@@ -71,6 +71,24 @@ struct BoundNative
         CERR << "@"<<(void const *)this<<"->doFooConstInt()!\n";
         return 7;
     }
+
+    void nativeParam( BoundNative const * other )
+    {
+        CERR << '@'<<(void const *)this<<"->nativeParam(@"<<(void const *)other<<")\n";
+    }
+#if 0
+    /**
+       Binding his to JS requires that CastToJS<T>() work so that we
+       can cast the return type. No generic impl of CastToJS() is
+       possible, and getting it to work requires extra tooling,
+       normally in the class binding code, to map native objects
+       to their JS counterparts.
+    */
+    BoundNative * nativeReturn()
+    {
+        CERR << '@'<<(void const *)this<<"->nativeReturn()\n";
+    }
+#endif
     double doFoo2(int i, double x)
     {
         assert( 0 != this );

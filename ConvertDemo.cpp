@@ -117,6 +117,8 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
           cv::ConstMethodToInvocationCallback<BoundNative,void (),&BoundNative::doFooConst>)
         ("invoInt",
          cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
+        ("nativeParam",
+         cv::MethodToInvocationCallback<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
         ("cstr",
          cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
         ("destroy", CC::DestroyObject )
