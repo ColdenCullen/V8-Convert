@@ -78,6 +78,12 @@ ValueHandle BoundNative_toString( v8::Arguments const & argv )
 }
 
 v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest );
+char const * cstring_test( char const * c )
+{
+    std::cerr << "cstring_test( @"<<(void const *)c
+              <<") ["<<(c ? c : "<NULL>")<<"]\n";
+    return c;
+}
 
 v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
 {
@@ -98,17 +104,19 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
     // Bind members...
 
     cc("cputs",
-       cv::FunctionToInvocationCallback<int (*)(char const *),::puts>)
+       cv::FunctionToInvocationCallback<int (char const *),::puts>)
         ("doFoo",
-         cv::MethodToInvocationCallback<BoundNative,void (BoundNative::*)(void),&BoundNative::doFoo>)
+         cv::MethodToInvocationCallback<BoundNative,void (void),&BoundNative::doFoo>)
         ("doFoo2",
-         cv::MethodToInvocationCallback<BoundNative,double (BoundNative::*)(int,double),&BoundNative::doFoo2>)
+         cv::MethodToInvocationCallback<BoundNative,double (int,double),&BoundNative::doFoo2>)
         ("toString",
-         cv::FunctionToInvocationCallback<ValueHandle (*)(v8::Arguments const &),BoundNative_toString>)
+         cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &),BoundNative_toString>)
         ("puts",
-         cv::ConstMethodToInvocationCallback<BoundNative,void (BoundNative::*)(char const *) const,&BoundNative::puts>)
+          cv::ConstMethodToInvocationCallback<BoundNative,void (char const *),&BoundNative::puts>)
         ("invoInt",
-         cv::MethodToInvocationCallback<BoundNative, int (BoundNative::*)(v8::Arguments const &), &BoundNative::invoInt>)
+         cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
+        ("cstr",
+         cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
         ("destroy", CC::DestroyObject )
         ("message", "hi, world")
         ("answer", 42)
@@ -116,14 +124,14 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
 
     // We can of course bind them directly to the prototype, instead
     // of via the cc object:
-    Handle<ObjectTemplate> const & proto( cc.Prototype() );
-    proto->Set(JSTR("bogo"),
-               cv::CastToJS(cv::FunctionToInvocationCallback<v8::InvocationCallback,bogo_callback>)
-               );
-    proto->Set(JSTR("bogo2"),
-               cv::CastToJS(cv::FunctionToInvocationCallback<int (*)(v8::Arguments const &),bogo_callback2>)
-               );
-    
+     Handle<ObjectTemplate> const & proto( cc.Prototype() );
+     proto->Set(JSTR("bogo"),
+                cv::CastToJS(cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &), bogo_callback>)
+                );
+     proto->Set(JSTR("bogo2"),
+                cv::CastToJS(cv::FunctionToInvocationCallback<int (v8::Arguments const &),bogo_callback2>)
+                );
+   
 
     ////////////////////////////////////////////////////////////
     // Add class to the destination object...
@@ -157,10 +165,11 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
         return cc.CtorFunction();
     }
 
-    cc("subFunc",
-       cv::ConstMethodToInvocationCallback<BoundSubNative,void (BoundSubNative::*)() const,&BoundSubNative::subFunc>)
+    cc
+        ("subFunc",
+         cv::ConstMethodToInvocationCallback<BoundSubNative,void (),&BoundSubNative::subFunc>)
         ("toString",
-         cv::ConstMethodToInvocationCallback<BoundSubNative,ValueHandle (BoundSubNative::*)() const,&BoundSubNative::toString>)
+         cv::ConstMethodToInvocationCallback<BoundSubNative,ValueHandle (),&BoundSubNative::toString>)
         ;
 
     //Handle<ObjectTemplate> const & proto( cc.Prototype() );

@@ -86,18 +86,26 @@ struct FunctionSignature< RV (*)() > : FunctionSignature< RV () >
 };
 
 template <typename T, typename RV >
-struct MethodSignature< T, RV (T::*)() > : SignatureBase< RV, 0 >
+struct MethodSignature< T, RV () > : SignatureBase< RV, 0 >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)();
 };
+template <typename T, typename RV >
+struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
+{
+};
 
 
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)() const > : SignatureBase< RV, 0 >
+struct ConstMethodSignature< T, RV () > : SignatureBase< RV, 0 >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)() const;
+};
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
+{
 };
 
 /**

@@ -18,7 +18,7 @@ INCDIR_DETAIL := $(TOP_INCDIR)/v8/convert/detail
 sig_gen_h := $(INCDIR_DETAIL)/signature_generated.hpp
 invo_gen_h := $(INCDIR_DETAIL)/invocable_generated.hpp
 TMPL_GENERATOR := $(TOP_SRCDIR_REL)/createForwarders.sh
-TMPL_GENERATOR_COUNT := 13# max number of arguments generate template specializations can handle
+TMPL_GENERATOR_COUNT := 5# max number of arguments generate template specializations can handle
 MAKEFILE_DEPS_LIST = $(filter-out $(ShakeNMake.CISH_DEPS_FILE),$(MAKEFILE_LIST))
 $(sig_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \

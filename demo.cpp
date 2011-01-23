@@ -61,7 +61,6 @@ ValueHandle test1_callback( v8::Arguments const & argv )
         jf->Call( jfoo, 0, varg ) /* Crashing!!! */;
 #endif
     }
-    BoundNative & foo = *fooPtr;
 
     typedef cv::FunctionPtr< int (char const *), ::puts > PUTS;
     PUTS::FunctionType putstr = PUTS::GetFunction();
@@ -69,52 +68,55 @@ ValueHandle test1_callback( v8::Arguments const & argv )
     
     typedef cv::FunctionPtr< void (), doNothing > DoNothingFP;
     DoNothingFP::GetFunction()();
-    typedef cv::FunctionPtr< void (*)(), doNothing > DoNothingFP2;
+    typedef cv::FunctionPtr< void (), doNothing > DoNothingFP2;
     DoNothingFP2::GetFunction()();
     typedef cv::FunctionPtr< int (int), doSomething > DoSomething;
     DoSomething::GetFunction()(13);
 
     
-    typedef cv::MethodPtr< BoundNative, void (BoundNative::*)(void), &BoundNative::doFoo > DoFoo;
-    typedef cv::MethodPtr< BoundNative, double (BoundNative::*)(int,double), &BoundNative::doFoo2 > DoFoo2;
+    typedef cv::MethodPtr< BoundNative, void (void), &BoundNative::doFoo > DoFoo;
+    typedef cv::MethodPtr< BoundNative, double (int,double), &BoundNative::doFoo2 > DoFoo2;
 
-    typedef cv::ConstMethodPtr< BoundNative, double (BoundNative::*)(int,double) const, &BoundNative::operator() > DoFooOp2;
+    typedef cv::ConstMethodPtr< BoundNative, double (int,double), &BoundNative::operator() > DoFooOp2;
 
     v8::InvocationCallback cb;
     CERR << "Calling doNothing():\n";
-    cb = cv::FunctionToInvocationCallback< void (*)(), doNothing >;
+    cb = cv::FunctionToInvocationCallback< void (), doNothing >;
     cb(argv);
 
   
     CERR << "Calling doSomething():\n";
-    cb = cv::FunctionToInvocationCallback< int (*)(int), doSomething >;
+    cb = cv::FunctionToInvocationCallback< int (int), doSomething >;
     cb(argv);
-    
+    BoundNative & foo = *fooPtr;
     CERR << "Calling foo.doFoo2():\n";
-    cv::MethodToInvocable< BoundNative, double (BoundNative::*)(int, double), &BoundNative::doFoo2 >::Call(foo, argv);
+    cv::MethodToInvocable< BoundNative, double (int, double), &BoundNative::doFoo2 >::Call(foo, argv);
+
     
     CERR << "Calling foo.operator():\n";
-    cv::ConstMethodToInvocable< BoundNative, double (BoundNative::*)(int, double) const, &BoundNative::operator() >::Call(foo, argv);
+    cv::ConstMethodToInvocable< BoundNative, double (int, double), &BoundNative::operator() >::Call(foo, argv);
+
+    CERR << "Calling foo.invo() (non-const):\n";
+    cv::MethodToInvocable< BoundNative, ValueHandle(v8::Arguments const &), &BoundNative::invo >::Call(foo, argv);
+
+
+    CERR << "Calling foo.invo() (const):\n";
+    cv::ConstMethodToInvocable< BoundNative, ValueHandle(v8::Arguments const &), &BoundNative::invo >::Call(foo, argv);
 
 
     CERR << "Calling sampleCallback():\n";
-    cb = cv::FunctionToInvocable< v8::InvocationCallback, sampleCallback >::Call;
+    cb = cv::FunctionToInvocable< ValueHandle(v8::Arguments const &), sampleCallback >::Call;
     cb(argv);
 
-    CERR << "Calling foo.invo() (non-const):\n";
-    cv::MethodToInvocable< BoundNative, cv::InvocationCallbackMethod<BoundNative>::FunctionType, &BoundNative::invo >::Call(foo, argv);
-
-    CERR << "Calling foo.invo() (const):\n";
-    cv::ConstMethodToInvocable< BoundNative, cv::ConstInvocationCallbackMethod<BoundNative>::FunctionType, &BoundNative::invo >::Call(foo, argv);
 
     CERR << "Calling foo.invo() (static):\n";
-    cb = cv::FunctionToInvocable< v8::InvocationCallback, BoundNative::invoStatic >::Call;
+    cb = cv::FunctionToInvocable< ValueHandle(v8::Arguments const &), BoundNative::invoStatic >::Call;
     cb(argv);
 
     CERR << "argv-forwarder (void):\n";
-    cv::ArgsToFunctionForwarder< void (*)() >::Call( doNothing, argv );
+    cv::ArgsToFunctionForwarder< void () >::Call( doNothing, argv );
     CERR << "argv-forwarder (int):\n";
-    cv::ArgsToFunctionForwarder< int (*)(int) >::Call( doSomething, argv );
+    cv::ArgsToFunctionForwarder< int (int) >::Call( doSomething, argv );
 
     CERR << "argv-forwarder (int) via forwardFunction():\n";
     cv::forwardFunction( doSomething, argv );
@@ -122,14 +124,14 @@ ValueHandle test1_callback( v8::Arguments const & argv )
     cv::forwardFunctionVoid( doSomething, argv );
 
     CERR << "argv-method-forwarder (void):\n";
-    cv::ArgsToMethodForwarder< BoundNative, void (BoundNative::*)() >::Call( foo, &BoundNative::doFoo, argv );
+    cv::ArgsToMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFoo, argv );
 
      CERR << "argv-method-forwarder (int,double):\n";
-     cv::ArgsToMethodForwarder< BoundNative, double (BoundNative::*)(int,double) >::Call( foo, &BoundNative::doFoo2, argv );
-     CERR << "same thing using forwardMethod(T, MemFunc, Arguments):\n";
-     cv::forwardMethod( foo, &BoundNative::doFoo2, argv );
-     CERR << "Done\n";
-
+     cv::ArgsToMethodForwarder< BoundNative, double (int,double) >::Call( foo, &BoundNative::doFoo2, argv );
+//      CERR << "same thing using forwardMethod(T, MemFunc, Arguments):\n";
+//      cv::forwardMethod( foo, &BoundNative::doFoo2, argv );
+//      CERR << "Done\n";
+     
      return v8::Undefined();
 }
 

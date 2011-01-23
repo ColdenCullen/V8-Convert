@@ -25,10 +25,15 @@ namespace v8 { namespace convert {
    (differing only in their return type) with an Arity value of -1.
 */
 template <typename RV>
-struct FunctionSignature< RV (*)(v8::Arguments const &) > : SignatureBase<RV, -1>
+struct FunctionSignature< RV (v8::Arguments const &) > : SignatureBase<RV, -1>
 {
     typedef RV (*FunctionType)(v8::Arguments const &);
 };
+// template <typename RV>
+// struct FunctionSignature< RV (*)(v8::Arguments const &) >
+//     : FunctionSignature< RV (v8::Arguments const &) >
+// {
+// };
 
 /**
    Partial specialization for v8::InvocationCallback-like non-const
@@ -36,7 +41,7 @@ struct FunctionSignature< RV (*)(v8::Arguments const &) > : SignatureBase<RV, -1
    Arity value of -1.
 */
 template <typename T, typename RV >
-struct MethodSignature< T, RV (T::*)(Arguments const &) > : SignatureBase< RV, -1 >
+struct MethodSignature< T, RV (Arguments const &) > : SignatureBase< RV, -1 >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(Arguments const &);
@@ -48,10 +53,15 @@ struct MethodSignature< T, RV (T::*)(Arguments const &) > : SignatureBase< RV, -
    of -1.
 */
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)(Arguments const &) const > : SignatureBase< RV, -1 >
+struct ConstMethodSignature< T, RV (Arguments const &) > : SignatureBase< RV, -1 >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(Arguments const &) const;
+};
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV (T::*)(Arguments const &) const >
+    : ConstMethodSignature< T, RV (Arguments const &) >
+{
 };
 
 /**
@@ -80,15 +90,13 @@ struct ConstInvocationCallbackMethod
    type), which uses an Arity value of -1.
 */
 template <typename RV, RV (*FuncPtr)(v8::Arguments const &) >
-struct FunctionPtr<RV (*)(v8::Arguments const &),FuncPtr>
-    : FunctionSignature<RV (*)(v8::Arguments const &)>
+struct FunctionPtr<RV (v8::Arguments const &),FuncPtr>
+    : FunctionSignature<RV (v8::Arguments const &)>
 {
-    private:
-    typedef FunctionSignature<RV (*)(v8::Arguments const &)> ParentType;
-
     public:
-    typedef typename ParentType::ReturnType ReturnType;
-    typedef typename ParentType::FunctionType FunctionType;
+    typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
+    typedef typename SignatureType::ReturnType ReturnType;
+    typedef typename SignatureType::FunctionType FunctionType;
     static FunctionType GetFunction()
      {
          return FuncPtr;
@@ -104,9 +112,9 @@ template <typename T,typename RV, RV (T::*FuncPtr)(v8::Arguments const &) >
 struct MethodPtr<T, RV (T::*)(v8::Arguments const &),FuncPtr>
     : MethodSignature<T, RV (T::*)(v8::Arguments const &)>
 {
-    typedef MethodSignature<T, RV (T::*)(v8::Arguments const &)> ParentType;
-    typedef typename ParentType::ReturnType ReturnType;
-    typedef typename ParentType::FunctionType FunctionType;
+    typedef MethodSignature<T, RV (T::*)(v8::Arguments const &)> SignatureType;
+    typedef typename SignatureType::ReturnType ReturnType;
+    typedef typename SignatureType::FunctionType FunctionType;
     static FunctionType GetFunction()
      {
          return FuncPtr;
@@ -122,9 +130,9 @@ template <typename T,typename RV, RV (T::*FuncPtr)(v8::Arguments const &) const 
 struct ConstMethodPtr<T, RV (T::*)(v8::Arguments const &) const,FuncPtr>
     : ConstMethodSignature<T, RV (T::*)(v8::Arguments const &) const>
 {
-    typedef ConstMethodSignature<T, RV (T::*)(v8::Arguments const &) const> ParentType;
-    typedef typename ParentType::ReturnType ReturnType;
-    typedef typename ParentType::FunctionType FunctionType;
+    typedef ConstMethodSignature<T, RV (T::*)(v8::Arguments const &) const> SignatureType;
+    typedef typename SignatureType::ReturnType ReturnType;
+    typedef typename SignatureType::FunctionType FunctionType;
     static FunctionType GetFunction()
      {
          return FuncPtr;
@@ -132,15 +140,22 @@ struct ConstMethodPtr<T, RV (T::*)(v8::Arguments const &) const,FuncPtr>
 };
 
 namespace Detail {
-    template <int Arity_, typename Sig, Sig Func>
+    template <int Arity_, typename Sig,
+              typename FunctionSignature<Sig>::FunctionType Func>
     struct FunctionToInvocable;
+    using v8::Arguments;
 
-    template <typename VT, VT (*Func)(Arguments const &) >
-    struct FunctionToInvocable<-1, VT (*)(Arguments const &), Func>
-        : FunctionPtr<VT (*)(Arguments const &), Func>
+    template <typename VT,
+              typename FunctionSignature<VT (v8::Arguments const &)>::FunctionType Func
+              >
+    struct FunctionToInvocable<-1,
+                               VT (Arguments const &),
+                               Func
+                               >
+        : FunctionPtr<VT (Arguments const &), Func>
     {
     private:
-        typedef FunctionPtr<VT (*)(Arguments const &), Func> ParentType;
+        typedef FunctionPtr<VT (Arguments const &), Func> ParentType;
     public:
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -148,7 +163,8 @@ namespace Detail {
         }
     };
     
-    template <typename Sig, Sig Func>
+    template <typename Sig,
+              typename FunctionSignature<Sig>::FunctionType Func>
     struct FunctionToInvocable<0,Sig,Func> : FunctionPtr<Sig, Func>
     {
     private:
@@ -161,15 +177,16 @@ namespace Detail {
         }
     };
 
-    template <int Arity_, typename Sig, Sig Func>
+    template <int Arity_, typename Sig,
+              typename FunctionSignature<Sig>::FunctionType Func>
     struct FunctionToInvocableVoid;
 
     template <typename VT, VT (*Func)(Arguments const &) >
-    struct FunctionToInvocableVoid<-1, VT (*)(Arguments const &), Func>
-        : FunctionPtr<VT (*)(Arguments const &), Func>
+    struct FunctionToInvocableVoid<-1, VT (Arguments const &), Func>
+        : FunctionPtr<VT (Arguments const &), Func>
     {
     private:
-        typedef FunctionPtr<VT (*)(Arguments const &), Func> ParentType;
+        typedef FunctionPtr<VT (Arguments const &), Func> ParentType;
     public:
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -178,7 +195,8 @@ namespace Detail {
         }
     };
     
-    template <typename Sig, Sig Func>
+    template <typename Sig,
+              typename FunctionSignature<Sig>::FunctionType Func>
     struct FunctionToInvocableVoid<0,Sig,Func> : FunctionPtr<Sig, Func>
     {
     private:
@@ -194,15 +212,19 @@ namespace Detail {
 
 
 namespace Detail {
-    template <typename T, int Arity_, typename Sig, Sig Func>
+    template <typename T, int Arity_, typename Sig,
+              typename MethodSignature<T,Sig>::FunctionType Func>
     struct MethodToInvocable;
 
-    template <typename T, typename VT, VT (T::*Func)(Arguments const &) >
+    template <typename T,
+              typename VT,
+              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
     struct MethodToInvocable<T, -1, VT (T::*)(Arguments const &), Func>
-        : MethodPtr<T, VT (T::*)(Arguments const &), Func>
+        : MethodPtr<T, VT (Arguments const &), Func>
     {
     private:
-        typedef MethodPtr<T, VT (T::*)(Arguments const &), Func> ParentType;
+        typedef MethodPtr<T, VT (Arguments const &), Func> ParentType;
     public:
         static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
         {
@@ -216,8 +238,16 @@ namespace Detail {
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
+    template <typename T,
+              typename VT,
+              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
+    struct MethodToInvocable<T, -1, VT (Arguments const &), Func>
+        : MethodToInvocable<T, -1, VT (T::*)(Arguments const &), Func>
+    {};
     
-    template <typename T, typename Sig, Sig Func>
+    template <typename T, typename Sig,
+              typename MethodSignature<T,Sig>::FunctionType Func>
     struct MethodToInvocable<T, 0,Sig,Func> : MethodPtr<T, Sig, Func>
     {
     private:
@@ -236,10 +266,14 @@ namespace Detail {
         }
     };
 
-    template <typename T, int Arity_, typename Sig, Sig Func>
+    template <typename T, int Arity_, typename Sig,
+              typename MethodSignature<T,Sig>::FunctionType Func>
     struct MethodToInvocableVoid;
 
-    template <typename T, typename VT, VT (T::*Func)(Arguments const &) >
+    template <typename T,
+              typename VT,
+              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
     struct MethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &), Func>
         : MethodPtr<T, VT (T::*)(Arguments const &), Func>
     {
@@ -259,8 +293,16 @@ namespace Detail {
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
+    template <typename T,
+              typename VT,
+              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
+    struct MethodToInvocableVoid<T, -1, VT (Arguments const &), Func>
+        : MethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &), Func>
+    {};
     
-    template <typename T, typename Sig, Sig Func>
+    template <typename T, typename Sig,
+              typename MethodSignature<T,Sig>::FunctionType Func>
     struct MethodToInvocableVoid<T, 0,Sig,Func> : MethodPtr<T, Sig, Func>
     {
     private:
@@ -282,15 +324,19 @@ namespace Detail {
 }
 
 namespace Detail {
-    template <typename T, int Arity_, typename Sig, Sig Func>
+    template <typename T, int Arity_, typename Sig,
+              typename ConstMethodSignature<T,Sig>::FunctionType Func>
     struct ConstMethodToInvocable;
 
-    template <typename T, typename VT, VT (T::*Func)(Arguments const &) const >
+    template <typename T,
+              typename VT,
+              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
     struct ConstMethodToInvocable<T, -1, VT (T::*)(Arguments const &) const, Func>
-        : ConstMethodPtr<T, VT (T::*)(Arguments const &) const, Func>
+        : ConstMethodPtr<T, VT (Arguments const &), Func>
     {
     private:
-        typedef ConstMethodPtr<T, VT (T::*)(Arguments const &) const, Func> ParentType;
+        typedef ConstMethodPtr<T, VT (Arguments const &), Func> ParentType;
     public:
         static v8::Handle<v8::Value> Call( T const & t, Arguments const & argv )
         {
@@ -304,8 +350,16 @@ namespace Detail {
                 : JS_THROW("CastFromJS<T const>() returned NULL! Cannot find 'this' pointer!");
         }
     };
+    template <typename T,
+              typename VT,
+              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
+    struct ConstMethodToInvocable<T, -1, VT (Arguments const &) const, Func>
+        : ConstMethodToInvocable<T, -1, VT (T::*)(Arguments const &) const, Func>
+    {};
 
-    template <typename T, typename Sig, Sig Func>
+    template <typename T, typename Sig,
+              typename ConstMethodSignature<T,Sig>::FunctionType Func>
     struct ConstMethodToInvocable<T, 0,Sig,Func> : ConstMethodPtr<T, Sig, Func>
     {
     private:
@@ -324,12 +378,16 @@ namespace Detail {
         }
     };
 
-    template <typename T, int Arity_, typename Sig, Sig Func>
+    template <typename T, int Arity_, typename Sig,
+              typename ConstMethodSignature<T,Sig>::FunctionType Func>
     struct ConstMethodToInvocableVoid;
 
-    template <typename T, typename VT, VT (T::*Func)(Arguments const &) const >
+    template <typename T,
+              typename VT,
+              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
     struct ConstMethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &) const, Func>
-        : ConstMethodPtr<T, VT (T::*)(Arguments const &) const, Func>
+        : ConstMethodPtr<T, VT (Arguments const &), Func>
     {
     private:
         typedef ConstMethodPtr<T, VT (T::*)(Arguments const &), Func> ParentType;
@@ -347,8 +405,16 @@ namespace Detail {
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
+    template <typename T,
+              typename VT,
+              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
+    >
+    struct ConstMethodToInvocableVoid<T, -1, VT (Arguments const &) const, Func>
+        : ConstMethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &) const, Func>
+    {};
     
-    template <typename T, typename Sig, Sig Func>
+    template <typename T, typename Sig,
+              typename ConstMethodSignature<T,Sig>::FunctionType Func>
     struct ConstMethodToInvocableVoid<T, 0,Sig,Func> : ConstMethodPtr<T, Sig, Func>
     {
     private:
@@ -378,7 +444,8 @@ namespace Detail {
    Sig must be a function signature. Func must be a pointer to a function
    with that signature.
 */
-template <typename Sig, Sig Func>
+template <typename Sig,
+          typename FunctionSignature<Sig>::FunctionType Func>
 struct FunctionToInvocable : FunctionPtr<Sig,Func>
 {
 private:
@@ -388,9 +455,9 @@ private:
     typedef 
     typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
                  Detail::FunctionToInvocableVoid< FunctionSignature<Sig>::Arity,
-                                                  typename FunctionSignature<Sig>::FunctionType, Func>,
+                                                  Sig, Func>,
                  Detail::FunctionToInvocable< FunctionSignature<Sig>::Arity,
-                                              typename FunctionSignature<Sig>::FunctionType, Func>
+                                              Sig, Func>
     >::Type
     ProxyType;
 public:
@@ -427,7 +494,7 @@ public:
    function signature for T. Func must be a pointer to a function with
    that signature.
 */
-template <typename T, typename Sig, Sig Func>
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
 struct MethodToInvocable : MethodPtr<T, Sig,Func>
 {
 private:
@@ -487,7 +554,7 @@ public:
 /**
    Identical to MethodToInvocable, but for const member functions.
 */
-template <typename T, typename Sig, Sig Func>
+template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func>
 struct ConstMethodToInvocable : ConstMethodPtr<T, Sig, Func>
 {
 private:
@@ -541,7 +608,8 @@ public:
    to the template-specified function. If Func returns void then the return
    value will be v8::Undefined().
 */
-template <typename FSig,FSig Func>
+template <typename FSig,
+          typename FunctionSignature<FSig>::FunctionType Func>
 v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
 {
     return FunctionToInvocable<FSig,Func>::Call(argv);
@@ -555,7 +623,8 @@ v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
 
    If Func returns void then the return value will be v8::Undefined().
 */
-template <typename T,typename FSig,FSig Func>
+template <typename T,typename FSig,
+          typename MethodSignature<T,FSig>::FunctionType Func>
 v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
 {
     return MethodToInvocable<T,FSig,Func>::Call(argv);
@@ -565,7 +634,8 @@ v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
 /**
    Identical to MethodToInvocationCallback(), but is for const member functions.
 */
-template <typename T,typename FSig,FSig Func>
+template <typename T,typename FSig,
+          typename ConstMethodSignature<T,FSig>::FunctionType Func>
 v8::Handle<v8::Value> ConstMethodToInvocationCallback( v8::Arguments const & argv )
 {
     return ConstMethodToInvocable<T,FSig,Func>::Call(argv);
@@ -577,7 +647,7 @@ namespace Detail {
     template <int Arity_, typename Sig>
     struct ArgsToFunctionForwarder;
 
-    // FIXME? use (RV (*)(Arguments const &)) instead
+    // FIXME? use (RV (Arguments const &)) instead
     template <>
     struct ArgsToFunctionForwarder<-1,v8::InvocationCallback> : FunctionSignature<v8::InvocationCallback>
     {
@@ -630,7 +700,7 @@ namespace Detail {
     private:
         typedef MethodSignature<T,Sig> ParentType;
     public:
-        typedef Sig FunctionType;
+        typedef typename ParentType::FunctionType FunctionType;
         typedef T Type;
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
         {
@@ -653,7 +723,7 @@ namespace Detail {
     {
     public:
         typedef MethodSignature<T,Sig> SignatureType;
-        typedef Sig FunctionType;
+        typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
         {
@@ -679,7 +749,7 @@ namespace Detail {
     private:
         typedef ConstMethodSignature<T,Sig> ParentType;
     public:
-        typedef Sig FunctionType;
+        typedef typename ParentType::FunctionType FunctionType;
         typedef T Type;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
@@ -702,7 +772,7 @@ namespace Detail {
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
-        typedef Sig FunctionType;
+        typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
@@ -894,7 +964,9 @@ inline void forwardFunctionVoid( FSig func, Arguments const & argv )
    as the 'this' pointer.
 */
 template <typename T, typename FSig>
-inline typename MethodSignature<T,FSig>::ReturnType forwardMethod( T & self, FSig func, Arguments const & argv )
+inline typename MethodSignature<T,FSig>::ReturnType forwardMethod( T & self,
+                                                                   typename MethodSignature<T,FSig>::FunctionType func,
+                                                                   Arguments const & argv )
 {
     typedef MethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;

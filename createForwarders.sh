@@ -176,7 +176,7 @@ function makeMethodSignature()
     cat <<EOF
 
 template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (T::*)(${aTParam}) > : SignatureBase< RV, ${count} >
+struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV, ${count} >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(${aTParam});
@@ -189,17 +189,23 @@ EOF
     
 cat <<EOF
 };
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T, RV (T::*)(${aTParam}) > :
+    MethodSignature< T, RV (${aTParam}) >
+{};
+
 
 EOF
 }
 
 ########################################################################
 # Create ConstMethodSignature<> and friends...
+# TODO: move this into makeMethodSignature.
 function makeConstMethodSignature()
 {
     cat <<EOF
 template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (T::*)(${aTParam}) const > : SignatureBase< RV, ${count} >
+struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV, ${count} >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(${aTParam}) const;
@@ -213,6 +219,11 @@ EOF
 cat <<EOF
 };
 
+template <typename T, typename RV, ${aTDecl} >
+struct ConstMethodSignature< T, RV (T::*)(${aTParam}) const > :
+    ConstMethodSignature< T, RV (${aTParam}) >
+{};
+
 EOF
 }
 
@@ -222,13 +233,13 @@ function makeFunctionToInvocable()
 {
     cat <<EOF
 namespace Detail {
-template <typename Sig, Sig Func>
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInvocable< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
-        typedef typename ParentType::SignatureType SignatureType;
     public:
+        typedef typename ParentType::SignatureType SignatureType;
         static ${ValueHandle} Call( Arguments const & argv )
         {
             if( argv.Length() < ParentType::Arity )
@@ -244,13 +255,13 @@ struct FunctionToInvocable< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
 EOF
 
     cat <<EOF
-template <typename Sig, Sig Func>
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
 struct FunctionToInvocableVoid< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
-        typedef typename ParentType::SignatureType SignatureType;
     public:
+        typedef typename ParentType::SignatureType SignatureType;
         static ${ValueHandle} Call( Arguments const & argv )
         {
             if( argv.Length() < ParentType::Arity )
@@ -274,15 +285,18 @@ function makeMethodToInvocable_impl()
 {
     local class=MethodToInvocable
     local parent=MethodPtr
+    local msig=MethodSignature
     local constness=""
     if [[ "x$1" = "xconst" ]]; then
         class=ConstMethodToInvocable
         parent=ConstMethodPtr
+        msig=ConstMethodSignature
         constness="const"
     fi
     cat <<EOF
 namespace Detail {
-template <typename T, typename Sig, Sig Func>
+template <typename T, typename Sig,
+typename ${msig}<T,Sig>::FunctionType Func>
 struct ${class}<T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
 {
     private:
@@ -311,7 +325,8 @@ struct ${class}<T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
 EOF
 
     cat <<EOF
-template <typename T, typename Sig, Sig Func>
+template <typename T, typename Sig,
+typename ${msig}<T,Sig>::FunctionType Func>
 struct ${class}Void< T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
 {
     private:
@@ -359,7 +374,7 @@ namespace Detail {
     {
     public:
         typedef FunctionSignature<Sig> SignatureType;
-        typedef Sig FunctionType;
+        typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
         {
             ${sigTypeDecls}
@@ -373,7 +388,7 @@ namespace Detail {
     {
     public:
         typedef FunctionSignature<Sig> SignatureType;
-        typedef Sig FunctionType;
+        typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
         {
             ${sigTypeDecls}
@@ -406,7 +421,7 @@ namespace Detail {
     {
     public:
         typedef ${parent}<T,Sig> SignatureType;
-        typedef Sig FunctionType;
+        typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
             ${sigTypeDecls}
@@ -428,7 +443,7 @@ namespace Detail {
     {
     public:
         typedef ${parent}<T,Sig> SignatureType;
-        typedef Sig FunctionType;
+        typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
             ${sigTypeDecls}
