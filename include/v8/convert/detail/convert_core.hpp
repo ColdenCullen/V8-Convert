@@ -184,17 +184,20 @@ namespace v8 { namespace convert {
     };
 #endif
     
+#if 0
     template <>
     struct NativeToJS<void>
     {
         /**
            Returns Undefined().
         */
-        v8::Handle<v8::Value> operator()(...) const
+        template <typename Ignored>
+        v8::Handle<v8::Value> operator()(Ignored const &) const
         {
             return ::v8::Undefined();
         }
     };
+#endif
 
 #if !defined(DOXYGEN)
     /**

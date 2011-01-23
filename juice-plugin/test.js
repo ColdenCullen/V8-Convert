@@ -19,6 +19,7 @@ function test1()
     f.doFoo();
     f.doFoo2(1,3.3);
     f.invoInt(1,2,3,4);
+    f.doFooConst();
     assert('hi, world' === f.message,'f.message===hi, world');
     assert(42 === f.answer,'f.answer===42');
     assert( f.destroy(), 'f.destroy() seems to work');

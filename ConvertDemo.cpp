@@ -113,6 +113,8 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
          cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &),BoundNative_toString>)
         ("puts",
           cv::ConstMethodToInvocationCallback<BoundNative,void (char const *),&BoundNative::puts>)
+        ("doFooConst",
+          cv::ConstMethodToInvocationCallback<BoundNative,void (),&BoundNative::doFooConst>)
         ("invoInt",
          cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
         ("cstr",

@@ -697,10 +697,9 @@ namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T,0,Sig> : MethodSignature<T,Sig>
     {
-    private:
-        typedef MethodSignature<T,Sig> ParentType;
     public:
-        typedef typename ParentType::FunctionType FunctionType;
+        typedef MethodSignature<T,Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
         {
@@ -746,10 +745,9 @@ namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToConstMethodForwarder<T,0,Sig> : ConstMethodSignature<T,Sig>
     {
-    private:
-        typedef ConstMethodSignature<T,Sig> ParentType;
     public:
-        typedef typename ParentType::FunctionType FunctionType;
+        typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
@@ -888,9 +886,9 @@ struct ArgsToConstMethodForwarder
 {
 private:
     typedef typename
-    tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, MethodSignature<T,Sig>::Arity, Sig >,
-                 Detail::ArgsToConstMethodForwarder< T, MethodSignature<T,Sig>::Arity, Sig >
+    tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T,Sig>::ReturnType>::Value,
+                 Detail::ArgsToConstMethodForwarderVoid< T, ConstMethodSignature<T,Sig>::Arity, Sig >,
+                 Detail::ArgsToConstMethodForwarder< T, ConstMethodSignature<T,Sig>::Arity, Sig >
     >::Type
     ProxyType;
 public:
@@ -939,7 +937,8 @@ public:
    in that case.
 */
 template <typename FSig>
-inline typename FunctionSignature<FSig>::ReturnType forwardFunction( FSig func, Arguments const & argv )
+inline typename FunctionSignature<FSig>::ReturnType
+forwardFunction( FSig func, Arguments const & argv )
 {
     typedef ArgsToFunctionForwarder<FSig> Proxy;
     typedef typename Proxy::SignatureType SigT;
@@ -962,17 +961,23 @@ inline void forwardFunctionVoid( FSig func, Arguments const & argv )
    Works like forwardFunction(), but forwards to the
    given non-const member function and treats the given object
    as the 'this' pointer.
+
+   Bugs: does not like a return type of void.
 */
 template <typename T, typename FSig>
-inline typename MethodSignature<T,FSig>::ReturnType forwardMethod( T & self,
-                                                                   typename MethodSignature<T,FSig>::FunctionType func,
-                                                                   Arguments const & argv )
+inline typename MethodSignature<T,FSig>::ReturnType
+forwardMethod( T & self,
+               FSig func,
+               /* if i do: typename MethodSignature<T,FSig>::FunctionType
+                  then this template is never selected. */
+               Arguments const & argv )
 {
     typedef MethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
     typedef ArgsToMethodForwarder<T,FSig> Proxy;
     return CastFromJS<RV>( Proxy::Call( self, func, argv ) );
 }
+
 
 /**
    Works like forwardMethod(), but does not try to convert
@@ -990,10 +995,15 @@ inline void forwardMethodVoid( T & self, FSig func, Arguments const & argv )
 /**
    Works like forwardMember(), but forwards to the given const
    member function and treats the given object as the 'this' pointer.
+
+   Bugs: does not like a return type of void.
 */
 template <typename T, typename FSig>
 inline typename ConstMethodSignature<T,FSig>::ReturnType
-forwardConstMethod( T const & self, FSig func, Arguments const & argv )
+forwardConstMethod( T const & self,
+                    //typename ConstMethodSignature<T,FSig>::FunctionType func,
+                    FSig func,
+                    Arguments const & argv )
 {
     typedef ConstMethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
@@ -1006,7 +1016,10 @@ forwardConstMethod( T const & self, FSig func, Arguments const & argv )
    the return type.
 */
 template <typename T, typename FSig>
-inline void forwardConstMethodVoid( T const & self, FSig func, Arguments const & argv )
+inline void forwardConstMethodVoid( T const & self,
+                                    //typename ConstMethodSignature<T,FSig>::FunctionType func,
+                                    FSig func,
+                                    Arguments const & argv )
 {
     typedef ConstMethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
@@ -1017,6 +1030,8 @@ inline void forwardConstMethodVoid( T const & self, FSig func, Arguments const &
 /**
    Works like the other forwardConstMethod(), but tries to extract the 'this'
    object from argv.This().
+
+   Bugs: does not like a return type of void.
 */
 template <typename T, typename FSig>
 inline typename ConstMethodSignature<T,FSig>::ReturnType forwardConstMethod( FSig func, Arguments const & argv )

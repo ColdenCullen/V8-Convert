@@ -62,6 +62,15 @@ struct BoundNative
         assert( 0 != this );
         CERR << "@"<<(void const *)this<<"->doFoo1("<<i<<")!\n";
     }
+    void doFooConst() const
+    {
+        CERR << "@"<<(void const *)this<<"->doFooConst()!\n";
+    }
+    int doFooConstInt() const
+    {
+        CERR << "@"<<(void const *)this<<"->doFooConstInt()!\n";
+        return 7;
+    }
     double doFoo2(int i, double x)
     {
         assert( 0 != this );
