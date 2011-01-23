@@ -54,8 +54,11 @@ ValueHandle test1_callback( v8::Arguments const & argv )
         jf->Call( jfoo, argc, varg );
         jf = Function::Cast( *(jfoo->Get(JSTR("bogo2"))) );
         jf->Call( jfoo, argc, varg );
+        jf = Function::Cast( *(jfoo->Get(JSTR("nativeParam"))) );
+        varg[0] = jfoo;
+        jf->Call( jfoo, argc, varg );
 #if 0
-        // this is crashing on me:
+        // calling v8::V8::IdleNotification() from JS is crashing on me:
         jf = Function::Cast( *(jfoo->Get(JSTR("runGC"))) );
         //CERR << "runGC handle isEmpty?=="<<jf.IsEmpty()<<'\n';
         jf->Call( jfoo, 0, varg ) /* Crashing!!! */;
@@ -131,7 +134,9 @@ ValueHandle test1_callback( v8::Arguments const & argv )
      CERR << "same thing using forwardMethod(T, MemFunc, Arguments):\n";
      cv::forwardMethod( foo, &BoundNative::doFoo2, argv );
      cv::forwardMethod( foo, &BoundNative::doFoo, argv );
-     cv::forwardMethod<BoundNative>( &BoundNative::doFoo, argv );
+     cv::forwardMethod<BoundNative>( &BoundNative::doFoo, argv )
+         /* won't actually work b/c argv.This() is-not-a BoundNative */
+         ;
 
      CERR << "argv-const-method-forwarder (void):\n";
      cv::ArgsToConstMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFooConst, argv );
@@ -139,7 +144,10 @@ ValueHandle test1_callback( v8::Arguments const & argv )
      CERR << "Calling forwardConstMethod(T, MemFunc, Arguments):\n";
      cv::forwardConstMethod( foo, &BoundNative::doFooConst, argv );
      cv::forwardConstMethod( foo, &BoundNative::doFooConstInt, argv );
-     cv::forwardConstMethod<BoundNative>( &BoundNative::doFooConstInt, argv );
+     cv::forwardConstMethod<BoundNative>( &BoundNative::doFooConstInt, argv )
+         /* won't actually work b/c argv.This() is-not-a BoundNative */
+         ;
+
      CERR << "Done\n";
      return v8::Undefined();
 }

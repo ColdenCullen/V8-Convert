@@ -10,6 +10,15 @@ function assert(cond,msg)
     }
 }
 
+function asserteq(got,expect,msg)
+{
+    if( got != expect ) throw new Error('Assertion: '+(msg || (got+' != '+expect)));
+    else
+    {
+        print("Assertion OK: "+(msg || (got+' == '+expect)));
+    }
+}
+
 function test1()
 {
     var f = new BoundNative();
@@ -21,8 +30,8 @@ function test1()
     f.invoInt(1,2,3,4);
     f.doFooConst();
     f.nativeParam(f);
-    assert('hi, world' === f.message,'f.message===hi, world');
-    assert(42 === f.answer,'f.answer===42');
+    asserteq('hi, world', f.message);
+    asserteq(42, f.answer);
     assert( f.destroy(), 'f.destroy() seems to work');
     assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
     var ex;

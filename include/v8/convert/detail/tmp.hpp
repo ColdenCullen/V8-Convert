@@ -52,6 +52,17 @@ namespace tmp {
         enum { Value = 1 };
     };
 
+
+    template <typename T>
+    struct IsConst
+    {
+        enum { Value = 0 };
+    };
+    template <typename T>
+    struct IsConst<T const>
+    {
+        enum { Value = 1 };
+    };
     
 }}} // namespaces
 #endif // CODE_GOOGLE_COM_P_V8_CONVERT_TMP_HPP_INCLUDED

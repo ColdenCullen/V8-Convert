@@ -29,11 +29,6 @@ struct FunctionSignature< RV (v8::Arguments const &) > : SignatureBase<RV, -1>
 {
     typedef RV (*FunctionType)(v8::Arguments const &);
 };
-// template <typename RV>
-// struct FunctionSignature< RV (*)(v8::Arguments const &) >
-//     : FunctionSignature< RV (v8::Arguments const &) >
-// {
-// };
 
 /**
    Partial specialization for v8::InvocationCallback-like non-const
@@ -57,11 +52,6 @@ struct ConstMethodSignature< T, RV (Arguments const &) > : SignatureBase< RV, -1
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(Arguments const &) const;
-};
-template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)(Arguments const &) const >
-    : ConstMethodSignature< T, RV (Arguments const &) >
-{
 };
 
 /**
@@ -934,6 +924,10 @@ public:
 namespace Detail {
     namespace cv = ::v8::convert;
 
+    /**
+       Internal level of indirection to handle void return
+       types from forwardFunction().
+     */
     template <typename FSig>
     struct ForwardFunction
     {
