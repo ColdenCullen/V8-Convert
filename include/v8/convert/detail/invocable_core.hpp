@@ -930,6 +930,98 @@ public:
 };
 
 
+
+namespace Detail {
+    namespace cv = ::v8::convert;
+
+    template <typename FSig>
+    struct ForwardFunction
+    {
+        typedef FunctionSignature<FSig> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef cv::ArgsToFunctionForwarder<FSig> Proxy;
+        static ReturnType Call( FSig func, v8::Arguments const & argv )
+        {
+            return CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
+        }
+    };
+    template <typename FSig>
+    struct ForwardFunctionVoid
+    {
+        typedef FunctionSignature<FSig> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef cv::ArgsToFunctionForwarder<FSig> Proxy;
+        static void Call( FSig func, v8::Arguments const & argv )
+        {
+            Proxy::Call( func, argv );
+        }
+    };
+    /**
+       Internal level of indirection to handle void return
+       types from forwardMethod().
+     */
+    template <typename T, typename FSig>
+    struct ForwardMethod
+    {
+        typedef MethodSignature<T,FSig> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef cv::ArgsToMethodForwarder<T,FSig> Proxy;
+        static ReturnType Call( T & self, FSig func, v8::Arguments const & argv )
+        {
+            return CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
+        }
+        static ReturnType Call( FSig func, v8::Arguments const & argv )
+        {
+            return CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
+        }
+    };
+    template <typename T, typename FSig>
+    struct ForwardMethodVoid
+    {
+        typedef MethodSignature<T,FSig> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef cv::ArgsToMethodForwarder<T,FSig> Proxy;
+        static void Call( T & self, FSig func, v8::Arguments const & argv )
+        {
+            Proxy::Call( self, func, argv );
+        }
+        static void Call( FSig func, v8::Arguments const & argv )
+        {
+            Proxy::Call( func, argv );
+        }
+    };
+    template <typename T, typename FSig>
+    struct ForwardConstMethod
+    {
+        typedef ConstMethodSignature<T,FSig> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef cv::ArgsToConstMethodForwarder<T,FSig> Proxy;
+        static ReturnType Call( T const & self, FSig func, v8::Arguments const & argv )
+        {
+            return CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
+        }
+        static ReturnType Call( FSig func, v8::Arguments const & argv )
+        {
+            return CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
+        }
+    };
+    template <typename T, typename FSig>
+    struct ForwardConstMethodVoid
+    {
+        typedef ConstMethodSignature<T,FSig> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef cv::ArgsToConstMethodForwarder<T,FSig> Proxy;
+        static void Call( T const & self, FSig func, v8::Arguments const & argv )
+        {
+            Proxy::Call( self, func, argv );
+        }
+        static void Call( FSig func, v8::Arguments const & argv )
+        {
+            Proxy::Call( func, argv );
+        }
+    };
+}
+    
 /**
    Tries to forward the given arguments to the given native
    function. Will fail if argv.Lengt() is not at least
@@ -940,29 +1032,25 @@ template <typename FSig>
 inline typename FunctionSignature<FSig>::ReturnType
 forwardFunction( FSig func, Arguments const & argv )
 {
-    typedef ArgsToFunctionForwarder<FSig> Proxy;
-    typedef typename Proxy::SignatureType SigT;
-    return CastFromJS< typename SigT::ReturnType >( Proxy::Call( func, argv ) );
-}
-
-/**
-   Identical to forwardFunction(), but does not try to convert the
-   return value.
-*/
-template <typename FSig>
-inline void forwardFunctionVoid( FSig func, Arguments const & argv )
-{
-    typedef ArgsToFunctionForwarder<FSig> Proxy;
-    Proxy::Call( func, argv );
-    return;
+    typedef FunctionSignature<FSig> MSIG;
+    typedef typename MSIG::ReturnType RV;
+    typedef typename
+        tmp::IfElse< tmp::SameType<void ,RV>::Value,
+        Detail::ForwardFunctionVoid< FSig >,
+        Detail::ForwardFunction< FSig >
+        >::Type ProxyType;
+    return (RV)ProxyType::Call( func, argv )
+        /* the explicit cast there is a workaround for the
+           RV==void case. It is a no-op for other cases,
+           since the return value is already RV.
+        */
+        ;
 }
 
 /**
    Works like forwardFunction(), but forwards to the
    given non-const member function and treats the given object
    as the 'this' pointer.
-
-   Bugs: does not like a return type of void.
 */
 template <typename T, typename FSig>
 inline typename MethodSignature<T,FSig>::ReturnType
@@ -974,87 +1062,99 @@ forwardMethod( T & self,
 {
     typedef MethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
-    typedef ArgsToMethodForwarder<T,FSig> Proxy;
-    return CastFromJS<RV>( Proxy::Call( self, func, argv ) );
+    typedef typename
+        tmp::IfElse< tmp::SameType<void ,RV>::Value,
+                 Detail::ForwardMethodVoid< T, FSig >,
+                 Detail::ForwardMethod< T, FSig >
+    >::Type ProxyType;
+    return (RV)ProxyType::Call( self, func, argv )
+        /* the explicit cast there is a workaround for the
+           RV==void case. It is a no-op for other cases,
+           since the return value is already RV.
+        */
+        ;
 }
 
-
 /**
-   Works like forwardMethod(), but does not try to convert
-   the return type.
+   Like the 3-arg forwardMethod() overload, but
+   extracts the native T 'this' object from argv.This().
+
+   Note that this function requires that the caller specify
+   the T template parameter - it cannot deduce it.
 */
 template <typename T, typename FSig>
-inline void forwardMethodVoid( T & self, FSig func, Arguments const & argv )
+typename MethodSignature<T,FSig>::ReturnType
+forwardMethod(FSig func, v8::Arguments const & argv )
 {
     typedef MethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
-    typedef ArgsToMethodForwarder<T,FSig> Proxy;
-    Proxy::Call( self, func, argv );
+    typedef typename
+        tmp::IfElse< tmp::SameType<void ,RV>::Value,
+                 Detail::ForwardMethodVoid< T, FSig >,
+                 Detail::ForwardMethod< T, FSig >
+    >::Type ProxyType;
+    return (RV)ProxyType::Call( func, argv )
+        /* the explicit cast there is a workaround for the
+           RV==void case. It is a no-op for other cases,
+           since the return value is already RV.
+        */
+        ;
 }
 
+    
 /**
    Works like forwardMember(), but forwards to the given const
    member function and treats the given object as the 'this' pointer.
 
-   Bugs: does not like a return type of void.
 */
 template <typename T, typename FSig>
 inline typename ConstMethodSignature<T,FSig>::ReturnType
 forwardConstMethod( T const & self,
                     //typename ConstMethodSignature<T,FSig>::FunctionType func,
                     FSig func,
-                    Arguments const & argv )
+                    v8::Arguments const & argv )
 {
     typedef ConstMethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
-    typedef ArgsToConstMethodForwarder<T,FSig> Proxy;
-    return CastFromJS<RV>( Proxy::Call( self, func, argv ) );
+    typedef typename
+        tmp::IfElse< tmp::SameType<void ,RV>::Value,
+                 Detail::ForwardConstMethodVoid< T, FSig >,
+                 Detail::ForwardConstMethod< T, FSig >
+    >::Type ProxyType;
+    return (RV)ProxyType::Call( self, func, argv )
+        /* the explicit cast there is a workaround for the
+           RV==void case. It is a no-op for other cases,
+           since the return value is already RV.
+        */
+        ;
 }
 
 /**
-   Works like forwardConstMethod(), but does not try to convert
-   the return type.
+   Like the 3-arg forwardConstMethod() overload, but
+   extracts the native T 'this' object from argv.This().
+
+   Note that this function requires that the caller specify
+   the T template parameter - it cannot deduce it.
 */
 template <typename T, typename FSig>
-inline void forwardConstMethodVoid( T const & self,
-                                    //typename ConstMethodSignature<T,FSig>::FunctionType func,
-                                    FSig func,
-                                    Arguments const & argv )
+typename ConstMethodSignature<T,FSig>::ReturnType
+forwardConstMethod(FSig func, v8::Arguments const & argv )
 {
     typedef ConstMethodSignature<T,FSig> MSIG;
     typedef typename MSIG::ReturnType RV;
-    typedef ArgsToConstMethodForwarder<T,FSig> Proxy;
-    Proxy::Call( self, func, argv );
+    typedef typename
+        tmp::IfElse< tmp::SameType<void ,RV>::Value,
+                 Detail::ForwardConstMethodVoid< T, FSig >,
+                 Detail::ForwardConstMethod< T, FSig >
+    >::Type ProxyType;
+    return (RV)ProxyType::Call( func, argv )
+        /* the explicit cast there is a workaround for the
+           RV==void case. It is a no-op for other cases,
+           since the return value is already RV.
+        */
+        ;
 }
 
-/**
-   Works like the other forwardConstMethod(), but tries to extract the 'this'
-   object from argv.This().
-
-   Bugs: does not like a return type of void.
-*/
-template <typename T, typename FSig>
-inline typename ConstMethodSignature<T,FSig>::ReturnType forwardConstMethod( FSig func, Arguments const & argv )
-{
-    typedef ConstMethodSignature<T,FSig> MSIG;
-    typedef typename MSIG::ReturnType RV;
-    typedef ArgsToConstMethodForwarder<T,FSig> Proxy;
-    return CastFromJS<RV>( Proxy::Call( func, argv ) );
-}
-
-/**
-   Works like forwardConstMethod(), but does not try to convert
-   the return type.
-*/
-template <typename T, typename FSig>
-inline void forwardConstMethodVoid( FSig func, Arguments const & argv )
-{
-    typedef ConstMethodSignature<T,FSig> MSIG;
-    typedef typename MSIG::Type Type;
-    typedef typename MSIG::ReturnType RV;
-    typedef ArgsToConstMethodForwarder<Type,FSig> Proxy;
-    Proxy::Call( func, argv );
-}
     
 #include "invocable_generated.hpp"
 

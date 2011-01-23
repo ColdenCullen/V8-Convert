@@ -120,8 +120,8 @@ ValueHandle test1_callback( v8::Arguments const & argv )
 
     CERR << "argv-forwarder (int) via forwardFunction():\n";
     cv::forwardFunction( doSomething, argv );
-    CERR << "argv-forwarder (int) via forwardFunctionVoid():\n";
-    cv::forwardFunctionVoid( doSomething, argv );
+    CERR << "argv-forwarder (void) via forwardFunction():\n";
+    cv::forwardFunction( doNothing, argv );
 
     CERR << "argv-method-forwarder (void):\n";
     cv::ArgsToMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFoo, argv );
@@ -130,27 +130,16 @@ ValueHandle test1_callback( v8::Arguments const & argv )
      cv::ArgsToMethodForwarder< BoundNative, double (int,double) >::Call( foo, &BoundNative::doFoo2, argv );
      CERR << "same thing using forwardMethod(T, MemFunc, Arguments):\n";
      cv::forwardMethod( foo, &BoundNative::doFoo2, argv );
-     cv::forwardMethodVoid( foo, &BoundNative::doFoo2, argv );
+     cv::forwardMethod( foo, &BoundNative::doFoo, argv );
+     cv::forwardMethod<BoundNative>( &BoundNative::doFoo, argv );
 
      CERR << "argv-const-method-forwarder (void):\n";
      cv::ArgsToConstMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFooConst, argv );
 
-     /** i somehow broke this during recent rewritings...
-
-     problem is related to void return...
-
-     ./include/v8/convert/detail/invocable_core.hpp:1007: instantiated
-     from 'typename v8::convert::ConstMethodSignature<T,
-     F>::ReturnType v8::convert::forwardConstMethod(const T&, FSig,
-     const v8::Arguments&) [with T = BoundNative, FSig = void
-     (BoundNative::*)()const]' demo.cpp:144: instantiated from here
-     ./include/v8/convert/detail/convert_core.hpp:889: error: cannot
-     pass objects of non-POD type 'const class v8::Handle<v8::Value>'
-     through '...'; call will abort at runtime
-     */
      CERR << "Calling forwardConstMethod(T, MemFunc, Arguments):\n";
-     cv::forwardConstMethodVoid( foo, &BoundNative::doFooConst, argv );
+     cv::forwardConstMethod( foo, &BoundNative::doFooConst, argv );
      cv::forwardConstMethod( foo, &BoundNative::doFooConstInt, argv );
+     cv::forwardConstMethod<BoundNative>( &BoundNative::doFooConstInt, argv );
      CERR << "Done\n";
      return v8::Undefined();
 }
