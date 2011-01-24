@@ -143,7 +143,7 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
                 );
 
      // Bind some properties:
-     typedef cv::PropertyBinder<BoundNative> PB;
+     typedef cv::NativePropertyBinder<BoundNative> PB;
      PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
      PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
      PB::BindStaticVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );

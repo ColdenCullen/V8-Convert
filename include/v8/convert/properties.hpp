@@ -27,7 +27,7 @@ namespace v8 { namespace convert {
        and not with arbitrary JS objects.
     */
     template <typename T>
-    struct PropertyBinder
+    struct NativePropertyBinder
     {
         typedef typename TypeInfo<T>::Type Type;
         typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -190,8 +190,7 @@ namespace v8 { namespace convert {
                                      v8::Handle<v8::ObjectTemplate> const & prototype,
                                      bool throwOnSet = false,
                                      v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                     v8::PropertyAttribute attribute = v8::DontDelete
-                         )
+                                     v8::PropertyAttribute attribute = v8::DontDelete )
         {
             if( ! prototype.IsEmpty() )
             {
@@ -199,7 +198,7 @@ namespace v8 { namespace convert {
                                         StaticVarGetter<VarType,SharedVar>,
                                         throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
                                         v8::Handle< v8::Value >(),
-                                        throwOnSet ? v8::DEFAULT : v8::PROHIBITS_OVERWRITING,
+                                        v8::PROHIBITS_OVERWRITING,
                                         attribute );
             }
         }
@@ -264,7 +263,9 @@ namespace v8 { namespace convert {
         template <typename VarType, VarType Type::*MemVar>
         static void BindMemVarRO( char const * name,
                                   v8::Handle<v8::ObjectTemplate> const & prototype,
-                                  bool throwOnSet = false )
+                                  bool throwOnSet = false,
+                                  v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
+                                  v8::PropertyAttribute attribute = v8::DontDelete )
         {
             if( ! prototype.IsEmpty() )
             {
@@ -272,8 +273,8 @@ namespace v8 { namespace convert {
                                         MemVarGetter<VarType,MemVar>,
                                         throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
                                         v8::Handle< v8::Value >(),
-                                        throwOnSet ? v8::DEFAULT : v8::PROHIBITS_OVERWRITING,
-                                        v8::DontDelete );
+                                        settings,
+                                        attribute );
             }
         }
         /**

@@ -33,6 +33,7 @@ function test1()
     f.runGC();
 
     var ex;
+    // We set up f.publicIntRO to throw on write.
     try{f.publicIntRO = 1;}
     catch(e){ex = e;}
     assert( !!ex, "Expecting exception: "+ex);
