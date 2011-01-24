@@ -33,7 +33,11 @@ ValueHandle sampleCallback( v8::Arguments const & argv );
 */
 struct BoundNative
 {
+public:
+    int publicInt;
+    static int publicStaticInt;
     BoundNative()
+        : publicInt(42)
     {
         CERR << "@"<<(void const *)this<<" is constructing.\n";
     }
@@ -135,6 +139,8 @@ struct BoundNative
        Returns dest. 
     */
     static v8::Handle<v8::Value> bindJSClass( v8::Handle<v8::Object> dest );
+
+   
 };
 
 /**

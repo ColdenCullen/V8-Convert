@@ -31,14 +31,37 @@ function test1()
     f.doFooConst();
     f.nativeParam(f);
     f.runGC();
-    asserteq('hi, world', f.message);
-    asserteq(42, f.answer);
-    assert( f.destroy(), 'f.destroy() seems to work');
-    assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
+
     var ex;
     try{f.doFoo();}
     catch(e){ex = e;}
     assert( !!ex, "Caught EXPECTED exception: "+ex);
+
+    ex = undefined;
+    try{f.publicIntRO = 1;}
+    catch(e){ex = e;}
+    assert( !!ex, "Caught EXPECTED exception: "+ex);
+
+    /* Note the arguably unintuitive behaviour when incrementing
+       f.publicIntRO: the return value of the ++ op is the incremented
+       value, but we do not actually modify the underlying native int.
+       This is v8's behaviour, not mine.
+    */
+    asserteq( ++f.publicIntRW, 43 );
+    asserteq( f.publicStaticIntRO, 42 );
+
+    ++f.publicStaticIntRW;
+    asserteq( f.publicStaticIntRW, f.publicStaticIntRO );
+    asserteq( ++f.publicStaticIntRO, 1+f.publicStaticIntRW );
+    asserteq( f.publicStaticIntRW, f.publicStaticIntRO );
+    asserteq( ++f.publicStaticIntRO, 1+f.publicStaticIntRW );
+    asserteq( f.publicStaticIntRW, 43 );
+    asserteq( f.publicStaticIntRO, f.publicStaticIntRW );
+    asserteq('hi, world', f.message);
+    asserteq(42, f.answer);
+    assert( f.destroy(), 'f.destroy() seems to work');
+    assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
+
 }
 
 function test2()

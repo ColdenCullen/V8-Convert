@@ -1,5 +1,8 @@
 #include "ConvertDemo.hpp"
 #include "v8/convert/ClassCreator.hpp"
+#include "v8/convert/properties.hpp"
+
+int BoundNative::publicStaticInt = 42;
 
 void doFoo()
 {
@@ -138,7 +141,13 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
      proto->Set(JSTR("runGC"),
                 cv::CastToJS(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
                 );
-   
+
+     // Bind some properties:
+     typedef cv::PropertyBinder<BoundNative> PB;
+     PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
+     PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
+     PB::BindStaticVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
+     PB::BindStaticVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );     
 
     ////////////////////////////////////////////////////////////
     // Add class to the destination object...
