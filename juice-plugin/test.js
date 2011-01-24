@@ -33,14 +33,9 @@ function test1()
     f.runGC();
 
     var ex;
-    try{f.doFoo();}
-    catch(e){ex = e;}
-    assert( !!ex, "Caught EXPECTED exception: "+ex);
-
-    ex = undefined;
     try{f.publicIntRO = 1;}
     catch(e){ex = e;}
-    assert( !!ex, "Caught EXPECTED exception: "+ex);
+    assert( !!ex, "Expecting exception: "+ex);
 
     /* Note the arguably unintuitive behaviour when incrementing
        f.publicIntRO: the return value of the ++ op is the incremented
@@ -48,7 +43,7 @@ function test1()
        This is v8's behaviour, not mine.
     */
     asserteq( ++f.publicIntRW, 43 );
-    asserteq( f.publicStaticIntRO, 42 );
+    asserteq( f.publicIntRO, f.publicIntRW );
 
     ++f.publicStaticIntRW;
     asserteq( f.publicStaticIntRW, f.publicStaticIntRO );
@@ -59,9 +54,16 @@ function test1()
     asserteq( f.publicStaticIntRO, f.publicStaticIntRW );
     asserteq('hi, world', f.message);
     asserteq(42, f.answer);
-    assert( f.destroy(), 'f.destroy() seems to work');
     assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
 
+    assert( f.destroy(), 'f.destroy() seems to work');
+
+    ex = undefined;
+    try{f.doFoo();}
+    catch(e){ex = e;}
+    assert( !!ex, "Expecting exception: "+ex);
+
+    
 }
 
 function test2()
