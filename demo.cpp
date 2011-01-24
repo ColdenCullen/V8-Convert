@@ -148,6 +148,10 @@ ValueHandle test1_callback( v8::Arguments const & argv )
          ;
 
      CERR << "Done\n";
+     CERR << "NOTE: you may see an exception or two above (or directly after this "
+          << "function returns) regarding missing native 'this' pointers. Don't "
+          << "panic - those are _expected_ here.\n"
+         ;
      return v8::Undefined();
 }
 
