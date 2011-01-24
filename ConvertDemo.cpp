@@ -135,6 +135,9 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
      proto->Set(JSTR("bogo2"),
                 cv::CastToJS(cv::FunctionToInvocationCallback<int (v8::Arguments const &),bogo_callback2>)
                 );
+     proto->Set(JSTR("runGC"),
+                cv::CastToJS(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+                );
    
 
     ////////////////////////////////////////////////////////////

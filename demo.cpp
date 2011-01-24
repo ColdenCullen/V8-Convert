@@ -57,11 +57,10 @@ ValueHandle test1_callback( v8::Arguments const & argv )
         jf = Function::Cast( *(jfoo->Get(JSTR("nativeParam"))) );
         varg[0] = jfoo;
         jf->Call( jfoo, argc, varg );
-#if 0
-        // calling v8::V8::IdleNotification() from JS is crashing on me:
+#if 1
         jf = Function::Cast( *(jfoo->Get(JSTR("runGC"))) );
-        //CERR << "runGC handle isEmpty?=="<<jf.IsEmpty()<<'\n';
-        jf->Call( jfoo, 0, varg ) /* Crashing!!! */;
+        CERR << "runGC handle isEmpty?=="<<jf.IsEmpty()<<'\n';
+        jf->Call( jfoo, 0, varg );
 #endif
     }
 

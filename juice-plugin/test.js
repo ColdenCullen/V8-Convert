@@ -30,6 +30,7 @@ function test1()
     f.invoInt(1,2,3,4);
     f.doFooConst();
     f.nativeParam(f);
+    f.runGC();
     asserteq('hi, world', f.message);
     asserteq(42, f.answer);
     assert( f.destroy(), 'f.destroy() seems to work');
