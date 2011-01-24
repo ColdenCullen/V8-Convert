@@ -399,13 +399,13 @@ namespace v8 { namespace convert {
                 }
                 else
                 {
-                    Factory::Delete(native);
                     nholder->SetInternalField( InternalFields::NativeIndex, Null() );
+                    Factory::Delete(native);
                 }
 #else
                 WeakWrap::Unwrap( nholder, native );
-                Factory::Delete(native);
                 nholder->SetInternalField( InternalFields::NativeIndex, Null() );
+                Factory::Delete(native);
 #endif
             }
             //pv.Dispose(); // don't do this: it causes another call to this function!

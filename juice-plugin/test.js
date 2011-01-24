@@ -1,5 +1,14 @@
-// v8::convert test/demo app for use with v8-juice-shell (or compatible)
-loadPlugin("v8-juice-ConvertDemo");
+/**
+   v8::convert test/demo app for use with v8-juice-shell (or compatible).
+   To run it without v8-juice you need to remove the loadPlugin() call,
+   build an app which includes the ConvertDemo.cpp code, and run this
+   script through v8.
+
+   Note that many of these tests/assertions depend on default state
+   set in the demo app (ConvertDemo.cpp), and changing them there might
+   (should) cause these tests to fail.
+*/
+if( 'function' == typeof loadPlugin ) loadPlugin("v8-juice-ConvertDemo");
 
 function assert(cond,msg)
 {
@@ -54,6 +63,17 @@ function test1()
     asserteq( f.publicStaticIntRW, 43 );
     asserteq( f.publicStaticIntRO, f.publicStaticIntRW );
     asserteq('hi, world', f.message);
+    asserteq('hi, world', f.staticString);
+    f.staticString = 'hi';
+    asserteq('hi', f.staticString);
+    asserteq( f.sharedString2, f.staticStringRO );
+    f.sharedString2 = "hi again";
+    asserteq( f.sharedString2, f.staticStringRO );
+    ex = undefined;
+    try{f.staticStringRO = 'bye';}
+    catch(e){ex = e;}
+    assert( !!ex, "Expecting exception: "+ex);
+
     asserteq(42, f.answer);
     assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
 
@@ -99,14 +119,28 @@ function test3()
     var ex;
     try{m.doFoo();}
     catch(e){ex = e;}
-    assert( !!ex, "Caught EXPECTED exception: "+ex);
+    assert( !!ex, "Expecting exception: "+ex);
 
 }
 
 function test4()
 {
+    throw new Error("Don't run this function. Calling v8::V8::IdleNotification() "
+                    +"from JS is crashing on me sometimes.");
     var i =0;
-    for( ; i < 10; ++i ) new BoundSubNative();
+    var root = new BoundSubNative();
+    for( ; i < 10; ++i ) { (new BoundSubNative()); }
+    i = 0;
+    var max = 10;
+    for( ; !root.runGC() && (i<max); ++i )
+    {
+        print("Waiting on GC to finish...");
+        sleep(1);
+    }
+    if( max == i )
+    {
+        print("Gave up waiting.");
+    }
 }
 
 test1();

@@ -148,12 +148,13 @@ ValueHandle test1_callback( v8::Arguments const & argv )
          ;
 
      CERR << "Done\n";
-     CERR << "NOTE: you may see an exception or two above (or directly after this "
-          << "function returns) regarding missing native 'this' pointers. Don't "
-          << "panic - those are _expected_ here.\n"
+     CERR << "NOTE: you may see an exception message directly after this "
+          << "function returns regarding a missing native 'this' pointer. Don't "
+          << "panic - it is _expected_ here.\n"
          ;
      return v8::Undefined();
 }
+#include "demo_shellfuncs.cpp"
 
 void test1()
 {
@@ -169,6 +170,25 @@ void test1()
     CERR << "Calling binding function...\n";
     hf->Call( v8::Context::GetCurrent()->Global(), 3, args );
     CERR << "Returned from binding function.\n";
+
+    if(0)
+    {
+        char const * extScr = "./juice-plugin/test.js";
+        CERR << "Calling external script ["<<extScr<<"]...\n";
+        Local<Object> global
+            ( v8::Context::GetCurrent()->Global() )
+            //(Object::New())
+            ;
+        assert( ! global.IsEmpty() );
+        Local<Function> jf( Function::Cast( *(global->Get(JSTR("load"))) ) );
+        assert( ! jf.IsEmpty() );
+        ValueHandle varg[] = { v8::String::New(extScr), cv::CastToJS(extScr) };
+        jf->Call( global, 1, varg )/* segfaulting, apparently in v8, and
+                                      it's never reaching the bound load()
+                                      function.
+                                    */;
+        CERR << "Returned from external script\n";
+    }
 }
 
 #if !defined(_WIN32)
@@ -179,7 +199,6 @@ void test1()
 #  define do_sleep(N) Sleep((N)*1000)
 #endif
 
-#include "demo_shellfuncs.cpp"
 static int v8_main(int argc, char const * const * argv)
 {
     v8::Locker locker;

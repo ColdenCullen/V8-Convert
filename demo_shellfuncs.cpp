@@ -75,6 +75,7 @@ bool ExecuteString(v8::Handle<v8::String> source,
 v8::Handle<v8::Value> Load(const v8::Arguments& args)
 {
     // code taken from v8 sample shell
+    //CERR << "load(...)ing...\n";
     for (int i = 0; i < args.Length(); i++) {
         v8::HandleScope handle_scope;
         v8::String::Utf8Value file(args[i]);

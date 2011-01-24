@@ -88,6 +88,18 @@ char const * cstring_test( char const * c )
     return c;
 }
 
+std::string sharedString("hi, world") /* may not be static for templating reasons. */;
+std::string getSharedString()
+{
+    CERR << "getSharedString()=="<<sharedString<<'\n';
+    return sharedString;
+}
+void setSharedString(std::string const &s)
+{
+    CERR << "setSharedString("<<s<<")\n";
+    sharedString = s;
+}
+
 v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
 {
     using namespace v8;
@@ -143,12 +155,22 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
                 );
 
      // Bind some properties:
-     typedef cv::NativePropertyBinder<BoundNative> PB;
+     typedef cv::MemberPropertyBinder<BoundNative> PB;
      PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
      PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
      PB::BindStaticVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
-     PB::BindStaticVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );     
-
+     PB::BindStaticVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
+     PB::BindStaticVar<std::string,&sharedString>("staticString", proto );
+     PB::BindStaticVarRO<std::string,&sharedString>("staticStringRO", proto, true );     
+#if 0
+     PB::BindGetter<std::string /* WEIRD: if i add () or (void) here, the template doesn't resolve! */,
+         getSharedString>("sharedString2", proto);
+#else
+     PB::BindGetterSetter<std::string () /*WEIRDER: () works fine here!*/,
+                          getSharedString,
+                          void (std::string const &),
+                          setSharedString>("sharedString2", proto);
+#endif
     ////////////////////////////////////////////////////////////
     // Add class to the destination object...
     //dest->Set( JSTR("BoundNative"), cc.CtorFunction() );
