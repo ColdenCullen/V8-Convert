@@ -8,7 +8,7 @@
    set in the demo app (ConvertDemo.cpp), and changing them there might
    (should) cause these tests to fail.
 */
-if( 'function' == typeof loadPlugin ) loadPlugin("v8-juice-ConvertDemo");
+if( 'function' == typeof loadPlugin ) loadPlugin("juice-plugin/v8-juice-ConvertDemo");
 
 function assert(cond,msg)
 {
