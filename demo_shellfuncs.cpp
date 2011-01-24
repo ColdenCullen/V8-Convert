@@ -100,3 +100,21 @@ v8::Handle<v8::Value> Load(const v8::Arguments& args)
     }
     return v8::Undefined();
 }
+
+// The callback that is invoked by v8 whenever the JavaScript 'print'
+// function is called.  Prints its arguments on stdout separated by
+// spaces and ending with a newline.
+v8::Handle<v8::Value> Print(const v8::Arguments& args) {
+  bool first = true;
+  for (int i = 0; i < args.Length(); i++) {
+    v8::HandleScope handle_scope;
+    if (first) {
+      first = false;
+    } else {
+        std::cout << ' ';
+    }
+    std::cout << cv::JSToStdString(args[i]);
+  }
+  std::cout << std::endl;
+  return v8::Undefined();
+}

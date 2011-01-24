@@ -171,24 +171,31 @@ void test1()
     hf->Call( v8::Context::GetCurrent()->Global(), 3, args );
     CERR << "Returned from binding function.\n";
 
+    char const * extScr = "./test.js";
+    CERR << "Calling external script ["<<extScr<<"]...\n";
     if(0)
     {
-        char const * extScr = "./juice-plugin/test.js";
-        CERR << "Calling external script ["<<extScr<<"]...\n";
-        Local<Object> global
-            ( v8::Context::GetCurrent()->Global() )
-            //(Object::New())
-            ;
+        Local<Object> global( v8::Context::GetCurrent()->Global() );
         assert( ! global.IsEmpty() );
         Local<Function> jf( Function::Cast( *(global->Get(JSTR("load"))) ) );
         assert( ! jf.IsEmpty() );
         ValueHandle varg[] = { v8::String::New(extScr), cv::CastToJS(extScr) };
-        jf->Call( global, 1, varg )/* segfaulting, apparently in v8, and
-                                      it's never reaching the bound load()
-                                      function.
-                                    */;
-        CERR << "Returned from external script\n";
+        jf->Call( global, 1, varg );
     }
+    else if(1)
+    {
+        /** WTF:
+
+       ./juice-plugin/test.js:1: Error executing file
+       load("./juice-plugin/test.js")
+       ^
+        */
+        cv::StringBuffer code;
+        code << "load(\"" << extScr << "\")";
+        ExecuteString( JSTR(code.Content().c_str()), JSTR(extScr),
+                       false, true);
+    }
+    CERR << "Returned from external script\n";
 }
 
 #if !defined(_WIN32)
@@ -204,9 +211,31 @@ static int v8_main(int argc, char const * const * argv)
     v8::Locker locker;
     v8::HandleScope handle_scope;
     v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
+    global->Set(JSTR("load"), v8::FunctionTemplate::New(Load) )
+        /* Reminder: Calling CastToJS(Load) this early in the v8
+           startup process apparently segfaults v8.
+        */
+        ;
+    global->Set(JSTR("print"), v8::FunctionTemplate::New( Print ));
+    global->Set(JSTR("sleep"), v8::FunctionTemplate::New(
+                                                         cv::FunctionToInvocationCallback<
+#if !defined(_WIN32)
+                                                         unsigned int (unsigned int), sleep
+#else
+                                                         void (DWORD), Sleep // UNTESTED!
+#endif
+                                                         >
+));
+    /**
+       Reminder to self: changes to global object must apparently come
+       before the context is created, otherwise they appear to have no
+       effect.
+
+       GODDAMMIT, GOOGLE, DOCUMENT V8 SO THAT PEOPLE CAN USE IT
+       PRODUCTIVELY INSTEAD OF HAVING TO FIGHT WITH IT!!!
+    */
     v8::Persistent<v8::Context> context = v8::Context::New(NULL, global);
     v8::Context::Scope context_scope(context);
-    global->Set(JSTR("load"), cv::CastToJS( Load ));
     try
     {
         test1();
@@ -225,7 +254,9 @@ static int v8_main(int argc, char const * const * argv)
     if(1)
     {
         CERR << "Trying to force GC... This will likely take 5-10 seconds... "
-             << "wait for it to see the weak pointer callbacks in action...\n";
+             << "wait for it to see the weak pointer callbacks in action...\n"
+             << "ON SOME MACHINES THIS IS CRASHING ON ME IN V8 at some point...\n"
+            ;
         while( !v8::V8::IdleNotification() )
         {
             CERR << "sleeping briefly before trying again...\n";
