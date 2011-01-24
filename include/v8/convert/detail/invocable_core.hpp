@@ -779,6 +779,9 @@ namespace Detail {
 
 /**
    A helper type for passing v8::Arguments lists to native functions.
+
+   Sig must be a function-signature-like argument. e.g. <double (int,double)>,
+   and the members of this class expect functions matching that signature.
 */
 template <typename Sig>
 struct ArgsToFunctionForwarder
@@ -818,6 +821,10 @@ public:
 /**
    Identicial to ArgsToFunctionForwarder, but works on non-const
    member methods of type T.
+
+   Sig must be a function-signature-like argument. e.g. <double
+   (int,double)>, and the members of this class expect T member
+   functions matching that signature.
 */
 template <typename T, typename Sig>
 struct ArgsToMethodForwarder
@@ -1034,9 +1041,10 @@ forwardFunction( FSig func, Arguments const & argv )
         Detail::ForwardFunction< FSig >
         >::Type ProxyType;
     return (RV)ProxyType::Call( func, argv )
-        /* the explicit cast there is a workaround for the
-           RV==void case. It is a no-op for other cases,
-           since the return value is already RV.
+        /* the explicit cast there is a workaround for the RV==void
+           case. It is a no-op for other cases, since the return value
+           is already RV. Not all compilers allow explicitly returning
+           void values, and thus the kludge.
         */
         ;
 }

@@ -418,7 +418,7 @@ namespace v8 { namespace convert {
     struct NativeToJS<std::exception>
     {
         /** Calls v8::ThrowException(ex.what()) and returns the
-            results of that cal (maybe an empty handle???). It must
+            results of that call (maybe an empty handle???). It must
             call ThrowException() because that is apparently the only
             way to create an Error object from the native API.
         */

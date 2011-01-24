@@ -182,9 +182,9 @@ namespace v8 { namespace convert { namespace tmp {
 
 } // namespace
 
-#ifndef V8_JUICE_TYPELIST_MAX_ARGS
-/** @def V8_JUICE_TYPELIST_MAX_ARGS
-   Define V8_JUICE_TYPELIST_MAX_ARGS before including this file to set
+#ifndef V8_CONVERT_TYPELIST_MAX_ARGS
+/** @def V8_CONVERT_TYPELIST_MAX_ARGS
+   Define V8_CONVERT_TYPELIST_MAX_ARGS before including this file to set
    the maximum number of arguments which TypeList<> can accept. It
    defaults to "some reasonable number", and pre-generated versions
    are available for "some other reasonable number". For generating
@@ -202,18 +202,18 @@ namespace v8 { namespace convert { namespace tmp {
    Maintenance note: we don't expect to have more than 4-6 types in
    the lists for most v8-juice use cases (passing function argument
    type info around), and 10 would be a fairly extreme case. Thus the
-   default value forV8_JUICE_TYPELIST_MAX_ARGS is fairly low.
+   default value forV8_CONVERT_TYPELIST_MAX_ARGS is fairly low.
 
    Maintenance note: the script for generating the TypeList_NN.h files
    is in the source repo with TypeList.h, called maketypelist.pl.
 */
-#define V8_JUICE_TYPELIST_MAX_ARGS 10
+#define V8_CONVERT_TYPELIST_MAX_ARGS 10
 #endif
 namespace tmp {
     /** @struct TypeList
         
        The TypeList type is a quasi-variadic template type which is specialized to
-       take up to some compile-time limit (see V8_JUICE_TYPELIST_MAX_ARGS) of _types_
+       take up to some compile-time limit (see V8_CONVERT_TYPELIST_MAX_ARGS) of _types_
        as arguments. All of the TypeList code is generated from a script.
 
        TypeList is simply a TypeChain<> type for which specializations
@@ -223,28 +223,28 @@ namespace tmp {
        use TypeList::ChainType to "convert" the TypeList to a
        TypeChain.
     */
-#if V8_JUICE_TYPELIST_MAX_ARGS < 6
+#if V8_CONVERT_TYPELIST_MAX_ARGS < 6
 // template <class T1, class T2, class T3, class T4, class T5>
 // struct TypeList; // only here so Doxygen will list this type
 #  define V8_CONVERT_TYPELIST_HEADER "TypeList_05.hpp"
-#elif V8_JUICE_TYPELIST_MAX_ARGS < 11
+#elif V8_CONVERT_TYPELIST_MAX_ARGS < 11
 // template <class T1, class T2, class T3, class T4, class T5,
 //           class T6, class T7, class T8, class T9, class T10>
 // struct TypeList; // only here so Doxygen will list this type
 #  define V8_CONVERT_TYPELIST_HEADER "TypeList_10.hpp"
-#elif V8_JUICE_TYPELIST_MAX_ARGS < 16
+#elif V8_CONVERT_TYPELIST_MAX_ARGS < 16
 // template <class T1, class T2, class T3, class T4, class T5,
 //           class T6, class T7, class T8, class T9, class T10,
 //           class T11, class T12, class T13, class T14, class T15>
 // struct TypeList; // only here so Doxygen will list this type
 #  define V8_CONVERT_TYPELIST_HEADER "TypeList_15.hpp"
 #else
-#    error "V8_JUICE_TYPELIST_MAX_ARGS is too high. See the docs above this code for details."
+#    error "V8_CONVERT_TYPELIST_MAX_ARGS is too high. See the docs above this code for details."
 #endif
 
 #include V8_CONVERT_TYPELIST_HEADER
 #undef V8_CONVERT_TYPELIST_HEADER
-#undef V8_JUICE_TYPELIST_MAX_ARGS
+#undef V8_CONVERT_TYPELIST_MAX_ARGS
 
 
     /**
