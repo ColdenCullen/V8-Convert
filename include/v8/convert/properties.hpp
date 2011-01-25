@@ -86,8 +86,11 @@ namespace v8 { namespace convert {
            StaticVarGetter<VarType,SharedVar> and set access will be
            ignored (it will not change SharedVar).
 
-           See BindMemVarRO() for the semantics of the throwOnSet
-           parameter.
+           The throwOnSet parameter installs a custom setter which,
+           when triggered, always throws a JS exception. If this value
+           is false, no setter will be installed (and see the notes in
+           MemberPropertyBinder::BindMemVarRO()). If you want
+           v8-specified behaviours, pass false for this value.
         */
         template <typename VarType, VarType const * SharedVar>
         static void BindStaticVarRO( char const * name,
@@ -448,6 +451,8 @@ namespace v8 { namespace convert {
            member property to a native getter function. This function
            can be used as the getter parameter to
            v8::ObjectTemplate::SetAccessor().
+
+           RV must be a non-void type convertible to v8 via castToJS().
         */
 	template <typename RV, RV (Type::*Func)()>
         static v8::Handle<v8::Value> MemberGetterFunc( Local< String > property, const AccessorInfo & info )
@@ -461,7 +466,7 @@ namespace v8 { namespace convert {
             }
             catch( std::exception const & ex )
             {
-                return ::v8::ThrowException( ::v8::String::New(ex.what()) );
+                return CastToJS(ex);
             }
             catch( ... )
             {
@@ -469,6 +474,7 @@ namespace v8 { namespace convert {
                                       << property << "' threw an unknown native exception type!");
             }
         }
+
         /**
            Overload for const native getter functions.
         */
@@ -513,6 +519,7 @@ namespace v8 { namespace convert {
                 return ::v8::ThrowException(::v8::String::New("Native property getter function threw an unknown native exception type!"));
             }
         }
+
 
 #if 0 // TODO port this to v8::convert's conventions (the tmpl args should use function-ptr-style templates)
         /**
