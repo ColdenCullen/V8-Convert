@@ -56,7 +56,7 @@ namespace v8 { namespace convert {
            AccessorSetterStaticVar<VarType,SharedVar>.
         */
         template <typename VarType, VarType * SharedVar>
-        static void BindStaticVar( char const * name,
+        static void BindSharedVar( char const * name,
                                    v8::Handle<v8::ObjectTemplate> const & prototype,
                                    v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
                                    v8::PropertyAttribute attribute = v8::DontDelete
@@ -98,7 +98,7 @@ namespace v8 { namespace convert {
            v8-specified behaviours, pass false for this value.
         */
         template <typename VarType, VarType const * SharedVar>
-        static void BindStaticVarRO( char const * name,
+        static void BindSharedVarRO( char const * name,
                                      v8::Handle<v8::ObjectTemplate> const & prototype,
                                      bool throwOnSet = false,
                                      v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
@@ -129,7 +129,7 @@ namespace v8 { namespace convert {
            exception.
         */
         template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> AccessorGetterFunction( Local< String > property, const AccessorInfo & info )
+        static v8::Handle<v8::Value> FunctionToAccesorGetter( Local< String > property, const AccessorInfo & info )
         {
             try
             {
@@ -151,7 +151,7 @@ namespace v8 { namespace convert {
            given prototype object, such that JS-side read access to the property
            will return the value of that member function.
 
-           See AccessorGetterFunction() for the semantics of the Sig type.
+           See FunctionToAccesorGetter() for the semantics of the Sig type.
 
            If Getter() throws a native exception it is converted to a JS
            exception.
@@ -159,17 +159,17 @@ namespace v8 { namespace convert {
            WEIRD: beware of this odd behaviour:
 
            @code
-           BindGetter<std::string // WEIRD: if i add () or (void) here,
+           BindGetterFunction<std::string // WEIRD: if i add () or (void) here,
                                   // the template doesn't resolve!
                       getSharedString>("sharedString", myProtoType);
            @endcode
 
         */
         template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindGetterFunction( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                    AccessorGetterFunction<Sig,Getter> );
+                                    FunctionToAccesorGetter<Sig,Getter> );
 	}
 
         
@@ -199,7 +199,7 @@ namespace v8 { namespace convert {
 
         */
         template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-        static void AccessorSetterFunction(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void FunctionToAccesorSetter(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             try
             {
@@ -262,8 +262,8 @@ namespace v8 { namespace convert {
             typedef FunctionSignature<SigGet> GFS;
             typedef FunctionSignature<SigSet> SFS;
             prototype->SetAccessor( v8::String::New( propName ),
-                                    AccessorGetterFunction<SigGet,Getter>,
-                                    AccessorSetterFunction<SigSet,Setter> );
+                                    FunctionToAccesorGetter<SigGet,Getter>,
+                                    FunctionToAccesorSetter<SigSet,Setter> );
 	}
        
     };
@@ -320,15 +320,15 @@ namespace v8 { namespace convert {
 
            \code
            myObjectTemplate.SetAccessor("foo",
-           AccessorGetterMember<Foo,std::string,&Foo::str>,
-           AccessorSetterMember<Foo,std::string,&Foo::str> );
+           MemberToAccessorGetter<Foo,std::string,&Foo::str>,
+           MemberToAccessorSetter<Foo,std::string,&Foo::str> );
            \endcode
 
            In 10 years of C++ coding, this is the first time i've ever
            had a use for a pointer-to-member.
         */
         template <typename PropertyType, PropertyType Type::*MemVar>
-        static v8::Handle<v8::Value> AccessorGetterMember(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        static v8::Handle<v8::Value> MemberToAccessorGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -349,7 +349,7 @@ namespace v8 { namespace convert {
         }
 
         /**
-           This is the Setter counterpart of AccessorGetterMember(). See
+           This is the Setter counterpart of MemberToAccessorGetter(). See
            that function for most of the details.
 
            Requirements:
@@ -363,7 +363,7 @@ namespace v8 { namespace convert {
            test, since the native bindings work so well ;).
         */
         template <typename PropertyType, PropertyType Type::*MemVar>
-        static void AccessorSetterMember(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void MemberToAccessorSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( self )
@@ -380,12 +380,12 @@ namespace v8 { namespace convert {
         
         /**
            Binds automatically-generated getter/setter functions to the given
-           member variable. See AccessorGetterMember() and AccessorSetterMember()
+           member variable. See MemberToAccessorGetter() and MemberToAccessorSetter()
            for the requirements of the templatized types.
 
            If you only want to bind one of the getter OR the setter then
-           use the 5-argument variant of Set() instead and pass AccessorGetterMember<>
-           or AccessorGetterMember<>, as appropriate, to that function.
+           use the 5-argument variant of Set() instead and pass MemberToAccessorGetter<>
+           or MemberToAccessorGetter<>, as appropriate, to that function.
         */
         template <typename VarType, VarType Type::*MemVar>
         static void BindMemVar( char const * name,
@@ -397,8 +397,8 @@ namespace v8 { namespace convert {
             if( ! prototype.IsEmpty() )
             {
                 prototype->SetAccessor( v8::String::New(name),
-                                        AccessorGetterMember<VarType,MemVar>,
-                                        AccessorSetterMember<VarType,MemVar>,
+                                        MemberToAccessorGetter<VarType,MemVar>,
+                                        MemberToAccessorSetter<VarType,MemVar>,
                                         v8::Handle< v8::Value >(),
                                         settings,
                                         attribute );
@@ -444,7 +444,7 @@ namespace v8 { namespace convert {
             if( ! prototype.IsEmpty() )
             {
                 prototype->SetAccessor( v8::String::New(name),
-                                        AccessorGetterMember<VarType,MemVar>,
+                                        MemberToAccessorGetter<VarType,MemVar>,
                                         throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
                                         v8::Handle< v8::Value >(),
                                         settings,
@@ -464,7 +464,7 @@ namespace v8 { namespace convert {
            defaults).
         */
         template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> AccessorGetterMethod( Local< String > property, const AccessorInfo & info )
+        static v8::Handle<v8::Value> MethodToAccessorGetter( Local< String > property, const AccessorInfo & info )
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -488,7 +488,7 @@ namespace v8 { namespace convert {
            Overload for const native getter functions.
         */
         template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> AccessorGetterMethod( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> MethodToAccessorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             NativeHandle const self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -526,7 +526,7 @@ namespace v8 { namespace convert {
             translated to JS exceptions.
         */
         template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
-        static void AccessorSetterMethod(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void MethodToAccessorSetter(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self )
@@ -571,8 +571,8 @@ namespace v8 { namespace convert {
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        AccessorGetterMethod<SigGet,Getter>,
-                                        AccessorSetterMethod<SigSet,Setter>
+                                        MethodToAccessorGetter<SigGet,Getter>,
+                                        MethodToAccessorSetter<SigSet,Setter>
                                         );
 	}
 
@@ -589,8 +589,8 @@ namespace v8 { namespace convert {
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        AccessorGetterMethod<SigGet,Getter>,
-                                        AccessorSetterMethod<SigSet,Setter>
+                                        MethodToAccessorGetter<SigGet,Getter>,
+                                        MethodToAccessorSetter<SigSet,Setter>
                                         );
 	}
 
@@ -605,19 +605,19 @@ namespace v8 { namespace convert {
            a non-const T member function matching that signature.
          */
         template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
-        static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindGetterMethod( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                    AccessorGetterMethod<Sig,Getter> );
+                                    MethodToAccessorGetter<Sig,Getter> );
 	}
         /**
            Overload too support const getters.
         */
         template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
-        static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindGetterConstMethod( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                    AccessorGetterMethod<Sig,Getter> );
+                                    MethodToAccessorGetter<Sig,Getter> );
 	}
 
     };

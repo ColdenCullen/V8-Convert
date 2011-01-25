@@ -158,21 +158,24 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
      typedef cv::MemberPropertyBinder<BoundNative> PB;
      PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
      PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
-     PB::BindStaticVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
-     PB::BindStaticVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
-     PB::BindStaticVar<std::string,&sharedString>("staticString", proto );
-     PB::BindStaticVarRO<std::string,&sharedString>("staticStringRO", proto, true );     
+     PB::BindSharedVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
+     PB::BindSharedVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
+     PB::BindSharedVar<std::string,&sharedString>("staticString", proto );
+     PB::BindSharedVarRO<std::string,&sharedString>("staticStringRO", proto, true );     
 #if 0
-     PB::BindGetter<std::string /* WEIRD: if i add () or (void) here, the template doesn't resolve! */,
-         getSharedString>("sharedString2", proto);
+     PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
 #else
-     PB::BindGetterSetterFunctions<std::string () /*WEIRDER: () works fine here!*/,
+     PB::BindGetterSetterFunctions<std::string (),
          getSharedString,
          void (std::string const &),
          setSharedString>("sharedString2", proto);
 #endif
-    PB::BindGetterSetterMethods<int (), &BoundNative::getInt, void (int), &BoundNative::setInt >("theInt", proto);
-    PB::BindGetterSetterMethods<int (), &BoundNative::getIntNonConst, void (int), &BoundNative::setInt >("theIntNC", proto);
+    PB::BindGetterSetterMethods<int (), &BoundNative::getInt,
+                                void (int), &BoundNative::setInt
+                                >("theInt", proto);
+    PB::BindGetterSetterMethods<int (), &BoundNative::getIntNonConst,
+                                void (int), &BoundNative::setInt
+                                >("theIntNC", proto);
 
     ////////////////////////////////////////////////////////////
     // Add class to the destination object...
