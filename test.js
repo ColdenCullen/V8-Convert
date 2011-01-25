@@ -77,8 +77,11 @@ function test1()
     asserteq(42, f.answer);
     assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
 
+    asserteq( f.theInt, f.theIntNC );
+    asserteq( ++f.theInt, f.theIntNC );
+    asserteq( f.theInt, f.theIntNC );
+    
     assert( f.destroy(), 'f.destroy() seems to work');
-
     ex = undefined;
     try{f.doFoo();}
     catch(e){ex = e;}

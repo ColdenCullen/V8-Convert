@@ -175,6 +175,47 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
     }
 };
 
+namespace Detail
+{
+    /** Base type for SignatureArgAt specializations. */
+    template <typename Signature, int Pos>
+    struct SignatureArgAt_Base
+    {
+    private:
+        typedef char AssertPosition[tmp::Assertion<(Pos>=0) && (Pos< Signature::Arity)>::Value ? 1 : -1 ];
+    public:
+        typedef Signature SignatureType;
+        typedef typename Signature::FunctionType FunctionType;
+        enum { N = Pos };
+    };
+}
+
+/**
+   Metatemplate to get the type of the function argument at the given
+   (0-based) position. Signature must be one of FunctionSignature,
+   MethodSignature, or ConstMethodSignature (or
+   compatible). Specializations of this type will have the following
+   members:
+
+   typedef Signature::ArgTypeAtGivenPos Type;
+
+   typedef Signature::FunctionType FunctionType;
+
+   (const) numeric_type N = Pos;
+*/
+template <typename Signature, unsigned int Pos>
+struct SignatureArgAt;
+
+#define ARGAT(N) template <typename Signature> struct SignatureArgAt<Signature,N> : \
+    Detail::SignatureArgAt_Base<Signature,N> { typedef typename Signature::ArgType##N Type; }
+ARGAT(0); ARGAT(1);
+ARGAT(2); ARGAT(3);
+ARGAT(4); ARGAT(5);
+ARGAT(6); ARGAT(7);
+ARGAT(8); ARGAT(9);
+ARGAT(10); ARGAT(11);
+#undef ARGAT
+
 #include "signature_generated.hpp"
 }} // namespaces
 

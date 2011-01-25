@@ -140,7 +140,20 @@ public:
     */
     static v8::Handle<v8::Value> bindJSClass( v8::Handle<v8::Object> dest );
 
-   
+    int getInt() const
+    {
+        return this->publicInt;
+    }
+    int getIntNonConst()
+    {
+        return this->publicInt;
+    }
+
+    void setInt(int v)
+    {
+        this->publicInt = v;
+    }
+
 };
 
 /**

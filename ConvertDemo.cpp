@@ -166,11 +166,14 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
      PB::BindGetter<std::string /* WEIRD: if i add () or (void) here, the template doesn't resolve! */,
          getSharedString>("sharedString2", proto);
 #else
-     PB::BindGetterSetter<std::string () /*WEIRDER: () works fine here!*/,
-                          getSharedString,
-                          void (std::string const &),
-                          setSharedString>("sharedString2", proto);
+     PB::BindGetterSetterFunctions<std::string () /*WEIRDER: () works fine here!*/,
+         getSharedString,
+         void (std::string const &),
+         setSharedString>("sharedString2", proto);
 #endif
+    PB::BindGetterSetterMethods<int (), &BoundNative::getInt, void (int), &BoundNative::setInt >("theInt", proto);
+    PB::BindGetterSetterMethods<int (), &BoundNative::getIntNonConst, void (int), &BoundNative::setInt >("theIntNC", proto);
+
     ////////////////////////////////////////////////////////////
     // Add class to the destination object...
     //dest->Set( JSTR("BoundNative"), cc.CtorFunction() );

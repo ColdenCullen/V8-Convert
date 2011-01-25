@@ -7,10 +7,15 @@ namespace v8 { namespace convert {
 
     /**
        This class contains static methods which can be used to bind
-       global/static/shared native variables to JS space.
+       global/class-static/shared native variables to JS space.
 
-       TODO: add getter/setter support which use non-member functions
-       to get/set the values.
+       Note that it cannot bind file- or function-scope static
+       variables because C++ does not allow pointers to them to be
+       used as template parameters (for linking reasons).
+
+       For binding member functions to accessors, see the
+       MemberPropertyBinder class (which subclasses this one, for
+       usage convenience).
     */
     class PropertyBinder
     {
@@ -239,7 +244,7 @@ namespace v8 { namespace convert {
            std::string getSharedString();
            void setSharedString(std::string const &);
            ...
-           PropertyBinder::BindGetterSetter<std::string (),
+           PropertyBinder::BindGetterSetterFunctions<std::string (),
                                             getSharedString,
                                             void (std::string const &),
                                             setSharedString>
@@ -251,7 +256,7 @@ namespace v8 { namespace convert {
                   typename SigSet,
                   typename FunctionSignature<SigSet>::FunctionType Setter
             >
-        static void BindGetterSetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindGetterSetterFunctions( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
             if( ! prototype.IsEmpty() )
             typedef FunctionSignature<SigGet> GFS;
@@ -452,9 +457,13 @@ namespace v8 { namespace convert {
            can be used as the getter parameter to
            v8::ObjectTemplate::SetAccessor().
 
-           RV must be a non-void type convertible to v8 via castToJS().
+           Sig must be a function-pointer-style argument with a
+           non-void return type convertible to v8 via CastToJS(), and
+           Getter must be function capable of being called with 0
+           arguments (either because it has none or they have
+           defaults).
         */
-	template <typename RV, RV (Type::*Func)()>
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
         static v8::Handle<v8::Value> MemberGetterFunc( Local< String > property, const AccessorInfo & info )
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
@@ -462,7 +471,7 @@ namespace v8 { namespace convert {
                                                     << property << "' could not access native This object!" );
             try
             {
-                return convert::CastToJS( (self->*Func)() );
+                return convert::CastToJS( (self->*Getter)() );
             }
             catch( std::exception const & ex )
             {
@@ -470,85 +479,71 @@ namespace v8 { namespace convert {
             }
             catch( ... )
             {
-                ::v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                      << property << "' threw an unknown native exception type!");
+                return ::v8::ThrowException( StringBuffer() << "Native member property getter '"
+                                             << property << "' threw an unknown native exception type!");
             }
         }
 
         /**
            Overload for const native getter functions.
         */
-	template <typename RV, RV (Type::*Func)() const>
-        static v8::Handle<v8::Value> MemberGetterFunc( Local< String > property, const AccessorInfo & info )
+        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
+        static v8::Handle<v8::Value> MemberGetterFunc( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             NativeHandle const self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
                                                     << property << "' could not access native This object!" );
             try
             {
-                return convert::CastToJS( (self->*Func)() );
+                return convert::CastToJS( (self->*Getter)() );
             }
             catch( std::exception const & ex )
             {
-                return ::v8::ThrowException( ::v8::String::New(ex.what()) );
+                return CastToJS(ex);
             }
             catch( ... )
             {
-                ::v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                      << property << "' threw an unknown native exception type!");
+                return ::v8::ThrowException( StringBuffer() << "Native member property getter '"
+                                             << property << "' threw an unknown native exception type!");
             }
         }
 
-        /** Overload which takes a free function as the getter. */
-	template <typename RV, RV (*Func)()>
-        static v8::Handle<v8::Value> MemberGetterFunc( Local< String > property, const AccessorInfo & info )
-        {
-            NativeHandle self = CastFromJS<NativeHandle>( info.This() );
-            if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                                    << property << "' could not access native This object!" );
-            try
-            {
-                return convert::CastToJS( Func() );
-            }
-            catch( std::exception const & ex )
-            {
-                return ::v8::ThrowException( ::v8::String::New(ex.what()) );
-            }
-            catch( ... )
-            {
-                return ::v8::ThrowException(::v8::String::New("Native property getter function threw an unknown native exception type!"));
-            }
-        }
-
-
-#if 0 // TODO port this to v8::convert's conventions (the tmpl args should use function-ptr-style templates)
         /**
             Implements v8::AccessorSetter interface to proxy a JS
             member property through a native member setter function.
 
-            The RV parameter is ignored by the conversion, and does
-            not invoke a conversion operation.
+            This function can be used as the setter parameter to
+            v8::ObjectTemplate::SetAccessor().
 
-             This function can be used as the setter parameter to
-             v8::ObjectTemplate::SetAccessor().
+            Sig must be a function-pointer-style type and Getter must
+            be a T member function of that type. The function must be
+            capable of being called with only 1 argument (either
+            because it only accepts 1 or has defaults for the others),
+            and its return value is discarded (not converted to v8)
+            because that's how v8's native setters work.
+
+            Exceptions thrown by the underlying function are
+            translated to JS exceptions.
         */
-        template <typename RV, typename ArgT, RV (Type::*Func)(ArgT)>
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
         static void MemberSetterFunc(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self )
             {
                 v8::ThrowException( StringBuffer() << "Native member property setter '"
-                                    << property << "' could not access native This object!" ) );
+                                    << property << "' could not access native This object!" );
                 return;
             }
             else try
-            { 
-                (self->*Func)( CastFromJS<ArgT>( value ) );
+            {
+
+                typedef typename SignatureArgAt< MethodSignature<T,Sig> ,0>::Type ArgT;
+                (self->*Setter)( CastFromJS<ArgT>( value ) );
             }
             catch( std::exception const & ex )
             {
-                ::v8::ThrowException( ::v8::String::New(ex.what()) );
+                CastToJS(ex);
             }
             catch( ... )
             {
@@ -562,85 +557,69 @@ namespace v8 { namespace convert {
            Binds the given JS property to a pair of T member
            functions, such that these functions will be called in
            place of get/set operations for the property.
-           
-           The native member functions must follow conventional
-           accessor signatures:
 
-           - Getter: T1 getter() [const]
-           - Setter: [AnyType] setter( T2 )
-
-           For the setter, T1 may differ from T2. T1 may be void but
-           T2 may not be. Any return value from the setter is ignored
-           by the JS engine.
-
-           For the getter, an overload of this function is provided which
-           supports a non-const getter.
-         */
-        template <typename RV,
-                  RV (Type::*Getter)(),
-                  typename SetRV,
-                  typename ArgV,
-                  SetRV (Type::*Setter)(ArgV)
+           See the inherited BindGetterSetterFunctions() for the full
+           details. This function is identical except that it maps
+           member functions.
+        */
+        template <typename SigGet,
+                  typename ConstMethodSignature<T,SigGet>::FunctionType Getter,
+                  typename SigSet,
+                  typename MethodSignature<T,SigSet>::FunctionType Setter
             >
-        static void BindGetterSetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindGetterSetterMethods( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        MemberGetterFunc<RV,Getter>,
-                                        MemberSetterFunc<SetRV,ArgV,Setter>
+                                        MemberGetterFunc<SigGet,Getter>,
+                                        MemberSetterFunc<SigSet,Setter>
                                         );
 	}
 
         /**
-           Overload to allow a const getter function. Member setter functions
-           are not, by nature, const.
-         */
-        template <typename RV,
-                  RV (Type::*Getter)() const,
-                  typename SetRV,
-                  typename ArgV,
-                  SetRV (Type::*Setter)(ArgV)
+           Overload which accepts a non-const getter. Member setter
+           functions are not, by nature, const.
+        */
+        template <typename SigGet,
+                  typename MethodSignature<T,SigGet>::FunctionType Getter,
+                  typename SigSet,
+                  typename MethodSignature<T,SigSet>::FunctionType Setter
             >
-        static void BindGetterSetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindGetterSetterMethods( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        MemberGetterFunc<RV,Getter>,
-                                        MemberSetterFunc<SetRV,ArgV,Setter>
+                                        MemberGetterFunc<SigGet,Getter>,
+                                        MemberSetterFunc<SigSet,Setter>
                                         );
 	}
-#endif
+
+        
+
         /**
            Binds the templatized getter function to the given JS property of the
            given prototype object, such that JS-side read access to the property
            will return the value of that member function.
+
+           Sig must be a function-pointer-style function signature and Getter must be
+           a non-const T member function matching that signature.
          */
-        template <typename RV, RV (Type::*Getter)()>
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
         static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                   MemberGetterFunc<RV,Getter> );
+                                    MemberGetterFunc<Sig,Getter> );
 	}
-
         /**
            Overload too support const getters.
         */
-        template <typename RV, RV (Type::*Getter)() const>
+        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
         static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                   MemberGetterFunc<RV,Getter> );
+                                    MemberGetterFunc<Sig,Getter> );
 	}
 
-        /**
-           Overload too support free-function getters.
-        */
-        template <typename RV, RV (*Getter)()>
-        static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-	    prototype->SetAccessor( v8::String::New( propName ),
-                                    MemberGetterFunc<RV,Getter> );
-	}
     };
 
 }} // namespaces
