@@ -97,13 +97,14 @@ function test2()
     print('s='+s);
     assert( /BoundSubNative/.exec(s.toString()), 'toString() seems to work: '+s);
 
-    assert(s.destroy(), 's.destroy()');
-
     // DO NOT TRY THIS AT HOME, kids: i'm testing weird stuff here...
     var f = new BoundNative();
     s.toString = f.toString;
     //print('f='+f);
     print('s='+s);
+
+
+    asserteq(true, s.destroy(), 's.destroy()');
 }
 
 function test3()
