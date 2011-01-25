@@ -31,12 +31,12 @@ namespace v8 { namespace convert {
            CastToJS<PropertyType>() must be legal.
         */
         template <typename PropertyType, PropertyType const * SharedVar>
-        static v8::Handle<v8::Value> StaticVarGetter(v8::Local<v8::String> property, const AccessorInfo &info)
+        static v8::Handle<v8::Value> AccessorGetterStaticVar(v8::Local<v8::String> property, const AccessorInfo &info)
         {
             return CastToJS<PropertyType>( *SharedVar );
         }
         /**
-           The setter counterpart of StaticVarGetter().
+           The setter counterpart of AccessorGetterStaticVar().
 
            SharedVar must be pointer to a static variable and must not
            be 0.
@@ -44,7 +44,7 @@ namespace v8 { namespace convert {
            CastFromJS<PropertyType> must be legal.
         */
         template <typename PropertyType, PropertyType * SharedVar>
-        static void StaticVarSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void AccessorSetterStaticVar(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             *SharedVar = CastFromJS<PropertyType>( value );
         }
@@ -52,8 +52,8 @@ namespace v8 { namespace convert {
         /**
            Binds the given static variable to a JS property, such that
            get/set access will go through
-           StaticVarGetter<VarType,SharedVar> and
-           StaticVarSetter<VarType,SharedVar>.
+           AccessorGetterStaticVar<VarType,SharedVar> and
+           AccessorSetterStaticVar<VarType,SharedVar>.
         */
         template <typename VarType, VarType * SharedVar>
         static void BindStaticVar( char const * name,
@@ -65,8 +65,8 @@ namespace v8 { namespace convert {
             if( ! prototype.IsEmpty() )
             {
                 prototype->SetAccessor( v8::String::New(name),
-                                        StaticVarGetter<VarType,SharedVar>,
-                                        StaticVarSetter<VarType,SharedVar>,
+                                        AccessorGetterStaticVar<VarType,SharedVar>,
+                                        AccessorSetterStaticVar<VarType,SharedVar>,
                                         v8::Handle< v8::Value >(),
                                         settings,
                                         attribute );
@@ -88,7 +88,7 @@ namespace v8 { namespace convert {
         /**
            Binds the given static variable to a JS property, such that
            read access will go through
-           StaticVarGetter<VarType,SharedVar> and set access will be
+           AccessorGetterStaticVar<VarType,SharedVar> and set access will be
            ignored (it will not change SharedVar).
 
            The throwOnSet parameter installs a custom setter which,
@@ -107,7 +107,7 @@ namespace v8 { namespace convert {
             if( ! prototype.IsEmpty() )
             {
                 prototype->SetAccessor( v8::String::New(name),
-                                        StaticVarGetter<VarType,SharedVar>,
+                                        AccessorGetterStaticVar<VarType,SharedVar>,
                                         throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
                                         v8::Handle< v8::Value >(),
                                         v8::PROHIBITS_OVERWRITING,
@@ -129,7 +129,7 @@ namespace v8 { namespace convert {
            exception.
         */
         template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> GetterFunc( Local< String > property, const AccessorInfo & info )
+        static v8::Handle<v8::Value> AccessorGetterFunction( Local< String > property, const AccessorInfo & info )
         {
             try
             {
@@ -151,7 +151,7 @@ namespace v8 { namespace convert {
            given prototype object, such that JS-side read access to the property
            will return the value of that member function.
 
-           See GetterFunc() for the semantics of the Sig type.
+           See AccessorGetterFunction() for the semantics of the Sig type.
 
            If Getter() throws a native exception it is converted to a JS
            exception.
@@ -169,7 +169,7 @@ namespace v8 { namespace convert {
         static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                    GetterFunc<Sig,Getter> );
+                                    AccessorGetterFunction<Sig,Getter> );
 	}
 
         
@@ -199,7 +199,7 @@ namespace v8 { namespace convert {
 
         */
         template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-        static void SetterFunc(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void AccessorSetterFunction(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             try
             {
@@ -262,8 +262,8 @@ namespace v8 { namespace convert {
             typedef FunctionSignature<SigGet> GFS;
             typedef FunctionSignature<SigSet> SFS;
             prototype->SetAccessor( v8::String::New( propName ),
-                                    GetterFunc<SigGet,Getter>,
-                                    SetterFunc<SigSet,Setter> );
+                                    AccessorGetterFunction<SigGet,Getter>,
+                                    AccessorSetterFunction<SigSet,Setter> );
 	}
        
     };
@@ -320,15 +320,15 @@ namespace v8 { namespace convert {
 
            \code
            myObjectTemplate.SetAccessor("foo",
-           MemVarGetter<Foo,std::string,&Foo::str>,
-           MemVarSetter<Foo,std::string,&Foo::str> );
+           AccessorGetterMember<Foo,std::string,&Foo::str>,
+           AccessorSetterMember<Foo,std::string,&Foo::str> );
            \endcode
 
            In 10 years of C++ coding, this is the first time i've ever
            had a use for a pointer-to-member.
         */
         template <typename PropertyType, PropertyType Type::*MemVar>
-        static v8::Handle<v8::Value> MemVarGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        static v8::Handle<v8::Value> AccessorGetterMember(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -349,7 +349,7 @@ namespace v8 { namespace convert {
         }
 
         /**
-           This is the Setter counterpart of MemVarGetter(). See
+           This is the Setter counterpart of AccessorGetterMember(). See
            that function for most of the details.
 
            Requirements:
@@ -363,7 +363,7 @@ namespace v8 { namespace convert {
            test, since the native bindings work so well ;).
         */
         template <typename PropertyType, PropertyType Type::*MemVar>
-        static void MemVarSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void AccessorSetterMember(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( self )
@@ -380,12 +380,12 @@ namespace v8 { namespace convert {
         
         /**
            Binds automatically-generated getter/setter functions to the given
-           member variable. See MemVarGetter() and MemVarSetter()
+           member variable. See AccessorGetterMember() and AccessorSetterMember()
            for the requirements of the templatized types.
 
            If you only want to bind one of the getter OR the setter then
-           use the 5-argument variant of Set() instead and pass MemVarGetter
-           or MemVarGetter, as appropriate, to that function.
+           use the 5-argument variant of Set() instead and pass AccessorGetterMember<>
+           or AccessorGetterMember<>, as appropriate, to that function.
         */
         template <typename VarType, VarType Type::*MemVar>
         static void BindMemVar( char const * name,
@@ -397,8 +397,8 @@ namespace v8 { namespace convert {
             if( ! prototype.IsEmpty() )
             {
                 prototype->SetAccessor( v8::String::New(name),
-                                        MemVarGetter<VarType,MemVar>,
-                                        MemVarSetter<VarType,MemVar>,
+                                        AccessorGetterMember<VarType,MemVar>,
+                                        AccessorSetterMember<VarType,MemVar>,
                                         v8::Handle< v8::Value >(),
                                         settings,
                                         attribute );
@@ -444,7 +444,7 @@ namespace v8 { namespace convert {
             if( ! prototype.IsEmpty() )
             {
                 prototype->SetAccessor( v8::String::New(name),
-                                        MemVarGetter<VarType,MemVar>,
+                                        AccessorGetterMember<VarType,MemVar>,
                                         throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
                                         v8::Handle< v8::Value >(),
                                         settings,
@@ -464,7 +464,7 @@ namespace v8 { namespace convert {
            defaults).
         */
         template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> MemberGetterFunc( Local< String > property, const AccessorInfo & info )
+        static v8::Handle<v8::Value> AccessorGetterMethod( Local< String > property, const AccessorInfo & info )
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -488,7 +488,7 @@ namespace v8 { namespace convert {
            Overload for const native getter functions.
         */
         template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> MemberGetterFunc( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> AccessorGetterMethod( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             NativeHandle const self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -526,7 +526,7 @@ namespace v8 { namespace convert {
             translated to JS exceptions.
         */
         template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
-        static void MemberSetterFunc(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void AccessorSetterMethod(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self )
@@ -571,8 +571,8 @@ namespace v8 { namespace convert {
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        MemberGetterFunc<SigGet,Getter>,
-                                        MemberSetterFunc<SigSet,Setter>
+                                        AccessorGetterMethod<SigGet,Getter>,
+                                        AccessorSetterMethod<SigSet,Setter>
                                         );
 	}
 
@@ -589,8 +589,8 @@ namespace v8 { namespace convert {
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        MemberGetterFunc<SigGet,Getter>,
-                                        MemberSetterFunc<SigSet,Setter>
+                                        AccessorGetterMethod<SigGet,Getter>,
+                                        AccessorSetterMethod<SigSet,Setter>
                                         );
 	}
 
@@ -608,7 +608,7 @@ namespace v8 { namespace convert {
         static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                    MemberGetterFunc<Sig,Getter> );
+                                    AccessorGetterMethod<Sig,Getter> );
 	}
         /**
            Overload too support const getters.
@@ -617,7 +617,7 @@ namespace v8 { namespace convert {
         static void BindGetter( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
 	    prototype->SetAccessor( v8::String::New( propName ),
-                                    MemberGetterFunc<Sig,Getter> );
+                                    AccessorGetterMethod<Sig,Getter> );
 	}
 
     };
