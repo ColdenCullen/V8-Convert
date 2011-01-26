@@ -116,8 +116,7 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
     }
 
     ////////////////////////////////////////////////////////////
-    // Bind members...
-
+    // Bind some member functions and properties...
     cc("cputs",
        cv::FunctionToInvocationCallback<int (char const *),::puts>)
         ("doFoo",
@@ -141,6 +140,7 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
         ("answer", 42)
         ;
 
+    ////////////////////////////////////////////////////////////////////////
     // We can of course bind them directly to the prototype, instead
     // of via the cc object:
      Handle<ObjectTemplate> const & proto( cc.Prototype() );
@@ -154,7 +154,8 @@ v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
                 cv::CastToJS(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
                 );
 
-     // Bind some properties:
+     ////////////////////////////////////////////////////////////////////////
+     // Bind some JS properties to native properties:
      typedef cv::MemberPropertyBinder<BoundNative> PB;
      PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
      PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
