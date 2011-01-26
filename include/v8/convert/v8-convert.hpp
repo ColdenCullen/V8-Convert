@@ -1,7 +1,7 @@
-#if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_HPP_INCLUDED)
-#define CODE_GOOGLE_COM_P_V8_CONVERT_HPP_INCLUDED 1
+#if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED)
+#define CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED 1
 
-/** @page page_v8_convert v8::convert API
+/** @mainpage v8::convert API
 
 The v8::convert namespace houses APIs for handling the following
 
@@ -80,4 +80,4 @@ conventions.
 #include "invocable.hpp"
 #include "ClassCreator.hpp"
 
-#endif /* CODE_GOOGLE_COM_P_V8_CONVERT_HPP_INCLUDED */
+#endif /* CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED */
