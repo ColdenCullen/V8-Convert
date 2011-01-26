@@ -1,4 +1,5 @@
 /* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */
+#if !defined(DOXYGEN)
 template <typename RV,  typename A0 >
 struct FunctionSignature< RV ( A0) > : SignatureBase< RV, 1 >
 {
@@ -524,3 +525,4 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
 {};
 
+#endif // if !defined(DOXYGEN)

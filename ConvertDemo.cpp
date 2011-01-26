@@ -100,108 +100,118 @@ void setSharedString(std::string const &s)
     sharedString = s;
 }
 
+namespace v8 { namespace convert {
+
+    template <>
+    struct ClassCreator_Init<BoundNative>
+    {
+        static void InitBindings( v8::Handle<v8::Object> & dest )
+        {
+            using namespace v8;
+
+            ////////////////////////////////////////////////////////////
+            // Bootstrap class-wrapping code...
+            typedef cv::ClassCreator<BoundNative> CC;
+            CC & cc( CC::Instance() );
+            if( cc.IsSealed() )
+            {
+                cc.AddClassTo( "BoundNative", dest );
+                bind_BoundSubNative(dest);
+                return;
+            }
+
+            ////////////////////////////////////////////////////////////
+            // Bind some member functions and properties...
+            cc("cputs",
+               cv::FunctionToInvocationCallback<int (char const *),::puts>)
+                ("doFoo",
+                 cv::MethodToInvocationCallback<BoundNative,void (void),&BoundNative::doFoo>)
+                ("doFoo2",
+                 cv::MethodToInvocationCallback<BoundNative,double (int,double),&BoundNative::doFoo2>)
+                ("toString",
+                 cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &),BoundNative_toString>)
+                ("puts",
+                 cv::ConstMethodToInvocationCallback<BoundNative,void (char const *),&BoundNative::puts>)
+                ("doFooConst",
+                 cv::ConstMethodToInvocationCallback<BoundNative,void (),&BoundNative::doFooConst>)
+                ("invoInt",
+                 cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
+                ("nativeParam",
+                 cv::MethodToInvocationCallback<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
+                ("cstr",
+                 cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
+                ("destroy", CC::DestroyObject )
+                ("message", "hi, world")
+                ("answer", 42)
+                ;
+
+            ////////////////////////////////////////////////////////////////////////
+            // We can of course bind them directly to the prototype, instead
+            // of via the cc object:
+            Handle<ObjectTemplate> const & proto( cc.Prototype() );
+            proto->Set(JSTR("bogo"),
+                       cv::CastToJS(cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &), bogo_callback>)
+                       );
+            proto->Set(JSTR("bogo2"),
+                       cv::CastToJS(cv::FunctionToInvocationCallback<int (v8::Arguments const &),bogo_callback2>)
+                       );
+            proto->Set(JSTR("runGC"),
+                       cv::CastToJS(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+                       );
+
+            ////////////////////////////////////////////////////////////////////////
+            // Bind some JS properties to native properties:
+            typedef cv::MemberPropertyBinder<BoundNative> PB;
+            PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
+            PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
+            PB::BindSharedVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
+            PB::BindSharedVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
+            PB::BindSharedVar<std::string,&sharedString>("staticString", proto );
+            PB::BindSharedVarRO<std::string,&sharedString>("staticStringRO", proto, true );     
+#if 0
+            PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
+#else
+            PB::BindGetterSetterFunctions<std::string (),
+                getSharedString,
+                void (std::string const &),
+                setSharedString>("sharedString2", proto);
+#endif
+            PB::BindGetterSetterMethods<int (), &BoundNative::getInt,
+                void (int), &BoundNative::setInt
+                >("theInt", proto);
+            PB::BindGetterSetterMethods<int (), &BoundNative::getIntNonConst,
+                void (int), &BoundNative::setInt
+                >("theIntNC", proto);
+
+            ////////////////////////////////////////////////////////////
+            // Add class to the destination object...
+            //dest->Set( JSTR("BoundNative"), cc.CtorFunction() );
+            cc.AddClassTo( "BoundNative", dest );
+
+            CERR << "Added BoundNative to JS.\n";
+            if(1)
+            { // sanity checking. This code should crash if the basic stuff is horribly wrong
+                Handle<Value> vinst = cc.NewInstance(0,NULL);
+                BoundNative * native = cv::CastFromJS<BoundNative>(vinst);
+                assert( 0 != native );
+                CERR << "Instantiated native BoundNative@"<<(void const *)native
+                     << " via JS.\n";
+                CC::DestroyObject( vinst );
+            }
+            bind_BoundSubNative(dest);
+            CERR << "Finished binding BoundNative.\n";
+        }
+    };
+} }
+
 v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
 {
-    using namespace v8;
-
-    ////////////////////////////////////////////////////////////
-    // Bootstrap class-wrapping code...
-    typedef cv::ClassCreator<BoundNative> CC;
-    CC & cc( CC::Instance() );
-    if( cc.IsSealed() )
-    {
-        cc.AddClassTo( "BoundNative", dest );
-        bind_BoundSubNative(dest);
-        return cc.CtorFunction();
-    }
-
-    ////////////////////////////////////////////////////////////
-    // Bind some member functions and properties...
-    cc("cputs",
-       cv::FunctionToInvocationCallback<int (char const *),::puts>)
-        ("doFoo",
-         cv::MethodToInvocationCallback<BoundNative,void (void),&BoundNative::doFoo>)
-        ("doFoo2",
-         cv::MethodToInvocationCallback<BoundNative,double (int,double),&BoundNative::doFoo2>)
-        ("toString",
-         cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &),BoundNative_toString>)
-        ("puts",
-          cv::ConstMethodToInvocationCallback<BoundNative,void (char const *),&BoundNative::puts>)
-        ("doFooConst",
-          cv::ConstMethodToInvocationCallback<BoundNative,void (),&BoundNative::doFooConst>)
-        ("invoInt",
-         cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
-        ("nativeParam",
-         cv::MethodToInvocationCallback<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
-        ("cstr",
-         cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
-        ("destroy", CC::DestroyObject )
-        ("message", "hi, world")
-        ("answer", 42)
-        ;
-
-    ////////////////////////////////////////////////////////////////////////
-    // We can of course bind them directly to the prototype, instead
-    // of via the cc object:
-     Handle<ObjectTemplate> const & proto( cc.Prototype() );
-     proto->Set(JSTR("bogo"),
-                cv::CastToJS(cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &), bogo_callback>)
-                );
-     proto->Set(JSTR("bogo2"),
-                cv::CastToJS(cv::FunctionToInvocationCallback<int (v8::Arguments const &),bogo_callback2>)
-                );
-     proto->Set(JSTR("runGC"),
-                cv::CastToJS(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
-                );
-
-     ////////////////////////////////////////////////////////////////////////
-     // Bind some JS properties to native properties:
-     typedef cv::MemberPropertyBinder<BoundNative> PB;
-     PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
-     PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
-     PB::BindSharedVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
-     PB::BindSharedVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
-     PB::BindSharedVar<std::string,&sharedString>("staticString", proto );
-     PB::BindSharedVarRO<std::string,&sharedString>("staticStringRO", proto, true );     
-#if 0
-     PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
-#else
-     PB::BindGetterSetterFunctions<std::string (),
-         getSharedString,
-         void (std::string const &),
-         setSharedString>("sharedString2", proto);
-#endif
-    PB::BindGetterSetterMethods<int (), &BoundNative::getInt,
-                                void (int), &BoundNative::setInt
-                                >("theInt", proto);
-    PB::BindGetterSetterMethods<int (), &BoundNative::getIntNonConst,
-                                void (int), &BoundNative::setInt
-                                >("theIntNC", proto);
-
-    ////////////////////////////////////////////////////////////
-    // Add class to the destination object...
-    //dest->Set( JSTR("BoundNative"), cc.CtorFunction() );
-    cc.AddClassTo( "BoundNative", dest );
-
-    CERR << "Added BoundNative to JS.\n";
-    if(1)
-    { // sanity checking. This code should crash if the basic stuff is horribly wrong
-        Handle<Value> vinst = cc.NewInstance(0,NULL);
-        BoundNative * native = cv::CastFromJS<BoundNative>(vinst);
-        assert( 0 != native );
-        CERR << "Instantiated native BoundNative@"<<(void const *)native
-             << " via JS.\n";
-        CC::DestroyObject( vinst );
-    }
-    bind_BoundSubNative(dest);
-    CERR << "Finished binding BoundNative.\n";
-    return dest;
+    return cv::ClassCreator<BoundNative>::Instance().InitBindings(dest);
 }
 
 v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 {
     using namespace v8;
-    typedef cv::ClassCreator<BoundNative> CCFoo;
     typedef cv::ClassCreator<BoundSubNative> CC;
     CC & cc( CC::Instance() );
     if( cc.IsSealed() )
@@ -217,7 +227,7 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
          cv::ConstMethodToInvocationCallback<BoundSubNative,ValueHandle (),&BoundSubNative::toString>)
         ;
 
-    //Handle<ObjectTemplate> const & proto( cc.Prototype() );
+    typedef cv::ClassCreator<BoundNative> CCFoo;
     cc.CtorTemplate()->Inherit( CCFoo::Instance().CtorTemplate() );
     
     cc.AddClassTo("BoundSubNative",dest);
@@ -225,16 +235,3 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 }
 #undef JSTR
 
-
-#if 0
-#include <v8/juice/juice.h>
-#include <v8/juice/plugin.h>
-static v8::Handle<v8::Value> plugin_init( v8::Handle<v8::Object> dest )
-{
-    CERR << "PLUGGING IN!\n";
-    return BoundNative::bindJSClass( dest );
-}
-
-
-V8_JUICE_PLUGIN_STATIC_INIT(plugin_init);
-#endif

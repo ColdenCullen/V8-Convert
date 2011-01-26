@@ -1,4 +1,5 @@
 /* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */
+#if !defined(DOXYGEN)
 template <typename RV,  typename A0 >
 struct SignatureBase< RV ( A0), 1 > : SignatureBase< RV, 1 >
 {
@@ -2944,3 +2945,4 @@ namespace Detail {
         }
     };
 }
+#endif // if !defined(DOXYGEN)

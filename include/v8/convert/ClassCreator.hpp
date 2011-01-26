@@ -4,13 +4,6 @@
 #include <cassert>
 #include "convert.hpp"
 
-#if 0
-#ifndef CERR
-#  include <iostream>
-#  define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
-#endif
-#endif
-
 namespace v8 { namespace convert {
 
     /**
@@ -88,9 +81,49 @@ namespace v8 { namespace convert {
     struct ClassCreator_AllowCtorWithoutNew : Opt_Bool<false>
     {};
 
+    /**
+       ClassCreator policy which determines whether lookups for native
+       types in JS objects should walk through the prototype
+       chain. This can decrease the speed of JS-to-this operations and
+       is necessary only if bound types will be subclassed (either from
+       other bound native types or from JS classes).
+    */
     template <typename T>
     struct ClassCreator_SearchPrototypeForThis : Opt_Bool<true>
     {};
+
+
+    /**
+       This policy is used by ClassCreator<T>::InitBindings()
+       to "plug in" native bindings. This policy is only required
+       if ClassCreator<T>::InitBindings() is used by the client,
+       and the intention is to provide a single interface which
+       clients of the T bindings can add the support to their
+       JS engine.
+    */
+    template <typename T>
+    struct ClassCreator_Init
+    {
+        /**
+           Implementations must do something like this following:
+
+           @code
+           typedef ClassCreator<T> CC;
+           CC & cc( CC::Instance() );
+           if( cc.IsSealed() )
+           {
+              // assume primary bindings are already done, and add
+              // the class to the new target:
+              cc.AddClassTo( "BoundNative", target );
+              return;
+           }
+           ... initialize the class bindings. End with:
+           cc.AddClassTo( "BoundNative", dest );
+           // or the logical equivalent for your plugin case.
+           @endcode
+        */
+        static void InitBindings( v8::Handle<v8::Object> target );
+    };
 
     
     /**
@@ -660,6 +693,34 @@ namespace v8 { namespace convert {
             return convert::CastToJS( DestroyObject(argv.This()) );
 	}
 
+        /**
+           Class ClassCreator_Init<T>::Setup(dest) to initialize the
+           class bindings for the native class. If that function
+           throws then the exception is converted to a JS exception,
+           otherwise success is assumed and dest is returned. We do
+           not return the new class' constructor because the bindings
+           may actually set up things other than the actual class, and
+           that return value wouldn't give access to them to the
+           caller.
+        */
+        v8::Handle<v8::Value> InitBindings( v8::Handle<v8::Object> & dest )
+        {
+            try
+            {
+                typedef ClassCreator_Init<T> S;
+                S::InitBindings( dest );
+                return dest;
+            }
+            catch(std::exception const & ex)
+            {
+                return CastToJS(ex);
+            }
+            catch(...)
+            {
+                return v8::ThrowException(v8::String::New("Native class bindings threw an unspecified exception during setup."));
+            }
+        }
+        
     };
 
     /**

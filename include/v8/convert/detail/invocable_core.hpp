@@ -54,25 +54,25 @@ struct ConstMethodSignature< T, RV (Arguments const &) > : SignatureBase< RV, -1
     typedef RV (T::*FunctionType)(Arguments const &) const;
 };
 
-/**
-   Utility class to generate an InvocationCallback-like signature for
-   a member method of class T.
-*/
-template <typename T>
-struct InvocationCallbackMethod
-{
-    typedef v8::Handle<v8::Value> (T::*FunctionType)( Arguments const & );
-};
+// /**
+//    Utility class to generate an InvocationCallback-like signature for
+//    a member method of class T.
+// */
+// template <typename T>
+// struct InvocationCallbackMethod
+// {
+//     typedef v8::Handle<v8::Value> (T::*FunctionType)( Arguments const & );
+// };
 
-/**
-   Utility class to generate an InvocationCallback-like signature for
-   a const member method of class T.
-*/
-template <typename T>
-struct ConstInvocationCallbackMethod
-{
-    typedef v8::Handle<v8::Value> (T::*FunctionType)( Arguments const & ) const;
-};
+// /**
+//    Utility class to generate an InvocationCallback-like signature for
+//    a const member method of class T.
+// */
+// template <typename T>
+// struct ConstInvocationCallbackMethod
+// {
+//     typedef v8::Handle<v8::Value> (T::*FunctionType)( Arguments const & ) const;
+// };
 
 /**
    Full specialization for InvocationCallback and

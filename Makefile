@@ -23,14 +23,17 @@ MAKEFILE_DEPS_LIST = $(filter-out $(ShakeNMake.CISH_DEPS_FILE),$(MAKEFILE_LIST))
 $(sig_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
 	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
+	echo "#if !defined(DOXYGEN)" >> $@; \
 	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
 		bash $(TMPL_GENERATOR) $$i FunctionSignature MethodSignature ConstMethodSignature  || exit $$?; \
 		i=$$((i + 1)); \
 	done >> $@
+	@echo "#endif // if !defined(DOXYGEN)" >> $@
 gen: $(sig_gen_h)
 $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
 	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
+	echo "#if !defined(DOXYGEN)" >> $@; \
 	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
 		bash $(TMPL_GENERATOR) $$i \
 			SignatureBase \
@@ -41,6 +44,8 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 		  || exit $$?; \
 		i=$$((i + 1)); \
 	done >> $@
+	@echo "#endif // if !defined(DOXYGEN)" >> $@;
+
 gen: $(invo_gen_h)
 
 demo.BIN.OBJECTS := demo.o ConvertDemo.o
