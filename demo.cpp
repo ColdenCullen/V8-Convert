@@ -255,7 +255,8 @@ static int v8_main(int argc, char const * const * argv)
     {
         CERR << "Trying to force GC... This will likely take 5-10 seconds... "
              << "wait for it to see the weak pointer callbacks in action...\n"
-             << "ON SOME MACHINES THIS IS CRASHING ON ME IN V8 at some point...\n"
+             << "ON SOME MACHINES THIS IS CRASHING ON ME IN V8 at some point "
+             << "on 64-bit builds, but not on 32-bit...\n"
             ;
         while( !v8::V8::IdleNotification() )
         {

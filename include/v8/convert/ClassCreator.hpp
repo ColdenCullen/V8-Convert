@@ -249,6 +249,23 @@ namespace v8 { namespace convert {
         }
 
         /**
+           Similar to Wrap(), but this is called before the native constructor is called.
+           It is rarely needed, but is necessary if one needs to manipulate the JS
+           "this" object before the native object is constructed, so that the native ctor
+           can access information stored in the JS-side internal fields.
+
+           The default implementation does nothing.
+
+           If this throws a native exception, construction of the
+           object will fail.
+        */
+        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf )
+        {
+            return;
+        }
+
+        
+        /**
            This is called from the ClassCreator-generated destructor,
            just before the native destructor is called.
         
@@ -392,7 +409,10 @@ namespace v8 { namespace convert {
             T * native = CastFromJS<T>( pv );
             if( !native )
             {
+#if 1
                 assert( 0 && "weak_dtor() got no native object!");
+#endif
+                return;
             }
             else
             {
@@ -441,7 +461,13 @@ namespace v8 { namespace convert {
                 Factory::Delete(native);
 #endif
             }
-            //pv.Dispose(); // don't do this: it causes another call to this function!
+            /*
+              pv.Dispose();
+
+              according to the v8 gurus i need to call pv.Dispose()
+              instead of pv.Clear(), but if i do then this dtor is
+              being called twice.
+            */
             pv.Clear();
         }
 
@@ -476,24 +502,24 @@ namespace v8 { namespace convert {
                 */
                 if (!argv.IsConstructCall()) 
                 {
-                    std::ostringstream os;
-                    os << "This constructor cannot be called as function!";
-                    return ThrowException(String::New(os.str().c_str()));
+                    return ThrowException(String::New("This constructor cannot be called as function!"));
                 }
             }
             Local<Object> const & jobj( argv.This()
                                         /*CastToJS<T>(*nobj)
                                           
                                         We are not yet far enough
-                                        along in the binding that that
-                                        can work. And it can't work
-                                        for the generic case, anyway.
+                                        along in the binding that
+                                        CastToJS() can work. And it
+                                        can't work for the generic
+                                        case, anyway.
                                         */);
             if( jobj.IsEmpty() ) return jobj /* assume exception*/;
             Persistent<Object> self( Persistent<Object>::New(jobj) );
             T * nobj = NULL;
             try
             {
+                WeakWrap::PreWrap( self );
                 nobj = Factory::Create( argv );
                 if( ! nobj )
                 {
@@ -505,12 +531,14 @@ namespace v8 { namespace convert {
             }
             catch(std::exception const &ex)
             {
-                Factory::Delete( nobj );
+                if( nobj ) Factory::Delete( nobj );
+                self.Clear();
                 return CastToJS(ex);
             }
             catch(...)
             {
-                Factory::Delete( nobj );
+                if( nobj ) Factory::Delete( nobj );
+                self.Clear();
                 return v8::ThrowException(v8::String::New("Native constructor threw an unknown exception!"));
             }
             return self;
