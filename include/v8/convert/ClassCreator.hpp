@@ -222,6 +222,26 @@ namespace v8 { namespace convert {
     struct ClassCreator_WeakWrap
     {
         typedef typename convert::TypeInfo<T>::NativeHandle NativeHandle;
+
+        /**
+           Similar to Wrap(), but this is called before the native constructor is called.
+           It is rarely needed, but is necessary if one needs to manipulate the JS
+           "this" object before the native object is constructed, so that the native ctor
+           can access information stored in the JS-side internal fields.
+
+           If this throws a native exception, construction of the
+           object will fail and Unwrap() is called, passed
+           (jsSelf,NULL), to clean up any data which this function might have
+           stored in jsSelf.
+
+           The default implementation does nothing.
+        */
+        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf )
+        {
+            return;
+        }
+
+
         /**
            This operation is called one time from ClassCreator for each
            new object, directly after the native has been connected to
@@ -240,47 +260,45 @@ namespace v8 { namespace convert {
 
            On error, this function may throw a native exception. If
            that happens, ClassCreator will call
+           Unwrap(jsSelf,nativeHandle) and
            Factory<T>::Destruct(nativeSelf) to clean up, and will then
            propagate the exception.
+
+           The default implementation does nothing.
         */
         static void Wrap( v8::Persistent<v8::Object> const & jsSelf, NativeHandle nativeSelf )
         {
             return;
         }
-
-        /**
-           Similar to Wrap(), but this is called before the native constructor is called.
-           It is rarely needed, but is necessary if one needs to manipulate the JS
-           "this" object before the native object is constructed, so that the native ctor
-           can access information stored in the JS-side internal fields.
-
-           The default implementation does nothing.
-
-           If this throws a native exception, construction of the
-           object will fail.
-        */
-        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf )
-        {
-            return;
-        }
-
         
         /**
            This is called from the ClassCreator-generated destructor,
-           just before the native destructor is called.
+           just before the native destructor is called. If nativeSelf
+           is NULL then it means that native construction failed,
+           but implementations must (if necessary) clean up any data
+           stored in jsSelf by the PreWrap() function.
         
            Specializations may use this to clean up data stored in
-           other internal fields of the object (_not_ the one used to
-           hold the native itself - that is removed by the
+           other internal fields of the object (_not_ the field used
+           to hold the native itself - that is removed by the
            framework). Optionally, such cleanup may be done in the
            corresponding Factory::Destruct() routine, and must be done
            there if the dtor will need access to such data.
 
            Note that when this is called, jsSelf and nativeSelf are
            about to be destroyed, so do not do anything crazy with the
-           contents of jsSelf and DO NOT destroy nativeSelf.
+           contents of jsSelf and DO NOT destroy nativeSelf (that is
+           the job of the ClassCreator_Factory policy).
 
            Ownership of the objects is unchanged by calling this.
+
+           Unwrap() is called during destruction or when construction
+           fails (via a native exception), so any cleanup required for
+           the jsSelf object can be delegated to this function, as
+           opposed to being performed (and possibly duplicated) in
+           PreWrap() and/or Wrap().
+           
+           The default implementation does nothing.
         */
         static void Unwrap( v8::Handle<v8::Object> const & jsSelf, NativeHandle nativeSelf )
         {
@@ -300,7 +318,8 @@ namespace v8 { namespace convert {
        match is found, the object in which the data were found is
        returned.
 
-       If nh is found nowhere in the chain, an empty handle is returned.
+       If nh is found nowhere in the chain, an empty handle is
+       returned.
 
        Note that T must be non-cv qualified, so it is generally
        undesirable to allow the compiler to deduce its type from the
@@ -527,16 +546,25 @@ namespace v8 { namespace convert {
                 }
                 WeakWrap::Wrap( self, nobj );
                 self.MakeWeak( nobj, weak_dtor );
-                self->SetPointerInInternalField( InternalFields::NativeIndex, nobj );
+                self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
+                    /* We do this after the call to Wrap() just in case the Wrap() impl
+                       accidentally writes to this field. In that case we end up
+                       losing the data they stored there. So this is just as evil as
+                       adding the internal field before Wrap(), but only when the
+                       client mis-uses the internal fields.
+                    */
+                    ;
             }
             catch(std::exception const &ex)
             {
+                WeakWrap::Unwrap( self, nobj );
                 if( nobj ) Factory::Delete( nobj );
                 self.Clear();
                 return CastToJS(ex);
             }
             catch(...)
             {
+                WeakWrap::Unwrap( self, nobj );
                 if( nobj ) Factory::Delete( nobj );
                 self.Clear();
                 return v8::ThrowException(v8::String::New("Native constructor threw an unknown exception!"));
