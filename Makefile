@@ -48,8 +48,10 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 
 gen: $(invo_gen_h)
 
+V8_LDFLAGS := -L$(V8_PREFIX)/lib -lv8_g
+
 demo.BIN.OBJECTS := demo.o ConvertDemo.o
-demo.BIN.LDFLAGS := -L$(V8_PREFIX)/lib -lv8
+demo.BIN.LDFLAGS := $(V8_LDFLAGS)
 $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
 demo.o: $(sig_gen_h)
 
