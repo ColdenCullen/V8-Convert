@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include "convert.hpp"
+//#include <iostream> // only for debuggering
 
 namespace v8 { namespace convert {
 
@@ -424,11 +425,28 @@ namespace v8 { namespace convert {
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
         {
             using namespace v8;
+            //std::cerr << "Entering weak_dtor<>(native="<<(void const *)nobj<<")\n";
             Local<Object> jobj( Object::Cast(*pv) );
             T * native = CastFromJS<T>( pv );
             if( !native )
             {
-#if 1
+                /* see: http://code.google.com/p/v8-juice/issues/detail?id=27
+
+                When i call pv.Dispose(), this function is getting called twice,
+                and the second time won't work. i'm going to igore (return w/o
+                side-effects) this for now for the sake of avoiding a crash
+                which i'm seeing only on 64-bit platforms.
+
+                However, even if i return here, v8 is crashing with a
+                !NEAR_DEATH assertion right after the second call is made.
+
+                The extra pair of Dispose()/Clear() calls seems to eliminate that
+                crash, but the fact that this code block is hit AT ALL is a
+                sign of a problem - the dtor shouldn't be called twice!
+                */
+                pv.Dispose();
+                pv.Clear();
+#if 0
                 assert( 0 && "weak_dtor() got no native object!");
 #endif
                 return;
@@ -481,12 +499,13 @@ namespace v8 { namespace convert {
 #endif
             }
             /*
-              pv.Dispose();
-
-              according to the v8 gurus i need to call pv.Dispose()
+              According to the v8 gurus i need to call pv.Dispose()
               instead of pv.Clear(), but if i do then this dtor is
-              being called twice.
+              being called twice. If i don't call it, v8 is crashing
+              sometime after this function with a !NEAR_DEATH
+              assertion.
             */
+            pv.Dispose();
             pv.Clear();
         }
 
