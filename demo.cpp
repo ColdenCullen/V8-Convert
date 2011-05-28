@@ -33,7 +33,7 @@ ValueHandle test1_callback( v8::Arguments const & argv )
 {
     using namespace v8;
     BoundNative * fooPtr;
-    Handle<Value> myref /* just to keep JS from gc'ing my BoundNative object */;
+    Local<Value> myref /* just to keep JS from gc'ing my BoundNative object */;
     {
         BoundNative::bindJSClass( v8::Context::GetCurrent()->Global() );
         Handle<Function> const & ctor( cv::ClassCreator<BoundSubNative>::Instance().CtorFunction() );
@@ -184,12 +184,6 @@ void test1()
     }
     else if(1)
     {
-        /** WTF:
-
-       ./juice-plugin/test.js:1: Error executing file
-       load("./juice-plugin/test.js")
-       ^
-        */
         cv::StringBuffer code;
         code << "load(\"" << extScr << "\")";
         ExecuteString( JSTR(code.Content().c_str()), JSTR(extScr),
