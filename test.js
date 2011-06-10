@@ -86,6 +86,10 @@ function test1()
     catch(e){ex = e;}
     assert( !!ex, "Expecting exception: "+ex);
 
+    ex = undefined;
+    try{f.anton2();}
+    catch(e){ex = e;}
+    assert( !!ex, "Expecting exception: "+ex);
     
     assert( f.destroy(), 'f.destroy() seems to work');
     ex = undefined;

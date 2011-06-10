@@ -101,9 +101,52 @@ void setSharedString(std::string const &s)
 }
 
 
+/**
+   This is an experiment...
+*/
+template < typename ExceptionT,
+           typename SigGetMsg,
+           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           v8::Handle<v8::Value> (*ICB)( v8::Arguments const & )
+>
+v8::Handle<v8::Value> InvocationCallbackExceptionWrapper( v8::Arguments const & args )
+{
+    try
+    {
+        return ICB( args );
+    }
+    catch( ExceptionT const & e2 )
+    {
+        return v8::ThrowException(v8::convert::CastToJS((e2.*Getter)()));
+    }
+#if 0
+    catch( std::exception const & ex )
+    {
+        return v8::convert::CastToJS(ex);
+    }
+#endif
+    catch(...)
+    {
+        return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
+    }
+}
+
+/**
+   InvocationCallback wrapper which calls another InvocationCallback
+   and translates native-level exceptions to JS. std::exception is caught
+   explicitly and its what() method it used as the exception string. Other
+   exceptions are caught and cause an unspecified exception message to be
+   used.   
+*/
 template < v8::Handle<v8::Value> (*ICB)( v8::Arguments const & ) >
 v8::Handle<v8::Value> InvocationCallbackToInvocationCallback( v8::Arguments const & args )
 {
+#if 1
+    return InvocationCallbackExceptionWrapper<std::exception,
+        char const *(),
+        &std::exception::what,
+        ICB>( args );
+#else
     try
     {
         return ICB( args );
@@ -116,6 +159,7 @@ v8::Handle<v8::Value> InvocationCallbackToInvocationCallback( v8::Arguments cons
     {
         return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
     }
+#endif
 }
 
 v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
@@ -168,6 +212,8 @@ namespace v8 { namespace convert {
                 ("message", "hi, world")
                 ("answer", 42)
                 ("anton", InvocationCallbackToInvocationCallback<test_anton_callback>)
+                ("anton2", InvocationCallbackExceptionWrapper<std::runtime_error,char const *(), &std::runtime_error::what,
+                 test_anton_callback> )
                 ;
 
             ////////////////////////////////////////////////////////////////////////
