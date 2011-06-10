@@ -80,6 +80,12 @@ function test1()
     asserteq( f.theInt, f.theIntNC );
     asserteq( ++f.theInt, f.theIntNC );
     asserteq( f.theInt, f.theIntNC );
+
+    ex = undefined;
+    try{f.anton();}
+    catch(e){ex = e;}
+    assert( !!ex, "Expecting exception: "+ex);
+
     
     assert( f.destroy(), 'f.destroy() seems to work');
     ex = undefined;

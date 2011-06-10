@@ -100,6 +100,30 @@ void setSharedString(std::string const &s)
     sharedString = s;
 }
 
+
+template < v8::Handle<v8::Value> (*ICB)( v8::Arguments const & ) >
+v8::Handle<v8::Value> InvocationCallbackToInvocationCallback( v8::Arguments const & args )
+{
+    try
+    {
+        return ICB( args );
+    }
+    catch( std::exception const & ex )
+    {
+        return v8::convert::CastToJS(ex);
+    }
+    catch(...)
+    {
+        return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
+    }
+}
+
+v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
+{
+    throw std::runtime_error("Testing Anton's callback.");
+    return v8::Undefined();
+}
+
 namespace v8 { namespace convert {
 
     template <>
@@ -143,6 +167,7 @@ namespace v8 { namespace convert {
                 ("destroy", CC::DestroyObject )
                 ("message", "hi, world")
                 ("answer", 42)
+                ("anton", InvocationCallbackToInvocationCallback<test_anton_callback>)
                 ;
 
             ////////////////////////////////////////////////////////////////////////
@@ -179,7 +204,7 @@ namespace v8 { namespace convert {
             PB::BindGetterSetterMethods<int (), &BoundNative::getInt,
                 void (int), &BoundNative::setInt
                 >("theInt", proto);
-            PB::BindGetterSetterMethods<int (), &BoundNative::getIntNonConst,
+            PB::BindNonConstGetterSetterMethods<int (), &BoundNative::getIntNonConst,
                 void (int), &BoundNative::setInt
                 >("theIntNC", proto);
 
