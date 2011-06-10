@@ -29,6 +29,7 @@ typedef v8::Handle<v8::Value> ValueHandle;
 #define JSTR(X) v8::String::New(X)
 
 #include <cstdio> /* puts() */
+
 ValueHandle test1_callback( v8::Arguments const & argv )
 {
     using namespace v8;

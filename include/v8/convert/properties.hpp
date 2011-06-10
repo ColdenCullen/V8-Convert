@@ -577,15 +577,18 @@ namespace v8 { namespace convert {
 	}
 
         /**
-           Overload which accepts a non-const getter. Member setter
-           functions are not, by nature, const.
+           Equivalent to BindGetterSetterMethods() but takes a
+           non-const getter. Member setter functions are not, by
+           nature, const. This function has a different name than
+           BindGetterSetterMethods() because MSVC cannot distinguish
+           between templates which differ only in constness.
         */
         template <typename SigGet,
                   typename MethodSignature<T,SigGet>::FunctionType Getter,
                   typename SigSet,
                   typename MethodSignature<T,SigSet>::FunctionType Setter
             >
-        static void BindGetterSetterMethods( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        static void BindNonConstGetterSetterMethods( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
