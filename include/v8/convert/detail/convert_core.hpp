@@ -345,7 +345,8 @@ namespace v8 { namespace convert {
 	v8::Handle<v8::Value> operator()( std::string const & v ) const
 	{
 	    /** This use of v.data() instead of v.c_str() is highly arguable. */
-	    return String::New( v.data(), static_cast<int>( v.size() ) );
+            char const * const cstr  = v.data();
+	    return cstr ? v8::String::New( cstr, static_cast<int>( v.size() ) ) : v8::String::New("",0);
 	}
     };
 	
@@ -740,13 +741,11 @@ namespace v8 { namespace convert {
 	ResultType operator()( v8::Handle<v8::Value> const & h ) const
 	{
             static const std::string emptyString;
-	    v8::String::Utf8Value utf8String( h );
+	    v8::String::Utf8Value const utf8String( h );
             const char* s = *utf8String;
-            if (s)
-            {
-		return std::string(s, utf8String.length());
-            }
-            return emptyString;
+            return s
+                ? std::string(s, utf8String.length())
+                : emptyString;
 	}
     };
 
