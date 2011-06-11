@@ -363,7 +363,6 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
     return Statement_bind( st, ndx, val );
 }
 
-#if 0
 v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
 {
     v8::HandleScope hscope;
@@ -375,12 +374,10 @@ v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
     uint16_t i = 0;
     for( ; i < colCount; ++i )
     {
-        arh->Set( i, XXXX );
+        arh->Set( i, Statement_getGeneric(st, i) );
     }
     return arh;
 }
-#endif
-
 
 
 v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
@@ -462,11 +459,12 @@ namespace v8 { namespace convert {
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObject )
                 ("step", cv::MethodToInvocationCallback<ST, bool (),&ST::step>)
+                ("stepArray", cv::InCaStdExceptionWrapper<Statement_stepArray>)
                 ("columnName", cv::MethodToInvocationCallback<ST, char const * (uint16_t),&ST::col_name>)
                 ("columnType", cv::MethodToInvocationCallback<ST, cpdo_data_type (uint16_t),&ST::col_type>)
                 ("getNumber", cv::InCaStdExceptionWrapper<Statement_getNumber>)
                 ("getString", cv::InCaStdExceptionWrapper<Statement_getString>)
-                ("getColumn", cv::InCaStdExceptionWrapper<Statement_getGeneric>)
+                ("get", cv::InCaStdExceptionWrapper<Statement_getGeneric>)
                 ("bind", cv::InCaStdExceptionWrapper<Statement_bind>)
                 ("reset", cv::MethodToInvocationCallback<ST, void (void),&ST::reset>)
                 ("toString", Statement_toString)

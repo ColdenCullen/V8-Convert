@@ -72,25 +72,35 @@ function testSelect()
         return;
     }
     print('statement='+st);
+    var sep = '\t';
     if( !st ) throw new Error("WTF? st is null?");
     var colCount = st.columnCount;
     print("Column count="+colCount);
     try {
-        var cols = [], i, v;
         var names = [];
         for(i=0; i < colCount; ++i ) {
             names.push(st.columnName(i));
         }
-        print( names.join('\t') );
-        while( st.step() ) {
-            cols.length = 0;
-            for(i=0; i < colCount;++i ) {
-                v = st.getColumn(i);
-                cols.push('[type='+st.columnType(i)+']'+
-                          ( (v===null) ? 'NULL' : v )
-                          );
+        print( names.join(sep) );
+        if(0) {
+            var cols = [], i, v;
+            while( st.step() ) {
+                cols.length = 0;
+                for(i=0; i < colCount;++i ) {
+                    v = st.get(i);
+                    cols.push('[type='+st.columnType(i)+']'+
+                              ( (v===null) ? 'NULL' : v )
+                              );
+                }
+                print(cols.join(sep));
             }
-            print(cols.join('\t'));
+        }
+        else {
+            var row;
+            while( (row = st.stepArray()) ) {
+                //asserteq( colCount, row.length, 'Column count matches.' );
+                print(row.join(sep));
+            }
         }
     }
     finally {
