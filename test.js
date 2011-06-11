@@ -22,9 +22,10 @@ function printStackTrace(indention)
 }
 
 function getCallLocation(framesBack){
-    var li = getStacktrace(framesBack || 2);
+    framesBack = (framesBack && (framesBack>0)) ? framesBack : 2;
+    var li = getStacktrace(framesBack);
     if( !li ) return -1;
-    else return li[1];
+    else return li[framesBack-1];
 }
 
 
@@ -32,7 +33,7 @@ function assert(cond,msg)
 {
     if( ! cond ) {
         msg = 'Assertion failed at (or around) line '+getCallLocation(3).line+': '+(msg||'')+
-            '\nStacktrace: '+JSON.stringify(getStacktrace(),0,4);
+            '\nStacktrace: '+JSON.stringify(getStacktrace(),0,0);
         throw new Error(msg);
     }
     else {
@@ -44,10 +45,10 @@ function asserteq(got,expect,msg)
 {
     msg = msg || (got+' == '+expect);
     if(1) {
-        var st = getStacktrace(2);
         if( got != expect ) {
+            var st = getStacktrace(4);
             msg = 'Assertion failed at line '+st[1].line+': '+msg+
-                '\nStacktrace: '+JSON.stringify(st,0,4);
+                '\nStacktrace: '+JSON.stringify(st,0,0);
             throw new Error(msg);
         }
         else print("Assertion OK: "+msg);
@@ -157,8 +158,7 @@ function test4()
     for( ; i < max; ++i ) {
         (i%2) ? new BoundSubNative() : new BoundNative();
     }
-    i = 0;
-    for( ; !BoundNative.prototype.runGC() && (i<max); ++i )
+    for( i = 0; !BoundNative.prototype.runGC() && (i<max); ++i )
     {
         print("Waiting on GC to finish...");
         sleep(1);
@@ -186,12 +186,15 @@ test3();
 //test4();
 if(1) {
     try {
-        asserteq(1,1);
-        asserteq(1,2,"Intentional error.");
+        asserteq(1,2,"Intentional error to check fetching of current line number.");
     }
     catch(e){
         print(e);
     }
+    /** The line numbers printed out below should match the lines on which
+        getCallLocation() is called. v8 uses 1-based rows/columns,
+        by the way, not 1-based rows and 0-based columns as most editors do.
+     */
     print( JSON.stringify(getCallLocation()) );
     print( JSON.stringify(getCallLocation()) );
     print( JSON.stringify(getCallLocation()) );
