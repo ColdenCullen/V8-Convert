@@ -24,7 +24,7 @@ function printStackTrace(indention)
 function getCallLocation(framesBack){
     framesBack = (framesBack && (framesBack>0)) ? framesBack : 2;
     var li = getStacktrace(framesBack);
-    if( !li ) return -1;
+    if( !li ) return undefined;
     else return li[framesBack-1];
 }
 
