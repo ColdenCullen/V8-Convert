@@ -33,10 +33,13 @@ typedef v8::Handle<v8::Value> ValueHandle;
 ValueHandle test1_callback( v8::Arguments const & argv )
 {
     using namespace v8;
+    Local<Value> myref /* to keep v8 from prematurly cleaning my object. */;
+    Local<Function> jf;
     BoundNative * fooPtr;
-    Local<Value> myref /* just to keep JS from gc'ing my BoundNative object */;
+    Local<Object> myobj;
     {
         BoundNative::bindJSClass( v8::Context::GetCurrent()->Global() );
+        //v8::HandleScope scope;
         Handle<Function> const & ctor( cv::ClassCreator<BoundSubNative>::Instance().CtorFunction() );
         CERR << "Calling NewInstance()\n";
         myref = ctor->NewInstance(0, NULL);
@@ -44,24 +47,24 @@ ValueHandle test1_callback( v8::Arguments const & argv )
         fooPtr = cv::CastFromJS<BoundNative>(myref);
         CERR << "NewInstance() == @"<<(void const *)fooPtr<<'\n';
         assert( 0 != fooPtr );
-        Local<Object> jfoo( Object::Cast(*myref) );
+        myobj = Object::Cast(*myref);
         ValueHandle varg[] = {
           JSTR("Example of binding functions taking (char const *) arguments.")
         };
         int const argc = 1;
-        Local<Function> jf( Function::Cast( *(jfoo->Get(JSTR("puts"))) ) );
-        jf->Call( jfoo, argc, varg );
-        jf = Function::Cast( *(jfoo->Get(JSTR("bogo"))) );
-        jf->Call( jfoo, argc, varg );
-        jf = Function::Cast( *(jfoo->Get(JSTR("bogo2"))) );
-        jf->Call( jfoo, argc, varg );
-        jf = Function::Cast( *(jfoo->Get(JSTR("nativeParam"))) );
-        varg[0] = jfoo;
-        jf->Call( jfoo, argc, varg );
+        jf = Function::Cast( *(myobj->Get(JSTR("puts"))) );
+        jf->Call( myobj, argc, varg );
+        jf = Function::Cast( *(myobj->Get(JSTR("bogo"))) );
+        jf->Call( myobj, argc, varg );
+        jf = Function::Cast( *(myobj->Get(JSTR("bogo2"))) );
+        jf->Call( myobj, argc, varg );
+        jf = Function::Cast( *(myobj->Get(JSTR("nativeParam"))) );
+        varg[0] = myobj;
+        jf->Call( myobj, argc, varg );
 #if 1
-        jf = Function::Cast( *(jfoo->Get(JSTR("runGC"))) );
+        jf = Function::Cast( *(myobj->Get(JSTR("runGC"))) );
         CERR << "runGC handle isEmpty?=="<<jf.IsEmpty()<<'\n';
-        jf->Call( jfoo, 0, varg );
+        jf->Call( myobj, 0, varg );
 #endif
     }
 
@@ -148,8 +151,15 @@ ValueHandle test1_callback( v8::Arguments const & argv )
          /* won't actually work b/c argv.This() is-not-a BoundNative */
          ;
 
+#if 0
+     jf = Function::Cast( *(myobj->Get(JSTR("destroy"))) );
+     CERR << "Calling myObject.destroy()...\n";
+     jf->Call( Local<Object>(Object::Cast(*myref)), 0, NULL );
+#endif
+
+     
      CERR << "Done\n";
-     CERR << "NOTE: you may see an exception message directly after this "
+     CERR << "NOTE: you may see an exception message directly before or after this "
           << "function returns regarding a missing native 'this' pointer. Don't "
           << "panic - it is _expected_ here.\n"
          ;
@@ -193,6 +203,71 @@ void test1()
     CERR << "Returned from external script\n";
 }
 
+/**
+   Implements the v8::InvocationCallback interface and has the
+   following JS interface:
+
+   @code
+   Array stracktrace([unsigned int limit = some reasonable default])
+   @endcode
+
+   Each element in the returned array represents a stack frame and
+   is a plain object with the following properties:
+
+   column = 1-based column number (note that this is different from most editors,
+   but this is how v8 returns this value.)
+       
+   line = 1-based line number
+
+   scriptName = name of the script
+
+   functionName = name of the function
+
+   isConstructor = true if this is a constructor call
+
+   isEval = true if this is part of an eval()
+
+   TODO:
+
+   - Add a toString() member to the returned array which creates a
+   conventional-looking stacktrace string.
+*/
+v8::Handle<v8::Value> GetV8StackTrace( v8::Arguments const & argv )
+{
+    using namespace v8;
+    // Lame hack to distinguish between v8::juice::convert and v8::convert APIs:
+#if defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED)
+    namespace cv = v8::convert;
+#else
+    namespace cv = v8::juice::convert;
+#endif
+    uint32_t limit = (argv.Length() > 0) ? cv::CastFromJS<uint32_t>(argv[0]) : 0;
+    if( limit == 0 ) limit = 8;
+    else if( limit > 100 ) limit = 100;
+
+    Local<StackTrace> const st = StackTrace::CurrentStackTrace( limit, StackTrace::kDetailed );
+    int const fcountI = st->GetFrameCount();
+    // Who the hell designed the StackTrace API to return an int in GetFrameCount() but take
+    // an unsigned int in GetFrame()???
+    uint32_t const fcount = static_cast<uint32_t>(fcountI);
+    Local<Array> jst = Array::New(fcount);
+#define STR(X) v8::String::New(X)
+    for( uint32_t i = 0; (i < fcount) && (i<limit); ++i )
+    {
+        Local<StackFrame> const & sf( st->GetFrame(i) );
+        Local<Object> jsf = Object::New();
+        jsf->Set(STR("column"), cv::CastToJS(sf->GetColumn()));
+        jsf->Set(STR("functionName"), sf->GetFunctionName());
+        jsf->Set(STR("line"), cv::CastToJS(sf->GetLineNumber()));
+        jsf->Set(STR("scriptName"), sf->GetScriptName());
+        jsf->Set(STR("isConstructor"), cv::CastToJS(sf->IsConstructor()));
+        jsf->Set(STR("isEval"), cv::CastToJS(sf->IsEval()));
+        jst->Set(i,jsf);
+    }
+    return jst;
+#undef STR
+}
+
 #if !defined(_WIN32)
 #  include <unistd.h> /* only for sleep() */
 #  define do_sleep sleep
@@ -205,6 +280,7 @@ static int v8_main(int argc, char const * const * argv)
 {
     v8::Locker locker;
     v8::HandleScope handle_scope;
+    v8::Persistent<v8::Context> context;
     v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
     global->Set(JSTR("load"), v8::FunctionTemplate::New(Load) )
         /* Reminder: Calling CastToJS(Load) this early in the v8
@@ -212,24 +288,27 @@ static int v8_main(int argc, char const * const * argv)
         */
         ;
     global->Set(JSTR("print"), v8::FunctionTemplate::New( Print ));
-    global->Set(JSTR("sleep"), v8::FunctionTemplate::New(
-                                                         cv::FunctionToInvocationCallback<
+    global->Set(JSTR("getStacktrace"), v8::FunctionTemplate::New( GetV8StackTrace ));
+    global->Set(JSTR("gc"),
+                v8::FunctionTemplate::New(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+                );
+    global->Set(JSTR("sleep"),
 #if !defined(_WIN32)
-                                                         unsigned int (unsigned int), sleep
+                v8::FunctionTemplate::New(cv::FunctionToInvocationCallback<unsigned int (unsigned int), ::sleep>)
 #else
-                                                         void (DWORD), Sleep // UNTESTED!
+                v8::FunctionTemplate::New(cv::FunctionToInvocationCallback<void (DWORD), Sleep /*UNTESTED!*/> )
 #endif
-                                                         >
-));
-    /**
-       Reminder to self: changes to global object must apparently come
-       before the context is created, otherwise they appear to have no
-       effect.
+                );
 
+    /**
+       Reminder to self: changes to global template must apparently
+       come before the context is created, otherwise they appear to
+       have no effect.
+       
        GODDAMMIT, GOOGLE, DOCUMENT V8 SO THAT PEOPLE CAN USE IT
        PRODUCTIVELY INSTEAD OF HAVING TO FIGHT WITH IT!!!
     */
-    v8::Persistent<v8::Context> context = v8::Context::New(NULL, global);
+    context = v8::Context::New(NULL, global);
     v8::Context::Scope context_scope(context);
     try
     {
@@ -245,13 +324,15 @@ static int v8_main(int argc, char const * const * argv)
         CERR << "UNKNOWN EXCEPTION!\n";
         return 1;
     }
-
+    context.Dispose();
     if(1)
     {
         CERR << "Trying to force GC... This will likely take 5-10 seconds... "
              << "wait for it to see the weak pointer callbacks in action...\n"
+#if 0 // this appears to have been fixed...
              << "ON SOME MACHINES THIS IS CRASHING ON ME IN V8 at some point "
              << "on 64-bit builds, but not on 32-bit...\n"
+#endif
             ;
         while( !v8::V8::IdleNotification() )
         {
@@ -260,7 +341,6 @@ static int v8_main(int argc, char const * const * argv)
         }
         CERR << "v8 says GC is done.\n";
     }
-    context.Dispose();
     return 0;
 }
 

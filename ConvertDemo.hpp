@@ -154,6 +154,20 @@ public:
         this->publicInt = v;
     }
 
+
+    void overload0()
+    {
+        CERR << "@"<<(void const *)this<<"->overload0()\n";
+    }
+    void overload1(int)
+    {
+        CERR << "@"<<(void const *)this<<"->overload1()\n";
+    }
+    void overload2(int,int)
+    {
+        CERR << "@"<<(void const *)this<<"->overload2()\n";
+    }
+    
 };
 
 /**

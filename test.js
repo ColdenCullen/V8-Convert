@@ -8,24 +8,65 @@
    set in the demo app (ConvertDemo.cpp), and changing them there might
    (should) cause these tests to fail.
 */
-if( 'function' == typeof loadPlugin ) loadPlugin("juice-plugin/v8-juice-ConvertDemo");
+if( 'function' == typeof loadPlugin )
+    (function(){
+        var lp = loadPlugin("juice-plugin/v8-juice-ConvertDemo");
+        print("Loaded v8-juice plugin. "+lp);
+    })();
+
+
+function printStackTrace(indention)
+{
+    var li = getStacktrace();
+    if( li ) print('Stacktrace: '+JSON.stringify(li,0,indention));
+}
+
+function getCallLocation(framesBack){
+    var li = getStacktrace(framesBack || 2);
+    if( !li ) return -1;
+    else return li[1];
+}
+
 
 function assert(cond,msg)
 {
-    if( ! cond ) throw new Error(msg);
-    else
-    {
+    if( ! cond ) {
+        msg = 'Assertion failed at (or around) line '+getCallLocation(3).line+': '+(msg||'')+
+            '\nStacktrace: '+JSON.stringify(getStacktrace(),0,4);
+        throw new Error(msg);
+    }
+    else {
         print("Assertion OK: "+msg);
     }
 }
 
 function asserteq(got,expect,msg)
 {
-    if( got != expect ) throw new Error('Assertion: '+(msg || (got+' != '+expect)));
-    else
-    {
-        print("Assertion OK: "+(msg || (got+' == '+expect)));
+    msg = msg || (got+' == '+expect);
+    if(1) {
+        var st = getStacktrace(2);
+        if( got != expect ) {
+            msg = 'Assertion failed at line '+st[1].line+': '+msg+
+                '\nStacktrace: '+JSON.stringify(st,0,4);
+            throw new Error(msg);
+        }
+        else print("Assertion OK: "+msg);
     }
+    else {
+        if( got != expect ) {
+            throw new Error('Assertion failed: '+msg);
+        }
+        else print("Assertion OK: "+msg);
+    }
+        
+}
+
+function assertThrows( func ) {
+    var ex = undefined;
+    try { func(); }
+    catch(e) { ex = e; }
+    assert( !!ex, "Got expected exception: "+ex );
+    if(0) printStackTrace(4);
 }
 
 function test1()
@@ -41,11 +82,8 @@ function test1()
     f.nativeParam(f);
     f.runGC();
 
-    var ex;
     // We set up f.publicIntRO to throw on write.
-    try{f.publicIntRO = 1;}
-    catch(e){ex = e;}
-    assert( !!ex, "Expecting exception: "+ex);
+    assertThrows( function(){ f.publicIntRO = 1;} );
 
     /* Note the arguably unintuitive behaviour when incrementing
        f.publicIntRO: the return value of the ++ op is the incremented
@@ -69,10 +107,7 @@ function test1()
     asserteq( f.sharedString2, f.staticStringRO );
     f.sharedString2 = "hi again";
     asserteq( f.sharedString2, f.staticStringRO );
-    ex = undefined;
-    try{f.staticStringRO = 'bye';}
-    catch(e){ex = e;}
-    assert( !!ex, "Expecting exception: "+ex);
+    assertThrows( function(){ f.staticStringRO = 'bye';} );
 
     asserteq(42, f.answer);
     assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
@@ -81,23 +116,11 @@ function test1()
     asserteq( ++f.theInt, f.theIntNC );
     asserteq( f.theInt, f.theIntNC );
 
-    ex = undefined;
-    try{f.anton();}
-    catch(e){ex = e;}
-    assert( !!ex, "Expecting exception: "+ex);
+    assertThrows( function(){ f.anton(); } );
+    assertThrows( function(){ f.anton2(); } );
 
-    ex = undefined;
-    try{f.anton2();}
-    catch(e){ex = e;}
-    assert( !!ex, "Expecting exception: "+ex);
-    
     assert( f.destroy(), 'f.destroy() seems to work');
-    ex = undefined;
-    try{f.doFoo();}
-    catch(e){ex = e;}
-    assert( !!ex, "Expecting exception: "+ex);
-
-    
+    assertThrows( function(){ f.doFoo();} );
 }
 
 function test2()
@@ -106,14 +129,6 @@ function test2()
     assert(s instanceof BoundNative, "BoundSubNative is-a BoundNative");
     print('s='+s);
     assert( /BoundSubNative/.exec(s.toString()), 'toString() seems to work: '+s);
-
-    // DO NOT TRY THIS AT HOME, kids: i'm testing weird stuff here...
-    var f = new BoundNative();
-    s.toString = f.toString;
-    //print('f='+f);
-    print('s='+s);
-
-
     asserteq(true, s.destroy(), 's.destroy()');
 }
 
@@ -130,36 +145,55 @@ function test3()
     m.puts("Hi from JS-side subclass");
     assert( /BoundSubNative/.exec(m.toString()), 'toString() seems to work: '+m);
     assert(m.destroy(), 'm.destroy()');
-    var ex;
-    try{m.doFoo();}
-    catch(e){ex = e;}
-    assert( !!ex, "Expecting exception: "+ex);
+    assertThrows( function() {m.doFoo();} );
 
 }
 
 function test4()
 {
-    throw new Error("Don't run this function. Calling v8::V8::IdleNotification() "
-                    +"from JS is crashing on me sometimes.");
+    print("Creating several unreferenced objects and manually running GC...");
     var i =0;
-    var root = new BoundSubNative();
-    for( ; i < 10; ++i ) { (new BoundSubNative()); }
+    var max = 5;
+    for( ; i < max; ++i ) {
+        (i%2) ? new BoundSubNative() : new BoundNative();
+    }
     i = 0;
-    var max = 10;
-    for( ; !root.runGC() && (i<max); ++i )
+    for( ; !BoundNative.prototype.runGC() && (i<max); ++i )
     {
         print("Waiting on GC to finish...");
         sleep(1);
     }
     if( max == i )
     {
-        print("Gave up waiting.");
+        print("Gave up waiting after "+i+" iterations.");
     }
 }
+
+if(0) {
+    /**
+       Interesting: if we have a native handle in the global object
+       then v8 is never GC'ing it, even if we dispose the context
+       and run a V8::IdleNotification() loop. Hmmm.
+     */
+    var originalBoundObject = new BoundNative();
+    print("Created object which we hope to see cleaned up at app exit: "+originalBoundObject);
+}
+
 
 test1();
 test2();
 test3();
 //test4();
-
+if(1) {
+    try {
+        asserteq(1,1);
+        asserteq(1,2,"Intentional error.");
+    }
+    catch(e){
+        print(e);
+    }
+    print( JSON.stringify(getCallLocation()) );
+    print( JSON.stringify(getCallLocation()) );
+    print( JSON.stringify(getCallLocation()) );
+}
 print("Done!");

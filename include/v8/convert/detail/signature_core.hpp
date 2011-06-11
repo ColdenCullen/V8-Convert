@@ -3,18 +3,19 @@
 namespace v8 { namespace convert {
 /** @file signature_core.hpp
 
-This file houses the core-most templates related to
-handling function/method signatures as.
+This file houses the core-most templates related to handling
+function/method signatures as full-fleged types.
 */
 
 /**
    Base type for FunctionSignature, MethodSignature,
    and ConstMethodSignature.
 
-   The Arity argument must specify how many arguments
-   the function requires. Values less than 0 are reserved
-   for the special case of passing v8::Arguments (which represent
-   any number of arguments).
+   The Arity argument must specify how many arguments the function
+   requires. Values less than 0 are reserved for the special case of
+   passing v8::Arguments (which represent any number of arguments)
+   (value=-1) or potential future use (e.g. using -2 as an end-of-list
+   marker for an overload-by-arity handler).
 */
 template <typename T, int Arity_>
 struct SignatureBase
@@ -34,6 +35,19 @@ struct SignatureBase
    static const int Arity = num_args_in_func_sig;
    typedef FunctionSig FunctionType;
    @endcode
+
+   Examples:
+
+   @code
+   // void func_foo():
+   typedef FunctionSignature< void () > NoArgsReturnsVoid;
+
+   // int func_foo(double):
+   typedef FunctionSignature< int (double) > OneArgReturnsInt;
+
+   // double func_foo(int,int):
+   typedef FunctionSignature< double (int,int) > TwoArgsReturnsDouble;
+   @endcode
    
 */
 template <typename FunctionSig>
@@ -52,6 +66,20 @@ struct FunctionSignature;
    static const int Arity = num_args_in_func_sig;
    typedef Sig FunctionType;
    @endcode
+
+   Examples: 
+
+   @code
+   // void MyType::func():
+   typedef MethodSignature< MyType, void () > NoArgsReturnsVoid;
+
+   // int MyType::func(double):
+   typedef MethodSignature< MyType, int (double) > OneArgReturnsInt;
+
+   // double MyType::func(int,int):
+   typedef MethodSignature< MyType, double (int,int) > TwoArgsReturnsDouble;
+   @endcode
+
 */
 template <typename T, typename Sig>
 struct MethodSignature;
@@ -68,6 +96,20 @@ struct MethodSignature;
    typedef T Type;
    static const int Arity = num_args_in_func_sig;
    typedef Sig FunctionType;
+   @endcode
+
+
+   Examples: 
+
+   @code
+   // void MyType::func() const:
+   typedef ConstMethodSignature< MyType, void () > NoArgsReturnsVoid;
+
+   // int MyType::func(double) const:
+   typedef ConstMethodSignature< MyType, int (double) > OneArgReturnsInt;
+
+   // double MyType::func(int,int) const:
+   typedef ConstMethodSignature< MyType, double (int,int) > TwoArgsReturnsDouble;
    @endcode
 
 */
@@ -145,7 +187,8 @@ struct FunctionPtr : FunctionSignature<Sig>
 
 /**
    Used like FunctionPtr, but in conjunction with non-const
-   member functions ("methods") of the T class.
+   member functions ("methods") of the T class. See FunctionPtr
+   for the requirements of the Sig type.
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType FuncPtr>
 struct MethodPtr : MethodSignature<T,Sig>
@@ -197,11 +240,17 @@ namespace Detail
    compatible). Specializations of this type will have the following
    members:
 
-   typedef Signature::ArgTypeAtGivenPos Type;
-
+   @code
+   typedef Signature::ArgType### Type; // ###==Pos
    typedef Signature::FunctionType FunctionType;
+   (const) unsigned_numeric_type N = Pos;
+   @endcode
 
-   (const) numeric_type N = Pos;
+   The ArgType### entry does not exist in the 0-arity variants of the
+   classes.
+
+   If my brain was bigger we'd use a TypeList instead of
+   sequentially-numbered type names.
 */
 template <typename Signature, unsigned int Pos>
 struct SignatureArgAt;

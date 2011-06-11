@@ -36,6 +36,57 @@ namespace v8 { namespace convert {
     {
         delete obj;
     }
+
+
+
+#if 0 // don't use this - it doesn't work
+    // An experiment.
+    v8::Handle<v8::Value> ICListEnd( v8::Arguments const & )
+    {
+        return v8::Undefined();
+    }
+
+    // An experiment.
+    template <>
+    struct FunctionPtr<v8::InvocationCallback,ICListEnd>
+        : SignatureBase<v8::Handle<v8::Value>, -2>
+    {
+        public:
+        typedef FunctionSignature<v8::InvocationCallback> SignatureType;
+        typedef typename SignatureType::ReturnType ReturnType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static FunctionType GetFunction()
+        {
+            return ICListEnd;
+        }
+        static v8::Handle<v8::Value> Call( v8::Arguments const & args  )
+        {
+            return ICListEnd(args);
+        }
+    };
+    typedef FunctionPtr<v8::InvocationCallback,ICListEnd> ICForwardEOL;
+    template < typename Callable0,
+               typename Callable1 = ICForwardEOL,
+               typename Callable2 = ICForwardEOL
+               >
+    struct ICForwardByArity
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & args )
+        {
+            int const n = args.Length();
+            CERR << "ICForwardByArity::Call(): args.Length=="<<n<<'\n';
+#define CHECK(N)                 CERR << "Checking against arity " << Callable##N::Arity << '\n'; \
+            if( Callable##N::Arity == n ) {                             \
+                return Callable##N::GetFunction()(args);                \
+            } (void)0
+            CHECK(0); CHECK(1); CHECK(2);
+            return v8::ThrowException(StringBuffer() << "This function was passed "<<n<<" arguments, "
+                                      << "but no overload was found matching that number of "
+                                      << "arguments.");
+        }
+    };
+#endif
+
 } }
 
 
@@ -188,6 +239,18 @@ namespace v8 { namespace convert {
                 return;
             }
 
+#if 0
+            typedef FunctionPtr<InvocationCallback,ICListEnd> FPLE;
+            CERR << "Arity == "<< FPLE::Arity << '\n';
+            assert( -2 == FPLE::Arity );
+            typedef ICForwardByArity<
+            FunctionPtr< v8::InvocationCallback, MethodToInvocationCallback<BoundNative, void(), &BoundNative::overload0> >,
+                FunctionPtr< v8::InvocationCallback, MethodToInvocationCallback<BoundNative, void(int), &BoundNative::overload1> >,
+                FunctionPtr< v8::InvocationCallback, MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
+                > ICOverloads;
+            cc( "overloaded", ICOverloads::Call );
+#endif
+            
             ////////////////////////////////////////////////////////////
             // Bind some member functions and properties...
             cc("cputs",
@@ -212,7 +275,7 @@ namespace v8 { namespace convert {
                 ("message", "hi, world")
                 ("answer", 42)
                 ("anton", InvocationCallbackToInvocationCallback<test_anton_callback>)
-                ("anton2", InvocationCallbackExceptionWrapper<std::runtime_error,char const *(), &std::runtime_error::what,
+                ("anton2", InvocationCallbackExceptionWrapper<std::exception,char const *(), &std::exception::what,
                  test_anton_callback> )
                 ;
 

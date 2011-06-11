@@ -597,6 +597,12 @@ public:
    A v8::InvocationCallback implementation which forwards the arguments from argv
    to the template-specified function. If Func returns void then the return
    value will be v8::Undefined().
+
+   Example usage:
+
+   @code
+   v8::InvocationCallback cb = FunctionToInvocationCallback<int (char const *), ::puts>;
+   @endcode
 */
 template <typename FSig,
           typename FunctionSignature<FSig>::FunctionType Func>
@@ -612,6 +618,13 @@ v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
    fail (with a JS-side exception) if that conversion fails.
 
    If Func returns void then the return value will be v8::Undefined().
+
+   Example usage:
+
+   @code
+   v8::InvocationCallback cb = MethodToInvocationCallback<MyType, int (double), &MyType::doSomething >;
+   @endcode
+
 */
 template <typename T,typename FSig,
           typename MethodSignature<T,FSig>::FunctionType Func>
@@ -623,6 +636,11 @@ v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
 
 /**
    Identical to MethodToInvocationCallback(), but is for const member functions.
+
+   @code
+   v8::InvocationCallback cb = ConstMethodToInvocationCallback<MyType, int (double), &MyType::doSomethingConst >;
+   @endcode
+
 */
 template <typename T,typename FSig,
           typename ConstMethodSignature<T,FSig>::FunctionType Func>
@@ -778,7 +796,8 @@ namespace Detail {
 }
 
 /**
-   A helper type for passing v8::Arguments lists to native functions.
+   A helper type for passing v8::Arguments lists to native non-member
+   functions.
 
    Sig must be a function-signature-like argument. e.g. <double (int,double)>,
    and the members of this class expect functions matching that signature.
@@ -914,8 +933,8 @@ public:
     }
 
     /**
-       Like the 3-arg overload, but tries to extract the (T*) object using
-       CastFromJS<T>(argv.This()).
+       Like the 3-arg overload, but tries to extract the (T const *)
+       object using CastFromJS<T>(argv.This()).
     */
     static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
@@ -1105,8 +1124,8 @@ forwardMethod(FSig func, v8::Arguments const & argv )
 
     
 /**
-   Works like forwardMember(), but forwards to the given const
-   member function and treats the given object as the 'this' pointer.
+   Works like forwardMethod(), but forwards to the given const member
+   function and treats the given object as the 'this' pointer.
 
 */
 template <typename T, typename FSig>
