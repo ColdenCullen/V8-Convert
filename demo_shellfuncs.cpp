@@ -118,3 +118,91 @@ v8::Handle<v8::Value> Print(const v8::Arguments& args) {
   std::cout << std::endl;
   return v8::Undefined();
 }
+
+
+/**
+   Implements the v8::InvocationCallback interface and has the
+   following JS interface:
+
+   @code
+   Array stracktrace([unsigned int limit = some reasonable default])
+   @endcode
+
+   Each element in the returned array represents a stack frame and
+   is a plain object with the following properties:
+
+   column = 1-based column number (note that this is different from most editors,
+   but this is how v8 returns this value.)
+       
+   line = 1-based line number
+
+   scriptName = name of the script
+
+   functionName = name of the function
+
+   isConstructor = true if this is a constructor call
+
+   isEval = true if this is part of an eval()
+
+   TODO:
+
+   - Add a toString() member to the returned array which creates a
+   conventional-looking stacktrace string.
+*/
+v8::Handle<v8::Value> GetV8StackTrace( v8::Arguments const & argv )
+{
+    using namespace v8;
+    // Lame hack to distinguish between v8::juice::convert and v8::convert APIs:
+#if defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED)
+    namespace cv = v8::convert;
+#else
+    namespace cv = v8::juice::convert;
+#endif
+    uint32_t limit = (argv.Length() > 0) ? cv::CastFromJS<uint32_t>(argv[0]) : 0;
+    if( limit == 0 ) limit = 8;
+    else if( limit > 100 ) limit = 100;
+
+    Local<StackTrace> const st = StackTrace::CurrentStackTrace( limit, StackTrace::kDetailed );
+    int const fcountI = st->GetFrameCount();
+    // Who the hell designed the StackTrace API to return an int in GetFrameCount() but take
+    // an unsigned int in GetFrame()???
+    uint32_t const fcount = static_cast<uint32_t>(fcountI);
+    Local<Array> jst = Array::New(fcount);
+#define STR(X) v8::String::New(X)
+    for( uint32_t i = 0; (i < fcount) && (i<limit); ++i )
+    {
+        Local<StackFrame> const & sf( st->GetFrame(i) );
+        Local<Object> jsf = Object::New();
+        jsf->Set(STR("column"), cv::CastToJS(sf->GetColumn()));
+        jsf->Set(STR("functionName"), sf->GetFunctionName());
+        jsf->Set(STR("line"), cv::CastToJS(sf->GetLineNumber()));
+        jsf->Set(STR("scriptName"), sf->GetScriptName());
+        jsf->Set(STR("isConstructor"), cv::CastToJS(sf->IsConstructor()));
+        jsf->Set(STR("isEval"), cv::CastToJS(sf->IsEval()));
+        jst->Set(i,jsf);
+    }
+    return jst;
+#undef STR
+}
+
+#if !defined(_WIN32)
+#  include <unistd.h> /* only for sleep() */
+#  define do_sleep sleep
+#else
+#  include <windows.h>
+#  define do_sleep(N) Sleep((N)*1000)
+#endif
+v8::Handle<v8::Value> JsSleep( v8::Arguments const & argv )
+{
+#if defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED)
+    namespace cv = v8::convert;
+#else
+    namespace cv = v8::juice::convert;
+#endif
+    unsigned int n = (argv.Length()>1) ? cv::CastFromJS<uint32_t>(argv[0]) : 0;
+    if( ! n ) return v8::Undefined();
+    else
+    {
+        return cv::CastToJS(do_sleep(n));
+    }
+}
