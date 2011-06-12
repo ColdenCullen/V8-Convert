@@ -416,7 +416,6 @@ v8::Handle<v8::Value> JSPDO_exec( v8::Arguments const & argv )
 
 v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
 {
-    CERR << "LAST INSERT ID... argc="<<argv.Length()<<"\n";
     ASSERT_DRV_DECL(argv.This());
     std::string const hint = (argv.Length()>0)
         ? cv::JSToStdString(argv[0])
