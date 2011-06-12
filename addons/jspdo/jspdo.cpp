@@ -108,11 +108,11 @@ namespace v8 { namespace convert {
 
 #define STMT_DECL(JVAL) cpdo::statement * st = cv::CastFromJS<cpdo::statement>(JVAL)
 #define ASSERT_STMT_DECL(JVAL) STMT_DECL(JVAL); \
-    if( ! st ) return v8::ThrowException(JSTR("Could not find native cpdo::statement 'this' object."))
+    if( ! st ) return v8::ThrowException(v8::Exception::Error(JSTR("Could not find native cpdo::statement 'this' object.")))
 #define DRV_DECL(JVAL) cpdo::driver * drv = cv::CastFromJS<cpdo::driver>(JVAL)
 #define ASSERT_DRV_DECL(JVAL) DRV_DECL(JVAL); \
-    if( ! drv ) return v8::ThrowException(JSTR("Could not find native cpdo::driver 'this' object."))
-#define ASSERT_ARGV(COND) if( ! (COND) ) return v8::ThrowException(v8::String::New("Arguments condition failed: "#COND))
+    if( ! drv ) return v8::ThrowException(v8::Exception::Error(JSTR("Could not find native cpdo::driver 'this' object.")))
+#define ASSERT_ARGV(COND) if( ! (COND) ) return v8::ThrowException(v8::Exception::Error(JSTR("Arguments condition failed: "#COND)))
 
 static v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
 {
@@ -416,6 +416,7 @@ v8::Handle<v8::Value> JSPDO_exec( v8::Arguments const & argv )
 
 v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
 {
+    CERR << "LAST INSERT ID... argc="<<argv.Length()<<"\n";
     ASSERT_DRV_DECL(argv.This());
     std::string const hint = (argv.Length()>0)
         ? cv::JSToStdString(argv[0])
@@ -451,21 +452,24 @@ namespace v8 { namespace convert {
             }
             WST & wst( WST::Instance() );
             assert( ! wst.IsSealed() );
+
             ////////////////////////////////////////////////////////////////////////
             // cpdo::statement bindings...
+#define CATCHER cv::InCaCatcher_std
+#define M2I cv::MethodToInvocationCallback
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObject )
-                ("step", cv::MethodToInvocationCallback<ST, bool (),&ST::step>)
-                ("stepArray", cv::InCaExceptionWrapper_std<Statement_stepArray,false>)
-                ("columnName", cv::MethodToInvocationCallback<ST, char const * (uint16_t),&ST::col_name>)
-                ("columnType", cv::MethodToInvocationCallback<ST, cpdo_data_type (uint16_t),&ST::col_type>)
-                ("getNumber", cv::InCaExceptionWrapper_std<Statement_getNumber,false>)
-                ("getString", cv::InCaExceptionWrapper_std<Statement_getString,false>)
-                ("get", cv::InCaExceptionWrapper_std<Statement_getGeneric,false>)
-                ("bind", cv::InCaExceptionWrapper_std<Statement_bind,false>)
-                ("reset", cv::MethodToInvocationCallback<ST, void (void),&ST::reset>)
+                ("step", CATCHER< M2I<ST, bool (),&ST::step> >::Call)
+                ("stepArray", CATCHER< Statement_stepArray >::Call)
+                ("columnName", CATCHER< M2I<ST, char const * (uint16_t),&ST::col_name> >::Call )
+                ("columnType", CATCHER< M2I<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
+                ("getNumber", CATCHER<Statement_getNumber>::Call)
+                ("getString", CATCHER<Statement_getString>::Call)
+                ("get", CATCHER<Statement_getGeneric>::Call)
+                ("bind", CATCHER<Statement_bind>::Call)
+                ("reset", CATCHER< M2I<ST, void (void),&ST::reset> >::Call)
                 ("toString", Statement_toString)
-                ("paramIndex", cv::MethodToInvocationCallback<ST, uint16_t (char const *),&ST::param_index>)
+                ("paramIndex", InCaCatcher_std<M2I<ST, uint16_t (char const *),&ST::param_index> >::Call )
                 ;
 
             typedef cv::MemberPropertyBinder<ST> SPB;
@@ -483,22 +487,37 @@ namespace v8 { namespace convert {
                 JSPDO_prepare,
                 true> CatchPrepare_RTE;
             typedef InCaCatcher_std<CatchPrepare_RTE::Call,false> CatchPrepare;
+
+
+#if 0
+            typedef InCa< M2I<DRV,uint64_t (char const *),&DRV::last_insert_id> > CbLastInsId;
+            typedef InCaCatcher_std<
+                cv::InCaOverloader<1, CbLastInsId::Call,
+                    cv::InCaOverloader<0, JSPDO_lastInsertId>::Call
+                    >::Call
+                > LastInsId;
+#endif       
+
             
             ////////////////////////////////////////////////////////////////////////
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
-
             wdrv("close", WDRV::DestroyObject )
-                ("begin", cv::MethodToInvocationCallback<DRV,void (),&DRV::begin>)
-                ("commit", cv::MethodToInvocationCallback<DRV,void (),&DRV::commit>)
-                ("rollback", cv::MethodToInvocationCallback<DRV,void (),&DRV::rollback>)
-                ("exec", cv::MethodToInvocationCallback<DRV,void (std::string const &),&DRV::exec>)
-                ("prepare", CatchPrepare::Call )
-                ("exec", cv::InCaExceptionWrapper_std<JSPDO_exec,false>)
-                ("lastInsertId", cv::InCaExceptionWrapper_std<JSPDO_lastInsertId,false>)
+                ("begin", CATCHER< M2I<DRV,void (),&DRV::begin> >::Call )
+                ("commit", CATCHER< M2I<DRV,void (),&DRV::commit> >::Call )
+                ("rollback", CATCHER< M2I<DRV,void (),&DRV::rollback> >::Call)
+                ("exec", CATCHER< M2I<DRV,void (std::string const &),&DRV::exec> >::Call)
+                ("prepare", CATCHER< JSPDO_prepare >::Call )
+                ("exec", CATCHER<JSPDO_exec>::Call )
+                ("XlastInsertId",
+                 CATCHER<JSPDO_lastInsertId>::Call
+                 //LastInsId::Call
+                 )
+                ("lastInsertId", InCa< CATCHER<JSPDO_lastInsertId>::Call >() )
                 ("toString", JSPDO_toString)
                 ;
-
+#undef M2I
+#undef CATCHER
             typedef cv::MemberPropertyBinder<DRV> PB;
             PB::BindGetterConstMethod<char const * (),&DRV::driver_name>( "driverName", dProto );
             PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );

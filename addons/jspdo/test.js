@@ -121,7 +121,7 @@ function testInsert()
         st.bind(2);
         st.bind(3, ds);
         st.step();
-        print('Inserted new record. ID='+App.drv.lastInsertId());
+        print('Inserted new record. ID='+App.drv.lastInsertId("ignored"));
         st.reset();
         st.bind([42.24, null, ds]);
         st.step();
@@ -149,7 +149,8 @@ finally {
     if( App.drv ) {
         print("Closing driver connection "+App.drv);
         App.drv.close();
-        delete App.drv;
+        //delete App.drv;
     }
 }
+
 print("Tests finished.");
