@@ -244,7 +244,7 @@ struct FunctionToInvocable< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly ${count} arguments!");
+                return JS_THROW("This function requires at least ${count} arguments!");
             }
             ${sigTypeDecls}
             ${castTypedefs}
@@ -266,7 +266,7 @@ struct FunctionToInvocableVoid< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly ${count} arguments!");
+                return JS_THROW("This function requires at least ${count} arguments!");
             }
             ${sigTypeDecls}
             ${castTypedefs}
@@ -307,7 +307,7 @@ struct ${class}<T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly ${count} arguments!");
+                return JS_THROW("This function requires at least ${count} arguments!");
             }
             ${sigTypeDecls}
             ${castTypedefs}
@@ -337,7 +337,7 @@ struct ${class}Void< T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly ${count} arguments!");
+                return JS_THROW("This function requires at least ${count} arguments!");
             }
             ${sigTypeDecls}
             ${castTypedefs}

@@ -431,7 +431,7 @@ namespace v8 { namespace convert {
 	v8::Handle<v8::Value> operator()( std::exception const & ex ) const
 	{
             char const * msg = ex.what();
-	    return v8::ThrowException( String::New( msg ? msg : "unknown std::exception!" ) );
+	    return v8::ThrowException(v8::Exception::Error(String::New( msg ? msg : "unknown std::exception!" ) ));
 	    /** ^^^ String::New() internally calls strlen(), which hates it when string==0. */
 	}
     };
@@ -1243,6 +1243,17 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
         inline operator v8::Handle<v8::Value>() const
         {
             return CastToJS<std::string>( this->os.str() );
+        }
+
+        /**
+           Converts the message state to a v8::String (for use
+           with v8::Exception::Error() and friends).
+        */
+        inline operator v8::Handle<v8::String>() const
+        {
+            std::string const & str(this->os.str());
+            char const * cstr = str.c_str();
+            return v8::String::New( cstr ? cstr : "", cstr ? str.size() : 0 );
         }
 
         /**

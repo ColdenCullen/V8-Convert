@@ -15,8 +15,12 @@ function getCallLocation(framesBack){
 function assert(cond,msg)
 {
     if( ! cond ) {
-        msg = 'Assertion failed at (or around) line '+getCallLocation(3).line+': '+(msg||'')+
-            '\nStacktrace: '+JSON.stringify(getStacktrace(),0,0);
+        var loc = getCallLocation(3);
+        msg = 'Assertion failed in ['+loc.scriptName+
+            '] at (or around) line '+
+            loc.line+': '+
+            (msg||'')+
+            '\nStacktrace: '+JSON.stringify(getStacktrace(),0,4);
         throw new Error(msg);
     }
     else {
@@ -29,9 +33,13 @@ function asserteq(got,expect,msg)
     msg = msg || (got+' == '+expect);
     if(1) {
         if( got != expect ) {
-            var st = getStacktrace(4);
-            msg = 'Assertion failed at line '+st[1].line+': '+msg+
-                '\nStacktrace: '+JSON.stringify(st,0,0);
+            var st = getStacktrace(2);
+            var loc = st[1];
+            msg = 'Assertion failed in ['+loc.scriptName+
+                '] at (or around) line '+
+                loc.line+': '+
+                msg +
+                '\nStacktrace: '+JSON.stringify(st,0,4);
             throw new Error(msg);
         }
         else print("Assertion OK: "+msg);
@@ -50,6 +58,6 @@ function assertThrows( func ) {
     try { func(); }
     catch(e) { ex = e; }
     assert( !!ex, "Got expected exception: "+ex );
-    if(0) printStackTrace(4);
+    if(0) printStackTrace();
 }
 

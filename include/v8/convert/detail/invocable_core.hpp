@@ -17,8 +17,11 @@ conversion.
 namespace v8 { namespace convert {
 
 
-/* Temporary internal macro - it is undef'd at the end of this file. */
-#define JS_THROW(MSG) v8::ThrowException(v8::String::New(MSG))
+/** Temporary internal macro - it is undef'd at the end of this file. It is used
+    by internal generated code, so don't go renaming it without also changing the
+    code generator.
+*/
+#define JS_THROW(MSG) v8::ThrowException(v8::Exception::Error(v8::String::New(MSG)))
 
 /**
    Partial specialization for v8::InvocationCallback-like functions
@@ -962,18 +965,18 @@ namespace Detail {
     template <typename FSig>
     struct ForwardFunction
     {
-        typedef FunctionSignature<FSig> SignatureType;
+        typedef cv::FunctionSignature<FSig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToFunctionForwarder<FSig> Proxy;
         static ReturnType Call( FSig func, v8::Arguments const & argv )
         {
-            return CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
+            return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
     template <typename FSig>
     struct ForwardFunctionVoid
     {
-        typedef FunctionSignature<FSig> SignatureType;
+        typedef cv::FunctionSignature<FSig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToFunctionForwarder<FSig> Proxy;
         static void Call( FSig func, v8::Arguments const & argv )
@@ -988,22 +991,22 @@ namespace Detail {
     template <typename T, typename FSig>
     struct ForwardMethod
     {
-        typedef MethodSignature<T,FSig> SignatureType;
+        typedef cv::MethodSignature<T,FSig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToMethodForwarder<T,FSig> Proxy;
         static ReturnType Call( T & self, FSig func, v8::Arguments const & argv )
         {
-            return CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
+            return cv::CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
         }
         static ReturnType Call( FSig func, v8::Arguments const & argv )
         {
-            return CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
+            return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
     template <typename T, typename FSig>
     struct ForwardMethodVoid
     {
-        typedef MethodSignature<T,FSig> SignatureType;
+        typedef cv::MethodSignature<T,FSig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToMethodForwarder<T,FSig> Proxy;
         static void Call( T & self, FSig func, v8::Arguments const & argv )
@@ -1018,22 +1021,22 @@ namespace Detail {
     template <typename T, typename FSig>
     struct ForwardConstMethod
     {
-        typedef ConstMethodSignature<T,FSig> SignatureType;
+        typedef cv::ConstMethodSignature<T,FSig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToConstMethodForwarder<T,FSig> Proxy;
         static ReturnType Call( T const & self, FSig func, v8::Arguments const & argv )
         {
-            return CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
+            return cv::CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
         }
         static ReturnType Call( FSig func, v8::Arguments const & argv )
         {
-            return CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
+            return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
     template <typename T, typename FSig>
     struct ForwardConstMethodVoid
     {
-        typedef ConstMethodSignature<T,FSig> SignatureType;
+        typedef cv::ConstMethodSignature<T,FSig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToConstMethodForwarder<T,FSig> Proxy;
         static void Call( T const & self, FSig func, v8::Arguments const & argv )
@@ -1185,7 +1188,10 @@ forwardConstMethod(FSig func, v8::Arguments const & argv )
 }
 
 /**
-   A structified/functorified form of v8::InvocationCallback.
+   A structified/functorified form of v8::InvocationCallback.  It is
+   sometimes convenient to be able to use a typedef to create an alias
+   for a given InvocationCallback. Since we cannot typedef function
+   templates this way, this class can fill that gap.
 */
 template <v8::InvocationCallback ICB>
 struct InCa
@@ -1204,6 +1210,22 @@ struct InCa
     v8::Handle<v8::Value> operator()( v8::Arguments const & argv ) const
     {
         return Call(argv);
+    }
+};
+
+/**
+   "Converts" an InCa<ICB> instance to JS by treating it as an
+   InvocationCallback function.
+*/
+template <v8::InvocationCallback ICB>
+struct NativeToJS< InCa<ICB> >
+{
+    /**
+       Returns a JS handle to InCa<ICB>::Call().
+    */
+    v8::Handle<v8::Value> operator()( InCa<ICB> const & )
+    {
+        return v8::FunctionTemplate::New(InCa<ICB>::Call)->GetFunction();
     }
 };
 
@@ -1247,53 +1269,16 @@ struct InCa
 
    @code
    v8::InvocationCallback cb =
-       InCaExceptionWrapper<
+       InCaCatcher<
            std::exception, // type to catch
            char const *(), // signature of message-getter
            &std::exception::what, // message-fetching method
            false // whether to propagate other exceptions or not
-       >;
+       >::Call;
    @endcode
 
-   TODO:
-
-   - Figure out how we can implement a struct on top of this to
-   simplify chaining. With the current approach we cannot use typedefs
-   and thus the chains can become very unreable.
-   
-   @see InCaExceptionWrapper_std()
-*/
-template < typename ExceptionT,
-           typename SigGetMsg,
-           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
-           v8::InvocationCallback ICB,
-           bool PropagateOtherExceptions
-    >
-v8::Handle<v8::Value> InCaExceptionWrapper( v8::Arguments const & args )
-{
-    try
-    {
-        return ICB( args );
-    }
-    catch( ExceptionT const & e2 )
-    {
-        return v8::ThrowException(CastToJS((e2.*Getter)()));
-    }
-    catch(...)
-    {
-        if( PropagateOtherExceptions )throw;
-        else return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
-    }
-}
-
-/**
-   InCaCatcher is a class form of InCaExeptionWrapper().  See that
-   function for the meanings of the template arguments.
-   This class exists so that we can create typenames mapping to
-   concrete InCaExeptionWrapper instantiations.
-
    This type can be used to implement "chaining" of exception
-   catching, such that we can use the InCaExceptionWrapper
+   catching, such that we can use the InCaCatcher
    to catch various distinct exception types in the context
    of one v8::InvocationCallback call.
 
@@ -1334,7 +1319,7 @@ v8::Handle<v8::Value> InCaExceptionWrapper( v8::Arguments const & args )
 
    // Now MyCatcher::Call is-a InvocationCallback which will handle
    // MyExceptionType, std::runtime_error, and std::exception via
-   // different catch blocks. (Note, however, that the visible
+   // different catch blocks. Note, however, that the visible
    // behaviour for runtime_error and std::exception (its base class)
    // will be identical here, though they actually have different
    // code.
@@ -1342,19 +1327,24 @@ v8::Handle<v8::Value> InCaExceptionWrapper( v8::Arguments const & args )
    @endcode
 
    Note that the InvocationCallbacks created by most of the
-   v8::convert templates API adds (non-propagating) exception catching
-   for std::exception to the generated wrappers. Thus this type
-   is not terribly useful with them. It is, however, useful when
-   one wants to implement an InvocationCallback such that it can
-   throw, but wants to make sure that the exceptions to not
-   pass back into v8 when JS is calling the InvocationCallback
-   (as propagating exceptions through v8 is fatal to v8).
+   v8::convert API adds (non-propagating) exception catching for
+   std::exception to the generated wrappers. Thus this type is not
+   terribly useful with them. It is, however, useful when one wants to
+   implement an InvocationCallback such that it can throw, but wants
+   to make sure that the exceptions to not pass back into v8 when JS
+   is calling the InvocationCallback (as propagating exceptions
+   through v8 is fatal to v8).
+
+   TODO: consider removing the default-imposed exception handling
+   created by most forwarders/wrappers in favour of this
+   approach. This way is more flexible and arguably "more correct",
+   but adds a burder to users who want exception catching built in.
 */
 template < typename ExceptionT,
            typename SigGetMsg,
            typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
            v8::InvocationCallback ICB,
-           bool PropagateOtherExceptions
+           bool PropagateOtherExceptions = false
     >
 struct InCaCatcher
 {
@@ -1366,28 +1356,63 @@ struct InCaCatcher
         }
         catch( ExceptionT const & e2 )
         {
-            return v8::ThrowException(CastToJS((e2.*Getter)()));
+            return v8::ThrowException(v8::Exception::Error(CastToJS((e2.*Getter)())->ToString()));
+        }
+        catch( ExceptionT const * e2 )
+        {
+            return v8::ThrowException(v8::Exception::Error(CastToJS((e2->*Getter)())->ToString()));
         }
         catch(...)
         {
-            if( PropagateOtherExceptions )throw;
-            else return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
+            if( PropagateOtherExceptions ) throw;
+            else return JS_THROW("Unknown native exception thrown!");
         }
     }
 };
+    
+namespace Detail {
+    template <int Arity>
+    v8::Handle<v8::Value> TossArgCountError( v8::Arguments const & args )
+    {
+        using v8::convert::StringBuffer;
+        return v8::ThrowException(v8::Exception::Error(StringBuffer()
+                                                       <<"Incorrect argument count ("<<args.Length()
+                                                       <<") for function - expecting "
+                                                       <<Arity<<" arguments."));
+    }
 
-
+}
 
 /**
-   Convenience form of InCaExceptionWrapper() which wraps
-   std::exception and fetches their error message using
-   std::exception::what().
+   A utility template to assist in the creation of InvocationCallbacks
+   overloadable based on the number of arguments passed to them at
+   runtime.
+
+   See Call() for more details.
 */
-template < v8::InvocationCallback ICB, bool PropagateOtherExceptions >
-v8::Handle<v8::Value> InCaExceptionWrapper_std( v8::Arguments const & argv )
+template < int Arity,
+           v8::InvocationCallback ICB,
+           v8::InvocationCallback Fallback = Detail::TossArgCountError<Arity>
+>
+struct InCaOverloader
 {
-    return InCaExceptionWrapper<std::exception,char const *(),&std::exception::what, ICB,PropagateOtherExceptions>( argv );
-}
+    /**
+       When called, if (Artity==-1) or if (Arity==args.Length()) then
+       ICB(args) is returned, else Fallback(args) is returned.
+
+       The default Fallback implementation triggers a JS-side
+       exception when called, its error string indicating the argument
+       count mismatch.
+
+       Implementats the InvocationCallback interface.
+    */
+    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
+    {
+        return ( (-1==Arity) || (Arity == args.Length()) )
+            ? ICB(args)
+            : Fallback(args);
+    }
+};
 
 /**
    Convenience form of InCaCatcher which catches
@@ -1395,7 +1420,7 @@ v8::Handle<v8::Value> InCaExceptionWrapper_std( v8::Arguments const & argv )
    fetch the error message.
 */
 template <v8::InvocationCallback ICB,
-          bool PropagateOtherExceptions
+          bool PropagateOtherExceptions = false
           >
 struct InCaCatcher_std :
     InCaCatcher<std::exception,

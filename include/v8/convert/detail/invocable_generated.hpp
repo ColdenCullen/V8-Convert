@@ -24,7 +24,7 @@ struct FunctionToInvocable< 1, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 1 arguments!");
+                return JS_THROW("This function requires at least 1 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;
              typedef ArgCaster<A0> AC0;
@@ -43,7 +43,7 @@ struct FunctionToInvocableVoid< 1, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 1 arguments!");
+                return JS_THROW("This function requires at least 1 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;
              typedef ArgCaster<A0> AC0;
@@ -66,7 +66,7 @@ struct MethodToInvocable<T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 1 arguments!");
+                return JS_THROW("This function requires at least 1 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;
              typedef ArgCaster<A0> AC0;
@@ -93,7 +93,7 @@ struct MethodToInvocableVoid< T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 1 arguments!");
+                return JS_THROW("This function requires at least 1 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;
              typedef ArgCaster<A0> AC0;
@@ -123,7 +123,7 @@ struct ConstMethodToInvocable<T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 1 arguments!");
+                return JS_THROW("This function requires at least 1 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;
              typedef ArgCaster<A0> AC0;
@@ -150,7 +150,7 @@ struct ConstMethodToInvocableVoid< T, 1, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 1 arguments!");
+                return JS_THROW("This function requires at least 1 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;
              typedef ArgCaster<A0> AC0;
@@ -315,7 +315,7 @@ struct FunctionToInvocable< 2, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 2 arguments!");
+                return JS_THROW("This function requires at least 2 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
@@ -334,7 +334,7 @@ struct FunctionToInvocableVoid< 2, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 2 arguments!");
+                return JS_THROW("This function requires at least 2 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
@@ -357,7 +357,7 @@ struct MethodToInvocable<T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 2 arguments!");
+                return JS_THROW("This function requires at least 2 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
@@ -384,7 +384,7 @@ struct MethodToInvocableVoid< T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 2 arguments!");
+                return JS_THROW("This function requires at least 2 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
@@ -414,7 +414,7 @@ struct ConstMethodToInvocable<T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 2 arguments!");
+                return JS_THROW("This function requires at least 2 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
@@ -441,7 +441,7 @@ struct ConstMethodToInvocableVoid< T, 2, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 2 arguments!");
+                return JS_THROW("This function requires at least 2 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
@@ -607,7 +607,7 @@ struct FunctionToInvocable< 3, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 3 arguments!");
+                return JS_THROW("This function requires at least 3 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
@@ -626,7 +626,7 @@ struct FunctionToInvocableVoid< 3, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 3 arguments!");
+                return JS_THROW("This function requires at least 3 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
@@ -649,7 +649,7 @@ struct MethodToInvocable<T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 3 arguments!");
+                return JS_THROW("This function requires at least 3 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
@@ -676,7 +676,7 @@ struct MethodToInvocableVoid< T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 3 arguments!");
+                return JS_THROW("This function requires at least 3 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
@@ -706,7 +706,7 @@ struct ConstMethodToInvocable<T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 3 arguments!");
+                return JS_THROW("This function requires at least 3 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
@@ -733,7 +733,7 @@ struct ConstMethodToInvocableVoid< T, 3, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 3 arguments!");
+                return JS_THROW("This function requires at least 3 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
@@ -900,7 +900,7 @@ struct FunctionToInvocable< 4, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 4 arguments!");
+                return JS_THROW("This function requires at least 4 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
@@ -919,7 +919,7 @@ struct FunctionToInvocableVoid< 4, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 4 arguments!");
+                return JS_THROW("This function requires at least 4 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
@@ -942,7 +942,7 @@ struct MethodToInvocable<T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 4 arguments!");
+                return JS_THROW("This function requires at least 4 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
@@ -969,7 +969,7 @@ struct MethodToInvocableVoid< T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 4 arguments!");
+                return JS_THROW("This function requires at least 4 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
@@ -999,7 +999,7 @@ struct ConstMethodToInvocable<T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 4 arguments!");
+                return JS_THROW("This function requires at least 4 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
@@ -1026,7 +1026,7 @@ struct ConstMethodToInvocableVoid< T, 4, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 4 arguments!");
+                return JS_THROW("This function requires at least 4 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
@@ -1194,7 +1194,7 @@ struct FunctionToInvocable< 5, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 5 arguments!");
+                return JS_THROW("This function requires at least 5 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
@@ -1213,7 +1213,7 @@ struct FunctionToInvocableVoid< 5, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 5 arguments!");
+                return JS_THROW("This function requires at least 5 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
@@ -1236,7 +1236,7 @@ struct MethodToInvocable<T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 5 arguments!");
+                return JS_THROW("This function requires at least 5 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
@@ -1263,7 +1263,7 @@ struct MethodToInvocableVoid< T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 5 arguments!");
+                return JS_THROW("This function requires at least 5 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
@@ -1293,7 +1293,7 @@ struct ConstMethodToInvocable<T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 5 arguments!");
+                return JS_THROW("This function requires at least 5 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
@@ -1320,7 +1320,7 @@ struct ConstMethodToInvocableVoid< T, 5, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 5 arguments!");
+                return JS_THROW("This function requires at least 5 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
@@ -1489,7 +1489,7 @@ struct FunctionToInvocable< 6, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 6 arguments!");
+                return JS_THROW("This function requires at least 6 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
@@ -1508,7 +1508,7 @@ struct FunctionToInvocableVoid< 6, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 6 arguments!");
+                return JS_THROW("This function requires at least 6 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
@@ -1531,7 +1531,7 @@ struct MethodToInvocable<T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 6 arguments!");
+                return JS_THROW("This function requires at least 6 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
@@ -1558,7 +1558,7 @@ struct MethodToInvocableVoid< T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 6 arguments!");
+                return JS_THROW("This function requires at least 6 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
@@ -1588,7 +1588,7 @@ struct ConstMethodToInvocable<T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 6 arguments!");
+                return JS_THROW("This function requires at least 6 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
@@ -1615,7 +1615,7 @@ struct ConstMethodToInvocableVoid< T, 6, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 6 arguments!");
+                return JS_THROW("This function requires at least 6 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
@@ -1785,7 +1785,7 @@ struct FunctionToInvocable< 7, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 7 arguments!");
+                return JS_THROW("This function requires at least 7 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
@@ -1804,7 +1804,7 @@ struct FunctionToInvocableVoid< 7, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 7 arguments!");
+                return JS_THROW("This function requires at least 7 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
@@ -1827,7 +1827,7 @@ struct MethodToInvocable<T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 7 arguments!");
+                return JS_THROW("This function requires at least 7 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
@@ -1854,7 +1854,7 @@ struct MethodToInvocableVoid< T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 7 arguments!");
+                return JS_THROW("This function requires at least 7 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
@@ -1884,7 +1884,7 @@ struct ConstMethodToInvocable<T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 7 arguments!");
+                return JS_THROW("This function requires at least 7 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
@@ -1911,7 +1911,7 @@ struct ConstMethodToInvocableVoid< T, 7, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 7 arguments!");
+                return JS_THROW("This function requires at least 7 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
@@ -2082,7 +2082,7 @@ struct FunctionToInvocable< 8, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 8 arguments!");
+                return JS_THROW("This function requires at least 8 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
@@ -2101,7 +2101,7 @@ struct FunctionToInvocableVoid< 8, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 8 arguments!");
+                return JS_THROW("This function requires at least 8 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
@@ -2124,7 +2124,7 @@ struct MethodToInvocable<T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 8 arguments!");
+                return JS_THROW("This function requires at least 8 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
@@ -2151,7 +2151,7 @@ struct MethodToInvocableVoid< T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 8 arguments!");
+                return JS_THROW("This function requires at least 8 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
@@ -2181,7 +2181,7 @@ struct ConstMethodToInvocable<T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 8 arguments!");
+                return JS_THROW("This function requires at least 8 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
@@ -2208,7 +2208,7 @@ struct ConstMethodToInvocableVoid< T, 8, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 8 arguments!");
+                return JS_THROW("This function requires at least 8 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
@@ -2380,7 +2380,7 @@ struct FunctionToInvocable< 9, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 9 arguments!");
+                return JS_THROW("This function requires at least 9 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
@@ -2399,7 +2399,7 @@ struct FunctionToInvocableVoid< 9, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 9 arguments!");
+                return JS_THROW("This function requires at least 9 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
@@ -2422,7 +2422,7 @@ struct MethodToInvocable<T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 9 arguments!");
+                return JS_THROW("This function requires at least 9 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
@@ -2449,7 +2449,7 @@ struct MethodToInvocableVoid< T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 9 arguments!");
+                return JS_THROW("This function requires at least 9 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
@@ -2479,7 +2479,7 @@ struct ConstMethodToInvocable<T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 9 arguments!");
+                return JS_THROW("This function requires at least 9 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
@@ -2506,7 +2506,7 @@ struct ConstMethodToInvocableVoid< T, 9, Sig, Func > : ConstMethodPtr< T, Sig, F
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 9 arguments!");
+                return JS_THROW("This function requires at least 9 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
@@ -2679,7 +2679,7 @@ struct FunctionToInvocable< 10, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 10 arguments!");
+                return JS_THROW("This function requires at least 10 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
@@ -2698,7 +2698,7 @@ struct FunctionToInvocableVoid< 10, Sig, Func > : FunctionPtr< Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 10 arguments!");
+                return JS_THROW("This function requires at least 10 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
@@ -2721,7 +2721,7 @@ struct MethodToInvocable<T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 10 arguments!");
+                return JS_THROW("This function requires at least 10 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
@@ -2748,7 +2748,7 @@ struct MethodToInvocableVoid< T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 10 arguments!");
+                return JS_THROW("This function requires at least 10 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
@@ -2778,7 +2778,7 @@ struct ConstMethodToInvocable<T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func 
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 10 arguments!");
+                return JS_THROW("This function requires at least 10 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
@@ -2805,7 +2805,7 @@ struct ConstMethodToInvocableVoid< T, 10, Sig, Func > : ConstMethodPtr< T, Sig, 
         {
             if( argv.Length() < ParentType::Arity )
             {
-                return JS_THROW("This function requires exactly 10 arguments!");
+                return JS_THROW("This function requires at least 10 arguments!");
             }
             typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
