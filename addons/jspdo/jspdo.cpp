@@ -421,9 +421,16 @@ v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
     return cv::CastToJS( drv->last_insert_id( hint.empty() ? NULL : hint.c_str() ) );
 }
 
-v8::Handle<v8::Value> JSPDO_driverList( v8::Arguments const & argv )
+v8::Local<v8::Array> JSPDO_driverList()
 {
-    return v8::Undefined();
+    char const * const * dlist = cpdo_available_drivers();
+    v8::Local<v8::Array> ar( v8::Array::New() );
+    uint32_t ndx = 0;
+    for( ; *dlist; ++dlist )
+    {
+        ar->Set( ndx++, v8::String::New(*dlist) );
+    }
+    return ar;
 }
 
 namespace v8 { namespace convert {
@@ -533,6 +540,7 @@ namespace v8 { namespace convert {
                certain (i hope!) v8 doesn't GC it.
              */
             dCtor->SetHiddenValue( JSTR("Statement"), wst.CtorFunction() );
+            dCtor->Set(JSTR("driverList"), JSPDO_driverList() );
 
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the

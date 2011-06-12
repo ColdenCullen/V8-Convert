@@ -38,6 +38,8 @@ function testConnect() {
         print('\t'+k+'='+JSPDO.columnTypes[k]);
     }
 
+    print("Available db drivers: "+JSPDO.driverList.join(', '));
+    
     if(drv.driverName==='sqlite3') {
         drv.exec("CREATE TABLE IF NOT EXISTS "+App.tableName+"("+
              "id INTEGER PRIMARY KEY DEFAULT NULL,"+
