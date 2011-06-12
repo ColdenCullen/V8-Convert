@@ -83,8 +83,8 @@ function testSelect()
         for(i=0; i < colCount; ++i ) {
             names.push(st.columnName(i));
         }
-        print( names.join(sep) );
         if(0) {
+            print( names.join(sep) );
             var cols = [], i, v;
             while( st.step() ) {
                 cols.length = 0;
@@ -97,7 +97,15 @@ function testSelect()
                 print(cols.join(sep));
             }
         }
+        else if(1) {
+            var row;
+            while( (row = st.stepObject()) ) {
+                //asserteq( colCount, row.length, 'Column count matches.' );
+                print(JSON.stringify(row));
+            }
+        }
         else {
+            print( names.join(sep) );
             var row;
             while( (row = st.stepArray()) ) {
                 //asserteq( colCount, row.length, 'Column count matches.' );

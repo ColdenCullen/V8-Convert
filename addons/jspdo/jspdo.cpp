@@ -158,13 +158,6 @@ v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
     }
 }
 
-v8::Handle<v8::Value> Statement_getNumber(v8::Arguments const & argv)
-{
-    ASSERT_ARGV(argv.Length()>0);
-    ASSERT_STMT_DECL(argv.This());
-    return Statement_getNumber( st, cv::CastFromJS<uint16_t>(argv[0]) );
-}
-
 static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
                                                  uint16_t ndx )
 {
@@ -212,14 +205,7 @@ static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
     }
 }
 
-v8::Handle<v8::Value> Statement_getString(v8::Arguments const & argv)
-{
-    ASSERT_ARGV(argv.Length()>0);
-    ASSERT_STMT_DECL(argv.This());
-    return Statement_getString( st, cv::CastFromJS<uint16_t>(argv[0]) );
-}
-
-static v8::Handle<v8::Value> Statement_getGeneric( cpdo::statement * st,
+static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
                                                    uint16_t ndx )
 {
     switch( st->col_type(ndx) )
@@ -236,11 +222,11 @@ static v8::Handle<v8::Value> Statement_getGeneric( cpdo::statement * st,
     }
 }
 
-v8::Handle<v8::Value> Statement_getGeneric(v8::Arguments const & argv)
+v8::Handle<v8::Value> Statement_get(v8::Arguments const & argv)
 {
     ASSERT_ARGV(argv.Length()>0);
     ASSERT_STMT_DECL(argv.This());
-    return Statement_getGeneric( st, cv::CastFromJS<uint16_t>(argv[0]) );
+    return Statement_get( st, cv::CastFromJS<uint16_t>(argv[0]) );
 }
 
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
@@ -407,9 +393,28 @@ v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
     uint16_t i = 0;
     for( ; i < colCount; ++i )
     {
-        arh->Set( i, Statement_getGeneric(st, i) );
+        arh->Set( i, Statement_get(st, i) );
     }
     return arh;
+}
+
+v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
+{
+    v8::HandleScope hscope;
+    ASSERT_STMT_DECL(argv.This());
+    if( ! st->step() ) return v8::Null();
+    uint16_t const colCount = st->col_count();
+    if( ! colCount ) return v8::Null() /* fixme: throw here. */;
+    char const * colName = NULL;
+    v8::Handle<v8::Object> obj( v8::Object::New() );
+    uint16_t i = 0;
+    for( ; i < colCount; ++i )
+    {
+        colName = st->col_name(i);
+        if( ! colName ) continue;
+        obj->Set( JSTR(colName), Statement_get(st, i) );
+    }
+    return obj;
 }
 
 
@@ -507,11 +512,10 @@ namespace v8 { namespace convert {
             wst("finalize", WST::DestroyObject )
                 ("step", CATCHER< M2I<ST, bool (),&ST::step> >::Call)
                 ("stepArray", CATCHER< Statement_stepArray >::Call)
+                ("stepObject", CATCHER< Statement_stepObject >::Call)
                 ("columnName", CATCHER< M2I<ST, char const * (uint16_t),&ST::col_name> >::Call )
                 ("columnType", CATCHER< M2I<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
-                ("getNumber", CATCHER<Statement_getNumber>::Call)
-                ("getString", CATCHER<Statement_getString>::Call)
-                ("get", CATCHER<Statement_getGeneric>::Call)
+                ("get", CATCHER<Statement_get>::Call )
                 ("bind", CATCHER<Statement_bind>::Call)
                 ("reset", CATCHER< M2I<ST, void (void),&ST::reset> >::Call)
                 ("toString", Statement_toString)
@@ -555,11 +559,10 @@ namespace v8 { namespace convert {
                 ("exec", CATCHER< M2I<DRV,void (std::string const &),&DRV::exec> >::Call)
                 ("prepare", CATCHER< JSPDO_prepare >::Call )
                 ("exec", CATCHER<JSPDO_exec>::Call )
-                ("XlastInsertId",
+                ("lastInsertId",
                  CATCHER<JSPDO_lastInsertId>::Call
                  //LastInsId::Call
                  )
-                ("lastInsertId", InCa< CATCHER<JSPDO_lastInsertId>::Call >() )
                 ("toString", JSPDO_toString)
                 ;
 #undef M2I
@@ -581,7 +584,7 @@ namespace v8 { namespace convert {
                it internally in a hidden field so that we can be 100%
                certain (i hope!) v8 doesn't GC it.
              */
-            dCtor->SetHiddenValue( JSTR("Statement"), wst.CtorFunction() );
+            dCtor->SetHiddenValue( JSTR("$Statement"), wst.CtorFunction() );
             dCtor->Set(JSTR("driverList"), JSPDO_driverList() );
 
             if(0)
