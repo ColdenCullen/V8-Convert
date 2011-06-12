@@ -305,7 +305,6 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     uint16_t ndx = 1;
     for( ; ndx <= alen; ++ndx )
     {
-        CERR << "Binding column "<<ndx << '\n';
         v8::Handle<v8::Value> const & rc( Statement_bind( st, ndx, ar->Get( ndx - 1 ) ) );
         if( rc.IsEmpty() )
         {
@@ -342,7 +341,6 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
         val = argv[0];
         if( val->IsArray() )
         {
-            CERR << "bind-array...\n";
             v8::Handle<v8::Array> ar((v8::Array::Cast(*val)));
             return Statement_bind( st, ar );
         }
