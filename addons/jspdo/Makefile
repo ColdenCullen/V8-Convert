@@ -2,6 +2,8 @@
 ########################################################################
 # Main makefile for jspdo.
 #
+# Requires GNU Make 3.81+
+#
 # This file is pre-configured for compling directly from the
 # v8::convert source tree in my own personal dev environments. See the
 # comments in the various sections below for what might need to be
@@ -18,23 +20,11 @@
 #   (it's a header-only library, so required to special installation)
 #
 ########################################################################
-include config.make # see that file for certain configuration options.
+include ../../config.make # see that file for certain configuration options.
 
 ########################################################################
-# Set V8_PREFIX to the top-level install path of your v8 installation.
-# If ENABLE_DEBUG is set to non-0 then libv8_g is used.
-V8_PREFIX := $(HOME)
-CPPFLAGS += -I$(V8_PREFIX)/include
-LDFLAGS_V8 :=  -lpthread -L$(V8_PREFIX)/lib
-ifeq (0,$(ENABLE_DEBUG))
-    LDFLAGS_V8 += -lv8
-else
-    LDFLAGS_V8 += -lv8_g
-endif
-
-########################################################################
-# Fix the CPPFLAGS to point to where <v8/convert/*.hpp> can be found.
-CPPFLAGS += -I../../include
+# If needed, append the CPPFLAGS to point to where <v8/convert/*.hpp> can
+# be found.
 
 
 ########################################################################
@@ -69,7 +59,7 @@ ifneq (1,$(CPDO_ENABLE_MYSQL5))
 endif
 
 ########################################################################
-# The library is useless without at least one driver, so we bail out
+# The library is useless without at least one db driver, so we bail out
 # if we didn't find one...
 ifeq (00,$(CPDO_ENABLE_MYSQL5)$(CPDO_ENABLE_SQLITE3))
   $(error The configuration process found neither sqlite3 nor mysql5 dev files.)
@@ -79,7 +69,6 @@ endif
 ########################################################################
 # The rest of the code "shouldn't" need to be hacked for most Unix
 # systems.
-
 
 ########################################################################
 # Build shared library and link it against the underlying db libs

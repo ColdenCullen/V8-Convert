@@ -15,16 +15,24 @@ ShakeNMake.QUIET := 0# set to 1 to enable "quiet mode"
 DEBUG ?= 1
 ENABLE_DEBUG ?= $(DEBUG)
 
-########################################################################
-# Set USE_PTHREADS to 1 to enable the pthreads-based mutex in the
-# paging allocator. (Not currently used.)
-USE_PTHREADS := 1
-
-
 GCC_CFLAGS := -pedantic -Wall -Werror -fPIC -ansi
-
 CFLAGS += $(GCC_CFLAGS)
 CXXFLAGS += $(GCC_CFLAGS)
+
+########################################################################
+# v8-specific stuff...
+#
+# Set V8_PREFIX to the top-level install path of your v8 installation.
+# If ENABLE_DEBUG is set to non-0 then libv8_g is used.
+V8_PREFIX ?= $(HOME)
+LDFLAGS_V8 ?= -lpthread -L$(V8_PREFIX)/lib
+CPPFLAGS += -I$(V8_PREFIX)/include
+ifeq (0,$(ENABLE_DEBUG))
+    LDFLAGS_V8 += -lv8
+else
+    LDFLAGS_V8 += -lv8_g
+endif
+
 
 ########################################################################
 # Don't touch anything below this line unless you need to tweak it to
