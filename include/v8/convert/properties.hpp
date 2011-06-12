@@ -259,8 +259,6 @@ namespace v8 { namespace convert {
         static void BindGetterSetterFunctions( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
 	{
             if( ! prototype.IsEmpty() )
-            typedef FunctionSignature<SigGet> GFS;
-            typedef FunctionSignature<SigSet> SFS;
             prototype->SetAccessor( v8::String::New( propName ),
                                     FunctionToAccesorGetter<SigGet,Getter>,
                                     FunctionToAccesorSetter<SigSet,Setter> );
