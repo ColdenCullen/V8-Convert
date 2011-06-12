@@ -112,6 +112,11 @@ function testSelect()
 
 }
 
+function testCleanup()
+{
+    App.drv.exec("DELETE FROM "+App.tableName);
+}
+
 function testInsert()
 {
     var st;
@@ -122,6 +127,7 @@ function testInsert()
         st.bind(1,24.42);
         st.bind(2);
         st.bind(3, ds);
+        assertThrows( function() { st.bind(4); } );
         st.step();
         print('Inserted new record. ID='+App.drv.lastInsertId("ignored"));
         st.reset();
@@ -137,11 +143,35 @@ function testInsert()
     }
 }
 
+function testInsertNamedParams() {
+    var st;
+    try {
+        var sql = "INSERT INTO "+App.tableName+"(a,b,c) VALUES(:pA,:pB,:pC)";
+        var ds = (new Date()).toString();
+        st = App.drv.prepare(sql);
+        st.bind(':pB', 32.23);
+        st.bind({':pA':7, ':pC':ds});
+        assertThrows( function() { st.bind(':pD'); } );
+        st.step();
+        print('Inserted new record using named params. ID='+App.drv.lastInsertId());
+    }
+    finally {
+        if( st ) {
+            print("Closing statement handle "+st);
+            st.finalize();
+        }
+    }
+
+}
+
+
 try {
     testConnect();
+    testCleanup();
     assert( App.drv, "Driver is alive." );
     testSelect();
     testInsert();
+    testInsertNamedParams();
     testSelect();
 }
 catch(e) {

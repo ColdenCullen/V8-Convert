@@ -299,6 +299,24 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
 }
 
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
+                                            std::string const & pname,
+                                            v8::Handle<v8::Value> const & val )
+{
+    char const * cstr = pname.empty() ? NULL : pname.c_str();
+    return Statement_bind( st, st->param_index( cstr ), val );
+}
+
+static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
+                                            v8::Handle<v8::Value> const & index,
+                                            v8::Handle<v8::Value> const & val )
+{
+    return index->IsString()
+        ? Statement_bind( st, cv::JSToStdString(index), val )
+        : Statement_bind( st, cv::CastFromJS<uint16_t>(index), val )
+        ;
+}
+
+static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
                                             v8::Handle<v8::Array> & ar )
 {
     uint32_t const alen = ar->Length();
@@ -309,6 +327,28 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
         if( rc.IsEmpty() )
         {
             // JS exception was thrown.
+            return rc;
+        }
+    }
+    return v8::Undefined();
+}
+
+static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
+                                            v8::Handle<v8::Object> & obj )
+{
+    v8::Local<v8::Array> plist( obj->GetPropertyNames() );
+    v8::Handle<v8::Value> rc;
+    uint32_t const alen = plist->Length();
+    uint32_t i = 0;
+    for( ; i < alen; ++i )
+    {
+        v8::Local<v8::Value> const key = plist->Get( i );
+        if( key.IsEmpty() ) continue;
+        v8::Local<v8::String> const skey( v8::String::Cast(*key) );
+        if( ! obj->HasOwnProperty(skey) ) continue;
+        rc = Statement_bind( st, skey, obj->Get(skey) );
+        if( rc.IsEmpty() )
+        { // JS exception
             return rc;
         }
     }
@@ -334,9 +374,9 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
     }
     if( 2 == argc )
     {
-        return Statement_bind( st, cv::CastFromJS<uint16_t>(argv[0]), argv[1] );
+        return Statement_bind( st, argv[0], argv[1] );
     }
-    else
+    else /* one argument */
     {
         val = argv[0];
         if( val->IsArray() )
@@ -344,12 +384,14 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
             v8::Handle<v8::Array> ar((v8::Array::Cast(*val)));
             return Statement_bind( st, ar );
         }
-        /** TODO: check if argv[0] is-a Object and use it as a set of
-            key/value pairs (key=bound param names) to bind.
-        */
+        else if( val->IsObject() )
+        {
+            v8::Handle<v8::Object> obj((v8::Object::Cast(*val)));
+            return Statement_bind( st, obj );
+        }
         else
         {
-            return Statement_bind( st, cv::CastFromJS<uint16_t>(val), v8::Null() );
+            return Statement_bind( st, val, v8::Null() );
         }
     }
 }
