@@ -115,12 +115,17 @@ function testInsert()
     var st;
     try {
         var sql = "INSERT INTO "+App.tableName+"(a,b,c) VALUES(?,?,?)";
+        var ds = (new Date()).toString();
         st = App.drv.prepare(sql);
         st.bind(1,24.42);
         st.bind(2);
-        st.bind(3, (new Date()).toString() );
+        st.bind(3, ds);
         st.step();
-        print('Inserted new record. ID='+App.drv.lastInsertId())
+        print('Inserted new record. ID='+App.drv.lastInsertId());
+        st.reset();
+        st.bind([42.24, null, ds]);
+        st.step();
+        print('Inserted new record. ID='+App.drv.lastInsertId());
     }
     finally {
         if( st ) {

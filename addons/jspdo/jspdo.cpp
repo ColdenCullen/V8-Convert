@@ -104,47 +104,6 @@ namespace v8 { namespace convert {
 }}
 
 namespace v8 { namespace convert {
-    /**
-       This is an experiment...
-    */
-    template < typename ExceptionT,
-               typename SigGetMsg,
-               typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
-               v8::Handle<v8::Value> (*ICB)( v8::Arguments const & )
-        >
-    v8::Handle<v8::Value> InCaExceptionWrapper( v8::Arguments const & args )
-    {
-        try
-        {
-            return ICB( args );
-        }
-        catch( ExceptionT const & e2 )
-        {
-            return v8::ThrowException(cv::CastToJS((e2.*Getter)()));
-        }
-#if 0
-        catch( std::exception const & ex )
-        {
-            return v8::convert::CastToJS(ex);
-        }
-#endif
-        catch(...)
-        {
-            return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
-        }
-    }
-    /**
-       InvocationCallback wrapper which calls another InvocationCallback
-       and translates native-level std::exceptions to JS. std::exception is caught
-       explicitly and its what() method it used as the exception string. Other
-       exceptions are caught and cause an unspecified exception message to be
-       used.
-    */
-    template < v8::Handle<v8::Value> (*ICB)( v8::Arguments const & ) >
-    v8::Handle<v8::Value> InCaStdExceptionWrapper( v8::Arguments const & argv )
-    {
-        return InCaExceptionWrapper<std::exception,char const *(),&std::exception::what, ICB>( argv );
-    }
 }}
 
 #define STMT_DECL(JVAL) cpdo::statement * st = cv::CastFromJS<cpdo::statement>(JVAL)
@@ -154,7 +113,8 @@ namespace v8 { namespace convert {
 #define ASSERT_DRV_DECL(JVAL) DRV_DECL(JVAL); \
     if( ! drv ) return v8::ThrowException(JSTR("Could not find native cpdo::driver 'this' object."))
 #define ASSERT_ARGV(COND) if( ! (COND) ) return v8::ThrowException(v8::String::New("Arguments condition failed: "#COND))
-v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
+
+static v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
 {
     DRV_DECL(argv.This());
     cv::StringBuffer buf;
@@ -169,13 +129,12 @@ v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
 v8::Handle<v8::Value> Statement_toString( v8::Arguments const & argv )
 {
     STMT_DECL(argv.This());
-    cv::StringBuffer buf;
-    buf << "[cpdo::statement@"<<(void const *)st;
-    return buf << ']';
+    return cv::StringBuffer()
+        << "[cpdo::statement@"<<(void const *)st << ']';
 }
 
-static v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
-                                                      uint16_t ndx )
+v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
+                                          uint16_t ndx )
 {
     switch( st->col_type(ndx) )
     {
@@ -207,7 +166,7 @@ v8::Handle<v8::Value> Statement_getNumber(v8::Arguments const & argv)
 }
 
 static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
-                                                      uint16_t ndx )
+                                                 uint16_t ndx )
 {
     switch( st->col_type(ndx) )
     {
@@ -260,8 +219,8 @@ v8::Handle<v8::Value> Statement_getString(v8::Arguments const & argv)
     return Statement_getString( st, cv::CastFromJS<uint16_t>(argv[0]) );
 }
 
-v8::Handle<v8::Value> Statement_getGeneric( cpdo::statement * st,
-                                            uint16_t ndx )
+static v8::Handle<v8::Value> Statement_getGeneric( cpdo::statement * st,
+                                                   uint16_t ndx )
 {
     switch( st->col_type(ndx) )
     {
@@ -339,6 +298,25 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     return v8::Undefined();
 }
 
+static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
+                                            v8::Handle<v8::Array> & ar )
+{
+    uint32_t const alen = ar->Length();
+    uint16_t ndx = 1;
+    for( ; ndx <= alen; ++ndx )
+    {
+        CERR << "Binding column "<<ndx << '\n';
+        v8::Handle<v8::Value> const & rc( Statement_bind( st, ndx, ar->Get( ndx - 1 ) ) );
+        if( rc.IsEmpty() )
+        {
+            // JS exception was thrown.
+            return rc;
+        }
+    }
+    return v8::Undefined();
+}
+
+
 /**
    Potential TODOs:
 
@@ -348,19 +326,34 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
 */
 v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
 {
-    ASSERT_ARGV(argv.Length()>0);
     ASSERT_STMT_DECL(argv.This());
-    uint16_t ndx = cv::CastFromJS<uint16_t>(argv[0]);
     v8::Handle<v8::Value> val;
-    if( argv.Length() > 0 ) val = argv[1];
-    else
-    {/** TODO: check if argv[0] is-a Array and if it is then loop over
-         each of them, binding the next subsequent parameter. We could
-         also handle named parameters using an object as input.
-     */
-        val = v8::Undefined();
+    int const argc = argv.Length();
+    if( !argc || (argc > 2) )
+    {
+        return v8::ThrowException(JSTR("bind() requires 1 or 2 arguments."));
     }
-    return Statement_bind( st, ndx, val );
+    if( 2 == argc )
+    {
+        return Statement_bind( st, cv::CastFromJS<uint16_t>(argv[0]), argv[1] );
+    }
+    else
+    {
+        val = argv[0];
+        if( val->IsArray() )
+        {
+            CERR << "bind-array...\n";
+            v8::Handle<v8::Array> ar((v8::Array::Cast(*val)));
+            return Statement_bind( st, ar );
+        }
+        /** TODO: check if argv[0] is-a Object and use it as a set of
+            key/value pairs (key=bound param names) to bind.
+        */
+        else
+        {
+            return Statement_bind( st, cv::CastFromJS<uint16_t>(val), v8::Null() );
+        }
+    }
 }
 
 v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
@@ -430,6 +423,10 @@ v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
     return cv::CastToJS( drv->last_insert_id( hint.empty() ? NULL : hint.c_str() ) );
 }
 
+v8::Handle<v8::Value> JSPDO_driverList( v8::Arguments const & argv )
+{
+    return v8::Undefined();
+}
 
 namespace v8 { namespace convert {
 
@@ -459,13 +456,13 @@ namespace v8 { namespace convert {
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObject )
                 ("step", cv::MethodToInvocationCallback<ST, bool (),&ST::step>)
-                ("stepArray", cv::InCaStdExceptionWrapper<Statement_stepArray>)
+                ("stepArray", cv::InCaExceptionWrapper_std<Statement_stepArray,false>)
                 ("columnName", cv::MethodToInvocationCallback<ST, char const * (uint16_t),&ST::col_name>)
                 ("columnType", cv::MethodToInvocationCallback<ST, cpdo_data_type (uint16_t),&ST::col_type>)
-                ("getNumber", cv::InCaStdExceptionWrapper<Statement_getNumber>)
-                ("getString", cv::InCaStdExceptionWrapper<Statement_getString>)
-                ("get", cv::InCaStdExceptionWrapper<Statement_getGeneric>)
-                ("bind", cv::InCaStdExceptionWrapper<Statement_bind>)
+                ("getNumber", cv::InCaExceptionWrapper_std<Statement_getNumber,false>)
+                ("getString", cv::InCaExceptionWrapper_std<Statement_getString,false>)
+                ("get", cv::InCaExceptionWrapper_std<Statement_getGeneric,false>)
+                ("bind", cv::InCaExceptionWrapper_std<Statement_bind,false>)
                 ("reset", cv::MethodToInvocationCallback<ST, void (void),&ST::reset>)
                 ("toString", Statement_toString)
                 ("paramIndex", cv::MethodToInvocationCallback<ST, uint16_t (char const *),&ST::param_index>)
@@ -478,6 +475,15 @@ namespace v8 { namespace convert {
             SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
 
             
+            // Just an experiment:
+            typedef InCaCatcher<
+                std::runtime_error,
+                char const * (),
+                &std::runtime_error::what,
+                JSPDO_prepare,
+                true> CatchPrepare_RTE;
+            typedef InCaCatcher_std<CatchPrepare_RTE::Call,false> CatchPrepare;
+            
             ////////////////////////////////////////////////////////////////////////
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
@@ -487,9 +493,9 @@ namespace v8 { namespace convert {
                 ("commit", cv::MethodToInvocationCallback<DRV,void (),&DRV::commit>)
                 ("rollback", cv::MethodToInvocationCallback<DRV,void (),&DRV::rollback>)
                 ("exec", cv::MethodToInvocationCallback<DRV,void (std::string const &),&DRV::exec>)
-                ("prepare", cv::InCaStdExceptionWrapper<JSPDO_prepare>)
-                ("exec", cv::InCaStdExceptionWrapper<JSPDO_exec>)
-                ("lastInsertId", cv::InCaStdExceptionWrapper<JSPDO_lastInsertId>)
+                ("prepare", CatchPrepare::Call )
+                ("exec", cv::InCaExceptionWrapper_std<JSPDO_exec,false>)
+                ("lastInsertId", cv::InCaExceptionWrapper_std<JSPDO_lastInsertId,false>)
                 ("toString", JSPDO_toString)
                 ;
 
@@ -551,11 +557,20 @@ namespace v8 { namespace convert {
 
 } }
 
-/**
-   Pass the JS engine's global object (or a "virtual" global
-   object of your choice) to add the JSPDO class to it.
-*/
-void SetupCpdoBindings( v8::Handle<v8::Object> & dest )
-{
-    cv::ClassCreator_Init<cpdo::driver>::InitBindings(dest);
+
+namespace jspdo {
+    /**
+       Pass the JS engine's global object (or a "virtual" global
+       object of your choice) to add the JSPDO class to it.
+    */
+    void SetupV8Bindings( v8::Handle<v8::Object> & dest )
+    {
+        cv::ClassCreator_Init<cpdo::driver>::InitBindings(dest);
+    }
+
 }
+#undef ASSERT_ARGV
+#undef DRV_DECL
+#undef ASSERT_DRV_DECL
+#undef STMT_DECL
+#undef ASSERT_STMT_DECL

@@ -33,7 +33,8 @@ typedef v8::Handle<v8::Value> ValueHandle;
 #include "../../demo_shellfuncs.cpp"
 
 
-void SetupCpdoBindings( v8::Handle<v8::Object> & dest ) /* in jspdo.cpp */;
+/* manual declarations of code from jspdo.cpp */
+namespace jspdo { void SetupV8Bindings( v8::Handle<v8::Object> & dest ); }
 
 static int v8_main(int argc, char const * const * argv)
 {
@@ -66,7 +67,7 @@ static int v8_main(int argc, char const * const * argv)
     context = Context::New(NULL, global);
     Context::Scope context_scope(context);
     Handle<Object> gobj = context->Global();
-    SetupCpdoBindings(gobj);
+    jspdo::SetupV8Bindings(gobj);
     try
     {
         ValueHandle av[] = {

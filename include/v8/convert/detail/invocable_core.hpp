@@ -801,6 +801,11 @@ namespace Detail {
 
    Sig must be a function-signature-like argument. e.g. <double (int,double)>,
    and the members of this class expect functions matching that signature.
+
+   TODO: Now that we have InCaCatcher, we could potentially
+   templatize this to customize exception handling. Or we could
+   remove the handling altogether and require clients to use
+   InCaCatcher and friends if they want to catch exceptions.
 */
 template <typename Sig>
 struct ArgsToFunctionForwarder
@@ -1062,8 +1067,8 @@ forwardFunction( FSig func, Arguments const & argv )
     return (RV)ProxyType::Call( func, argv )
         /* the explicit cast there is a workaround for the RV==void
            case. It is a no-op for other cases, since the return value
-           is already RV. Not all compilers allow explicitly returning
-           void values, and thus the kludge.
+           is already RV. Some compilers (MSVC) don't allow an explit
+           return of a void expression without the cast.
         */
         ;
 }
@@ -1089,9 +1094,10 @@ forwardMethod( T & self,
                  Detail::ForwardMethod< T, FSig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( self, func, argv )
-        /* the explicit cast there is a workaround for the
-           RV==void case. It is a no-op for other cases,
-           since the return value is already RV.
+        /* the explicit cast there is a workaround for the RV==void
+           case. It is a no-op for other cases, since the return value
+           is already RV. Some compilers (MSVC) don't allow an explit
+           return of a void expression without the cast.
         */
         ;
 }
@@ -1115,9 +1121,10 @@ forwardMethod(FSig func, v8::Arguments const & argv )
                  Detail::ForwardMethod< T, FSig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( func, argv )
-        /* the explicit cast there is a workaround for the
-           RV==void case. It is a no-op for other cases,
-           since the return value is already RV.
+        /* the explicit cast there is a workaround for the RV==void
+           case. It is a no-op for other cases, since the return value
+           is already RV. Some compilers (MSVC) don't allow an explit
+           return of a void expression without the cast.
         */
         ;
 }
@@ -1143,9 +1150,10 @@ forwardConstMethod( T const & self,
                  Detail::ForwardConstMethod< T, FSig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( self, func, argv )
-        /* the explicit cast there is a workaround for the
-           RV==void case. It is a no-op for other cases,
-           since the return value is already RV.
+        /* the explicit cast there is a workaround for the RV==void
+           case. It is a no-op for other cases, since the return value
+           is already RV. Some compilers (MSVC) don't allow an explit
+           return of a void expression without the cast.
         */
         ;
 }
@@ -1176,7 +1184,229 @@ forwardConstMethod(FSig func, v8::Arguments const & argv )
         ;
 }
 
-    
+/**
+   A structified/functorified form of v8::InvocationCallback.
+*/
+template <v8::InvocationCallback ICB>
+struct InCa
+{
+    /**
+       Implements the v8::InvocationCallback() interface.
+       Simply passes on the call to ICB(argv).
+    */
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        return ICB(argv);
+    }
+    /**
+       Returns Call(argv).
+    */
+    v8::Handle<v8::Value> operator()( v8::Arguments const & argv ) const
+    {
+        return Call(argv);
+    }
+};
+
+/**
+   InvocationCallback wrapper which calls another InvocationCallback
+   and translates any native ExceptionT exceptions thrown by that
+   function into JS exceptions.
+
+   ExceptionT must be an exception type which is thrown by copy
+   (e.g. STL-style) as opposed to by pointer (MFC-style).
+   
+   SigGetMsg must be a function-signature-style argument describing
+   a method within ExceptionT which can be used to fetch the message
+   reported by the exception. It must meet these requirements:
+
+   a) Be const
+   b) Take no arguments
+   c) Return a type convertible to JS via CastToJS()
+
+   Getter must be a pointer to a function matching that signature.
+
+   ICB must be a v8::InvocationCallback. When this function is called
+   by v8, it will pass on the call to ICB and catch exceptions.
+
+   Exceptions of type ExceptionT which are thrown by ICB get
+   translated into a JS exception with an error message fetched using
+   ExceptionT::Getter().
+
+   If PropagateOtherExceptions is true then exception of types other
+   than ExceptionT are re-thrown (which can be fatal to v8, so be
+   careful). If it is false then they are not propagated but the error
+   message in the generated JS exception is unspecified (because we
+   have no generic way to get such a message). If a client needs to
+   catch multiple exception types, enable propagation and chain the
+   callbacks together. In such a case, the outer-most (first) callback
+   in the chain should not propagate unknown exceptions (to avoid
+   killing v8).
+
+
+   Example:
+
+   @code
+   v8::InvocationCallback cb =
+       InCaExceptionWrapper<
+           std::exception, // type to catch
+           char const *(), // signature of message-getter
+           &std::exception::what, // message-fetching method
+           false // whether to propagate other exceptions or not
+       >;
+   @endcode
+
+   TODO:
+
+   - Figure out how we can implement a struct on top of this to
+   simplify chaining. With the current approach we cannot use typedefs
+   and thus the chains can become very unreable.
+   
+   @see InCaExceptionWrapper_std()
+*/
+template < typename ExceptionT,
+           typename SigGetMsg,
+           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           v8::InvocationCallback ICB,
+           bool PropagateOtherExceptions
+    >
+v8::Handle<v8::Value> InCaExceptionWrapper( v8::Arguments const & args )
+{
+    try
+    {
+        return ICB( args );
+    }
+    catch( ExceptionT const & e2 )
+    {
+        return v8::ThrowException(CastToJS((e2.*Getter)()));
+    }
+    catch(...)
+    {
+        if( PropagateOtherExceptions )throw;
+        else return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
+    }
+}
+
+/**
+   InCaCatcher is a class form of InCaExeptionWrapper().  See that
+   function for the meanings of the template arguments.
+   This class exists so that we can create typenames mapping to
+   concrete InCaExeptionWrapper instantiations.
+
+   This type can be used to implement "chaining" of exception
+   catching, such that we can use the InCaExceptionWrapper
+   to catch various distinct exception types in the context
+   of one v8::InvocationCallback call.
+
+   Example:
+
+   @code
+   // Here we want to catch MyExceptionType, std::runtime_error, and
+   // std::exception (the base class of std::runtime_error, by the
+   // way) separately:
+
+   // When catching within an exception hierarchy, start with the most
+   // specific (most-derived) exceptions.
+
+   // Client-specified exception type:
+   typedef InCaCatcher<
+      MyExceptionType,
+      std::string (),
+      &MyExceptionType::getMessage,
+      MyCallbackWhichThrows, // the "real" InvocationCallback
+      true // make sure propagation is turned on!
+      > Catch_MyEx;
+
+  // std::runtime_error:
+  typedef InCaCatcher<
+      std::runtime_error,
+      char const * (),
+      &std::runtime_error::what,
+      Catch_MyEx::Catch, // next Callback in the chain
+      true // make sure propagation is turned on!
+      > Catch_RTE;
+
+   // std::exception:
+   typedef InCaCatcher_std<
+       Catch_RTE::Call,
+       false // Often we want no propagation at the top-most level,
+             // to avoid killing v8.
+       > MyCatcher;
+
+   // Now MyCatcher::Call is-a InvocationCallback which will handle
+   // MyExceptionType, std::runtime_error, and std::exception via
+   // different catch blocks. (Note, however, that the visible
+   // behaviour for runtime_error and std::exception (its base class)
+   // will be identical here, though they actually have different
+   // code.
+
+   @endcode
+
+   Note that the InvocationCallbacks created by most of the
+   v8::convert templates API adds (non-propagating) exception catching
+   for std::exception to the generated wrappers. Thus this type
+   is not terribly useful with them. It is, however, useful when
+   one wants to implement an InvocationCallback such that it can
+   throw, but wants to make sure that the exceptions to not
+   pass back into v8 when JS is calling the InvocationCallback
+   (as propagating exceptions through v8 is fatal to v8).
+*/
+template < typename ExceptionT,
+           typename SigGetMsg,
+           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           v8::InvocationCallback ICB,
+           bool PropagateOtherExceptions
+    >
+struct InCaCatcher
+{
+    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
+    {
+        try
+        {
+            return ICB( args );
+        }
+        catch( ExceptionT const & e2 )
+        {
+            return v8::ThrowException(CastToJS((e2.*Getter)()));
+        }
+        catch(...)
+        {
+            if( PropagateOtherExceptions )throw;
+            else return v8::ThrowException(v8::String::New("Unknown native exception thrown!"));
+        }
+    }
+};
+
+
+
+/**
+   Convenience form of InCaExceptionWrapper() which wraps
+   std::exception and fetches their error message using
+   std::exception::what().
+*/
+template < v8::InvocationCallback ICB, bool PropagateOtherExceptions >
+v8::Handle<v8::Value> InCaExceptionWrapper_std( v8::Arguments const & argv )
+{
+    return InCaExceptionWrapper<std::exception,char const *(),&std::exception::what, ICB,PropagateOtherExceptions>( argv );
+}
+
+/**
+   Convenience form of InCaCatcher which catches
+   std::exception and uses their what() method to
+   fetch the error message.
+*/
+template <v8::InvocationCallback ICB,
+          bool PropagateOtherExceptions
+          >
+struct InCaCatcher_std :
+    InCaCatcher<std::exception,
+                char const * (),
+                &std::exception::what,
+                ICB,
+                PropagateOtherExceptions
+                >
+{};
+
+
 #include "invocable_generated.hpp"
 
 }} // namespaces
