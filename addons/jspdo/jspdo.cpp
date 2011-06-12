@@ -330,9 +330,14 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     {
         v8::Local<v8::Value> const key = plist->Get( i );
         if( key.IsEmpty() ) continue;
-        v8::Local<v8::String> const skey( v8::String::Cast(*key) );
-        if( ! obj->HasOwnProperty(skey) ) continue;
-        rc = Statement_bind( st, skey, obj->Get(skey) );
+        v8::Local<v8::String> skey( v8::String::Cast(*key) );
+        if( ! obj->HasOwnProperty(skey) || (skey->Length()<1) ) continue;
+        else if( ':' != *(*v8::String::AsciiValue(skey)) )
+        {
+            std::string const & colon( ":"+cv::JSToStdString(skey) );
+            skey = v8::String::New(colon.c_str(), static_cast<int>(colon.size()) );
+        }
+        rc = Statement_bind( st, skey, obj->Get(key/*NOT skey! We might have changed it!*/) );
         if( rc.IsEmpty() )
         { // JS exception
             return rc;
@@ -583,8 +588,12 @@ namespace v8 { namespace convert {
                constructor to the destination object, but we do store
                it internally in a hidden field so that we can be 100%
                certain (i hope!) v8 doesn't GC it.
+
+               On second thought - if it's private then clients cannot do
+               'instanceof' checks on it.
              */
-            dCtor->SetHiddenValue( JSTR("$Statement"), wst.CtorFunction() );
+            //dCtor->SetHiddenValue( JSTR("$Statement"), wst.CtorFunction() );
+            dCtor->Set( JSTR("Statement"), wst.CtorFunction() );
             dCtor->Set(JSTR("driverList"), JSPDO_driverList() );
 
             if(0)
