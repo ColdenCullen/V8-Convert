@@ -188,8 +188,11 @@ function testExt_forEach() {
 function testExt_fetchAll() {
     var sql;
     sql = "SELECT * FROM "+App.tableName+" WHERE a > :pA LIMIT 3";
-    sql = App.drv.prepare(sql);
-    print('fetchAll() parameter names: '+sql.paramNames.join(', '));
+    if(1) {
+        sql = App.drv.prepare(sql);
+        print('fetchAll() parameter names: '+sql.paramNames.join(', '));
+        print('parameter names 1 and 5: '+sql.paramName(1)+' '+sql.paramName(5));
+    }
     var opt = {
         sql:sql,
         bind:{pA:20},

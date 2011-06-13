@@ -712,7 +712,8 @@ namespace v8 { namespace convert {
                 ("bind", CATCHER<Statement_bind>::Call)
                 ("reset", CATCHER< M2I<ST, void (void),&ST::reset> >::Call)
                 ("toString", CATCHER<Statement_toString>::Call )
-                ("paramIndex", InCaCatcher_std<M2I<ST, uint16_t (char const *),&ST::param_index> >::Call )
+                ("paramIndex", CATCHER<M2I<ST, uint16_t (char const *),&ST::param_index> >::Call )
+                ("paramName", CATCHER<M2I<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
             typedef cv::MemberPropertyBinder<ST> SPB;
