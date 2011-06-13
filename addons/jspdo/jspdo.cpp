@@ -39,7 +39,7 @@ namespace v8 { namespace convert {
     {
     public:
         typedef cpdo::driver * ReturnType;
-        static ReturnType Create( v8::Arguments const & argv );
+        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
         static void Delete( cpdo::driver * obj );
     };
 
@@ -48,7 +48,7 @@ namespace v8 { namespace convert {
     {
     public:
         typedef cpdo::statement * ReturnType;
-        static ReturnType Create( v8::Arguments const & argv );
+        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
         static void Delete( cpdo::statement * obj );
     };
     
@@ -72,7 +72,8 @@ namespace v8 { namespace convert {
 } }
 
 namespace v8 { namespace convert {
-    cpdo::driver * ClassCreator_Factory<cpdo::driver>::Create( v8::Arguments const & argv )
+    cpdo::driver * ClassCreator_Factory<cpdo::driver>::Create( v8::Handle<v8::Object> & jsSelf,
+                                                               v8::Arguments const & argv )
     {
         if( argv.Length() < 1 )
         {
@@ -81,13 +82,16 @@ namespace v8 { namespace convert {
         std::string dsn = cv::CastFromJS<std::string>(argv[0]);
         std::string user = (argv.Length()>1) ? cv::CastFromJS<std::string>(argv[1]) : std::string();
         std::string pass = (argv.Length()>2) ? cv::CastFromJS<std::string>(argv[2]) : std::string();
-        return new cpdo::driver( dsn.c_str(), user.c_str(), pass.c_str() );
+        cpdo::driver * db = new cpdo::driver( dsn.c_str(), user.c_str(), pass.c_str() );
+        jsSelf->Set(JSTR("dsn"), argv[0]);
+        return db;
     }
     void ClassCreator_Factory<cpdo::driver>::Delete( cpdo::driver * drv )
     {
         delete drv;
     }
-    cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Arguments const & argv )
+    cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Handle<v8::Object> & jsSelf,
+                                                                     v8::Arguments const & argv )
     {
         if( argv.Length() < 2 )
         {
@@ -98,7 +102,10 @@ namespace v8 { namespace convert {
         {
             throw std::range_error("The Statement ctor must not be called directly from client code.");
         }
-        return drv->prepare( cv::CastFromJS<std::string>(argv[1]) );
+        v8::Handle<v8::Value> const & sql(argv[1]);
+        cpdo::statement * rc = drv->prepare( cv::CastFromJS<std::string>(sql) );
+        jsSelf->Set(JSTR("sql"), sql);
+        return rc;
     }
     void ClassCreator_Factory<cpdo::statement>::Delete( cpdo::statement * drv )
     {

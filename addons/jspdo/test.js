@@ -147,6 +147,7 @@ function testInsert()
         st.bind([42.24, null, ds]);
         st.step();
         print('Inserted new record. ID='+App.drv.lastInsertId());
+        print('SQL = '+st.sql);
     }
     finally {
         if( st ) {
@@ -180,8 +181,11 @@ function testInsertNamedParams() {
 }
 
 function testExt_forEach() {
+    var st, sql = "SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3";
+    var st;
+    st = App.drv.prepare(sql);
     var opt = {
-        sql:"SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3",
+        sql:st || sql,
         //bind:[20],
         bind:function(st){st.bind(1,20);},
         mode:'object',
@@ -199,14 +203,15 @@ function testExt_forEach() {
 
 function testExt_fetchAll() {
     var opt = {
-        sql:"SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3",
-        bind:[20],
+        sql:"SELECT * FROM "+App.tableName+" WHERE a > :pA LIMIT 3",
+        bind:{pA:20},
         mode:'array'
         //mode:'object'
     };
     print("Trying db.fetchAll( "+JSON.stringify(opt)+" )");
     var all = App.drv.fetchAll(opt);
     print(JSON.stringify(all));
+    print(all.rows.length+" row(s)");
 }
 
 try {
@@ -227,7 +232,7 @@ catch(e) {
 }
 finally {
     if( App.drv ) {
-        print("Closing driver connection "+App.drv);
+        print("Closing driver connection "+JSON.stringify(App.drv));
         App.drv.close();
         //delete App.drv;
     }

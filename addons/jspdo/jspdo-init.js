@@ -25,7 +25,9 @@
        execForeach() takes an object parameter with the following
        properties:
 
-       .sql (required): SQL code to run.
+       .sql (required): SQL code to run. It may optionally be a
+       Statement object which has already been prepared (but note that
+       this function will finalize() it).
 
        .foreach: function(row,callbackData,statement) is called for
        each row.  If foreach() is not set then the query is executed
@@ -46,11 +48,10 @@
        bind(statement,bindOpt) is called to initialize the bindings.
 
        .bindData: Optional data to passed as the 2nd argument to bind().
-
     */
     jp.execForeach = function(opt) {
         try {
-            var st = this.prepare(opt.sql);
+            var st = (opt.sql instanceof ctor.Statement) ? opt.sql : this.prepare(opt.sql);
             var bind;
             if( opt.bind ) {
                 if( opt.bind instanceof Function ) {
@@ -119,11 +120,23 @@
        or if the underying query preparation/execution throws.
     */
     jp.fetchAll = function(opt) {
-        if( ! (opt instanceof Object) ) {
-            throw new Error("fetchAll() requires an Object as its first argument.");
+        try {
+            if( ! (opt instanceof Object) ) {
+                throw new Error("fetchAll() requires an Object as its first argument.");
+            }
+            else if( ! opt.sql ) {
+                throw new Error("fetchAll(opt) requires that opt.sql be set.");
+            }
         }
-        else if( ! opt.sql ) {
-            throw new Error("fetchAll(opt) requires that opt.sql be set.");
+        finally {
+            /** For consistency with the on-success behaviour, since
+                the client can't generically tell if the error came
+                before or during the db operations.
+            */
+            if( opt.sql instanceof ctor.Statement ) {
+                opt.sql.finalize();
+                delete opt.sql;
+            }
         }
         if( ! ('mode' in opt) ) opt.mode = 'array';
         else if( (opt.mode !== 'array') && (opt.mode !== 'object') )
@@ -148,5 +161,20 @@
         this.execForeach(fo);
         return fo.foreachData;
     };
+
+    jp.toJSON = function() {
+        return {
+            id:this.toString(),
+            dsn:this.dsn
+        }
+    };
+    var sp = ctor.Statement.prototype;
+    sp.toJSON = function() {
+        return {
+            id:this.toString(),
+            sql:this.sql
+        };
+    };
+    
     return ctor;
 });
