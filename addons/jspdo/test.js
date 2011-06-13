@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-//JSPDO.enableDebug = true;
+JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -168,8 +168,8 @@ function testExt_forEach() {
     sql = App.drv.prepare(sql);
     var opt = {
         sql:sql,
-        //bind:[20],
-        bind:function(st){st.bind(1,20);},
+        bind:[20],
+        //bind:function(st){st.bind(1,20);},
         mode:'object',
         //mode:'array',
         foreach:function(row,data){
@@ -178,7 +178,7 @@ function testExt_forEach() {
         },
         foreachData:{rows:0}
     };
-    print("Trying db.execForeach(): "+JSON.stringify(opt));
+    print("Trying db.exec("+JSON.stringify(opt)+")");
     try {
         //App.drv.execForeach(opt);
         App.drv.exec(opt);

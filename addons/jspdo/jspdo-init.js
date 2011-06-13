@@ -8,9 +8,13 @@
 
    The final expression in this file MUST evaluate to the anonymous
    function we're creating.
+   
+   Reminder to self: i wanted to pass the JSPDO ctor as the first
+   argument but when i do that, ctor.prototype is empty (or seems
+   to be?).
 */
 (function(){
-    var ctor = this; // === JSPDO
+    var ctor = this; // === JSPDO ctor
     var jp = this.prototype;
     var sp = ctor.Statement.prototype;
     function stepA(st) { return st.stepArray(); }
@@ -20,17 +24,22 @@
         if( ! ctor.enableDebug ) return;
         if( ! arguments.callee.hasWarned ) {
             arguments.callee.hasWarned = true;
-            arguments.callee( "(To disable debug mode, set the constructor's enableDebug to false.)" );
+            arguments.callee( "(To disable debug mode, set "+ctor.name+".enableDebug to false.)" );
         }
         var i, av = ['JSPDO DEBUG:'];
         for( i = 0; i < arguments.length; ++i ) av.push(arguments[i]);
         print.apply(ctor,av);
     }
 
+    function argvToArray(argv) {
+        return Array.prototype.slice.apply(argv,[0]);
+    }
     var origImpls = {
         finalize:sp.finalize,
-        close:jp.close
+        close:jp.close,
+        prepare:jp.prepare
     };
+    
     sp.finalize = function() {
         debug("Finalizing JSPDO.Statement handle "+this);
         origImpls.finalize.apply(this,[]);
@@ -39,6 +48,12 @@
     jp.close = function() {
         debug("Closing JSPDO handle "+this);
         origImpls.close.apply(this,[]);
+    };
+    
+    jp.prepare = function() {
+        var st = origImpls.prepare.apply(this,argvToArray(arguments));
+        debug("Prepared statement: "+JSON.stringify(st));
+        return st;        
     };
 
     /**
@@ -83,6 +98,7 @@
                        us to stop looping.
                     */
                     //repeatBind = opt.bind(st, opt.bindData);
+                    opt.bind(st, opt.bindData);
                 }
                 else {
                     st.bind(opt.bind);

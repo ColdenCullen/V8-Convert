@@ -825,6 +825,7 @@ namespace v8 { namespace convert {
             dCtor->Set( JSTR("Statement"), wst.CtorFunction() );
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             dCtor->Set( JSTR("enableDebug"), v8::False() );
+            dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, replacing them with a bool or an exception.
