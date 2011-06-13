@@ -6118,7 +6118,7 @@ namespace cpdo {
             if(!ndx || (ndx > this->param_count()))
             {
                 throw exception( cpdo_rc.RangeError, false,
-                                "Parameter index out of range.");
+                                "Bound parameter index out of range.");
             }
         }
         else
@@ -6172,11 +6172,9 @@ namespace cpdo {
     char const * statement::param_name( uint16_t ndx )
     {
         CPDO_STMT_CHECK_ALIVE;
+        assert_index(ndx, 1);
         return st->api->bind.param_name(st, ndx);
     }
-
-    
-
     
     void statement::bind( uint16_t ndx )
     {

@@ -9,7 +9,7 @@ user:"",
 password:"",
 tableName:'mytbl'
 };
-if(1) {
+if(0) {
     App.dsn = 'sqlite3::memory:';
 }
 else {
@@ -145,7 +145,7 @@ function testInsertNamedParams() {
         asserteq(0,st.paramIndex(':pX'));
         st.bind(':pB', 32.23);
         st.bind({pA:7, ':pC':ds});
-        print('Parameter names: '+st.paramNames.join(', '));
+        print('Parameter names: '+JSON.stringify(st.paramNames));
         //assertThrows( function() { st.bind(':pD'); } );
         st.step();
         print('Inserted new record using named params. ID='+App.drv.lastInsertId());
@@ -190,8 +190,9 @@ function testExt_fetchAll() {
     sql = "SELECT * FROM "+App.tableName+" WHERE a > :pA LIMIT 3";
     if(1) {
         sql = App.drv.prepare(sql);
-        print('fetchAll() parameter names: '+sql.paramNames.join(', '));
-        print('parameter names 1 and 5: '+sql.paramName(1)+' '+sql.paramName(5));
+        print('fetchAll() parameter names: '+JSON.stringify(sql.paramNames));
+        print('parameter name 1: '+sql.paramName(1));
+        assertThrows( function() { sql.paramName(5) } );
     }
     var opt = {
         sql:sql,
