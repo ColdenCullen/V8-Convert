@@ -637,7 +637,10 @@ void ReportException(v8::TryCatch* try_catch, std::ostream & out) {
 
 #endif
 
+namespace {
 #include "jspdo-init.cpp" /* generated code (JavaScript source) */
+}
+
 static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 {
     v8::HandleScope scope;
