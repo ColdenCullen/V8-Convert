@@ -105,14 +105,6 @@ $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5
 LDFLAGS_JSPDO := -L. -ljspdo
 BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_JSPDO) #$(LDFLAGS_DRIVERS)
 
-#test.BIN.OBJECTS := test.o
-#test.BIN.LDFLAGS += $(BINS_LDFLAGS)
-#test.o: CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3)
-#test.o: CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5)
-#$(eval $(call ShakeNMake.CALL.RULES.BINS,test))
-#$(test.BIN): $(libjspdo.DLL)
-#all: $(test.BIN)
-
 ifeq (1,1)
   SHELL.DIR := ../shell-skel
   shell.cpp: $(SHELL.DIR)/shell.cpp

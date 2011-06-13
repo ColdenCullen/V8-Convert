@@ -62,10 +62,7 @@ function testSelect(mode)
     var colCount = st.columnCount;
     print("Column count="+colCount);
     try {
-        var rowCount = 0, i, names = [];
-        for(i=0; i < colCount; ++i ) {
-            names.push(st.columnName(i));
-        }
+        var rowCount = 0, i;
         if('object'===mode) {
             var row;
             while( (row = st.stepObject()) ) {
@@ -75,7 +72,7 @@ function testSelect(mode)
             }
         }
         else if('array'===mode){
-            print( names.join(sep) );
+            print( st.columnNames.join(sep) );
             var row;
             while( (row = st.stepArray()) ) {
                 //asserteq( colCount, row.length, 'Column count matches.' );
@@ -84,7 +81,7 @@ function testSelect(mode)
             }
         }
         else {
-            print( names.join(sep) );
+            print( st.columnNames.join(sep) );
             var cols = [], v;
             while( st.step() ) {
                 ++rowCount;

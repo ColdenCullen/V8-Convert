@@ -433,6 +433,52 @@ v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
     return hscope.Close(obj);
 }
 
+/**
+   Statement.columnNames accessor which caches
+*/
+static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > property,
+                                                       const v8::AccessorInfo & info )
+{
+    try
+    {
+        ASSERT_STMT_DECL(info.This());
+        v8::Handle<v8::Object> self( info.This() );
+        char const * prop = "columnNames";
+        v8::Handle<v8::String> jProp(JSTR(prop));
+        v8::Handle<v8::Value> val( self->GetHiddenValue(jProp) );
+        if( val.IsEmpty() )
+        {
+            uint16_t colCount = st->col_count();
+            if( ! colCount )
+            {
+                val = v8::Null();
+            }
+            else
+            {
+                v8::Handle<v8::Array> ar( v8::Array::New(colCount) );
+                for( uint16_t i = 0; i < colCount; ++i )
+                {
+                    char const * n = st->col_name(i);
+                    if( ! n ) continue;
+                    ar->Set( i, JSTR(n) );
+                }
+                val = ar;
+            }
+            self->SetHiddenValue(jProp, val);
+        }
+        return val;
+    }
+    catch(std::exception const & ex)
+    {
+        return cv::CastToJS(ex);
+    }
+    catch(...)
+    {
+        return v8::ThrowException(v8::Exception::Error(JSTR("columnNames accessor threw an unknown native exception!")));
+    }
+        
+}
+
 
 v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
 {
@@ -632,7 +678,10 @@ namespace v8 { namespace convert {
             SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
             SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
             SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
-            
+            stProto->SetAccessor(JSTR("columnNames"),
+                                 Statement_getColumnNames,
+                                 SPB::AccessorSetterThrow);
+
             // Just an experiment:
             typedef InCaCatcher<
                 std::runtime_error,
