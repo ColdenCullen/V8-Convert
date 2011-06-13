@@ -59,13 +59,13 @@ For cpdo_amalgamation.cpp:
 
     Enable MySQL driver:
 
-        -DCPDO_ENABLE_MYSQL=1
+        -DCPDO_ENABLE_MYSQL5=1
         Add the flags from (mysql_config --cflags)
 
 For jspdo.cpp:
 
         -I/path/to/v8/convert/install/prefix
-        -DCPDO_ENABLE_MYSQL=1 and/or -DCPDO_ENABLE_SQLITE3=1
+        -DCPDO_ENABLE_MYSQL5=1 and/or -DCPDO_ENABLE_SQLITE3=1
 
 Linking:
      - If using MySQL add: (mysql_config --libs).
