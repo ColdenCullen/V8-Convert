@@ -183,9 +183,9 @@ function testInsertNamedParams() {
 function testExt_forEach() {
     var st, sql = "SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3";
     var st;
-    st = App.drv.prepare(sql);
+    sql = App.drv.prepare(sql);
     var opt = {
-        sql:st || sql,
+        sql:sql,
         //bind:[20],
         bind:function(st){st.bind(1,20);},
         mode:'object',
@@ -197,7 +197,12 @@ function testExt_forEach() {
         foreachData:{rows:0}
     };
     print("Trying db.execForeach(): "+JSON.stringify(opt));
-    App.drv.execForeach(opt);
+    try {
+        App.drv.execForeach(opt);
+    }
+    finally {
+        if( sql instanceof JSPDO.Statement ) sql.finalize();
+    }
     print(opt.foreachData.rows+" row(s)");
 }
 

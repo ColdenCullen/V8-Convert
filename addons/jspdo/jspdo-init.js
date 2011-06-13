@@ -9,25 +9,26 @@
 (function(){
     var ctor = this;
     var jp = this.prototype;
-    //print("RUNNING INIT CODE!!!! prototype:",typeof jp,jp);
-    //print('ctor:',typeof ctor,ctor);
-    //jp.hi = "hi!"; ctor.hi = "hi!!";
-
     function stepA(st) { return st.stepArray(); }
     function stepO(st) { return st.stepObject(); }
     function step1(st) { return st.step(); }
-    var doDebug = false;
+    var doDebug = true;
     function debug() {
         if( ! doDebug ) return;
         print.call(ctor,Array.prototype.slice.apply(arguments,[0]));
+    }
+    function stFinalize(st) {
+        debug("Finalizing statement handle "+st);
+        st.finalize();
     }
     /**
        execForeach() takes an object parameter with the following
        properties:
 
-       .sql (required): SQL code to run. It may optionally be a
-       Statement object which has already been prepared (but note that
-       this function will finalize() it).
+       .sql (required): SQL code string to run. It may optionally be a
+       Statement object which has already been prepared, but in that
+       case this function DOES NOT finalize() it (regardless of
+       success or failure!).
 
        .foreach: function(row,callbackData,statement) is called for
        each row.  If foreach() is not set then the query is executed
@@ -95,10 +96,7 @@
             }
         }
         finally {
-            if(st) {
-                debug("Closing statement handle "+st);
-                st.finalize();
-            }
+            if(st && (st !== opt.sql)) stFinalize(st);
         }
     };
 
@@ -120,23 +118,11 @@
        or if the underying query preparation/execution throws.
     */
     jp.fetchAll = function(opt) {
-        try {
-            if( ! (opt instanceof Object) ) {
-                throw new Error("fetchAll() requires an Object as its first argument.");
-            }
-            else if( ! opt.sql ) {
-                throw new Error("fetchAll(opt) requires that opt.sql be set.");
-            }
+        if( ! (opt instanceof Object) ) {
+            throw new Error("fetchAll() requires an Object as its first argument.");
         }
-        finally {
-            /** For consistency with the on-success behaviour, since
-                the client can't generically tell if the error came
-                before or during the db operations.
-            */
-            if( opt.sql instanceof ctor.Statement ) {
-                opt.sql.finalize();
-                delete opt.sql;
-            }
+        else if( ! opt.sql ) {
+            throw new Error("fetchAll(opt) requires that opt.sql be set.");
         }
         if( ! ('mode' in opt) ) opt.mode = 'array';
         else if( (opt.mode !== 'array') && (opt.mode !== 'object') )
@@ -160,6 +146,7 @@
         };
         this.execForeach(fo);
         return fo.foreachData;
+
     };
 
     jp.toJSON = function() {
