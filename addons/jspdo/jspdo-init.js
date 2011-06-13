@@ -18,7 +18,13 @@
     function step1(st) { return st.step(); }
     function debug() {
         if( ! ctor.enableDebug ) return;
-        print.apply(ctor,Array.prototype.slice.apply(arguments,[0]));
+        if( ! arguments.callee.hasWarned ) {
+            arguments.callee.hasWarned = true;
+            arguments.callee( "(To disable debug mode, set the constructor's enableDebug to false.)" );
+        }
+        var i, av = ['JSPDO DEBUG:'];
+        for( i = 0; i < arguments.length; ++i ) av.push(arguments[i]);
+        print.apply(ctor,av);
     }
 
     var origImpls = {
@@ -68,18 +74,15 @@
         try {
             var st = (opt.sql instanceof ctor.Statement) ? opt.sql : this.prepare(opt.sql);
             var bind;
+            //var repeatBind = false;
             if( opt.bind ) {
                 if( opt.bind instanceof Function ) {
                     /* todo: see if we can extend this model to support
                        this. This only makes sense for INSERTs, but then
                        we need some semantics for the client to tell
                        us to stop looping.
-
-                       bind = function() {
-                        return opt.bind(st, opt.bindData);
-                       }
                     */
-                    opt.bind(st, opt.bindData);
+                    //repeatBind = opt.bind(st, opt.bindData);
                 }
                 else {
                     st.bind(opt.bind);
@@ -103,10 +106,10 @@
             var row;
             while( row = step(st) ) {
                 opt.foreach( cbArg ? cbArg : row, opt.foreachData, st );
-                if( false && bind ) {
+                /**if( true === repeatBind ) {
                     st.reset();
-                    bind();
-                }
+                    opt.bind(st, opt.bindData);
+                }*/
             }
         }
         finally {
