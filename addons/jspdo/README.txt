@@ -27,14 +27,59 @@ To include this code into your own project you need to:
   jspdo.cpp (this will #include jspdo-init.cpp)
 
 
-See the included Makefile for the various linker arguments.
-
 - #include jspdo.hpp into your app.
 
 - Run jspdo::SetupV8Bindings() from your v8-init routine, passing it
 the global object for your v8 engine. It will install the class JSPDO
 in that object.
 
+Compilation/Linker arguments:
+
+See the included Makefile for the full list of various linker arguments.
+Here is an overview:
+
+General compiler/linker flags:
+
+    On Linux platforms, use -fPIC. Don't ask me why.
+    -I/path/to/v8/convert/install/prefix
+
+For v8:
+
+    Linker: -L${V8_PREFIX} -lv8 (or -lv8_g)
+
+For sqlite3:
+
+    Normally nothing special is required.
+
+For cpdo_amalgamation.cpp:
+
+    Enable sqlite3 driver:
+
+        -DCPDO_ENABLE_SQLITE3=1
+
+    Enable MySQL driver:
+
+        -DCPDO_ENABLE_MYSQL=1
+        Add the flags from (mysql_config --cflags)
+
+For jspdo.cpp:
+
+        -I/path/to/v8/convert/install/prefix
+        -DCPDO_ENABLE_MYSQL=1 and/or -DCPDO_ENABLE_SQLITE3=1
+
+Linking:
+     - If using MySQL add: (mysql_config --libs).
+     - If using sqlite3 add: -lsqlite3 (or link in your own copy of
+     sqlite3.o)
+
+When using MySQL it is impossible (at least on Linux) to build a
+static binary because MySQL links to libraries which cannot work in
+statically-linked applications.
+
+
+
+If neither sqlite3 nor MySQL are enabled then the library will be
+useless - it will not be able to connect to anything.
 
 ========================================================================
 jspdo-init.cpp:
