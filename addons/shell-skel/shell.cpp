@@ -116,6 +116,10 @@ static int v8_main(int argc, char const * const * argv)
 int main(int argc, char const * const * argv)
 {
 
+    if( 1 == argc ) {
+        CERR << "Usage: " << argv[0] << " file1.js [... fileN.js]\n";
+        return 1;
+    }
     int const rc = v8_main(argc, argv);
     CERR << "Done! rc="<<rc<<'\n';
     return rc;
