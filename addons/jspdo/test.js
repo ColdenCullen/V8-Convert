@@ -117,6 +117,7 @@ function testInsert()
         var sql = "INSERT INTO "+App.tableName+"(a,b,c) VALUES(?,?,?)";
         var ds = (new Date()).toString();
         st = App.drv.prepare(sql);
+        print("Inserting: "+st);
         st.bind(1,24.42);
         st.bind(2);
         st.bind(3, ds);
@@ -146,9 +147,10 @@ function testInsertNamedParams() {
         asserteq(0,st.paramIndex(':pX'));
         st.bind(':pB', 32.23);
         st.bind({pA:7, ':pC':ds});
+        print("Inserting: "+st);
         print('Parameter names: '+JSON.stringify(st.paramNames));
         assertThrows(function(){st.paramNames="should throw";});
-        //assertThrows( function() { st.bind(':pD'); } );
+        assertThrows( function() { st.bind(':pD'); } );
         st.step();
         print('Inserted new record using named params. ID='+App.drv.lastInsertId());
     }
@@ -208,40 +210,6 @@ function testExt_fetchAll() {
     print(all.rows.length+" row(s)");
 }
 
-function test_QueryClass()
-{
-    var src = 'query.js';
-    if( ! load(src) ) {
-        print("Could not load ["+src+"].");
-        return;
-    }
-    print("Poking around the 3rd-party Query class...");
-    var db = App.drv;
-    db.qualify = function(x) { return '`'+x+'`';}
-    db.escape = function(x) { return ('string' === typeof x) ? x.replace(/\'/g,"''") : x;}
-    db.query = db.exec;
-    print("escaped:",db.escape("He's not from'n 'round here."));
-    Query.setDB( db );
-    var q = new Query(Query.SELECT)
-        .field('c')
-        .table(App.tableName)
-        .where("%f like '%%01:%%'",'c')
-        .limit(7);
-    print("Query:",q);
-    //print( q.execute() );
-
-    var t = new Table(App.tableName);
-    q = t.select()
-        .field('c')
-        .where("%f like '%%01:%%'",'c')
-        .limit(7);
-    print("Query:"+q);
-    t = new Table(App.tableName);
-    q = t.insert({a:56.65, b:78.87, c:"Hi, world's'!"});
-    print("Query:"+q);
-    //testSelect();
-    //print( q.execute() );
-}
 
 try {
     testConnect();
@@ -254,7 +222,6 @@ try {
     testSelect('array');
     testExt_forEach();
     testExt_fetchAll();
-    //test_QueryClass();
 }
 catch(e) {
     print("EXCEPTION: "+e);
@@ -262,7 +229,7 @@ catch(e) {
 }
 finally {
     if( App.drv ) {
-        //print("Closing driver connection "+JSON.stringify(App.drv));
+        print("Closing driver connection "+JSON.stringify(App.drv));
         App.drv.close();
         delete App.drv;
     }
