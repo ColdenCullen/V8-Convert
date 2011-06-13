@@ -10,6 +10,7 @@ int main(int argc, char const ** argv )
     if( 2 != argc ) {
         fprintf(stderr, "Usage: %s dataName\n", argv[0]);
     }
+    puts("/* auto-generated code - edit at your own risk! */");
     printf("static const char %s[] = {\n", argv[1]);
     while(EOF != (ch = getchar())) {
         printf("%d, ",ch);

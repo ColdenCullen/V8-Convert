@@ -22,7 +22,7 @@ function testConnect() {
     print("Driver: "+JSON.stringify(drv,0,4));
     print('JSPDO.columnTypes: '+JSON.stringify(JSPDO.columnTypes,0,4));
     print("Available db drivers: "+JSON.stringify(JSPDO.driverList));
-    
+    assertThrows(function() { drv.driverName = "should throw"; });
     if(drv.driverName==='sqlite3') {
         drv.exec("CREATE TABLE IF NOT EXISTS "+App.tableName+"("+
              "id INTEGER PRIMARY KEY DEFAULT NULL,"+
@@ -62,6 +62,7 @@ function testSelect(mode)
     var colCount = st.columnCount;
     print("Column count="+colCount);
     try {
+        assertThrows(function(){st.columnNames="should throw";});
         var rowCount = 0, i;
         if('object'===mode) {
             var row;
@@ -146,6 +147,7 @@ function testInsertNamedParams() {
         st.bind(':pB', 32.23);
         st.bind({pA:7, ':pC':ds});
         print('Parameter names: '+JSON.stringify(st.paramNames));
+        assertThrows(function(){st.paramNames="should throw";});
         //assertThrows( function() { st.bind(':pD'); } );
         st.step();
         print('Inserted new record using named params. ID='+App.drv.lastInsertId());

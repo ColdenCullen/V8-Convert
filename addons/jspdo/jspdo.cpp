@@ -30,6 +30,8 @@ used by MySQL (if any).
 
 #define JSTR(X) v8::String::New(X)
 
+#define JSPDO_CLASS_NAME "JSPDO" /* JSPDO class name, as it should appear in JS. */
+
 namespace cv = v8::convert;
 
 /**
@@ -660,7 +662,7 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
     v8::Handle<v8::Script> script = v8::Script::Compile(source, JSTR(fname));
     if (script.IsEmpty()) {
         std::ostringstream msg;
-        msg << "Compilation of JSPDO JS extensions failed: ";
+        msg << "Compilation of "<<JSPDO_CLASS_NAME<<" JS extensions failed: ";
         ReportException( &tc, msg );
         throw std::runtime_error( msg.str().c_str() );
     }
@@ -668,7 +670,7 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
     v8::Handle<v8::Value> result = script->Run();
     if (result.IsEmpty()) {
         std::ostringstream msg;
-        msg << "Execution of JSPDO JS extensions failed: ";
+        msg << "Execution of "<<JSPDO_CLASS_NAME<<" JS extensions failed: ";
         ReportException( &tc, msg );
         throw std::runtime_error( msg.str().c_str() );
     }
@@ -679,7 +681,7 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
     if( rc.IsEmpty() )
     {
         std::ostringstream msg;
-        msg << "Got exception from JSPDO JS init code: ";
+        msg << "Got exception from "<<JSPDO_CLASS_NAME<<" JS init code: ";
         ReportException( &tc, msg );
         throw std::runtime_error( msg.str().c_str() );
     }
@@ -704,7 +706,7 @@ namespace v8 { namespace convert {
             WDRV & wdrv( WDRV::Instance() );
             if( wdrv.IsSealed() )
             {
-                wdrv.AddClassTo( "JSPDO", dest );
+                wdrv.AddClassTo( JSPDO_CLASS_NAME, dest );
                 return;
             }
             WST & wst( WST::Instance() );
@@ -730,13 +732,27 @@ namespace v8 { namespace convert {
                 ;
 
             typedef cv::MemberPropertyBinder<ST> SPB;
-            SPB::BindGetterMethod<std::string (),&ST::error_text>( "errorText", stProto );
-            SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
-            SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
-            SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
-            stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, SPB::AccessorSetterThrow);
-            stProto->SetAccessor(JSTR("paramNames"), Statement_getParamNames, SPB::AccessorSetterThrow);
+            v8::AccessorSetter const throwOnSet = SPB::AccessorSetterThrow;
+            //SPB::BindGetterMethod<std::string (),&ST::error_text>( "errorText", stProto );
+            //SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
+            //SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
+            //SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
+            stProto->SetAccessor(JSTR("errorCode"),
+                                 SPB::MethodToAccessorGetter<int (),&ST::error_code>,
+                                 throwOnSet);
+            stProto->SetAccessor(JSTR("errorText"),
+                                 SPB::MethodToAccessorGetter<std::string (),&ST::error_text>,
+                                 throwOnSet);
+            stProto->SetAccessor(JSTR("columnCount"),
+                                 SPB::MethodToAccessorGetter<uint16_t (),&ST::col_count>,
+                                 throwOnSet);
+            stProto->SetAccessor(JSTR("paramCount"),
+                                 SPB::MethodToAccessorGetter<uint16_t (),&ST::param_count>,
+                                 throwOnSet);
+            stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
+            stProto->SetAccessor(JSTR("paramNames"), Statement_getParamNames, throwOnSet );
 
+#if 0
             // Just an experiment:
             typedef InCaCatcher<
                 std::runtime_error,
@@ -746,8 +762,6 @@ namespace v8 { namespace convert {
                 true> CatchPrepare_RTE;
             typedef InCaCatcher_std<CatchPrepare_RTE::Call,false> CatchPrepare;
 
-
-#if 0
             typedef InCa< M2I<DRV,uint64_t (char const *),&DRV::last_insert_id> > CbLastInsId;
             typedef InCaCatcher_std<
                 cv::InCaOverloader<1, CbLastInsId::Call,
@@ -777,14 +791,25 @@ namespace v8 { namespace convert {
 #undef CATCHER
             
             typedef cv::MemberPropertyBinder<DRV> PB;
-            PB::BindGetterConstMethod<char const * (),&DRV::driver_name>( "driverName", dProto );
-            PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
-            PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
+            //PB::BindGetterConstMethod<char const * (),&DRV::driver_name>( "driverName", dProto );
+            //PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
+            //PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
+            dProto->SetAccessor(JSTR("driverName"),
+                                PB::MethodToAccessorGetter< char const * (),&DRV::driver_name >,
+                                throwOnSet);
+            dProto->SetAccessor(JSTR("errorText"),
+                                PB::MethodToAccessorGetter< std::string (),&DRV::error_text >,
+                                throwOnSet);
+            dProto->SetAccessor(JSTR("errorCode"),
+                                PB::MethodToAccessorGetter< int (),&DRV::error_code >,
+                                throwOnSet);
 
             ////////////////////////////////////////////////////////////////////////
             // The following changes have to be made after the
-            // prototype-level changes are made or they appear to have
-            // no effect.
+            // prototype-level changes are made or they have no
+            // effect. Once CtorFunction() is called, the prototype object
+            // is effectively "sealed" - further changes made here won't show up
+            // in new JS instances.
             v8::Handle<v8::Function> dCtor = wdrv.CtorFunction();
             /**
                We don't want clients to instantiate Statement objects
@@ -833,7 +858,7 @@ namespace v8 { namespace convert {
            
             ////////////////////////////////////////////////////////////////////////
             // Add the new class to the engine...
-            wdrv.AddClassTo( "JSPDO", dest );
+            wdrv.AddClassTo( JSPDO_CLASS_NAME, dest );
             //CERR << "Finished binding cpdo::driver.\n";
         }
     };
@@ -857,3 +882,6 @@ namespace jspdo {
 #undef ASSERT_DRV_DECL
 #undef STMT_DECL
 #undef ASSERT_STMT_DECL
+#undef JSTR
+#undef CERR
+#undef JSPDO_CLASS_NAME
