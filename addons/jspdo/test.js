@@ -2,6 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
+JSPDO.doDebug = false;
 var App = {
 drv:null,
 user:"",
@@ -18,27 +19,9 @@ else {
 
 function testConnect() {
     var drv = App.drv = new JSPDO(App.dsn,App.user,App.password);
-    print("Driver: "+drv);
-    var li, k;
-    li = ['ERROR',
-          'NULL',
-          'INT8',
-          'INT16',
-          'INT32',
-          'INT64',
-          'FLOAT',
-          'DOUBLE',
-          'STRING',
-          'BLOB',
-          'CUSTOM'
-          ];
-    print('JSPDO.columnTypes:');
-    for( k in li ) {
-        k = li[k];
-        print('\t'+k+'='+JSPDO.columnTypes[k]);
-    }
-
-    print("Available db drivers: "+JSPDO.driverList.join(', '));
+    print("Driver: "+JSON.stringify(drv,0,4));
+    print('JSPDO.columnTypes: '+JSON.stringify(JSPDO.columnTypes,0,4));
+    print("Available db drivers: "+JSON.stringify(JSPDO.driverList));
     
     if(drv.driverName==='sqlite3') {
         drv.exec("CREATE TABLE IF NOT EXISTS "+App.tableName+"("+
@@ -57,7 +40,7 @@ function testConnect() {
              ")");
     }
     else {
-        asserteq(0,1,'Unknown driver name! How can that be? i wrote the damned thing!');
+        asserteq(0,1,'Unknown driver name! How can that be?');
     }
 }
 
@@ -74,7 +57,7 @@ function testSelect(mode)
         print("Error preparing sql. Db says: Code #"+drv.errorCode+": "+drv.errorText);
         return;
     }
-    print('statement='+st);
+    print('Testing SELECT. statement='+JSON.stringify(st));
     var sep = '\t';
     if( !st ) throw new Error("WTF? st is null?");
     var colCount = st.columnCount;
@@ -119,7 +102,7 @@ function testSelect(mode)
         print(rowCount+" row(s)");
     }
     finally {
-        print("Closing statement handle "+st);
+
         st.finalize();
     }
 
@@ -151,7 +134,6 @@ function testInsert()
     }
     finally {
         if( st ) {
-            print("Closing statement handle "+st);
             st.finalize();
         }
     }
@@ -173,7 +155,6 @@ function testInsertNamedParams() {
     }
     finally {
         if( st ) {
-            print("Closing statement handle "+st);
             st.finalize();
         }
     }
@@ -198,7 +179,8 @@ function testExt_forEach() {
     };
     print("Trying db.execForeach(): "+JSON.stringify(opt));
     try {
-        App.drv.execForeach(opt);
+        //App.drv.execForeach(opt);
+        App.drv.exec(opt);
     }
     finally {
         if( sql instanceof JSPDO.Statement ) sql.finalize();
@@ -237,9 +219,9 @@ catch(e) {
 }
 finally {
     if( App.drv ) {
-        print("Closing driver connection "+JSON.stringify(App.drv));
+        //print("Closing driver connection "+JSON.stringify(App.drv));
         App.drv.close();
-        //delete App.drv;
+        delete App.drv;
     }
 }
 

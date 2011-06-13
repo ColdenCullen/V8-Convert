@@ -471,9 +471,20 @@ v8::Handle<v8::Value> JSPDO_exec( v8::Arguments const & argv )
         throw std::range_error("exec() requires 1 argument.");
     }
     ASSERT_DRV_DECL(argv.This());
-    std::string sql = cv::JSToStdString(argv[0]);
-    drv->exec( sql.c_str(), sql.size() );
-    return v8::Undefined();
+    v8::Handle<v8::Value> const val(argv[0]);
+    if( val->IsString() ) {
+        std::string sql = cv::JSToStdString(argv[0]);
+        drv->exec( sql.c_str(), sql.size() );
+        return v8::Undefined();
+    }
+    else if( val->IsObject() ) {
+        v8::Handle<v8::Value> ac[] = {val};
+        return v8::Function::Cast( *(argv.This()->Get(JSTR("execForeach"))) )
+            ->Call( argv.This(), 1, ac );
+    }
+    else {
+        return v8::ThrowException(v8::Exception::Error(JSTR("Invalid argument type passed to exec().")));
+    }
 }
 
 v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
@@ -498,13 +509,12 @@ v8::Local<v8::Array> JSPDO_driverList()
 }
 
 #if 1
-void ReportException(v8::TryCatch* try_catch) {
+void ReportException(v8::TryCatch* try_catch, std::ostream & out) {
     // code taken from v8 sample shell
   v8::HandleScope handle_scope;
   //v8::String::Utf8Value exception();
   std::string exception_string( cv::CastFromJS<std::string>(try_catch->Exception()) ) ;
   v8::Handle<v8::Message> message = try_catch->Message();
-  std::ostream & out( std::cerr );
   if (message.IsEmpty()) {
       // V8 didn't provide any extra information about this error; just
       // print the exception.
@@ -541,25 +551,26 @@ void ReportException(v8::TryCatch* try_catch) {
 
 #define JSPDO_EXT_JS_CPP "jspdo-init.cpp"
 #include JSPDO_EXT_JS_CPP
-
-//static
-bool JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
+static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 {
     v8::HandleScope scope;
     char const * fname = JSPDO_EXT_JS_CPP;
     v8::Handle<v8::String> source( v8::String::New(jspdoExtCode, sizeof(jspdoExtCode)-1) );
-    v8::TryCatch tryCatch;
+    v8::TryCatch tc;
     v8::Handle<v8::Script> script = v8::Script::Compile(source, JSTR(fname));
     if (script.IsEmpty()) {
-        assert( 0 && "Compilation of JSPDO JS extensions failed!" );
-        return false;
+        std::ostringstream msg;
+        msg << "Compilation of JSPDO JS extensions failed: ";
+        ReportException( &tc, msg );
+        throw std::runtime_error( msg.str().c_str() );
     }
 
     v8::Handle<v8::Value> result = script->Run();
     if (result.IsEmpty()) {
-        // Print errors that happened during execution.
-        assert( 0 && "Execution of JSPDO JS extensions failed!" );
-        return false;
+        std::ostringstream msg;
+        msg << "Execution of JSPDO JS extensions failed: ";
+        ReportException( &tc, msg );
+        throw std::runtime_error( msg.str().c_str() );
     }
     assert( result->IsFunction() );
     v8::Handle<v8::Function> initFunc( v8::Function::Cast(*result) );
@@ -567,15 +578,13 @@ bool JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
     v8::Handle<v8::Value> rc = initFunc->Call( ctor, 0, NULL );
     if( rc.IsEmpty() )
     {
-        CERR << "EXCEPTION: "<< cv::JSToStdString(tryCatch.Exception()) <<'\n';
-        //ReportException( &tryCatch );
-        assert( 0 && "Got exception from init code.");
+        std::ostringstream msg;
+        msg << "Got exception from JSPDO JS init code: ";
+        ReportException( &tc, msg );
+        throw std::runtime_error( msg.str().c_str() );
     }
-    CERR << "init rc="<<cv::JSToStdString(rc)<<'\n';
-    tryCatch.Reset();
-    return !rc.IsEmpty();
 }
-
+#undef JSPDO_EXT_JS_CPP
 
 namespace v8 { namespace convert {
 
@@ -670,8 +679,6 @@ namespace v8 { namespace convert {
             PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
             PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
 
-
-
             ////////////////////////////////////////////////////////////////////////
             // The following changes have to be made after the
             // prototype-level changes are made or they appear to have
@@ -690,6 +697,7 @@ namespace v8 { namespace convert {
             //dCtor->SetHiddenValue( JSTR("$Statement"), wst.CtorFunction() );
             dCtor->Set( JSTR("Statement"), wst.CtorFunction() );
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
+            dCtor->Set( JSTR("doDebug"), v8::False() );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, replacing them with a bool or an exception.

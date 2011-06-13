@@ -9,18 +9,31 @@
 (function(){
     var ctor = this;
     var jp = this.prototype;
+    var sp = ctor.Statement.prototype;
+    ctor.doDebug = true;
+
     function stepA(st) { return st.stepArray(); }
     function stepO(st) { return st.stepObject(); }
     function step1(st) { return st.step(); }
-    var doDebug = true;
     function debug() {
-        if( ! doDebug ) return;
+        if( ! ctor.doDebug ) return;
         print.call(ctor,Array.prototype.slice.apply(arguments,[0]));
     }
-    function stFinalize(st) {
-        debug("Finalizing statement handle "+st);
-        st.finalize();
-    }
+
+    var origImpls = {
+        finalize:sp.finalize,
+        close:jp.close
+    };
+    sp.finalize = function() {
+        debug("Finalizing JSPDO.Statement handle "+this);
+        origImpls.finalize.apply(this,[]);
+    };
+
+    jp.close = function() {
+        debug("Closing JSPDO handle "+this);
+        origImpls.close.apply(this,[]);
+    };
+
     /**
        execForeach() takes an object parameter with the following
        properties:
@@ -96,7 +109,7 @@
             }
         }
         finally {
-            if(st && (st !== opt.sql)) stFinalize(st);
+            if(st && (st !== opt.sql)) st.finalize();
         }
     };
 
@@ -151,15 +164,14 @@
 
     jp.toJSON = function() {
         return {
-            id:this.toString(),
-            dsn:this.dsn
+            dsn:this.dsn,
+            id:this.toString()
         }
     };
-    var sp = ctor.Statement.prototype;
     sp.toJSON = function() {
         return {
-            id:this.toString(),
-            sql:this.sql
+            sql:this.sql,
+            id:this.toString()
         };
     };
     

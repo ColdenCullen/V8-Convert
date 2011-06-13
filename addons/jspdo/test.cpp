@@ -67,9 +67,9 @@ static int v8_main(int argc, char const * const * argv)
     context = Context::New(NULL, global);
     Context::Scope context_scope(context);
     Handle<Object> gobj = context->Global();
-    jspdo::SetupV8Bindings(gobj);
     try
     {
+        jspdo::SetupV8Bindings(gobj);
         ValueHandle av[] = {
         cv::CastToJS("./test.js")
         };
