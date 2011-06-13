@@ -1,3 +1,13 @@
+/************************************************************************
+This file contains the v8 bindings for the cpdo db abstraction layer
+(http://fossil.wanderinghorse.net/repos/cpdo/).
+
+License: this code is released into the Public Domain by its author,
+Stephan Beal (http://wanderinghorse.net/home/stephan/). HOWEVER, if
+you enable the MySQL driver (by compiling with
+-DCPDO_ENABLE_MYSQL5=ATrueValue) then you must inherit the GPL license
+used by MySQL (if any).
+ ************************************************************************/
 #if defined(NDEBUG)
 #  undef NDEBUG
 #endif
