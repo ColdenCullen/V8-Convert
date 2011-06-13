@@ -1157,7 +1157,31 @@ extern "C" {
             */
             uint16_t (*column_count)( cpdo_stmt * self );
             /**
-               Returns the name of the 0-based column index, or NULL on error.
+               Returns the name of the 0-based column index, or NULL
+               on error.
+
+               Note that not all DB drivers guaranty the exact string
+               returned for any given column name will have any
+               particular value unless the SQL explicitly uses 'AS' to
+               alias the column. sqlite3, in particular, has that
+               property, and can legally return "possibly unexpected"
+               results if the query does not explicitly alias each
+               column.
+   
+               What that means is:
+
+               @code
+               // This might provide unexpected column names for (a,b):
+               SELECT a, b FROM t;
+               // That might return "t.a" and "t.b", or something
+               // entirely different, for the column names.
+
+               // This approach guarantees a specific column name will be returned:
+               SELECT a AS a, b AS b FROM t;
+               @endcode
+
+               Thus clients should always alias all column names with
+               'AS' if they want this function to behave predictably.
             */
             char const * (*column_name)( cpdo_stmt * self, uint16_t ndx );
             /**
@@ -2888,6 +2912,12 @@ Temporary (file-scope) macro to mark functions which throw on error.
                 driver does not support named parameters).
             */
             uint16_t param_index( char const * name );
+            /**
+                Returns the name for the given 1-based BIND parameter index,
+                or NULL if no such parameter is found or on error (e.g. if the
+                driver does not support named parameters).
+            */
+            char const * param_name( uint16_t ndx );
 
             /**
                 Binds the NULL value to the given 1-based index.
@@ -6220,12 +6250,19 @@ Temporary (file-scope) macro to mark functions which throw on error.
                 the prepared query.
             */  
             uint16_t param_count();
+
             /**
                 Returns the 1-based BIND parameter for the given placeholder name,
                 or 0 if no such parameter is found or on error (e.g. if the
                 driver does not support named parameters).
             */
             uint16_t param_index( char const * name );
+            /**
+                Returns the name for the given 1-based BIND parameter index,
+                or NULL if no such parameter is found or on error (e.g. if the
+                driver does not support named parameters).
+            */
+            char const * param_name( uint16_t ndx );
 
             /**
                 Binds the NULL value to the given 1-based index.

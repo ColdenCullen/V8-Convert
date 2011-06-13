@@ -6100,6 +6100,7 @@ namespace cpdo {
 
     bool statement::step()
     {
+        CPDO_STMT_CHECK_ALIVE;
         switch(st->api->step(st))
         {
             case CPDO_STEP_OK: return true;
@@ -6108,29 +6109,6 @@ namespace cpdo {
                 this->check_code( cpdo_rc.CheckDbError )/*will throw*/;
                 return false /* won't be reached. */;
         }
-    }
-
-    int statement::error_code()
-    {
-        int rc = 0;
-        st->api->error_info( st, NULL, NULL, &rc );
-        return rc;
-    }
-
-    std::string statement::error_text()
-    {
-        char const * s = NULL;
-        st->api->error_info( st, &s, NULL, NULL );
-        return s ? s : "";
-    }
-
-    uint16_t statement::param_count()
-    {
-        return st->api->bind.param_count(st);
-    }
-    uint16_t statement::param_index( char const * name )
-    {
-        return st->api->bind.param_index(st, name);
     }
 
     void statement::assert_index( uint16_t ndx, unsigned char base )
@@ -6162,6 +6140,44 @@ namespace cpdo {
         }
     }
 
+    
+    int statement::error_code()
+    {
+        CPDO_STMT_CHECK_ALIVE;
+        int rc = 0;
+        st->api->error_info( st, NULL, NULL, &rc );
+        return rc;
+    }
+
+    std::string statement::error_text()
+    {
+        CPDO_STMT_CHECK_ALIVE;
+        char const * s = NULL;
+        st->api->error_info( st, &s, NULL, NULL );
+        return s ? s : "";
+    }
+
+    uint16_t statement::param_count()
+    {
+        CPDO_STMT_CHECK_ALIVE;
+        return st->api->bind.param_count(st);
+    }
+
+    uint16_t statement::param_index( char const * name )
+    {
+        CPDO_STMT_CHECK_ALIVE;
+        return st->api->bind.param_index(st, name);
+    }
+
+    char const * statement::param_name( uint16_t ndx )
+    {
+        CPDO_STMT_CHECK_ALIVE;
+        return st->api->bind.param_name(st, ndx);
+    }
+
+    
+
+    
     void statement::bind( uint16_t ndx )
     {
         CPDO_STMT_CHECK_ALIVE;

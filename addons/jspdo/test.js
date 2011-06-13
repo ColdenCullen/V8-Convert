@@ -145,6 +145,7 @@ function testInsertNamedParams() {
         asserteq(0,st.paramIndex(':pX'));
         st.bind(':pB', 32.23);
         st.bind({pA:7, ':pC':ds});
+        print('Parameter names: '+st.paramNames.join(', '));
         //assertThrows( function() { st.bind(':pD'); } );
         st.step();
         print('Inserted new record using named params. ID='+App.drv.lastInsertId());
@@ -185,8 +186,12 @@ function testExt_forEach() {
 }
 
 function testExt_fetchAll() {
+    var sql;
+    sql = "SELECT * FROM "+App.tableName+" WHERE a > :pA LIMIT 3";
+    sql = App.drv.prepare(sql);
+    print('fetchAll() parameter names: '+sql.paramNames.join(', '));
     var opt = {
-        sql:"SELECT * FROM "+App.tableName+" WHERE a > :pA LIMIT 3",
+        sql:sql,
         bind:{pA:20},
         mode:'array'
         //mode:'object'
