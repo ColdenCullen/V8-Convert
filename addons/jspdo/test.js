@@ -9,7 +9,7 @@ password:"",
 tableName:'mytbl'
 };
 if(1) {
-    App.dsn = 'sqlite3:db.sqlite3';
+    App.dsn = 'sqlite3::memory:';
 }
 else {
     App.dsn = 'mysql5:host=localhost;dbname=cpdo';
@@ -162,6 +162,8 @@ function testInsertNamedParams() {
         var sql = "INSERT INTO "+App.tableName+"(a,b,c) VALUES(:pA,:pB,:pC)";
         var ds = (new Date()).toString();
         st = App.drv.prepare(sql);
+        asserteq(3,st.paramIndex(':pC'));
+        asserteq(0,st.paramIndex(':pX'));
         st.bind(':pB', 32.23);
         st.bind({pA:7, ':pC':ds});
         //assertThrows( function() { st.bind(':pD'); } );
@@ -177,6 +179,35 @@ function testInsertNamedParams() {
 
 }
 
+function testExt_forEach() {
+    var opt = {
+        sql:"SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3",
+        //bind:[20],
+        bind:function(st){st.bind(1,20);},
+        mode:'object',
+        //mode:'array',
+        foreach:function(row,data){
+            ++data.rows;
+            print(JSON.stringify(row));
+        },
+        foreachData:{rows:0}
+    };
+    print("Trying db.execForeach(): "+JSON.stringify(opt));
+    App.drv.execForeach(opt);
+    print(opt.foreachData.rows+" row(s)");
+}
+
+function testExt_fetchAll() {
+    var opt = {
+        sql:"SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3",
+        bind:[20],
+        mode:'array'
+        //mode:'object'
+    };
+    print("Trying db.fetchAll( "+JSON.stringify(opt)+" )");
+    var all = App.drv.fetchAll(opt);
+    print(JSON.stringify(all));
+}
 
 try {
     testConnect();
@@ -187,6 +218,8 @@ try {
     testSelect(2);
     testInsertNamedParams();
     testSelect(3);
+    testExt_forEach();
+    testExt_fetchAll();
 }
 catch(e) {
     print("Exception: "+e);

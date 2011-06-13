@@ -120,3 +120,12 @@ amal-cpp: cpdo_amalgamation.o
 		-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3) \
 		-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5) \
 		$(CFLAGS_MYSQL5)
+
+EXT.JS := jspdo-init.js
+EXT.CPP := jspdo-init.cpp
+$(EXT.JS):
+
+js2c: js2c.o
+$(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)
+	./js2c jspdoExtCode < $(EXT.JS) > $@
+jspdo.o: $(EXT.CPP)

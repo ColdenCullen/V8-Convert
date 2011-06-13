@@ -9,7 +9,11 @@
 #include "v8/convert/properties.hpp"
 
 
-#include <iostream> /* only for debuggering */
+#include <iostream>
+#include <fstream>
+#include <iterator>
+#include <algorithm>
+
 #ifndef CERR
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
 #endif
@@ -114,7 +118,7 @@ namespace v8 { namespace convert {
     if( ! drv ) return v8::ThrowException(v8::Exception::Error(JSTR("Could not find native cpdo::driver 'this' object.")))
 #define ASSERT_ARGV(COND) if( ! (COND) ) return v8::ThrowException(v8::Exception::Error(JSTR("Arguments condition failed: "#COND)))
 
-static v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
+v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
 {
     DRV_DECL(argv.This());
     cv::StringBuffer buf;
@@ -400,7 +404,7 @@ v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
     {
         arh->Set( i, Statement_get(st, i) );
     }
-    return arh;
+    return hscope.Close(arh);
 }
 
 v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
@@ -419,7 +423,7 @@ v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
         if( ! colName ) continue;
         obj->Set( JSTR(colName), Statement_get(st, i) );
     }
-    return obj;
+    return hscope.Close(obj);
 }
 
 
@@ -432,6 +436,7 @@ v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
     ASSERT_DRV_DECL(argv.This());
     try
     {
+        v8::HandleScope hscope;
         typedef cv::ClassCreator<cpdo::statement> WST;
         WST & wst( WST::Instance() );
         v8::Handle<v8::Value> stArgs[] = {
@@ -445,7 +450,7 @@ v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
         }
         cpdo::statement * st = cv::CastFromJS<cpdo::statement>(jSt);
         assert( (NULL != st) && "Probable bug in the binding code." );
-        return jSt;
+        return hscope.Close(jSt);
     }
     catch(std::exception const &ex)
     {
@@ -485,6 +490,86 @@ v8::Local<v8::Array> JSPDO_driverList()
     return ar;
 }
 
+#if 1
+void ReportException(v8::TryCatch* try_catch) {
+    // code taken from v8 sample shell
+  v8::HandleScope handle_scope;
+  //v8::String::Utf8Value exception();
+  std::string exception_string( cv::CastFromJS<std::string>(try_catch->Exception()) ) ;
+  v8::Handle<v8::Message> message = try_catch->Message();
+  std::ostream & out( std::cerr );
+  if (message.IsEmpty()) {
+      // V8 didn't provide any extra information about this error; just
+      // print the exception.
+      out << exception_string << '\n';
+  } else {
+    // Print (filename):(line number): (message).
+    std::string filename_string = cv::JSToStdString(message->GetScriptResourceName());
+    int linenum = message->GetLineNumber();
+    out << filename_string << ':' << linenum
+         << ": "<< exception_string
+         << '\n';
+    // Print line of source code.
+    std::string sourceline_string = cv::JSToStdString(message->GetSourceLine());
+    out << sourceline_string << '\n';
+    // Print wavy underline (GetUnderline is deprecated).
+    int start = message->GetStartColumn();
+    for (int i = 0; i < start; i++) {
+        out << ' ';
+    }
+    int end = message->GetEndColumn();
+    for (int i = start; i < end; i++) {
+        out << '^';
+    }
+    out << std::endl;
+    v8::String::Utf8Value stack_trace(try_catch->StackTrace());
+    if (stack_trace.length() > 0) {
+        std::string stack_trace_string = cv::JSToStdString(try_catch->StackTrace());
+        out << stack_trace_string << '\n';
+    }
+  }
+}
+
+#endif
+
+#define JSPDO_EXT_JS_CPP "jspdo-init.cpp"
+#include JSPDO_EXT_JS_CPP
+
+//static
+bool JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
+{
+    v8::HandleScope scope;
+    char const * fname = JSPDO_EXT_JS_CPP;
+    v8::Handle<v8::String> source( v8::String::New(jspdoExtCode, sizeof(jspdoExtCode)-1) );
+    v8::TryCatch tryCatch;
+    v8::Handle<v8::Script> script = v8::Script::Compile(source, JSTR(fname));
+    if (script.IsEmpty()) {
+        assert( 0 && "Compilation of JSPDO JS extensions failed!" );
+        return false;
+    }
+
+    v8::Handle<v8::Value> result = script->Run();
+    if (result.IsEmpty()) {
+        // Print errors that happened during execution.
+        assert( 0 && "Execution of JSPDO JS extensions failed!" );
+        return false;
+    }
+    assert( result->IsFunction() );
+    v8::Handle<v8::Function> initFunc( v8::Function::Cast(*result) );
+    v8::Local<v8::Value> self( ctor->GetPrototype() );
+    v8::Handle<v8::Value> rc = initFunc->Call( ctor, 0, NULL );
+    if( rc.IsEmpty() )
+    {
+        CERR << "EXCEPTION: "<< cv::JSToStdString(tryCatch.Exception()) <<'\n';
+        //ReportException( &tryCatch );
+        assert( 0 && "Got exception from init code.");
+    }
+    CERR << "init rc="<<cv::JSToStdString(rc)<<'\n';
+    tryCatch.Reset();
+    return !rc.IsEmpty();
+}
+
+
 namespace v8 { namespace convert {
 
     template <>
@@ -493,6 +578,7 @@ namespace v8 { namespace convert {
         static void InitBindings( v8::Handle<v8::Object> & dest )
         {
             using namespace v8;
+            HandleScope hscope;
             //CERR << "Binding cpdo::driver...\n";
             ////////////////////////////////////////////////////////////
             // Bootstrap class-wrapping code...
@@ -523,7 +609,7 @@ namespace v8 { namespace convert {
                 ("get", CATCHER<Statement_get>::Call )
                 ("bind", CATCHER<Statement_bind>::Call)
                 ("reset", CATCHER< M2I<ST, void (void),&ST::reset> >::Call)
-                ("toString", Statement_toString)
+                ("toString", CATCHER<Statement_toString>::Call )
                 ("paramIndex", InCaCatcher_std<M2I<ST, uint16_t (char const *),&ST::param_index> >::Call )
                 ;
 
@@ -532,7 +618,6 @@ namespace v8 { namespace convert {
             SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
             SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
             SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
-
             
             // Just an experiment:
             typedef InCaCatcher<
@@ -568,14 +653,17 @@ namespace v8 { namespace convert {
                  CATCHER<JSPDO_lastInsertId>::Call
                  //LastInsId::Call
                  )
-                ("toString", JSPDO_toString)
+                ("toString", CATCHER<JSPDO_toString>::Call)
                 ;
 #undef M2I
 #undef CATCHER
+            
             typedef cv::MemberPropertyBinder<DRV> PB;
             PB::BindGetterConstMethod<char const * (),&DRV::driver_name>( "driverName", dProto );
             PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
             PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
+
+
 
             ////////////////////////////////////////////////////////////////////////
             // The following changes have to be made after the
@@ -594,8 +682,7 @@ namespace v8 { namespace convert {
              */
             //dCtor->SetHiddenValue( JSTR("$Statement"), wst.CtorFunction() );
             dCtor->Set( JSTR("Statement"), wst.CtorFunction() );
-            dCtor->Set(JSTR("driverList"), JSPDO_driverList() );
-
+            dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, replacing them with a bool or an exception.
@@ -625,6 +712,7 @@ namespace v8 { namespace convert {
                 COLTYPE(CUSTOM);
 #undef COLTYPE
             }
+            JSPDO_extendCtor( dCtor );
            
             ////////////////////////////////////////////////////////////////////////
             // Add the new class to the engine...
