@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-JSPDO.doDebug = false;
+//JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -46,7 +46,6 @@ function testConnect() {
 
 function testSelect(mode)
 {
-    mode = mode || 1;
     var drv = App.drv;
     var st;
     var sql = "select id as id, a as a,b as b,c as c from "+App.tableName;
@@ -67,7 +66,24 @@ function testSelect(mode)
         for(i=0; i < colCount; ++i ) {
             names.push(st.columnName(i));
         }
-        if(1===mode) {
+        if('object'===mode) {
+            var row;
+            while( (row = st.stepObject()) ) {
+                //asserteq( colCount, row.length, 'Column count matches.' );
+                print(JSON.stringify(row));
+                ++rowCount;
+            }
+        }
+        else if('array'===mode){
+            print( names.join(sep) );
+            var row;
+            while( (row = st.stepArray()) ) {
+                //asserteq( colCount, row.length, 'Column count matches.' );
+                print(row.join(sep));
+                ++rowCount;
+            }
+        }
+        else {
             print( names.join(sep) );
             var cols = [], v;
             while( st.step() ) {
@@ -80,23 +96,6 @@ function testSelect(mode)
                               );
                 }
                 print(cols.join(sep));
-            }
-        }
-        else if(2===mode) {
-            var row;
-            while( (row = st.stepObject()) ) {
-                //asserteq( colCount, row.length, 'Column count matches.' );
-                print(JSON.stringify(row));
-                ++rowCount;
-            }
-        }
-        else {
-            print( names.join(sep) );
-            var row;
-            while( (row = st.stepArray()) ) {
-                //asserteq( colCount, row.length, 'Column count matches.' );
-                print(row.join(sep));
-                ++rowCount;
             }
         }
         print(rowCount+" row(s)");
@@ -201,21 +200,57 @@ function testExt_fetchAll() {
     print(all.rows.length+" row(s)");
 }
 
+function test_QueryClass()
+{
+    var src = 'query.js';
+    if( ! load(src) ) {
+        print("Could not load ["+src+"].");
+        return;
+    }
+    print("Poking around the 3rd-party Query class...");
+    var db = App.drv;
+    db.qualify = function(x) { return '`'+x+'`';}
+    db.escape = function(x) { return ('string' === typeof x) ? x.replace(/\'/g,"''") : x;}
+    db.query = db.exec;
+    print("escaped:",db.escape("He's not from'n 'round here."));
+    Query.setDB( db );
+    var q = new Query(Query.SELECT)
+        .field('c')
+        .table(App.tableName)
+        .where("%f like '%%01:%%'",'c')
+        .limit(7);
+    print("Query:",q);
+    //print( q.execute() );
+
+    var t = new Table(App.tableName);
+    q = t.select()
+        .field('c')
+        .where("%f like '%%01:%%'",'c')
+        .limit(7);
+    print("Query:"+q);
+    t = new Table(App.tableName);
+    q = t.insert({a:56.65, b:78.87, c:"Hi, world's'!"});
+    print("Query:"+q);
+    //testSelect();
+    //print( q.execute() );
+}
+
 try {
     testConnect();
     testCleanup();
     assert( App.drv, "Driver is alive." );
-    testSelect(1);
+    testSelect();
     testInsert();
-    testSelect(2);
+    testSelect('object');
     testInsertNamedParams();
-    testSelect(3);
+    testSelect('array');
     testExt_forEach();
     testExt_fetchAll();
+    //test_QueryClass();
 }
 catch(e) {
-    print("Exception: "+e);
-    //stacktrace is reset in catch? print("Stacktrace:\n"+JSON.stringify(getStacktrace(),0,4));
+    print("EXCEPTION: "+e);
+    //stacktrace is reset in catch! print("Stacktrace:\n"+JSON.stringify(getStacktrace(),0,4));
 }
 finally {
     if( App.drv ) {

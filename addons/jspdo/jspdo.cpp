@@ -549,13 +549,12 @@ void ReportException(v8::TryCatch* try_catch, std::ostream & out) {
 
 #endif
 
-#define JSPDO_EXT_JS_CPP "jspdo-init.cpp"
-#include JSPDO_EXT_JS_CPP
+#include "jspdo-init.cpp" /* generated code (JavaScript source) */
 static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 {
     v8::HandleScope scope;
-    char const * fname = JSPDO_EXT_JS_CPP;
-    v8::Handle<v8::String> source( v8::String::New(jspdoExtCode, sizeof(jspdoExtCode)-1) );
+    char const * fname = "jspdo-init.js";
+    v8::Handle<v8::String> source( v8::String::New(jspdoInitCode, sizeof(jspdoInitCode)-1) );
     v8::TryCatch tc;
     v8::Handle<v8::Script> script = v8::Script::Compile(source, JSTR(fname));
     if (script.IsEmpty()) {
@@ -584,7 +583,6 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
         throw std::runtime_error( msg.str().c_str() );
     }
 }
-#undef JSPDO_EXT_JS_CPP
 
 namespace v8 { namespace convert {
 
@@ -697,7 +695,7 @@ namespace v8 { namespace convert {
             //dCtor->SetHiddenValue( JSTR("$Statement"), wst.CtorFunction() );
             dCtor->Set( JSTR("Statement"), wst.CtorFunction() );
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
-            dCtor->Set( JSTR("doDebug"), v8::False() );
+            dCtor->Set( JSTR("enableDebug"), v8::False() );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, replacing them with a bool or an exception.

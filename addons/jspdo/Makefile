@@ -105,13 +105,28 @@ $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5
 LDFLAGS_JSPDO := -L. -ljspdo
 BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_JSPDO) #$(LDFLAGS_DRIVERS)
 
-test.BIN.OBJECTS := test.o
-test.BIN.LDFLAGS += $(BINS_LDFLAGS)
-test.o: CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3)
-test.o: CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5)
-$(eval $(call ShakeNMake.CALL.RULES.BINS,test))
-$(test.BIN): $(libjspdo.DLL)
-all: $(test.BIN)
+#test.BIN.OBJECTS := test.o
+#test.BIN.LDFLAGS += $(BINS_LDFLAGS)
+#test.o: CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3)
+#test.o: CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5)
+#$(eval $(call ShakeNMake.CALL.RULES.BINS,test))
+#$(test.BIN): $(libjspdo.DLL)
+#all: $(test.BIN)
+
+ifeq (1,1)
+  SHELL.DIR := ../shell-skel
+  shell.cpp: $(SHELL.DIR)/shell.cpp
+	cp $< $@
+  CLEAN_FILES += shell.cpp
+  shell.BIN.OBJECTS := shell.o
+  shell.BIN.LDFLAGS += $(BINS_LDFLAGS)
+  $(eval $(call ShakeNMake.CALL.RULES.BINS,shell))
+  shell.o: shell.cpp $(ALL_MAKEFILES)
+  shell.o: CPPFLAGS+=-DSETUP_SHELL_BINDINGS=jspdo::SetupV8Bindings
+  shell.o: CPPFLAGS+=-DINCLUDE_SHELL_BINDINGS='"jspdo.hpp"'
+  $(shell.BIN): $(libjspdo.DLL)
+  all: $(shell.BIN)
+endif
 
 .PHONY: amal-cpp
 amal-cpp: cpdo_amalgamation.o
@@ -126,6 +141,7 @@ EXT.CPP := jspdo-init.cpp
 $(EXT.JS):
 
 js2c: js2c.o
+CLEAN_FILES += js2c
 $(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)
-	./js2c jspdoExtCode < $(EXT.JS) > $@
+	./js2c jspdoInitCode < $(EXT.JS) > $@
 jspdo.o: $(EXT.CPP)

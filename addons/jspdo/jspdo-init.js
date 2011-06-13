@@ -5,19 +5,20 @@
 
    The 'this' pointer in the function call will be the JSPDO
    constructor function.
+
+   The final expression in this file MUST evaluate to the anonymous
+   function we're creating.
 */
 (function(){
-    var ctor = this;
+    var ctor = this; // === JSPDO
     var jp = this.prototype;
     var sp = ctor.Statement.prototype;
-    ctor.doDebug = true;
-
     function stepA(st) { return st.stepArray(); }
     function stepO(st) { return st.stepObject(); }
     function step1(st) { return st.step(); }
     function debug() {
-        if( ! ctor.doDebug ) return;
-        print.call(ctor,Array.prototype.slice.apply(arguments,[0]));
+        if( ! ctor.enableDebug ) return;
+        print.apply(ctor,Array.prototype.slice.apply(arguments,[0]));
     }
 
     var origImpls = {
@@ -177,3 +178,4 @@
     
     return ctor;
 });
+

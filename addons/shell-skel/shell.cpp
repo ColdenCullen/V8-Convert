@@ -34,7 +34,10 @@ typedef v8::Handle<v8::Value> ValueHandle;
 
 
 /* manual declarations of code from jspdo.cpp */
-namespace jspdo { void SetupV8Bindings( v8::Handle<v8::Object> & dest ); }
+//namespace jspdo { void SetupV8Bindings( v8::Handle<v8::Object> & dest ); }
+#if defined(INCLUDE_SHELL_BINDINGS)
+#  include INCLUDE_SHELL_BINDINGS // "shell_bindings.hpp"
+#endif
 
 static int v8_main(int argc, char const * const * argv)
 {
@@ -69,11 +72,22 @@ static int v8_main(int argc, char const * const * argv)
     Handle<Object> gobj = context->Global();
     try
     {
-        jspdo::SetupV8Bindings(gobj);
-        ValueHandle av[] = {
-        cv::CastToJS("./test.js")
-        };
-        fntmLoad->GetFunction()->Call(gobj,1,av);
+#if defined(SETUP_SHELL_BINDINGS)
+        SETUP_SHELL_BINDINGS(gobj);
+#endif
+        v8::TryCatch tryCatch;
+        for( int i = 1; i < argc; ++i ) {
+            char const * fname = argv[i];
+            ValueHandle av[] = {
+                cv::CastToJS(fname)
+            };
+            ValueHandle rc = fntmLoad->GetFunction()->Call(gobj,1,av);
+            if( rc.IsEmpty() )
+            {
+                ReportException(&tryCatch, std::cerr);
+                return 1;
+            }
+        }
     }
     catch(std::exception const & ex)
     {
