@@ -9,7 +9,7 @@ user:"",
 password:"",
 tableName:'mytbl'
 };
-if(0) {
+if(1) {
     App.dsn = 'sqlite3::memory:';
 }
 else {
