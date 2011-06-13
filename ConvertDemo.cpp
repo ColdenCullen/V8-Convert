@@ -28,7 +28,7 @@ ValueHandle sampleCallback( v8::Arguments const & argv )
 }
 
 namespace v8 { namespace convert {
-    BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Arguments const & argv )
+    BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
         return new BoundNative;
     }

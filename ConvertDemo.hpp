@@ -246,7 +246,7 @@ namespace v8 { namespace convert {
     {
     public:
         typedef BoundNative * ReturnType;
-        static ReturnType Create( v8::Arguments const & argv );
+        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
         static void Delete( BoundNative * obj );
     };
 

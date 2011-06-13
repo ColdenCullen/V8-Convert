@@ -26,9 +26,22 @@ namespace v8 { namespace convert {
            Ownership of the object is passed to the caller (the
            binding API internals), and eventually given to v8.
 
+           jsSelf will be the newly-created JS-side 'this' object.  It
+           is not normally required by this function but it is
+           sometimes useful when we need to bind supplementary
+           properties in the ctor, especially when binding a "pure
+           C++" class which has no native place to store such
+           properties.
+
+           At the time this is called, jsSelf is not connected to the
+           native (because it hasn't yet been created).
+           Implementations must not perform the actual binding of the
+           returned native to jsSelf - ClassCreator will do that
+           immediately after Create() returns the new object.
+           
            The default implementation simply return (new T).
         */
-        static ReturnType Create( v8::Arguments const & argv )
+        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
         {
             return new T;
         }
@@ -36,6 +49,8 @@ namespace v8 { namespace convert {
         /**
            Must destroy obj using a mechanism complementary to its
            construction via a prior call to Create().
+
+           The default implementation simply calls (delete obj).
         */
         static void Delete( T * obj )
         {
@@ -235,9 +250,11 @@ namespace v8 { namespace convert {
            (jsSelf,NULL), to clean up any data which this function might have
            stored in jsSelf.
 
+           The argv object is the arguments passed to the constructor.
+
            The default implementation does nothing.
         */
-        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf )
+        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf, v8::Arguments const & argv )
         {
             return;
         }
@@ -557,8 +574,8 @@ namespace v8 { namespace convert {
             T * nobj = NULL;
             try
             {
-                WeakWrap::PreWrap( self );
-                nobj = Factory::Create( argv );
+                WeakWrap::PreWrap( self, argv  );
+                nobj = Factory::Create( self, argv );
                 if( ! nobj )
                 {
                     return CastToJS<std::exception>(std::runtime_error("Native constructor failed."));
