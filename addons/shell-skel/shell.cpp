@@ -84,7 +84,7 @@ static int v8_main(int argc, char const * const * argv)
             ValueHandle rc = fntmLoad->GetFunction()->Call(gobj,1,av);
             if( rc.IsEmpty() )
             {
-                ReportException(&tryCatch, std::cerr);
+                ReportException(&tryCatch);
                 return 1;
             }
         }
