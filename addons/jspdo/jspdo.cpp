@@ -181,10 +181,6 @@ namespace v8 { namespace convert {
         typedef cpdo::statement * NativeHandle;
         static void PreWrap( v8::Persistent<v8::Object> const & jsSelf, v8::Arguments const & argv )
         {
-            if( argv.Length() > 1 )
-            {
-                jsSelf->Set(JSTR("sql"),argv[1]);
-            }
             return;
         }
         static void Wrap( v8::Persistent<v8::Object> const & jsSelf, NativeHandle nativeSelf )
@@ -228,6 +224,8 @@ namespace v8 { namespace convert {
         cpdo::statement * rc = drv->prepare( *u8v );
         assert( jsSelf->InternalFieldCount() == 2 );
         jsSelf->SetInternalField(1,jdrv);
+        jsSelf->Set(JSTR("sql"),sql);
+
         if( jspdo::IsDebugEnabled() )
         {
             CERR << "Created cpdo::statement@"<<(void const *)rc<<'\n';

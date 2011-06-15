@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-JSPDO.enableDebug = true;
+//JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -282,7 +282,7 @@ try {
     testExt_forEach();
     testExt_fetchAll();
     testCopyDb();
-    if( 'sqlite3' === App.drv.driverName ) {
+    if( 1 && ('sqlite3' === App.drv.driverName) ) {
         testUnclosedHandles();
     }
 }
