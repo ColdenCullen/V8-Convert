@@ -6028,7 +6028,7 @@ int cpdo_driver_mysql5_register()
 
 namespace cpdo {
     exception::exception( cpdo_driver * drv )
-        : code(0), is_db_err(true), msg(NULL)
+        : code(0), is_db_err(true), msg()
     {
         char const * str = NULL;
         if( drv )
