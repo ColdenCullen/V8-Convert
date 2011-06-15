@@ -9,12 +9,15 @@ indent_mode=2
 [project]
 name=v8-convert
 base_path=/home/stephan/cvs/v8-juice/convert/
+description=
 
 [long line marker]
 long_line_behaviour=1
 long_line_column=80
 
 [files]
-current_page=1
-FILE_NAME_0=0;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo-init.js;0
-FILE_NAME_1=0;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo.cpp;0
+current_page=0
+FILE_NAME_0=3424;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo-init.js;0
+FILE_NAME_1=57;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/test.js;0
+FILE_NAME_2=13140;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/ClassCreator.hpp;0
+FILE_NAME_3=7116;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo.cpp;0
