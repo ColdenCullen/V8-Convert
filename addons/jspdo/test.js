@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-//JSPDO.enableDebug = true;
+JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -260,7 +260,8 @@ function testUnclosedHandles() {
     try {
         for( var i = 0; i < count; ++i ) {
             var st = db.prepare("SELECT COUNT(*) sqlite_master");
-            st.step();
+            //st.step();
+            print('Intentionally trying to "leak" statement '+st);
         }
     }
     finally {

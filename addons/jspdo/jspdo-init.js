@@ -44,7 +44,7 @@
     };
     
     sp.finalize = function() {
-        debug("Finalizing JSPDO.Statement handle "+this);
+        debug("Finalizing JSPDO.Statement "+this);
         origImpls.finalize.apply(this,[]);
     };
 
@@ -55,7 +55,7 @@
     
     jp.prepare = function() {
         var st = origImpls.prepare.apply(this,argvToArray(arguments));
-        debug("Prepared statement: "+st);
+        debug("Created JSPDO.Statement "+st);
         return st;        
     };
 
