@@ -243,7 +243,7 @@ endif
 # Deps, Tromey's Way:
 # $(call ShakeNBake.CALL.MkDep.Tromey,source-file,object-file,depend-file)
 ifeq (0,1)
-.dfiles.list = $(wildcard *.o.d) $(shell find src -name '*.o.d')
+.dfiles.list = $(wildcard *.o.d) $(shell find . -name '*.o.d')
 ifneq (,$(.dfiles.list))
 # $(error include $(.dfiles.list))
 include $(.dfiles.list)
