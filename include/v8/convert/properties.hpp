@@ -317,7 +317,7 @@ namespace v8 { namespace convert {
            called str. We can bind the member variable with:
 
            \code
-           myObjectTemplate.SetAccessor("foo",
+           myObjectTemplate.SetAccessor(String::New("foo"),
            MemberToAccessorGetter<Foo,std::string,&Foo::str>,
            MemberToAccessorSetter<Foo,std::string,&Foo::str> );
            \endcode
