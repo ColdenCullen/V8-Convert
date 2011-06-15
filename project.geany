@@ -1,0 +1,20 @@
+
+[indentation]
+indent_width=4
+indent_type=0
+indent_hard_tab_width=8
+detect_indent=false
+indent_mode=2
+
+[project]
+name=v8-convert
+base_path=/home/stephan/cvs/v8-juice/convert/
+
+[long line marker]
+long_line_behaviour=1
+long_line_column=80
+
+[files]
+current_page=1
+FILE_NAME_0=0;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo-init.js;0
+FILE_NAME_1=0;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo.cpp;0
