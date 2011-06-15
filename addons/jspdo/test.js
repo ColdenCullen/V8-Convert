@@ -171,22 +171,21 @@ function testExt_forEach() {
         bind:function(st){st.bind(1,20)},
         mode:'object',
         //mode:'array',
-        foreach:function(row,data){
+        each:function(row,data){
             ++data.rows;
             print(JSON.stringify(row));
         },
-        foreachData:{rows:0}
+        callbackData:{rows:0}
     };
     print("Trying db.exec("+JSON.stringify(opt)+")");
     try {
-        //App.drv.execForeach(opt);
         App.drv.exec(opt);
-        asserteq( 2, opt.foreachData.rows, 'expecting 2 rows' );
+        asserteq( 2, opt.callbackData.rows, 'expecting 2 rows' );
     }
     finally {
         if( sql instanceof JSPDO.Statement ) sql.finalize();
     }
-    print(opt.foreachData.rows+" row(s)");
+    print(opt.callbackData.rows+" row(s)");
 }
 
 function testExt_fetchAll() {

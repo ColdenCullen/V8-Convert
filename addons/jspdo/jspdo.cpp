@@ -34,18 +34,10 @@ used by MySQL (if any).
 
 namespace cv = v8::convert;
 
-/**
-   The following code is mostly here for use with ClassCreator<>, a
-   class-binding mechanism which is demonstrated in
-   ConvertDemo.cpp. It mostly shows how to use ClassCreator<> policies
-   to customize the ClassCreator bindings for a particular class.
-*/
 namespace v8 { namespace convert {
-    /*
-      This class is required unless you just want to bind to the
-      default constructor. It creates native objects for the
-      underlying binding code.
-     */
+    // Various ClassCreator policy classes specialized for the native types
+    // we are binding...
+
     template <>
     class ClassCreator_Factory<cpdo::driver>
     {
@@ -64,20 +56,17 @@ namespace v8 { namespace convert {
         static void Delete( cpdo::statement * obj );
     };
     
-    /**
-       Required specialization so that the conversion API can derive
-       the native 'this' object from v8::Arguments::This() and from
-       function arguments of our bound type.
-    */
     template <>
     struct JSToNative<cpdo::driver>
         : JSToNative_ClassCreator<cpdo::driver>
     {};
+
     template <>
     struct JSToNative<cpdo::statement>
         : JSToNative_ClassCreator<cpdo::statement>
     {};
 
+    /** Enum-to-int conversion workaround. */
     template <>
     struct NativeToJS<cpdo_data_type> : NativeToJS<int32_t> {};
 
@@ -98,10 +87,12 @@ namespace v8 { namespace convert {
         jsSelf->Set(JSTR("dsn"), argv[0]);
         return db;
     }
+
     void ClassCreator_Factory<cpdo::driver>::Delete( cpdo::driver * drv )
     {
         delete drv;
     }
+
     cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Handle<v8::Object> & jsSelf,
                                                                      v8::Arguments const & argv )
     {
@@ -119,6 +110,7 @@ namespace v8 { namespace convert {
         jsSelf->Set(JSTR("sql"), sql);
         return rc;
     }
+
     void ClassCreator_Factory<cpdo::statement>::Delete( cpdo::statement * drv )
     {
         delete drv;
@@ -126,9 +118,7 @@ namespace v8 { namespace convert {
 
 }}
 
-namespace v8 { namespace convert {
-}}
-
+// Internal convenience macros...
 #define STMT_DECL(JVAL) cpdo::statement * st = cv::CastFromJS<cpdo::statement>(JVAL)
 #define ASSERT_STMT_DECL(JVAL) STMT_DECL(JVAL); \
     if( ! st ) return v8::ThrowException(v8::Exception::Error(JSTR("Could not find native cpdo::statement 'this' object.")))
@@ -137,6 +127,7 @@ namespace v8 { namespace convert {
     if( ! drv ) return v8::ThrowException(v8::Exception::Error(JSTR("Could not find native cpdo::driver 'this' object.")))
 #define ASSERT_ARGV(COND) if( ! (COND) ) return v8::ThrowException(v8::Exception::Error(JSTR("Arguments condition failed: "#COND)))
 
+//! JSPDO.toString() impl
 v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
 {
     DRV_DECL(argv.This());
@@ -149,6 +140,7 @@ v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
     return buf << ']';
 }
 
+//! JSPDO.Statement.toString() impl
 v8::Handle<v8::Value> Statement_toString( v8::Arguments const & argv )
 {
     STMT_DECL(argv.This());
@@ -156,6 +148,7 @@ v8::Handle<v8::Value> Statement_toString( v8::Arguments const & argv )
         << "[cpdo::statement@"<<(void const *)st << ']';
 }
 
+//! JSPDO.Statement.get() impl for Number values.
 v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
                                           uint16_t ndx )
 {
@@ -181,6 +174,7 @@ v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
     }
 }
 
+//! JSPDO.Statement.get() impl for String values.
 static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
                                                  uint16_t ndx )
 {
@@ -228,8 +222,9 @@ static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
     }
 }
 
+//! Main JSPDO.Statement.get() impl.
 static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
-                                                   uint16_t ndx )
+                                            uint16_t ndx )
 {
     switch( st->col_type(ndx) )
     {
@@ -245,6 +240,7 @@ static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
     }
 }
 
+//! Main JSPDO.Statement.get() impl.
 v8::Handle<v8::Value> Statement_get(v8::Arguments const & argv)
 {
     ASSERT_ARGV(argv.Length()>0);
@@ -252,6 +248,7 @@ v8::Handle<v8::Value> Statement_get(v8::Arguments const & argv)
     return Statement_get( st, cv::CastFromJS<uint16_t>(argv[0]) );
 }
 
+//! JSPDO.Statement.bind(int[,val]) impl.
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
                                             uint16_t ndx,
                                             v8::Handle<v8::Value> const & val )
@@ -307,6 +304,7 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     return v8::Undefined();
 }
 
+//! JSPDO.Statement.bind(string[,val]) impl.
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
                                             std::string const & pname,
                                             v8::Handle<v8::Value> const & val )
@@ -315,6 +313,7 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     return Statement_bind( st, st->param_index( cstr ), val );
 }
 
+//! JSPDO.Statement.bind(string|int[,val]) impl.
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
                                             v8::Handle<v8::Value> const & index,
                                             v8::Handle<v8::Value> const & val )
@@ -325,6 +324,7 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
         ;
 }
 
+//! JSPDO.Statement.bind(Array) impl.
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
                                             v8::Handle<v8::Array> & ar )
 {
@@ -342,6 +342,7 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     return v8::Undefined();
 }
 
+//! JSPDO.Statement.bind(Object) impl.
 static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
                                             v8::Handle<v8::Object> & obj )
 {
@@ -371,11 +372,7 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
 
 
 /**
-   Potential TODOs:
-
-   bind({':namedParam1':val, ':namedParam2':val})
-
-   bind( [ col0Val, col1Val... ] )
+   ! Main JSPDO.Statement.bind() impl.
 */
 v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
 {
@@ -410,6 +407,7 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
     }
 }
 
+//! JSPDO.Statement.stepArray() impl.
 v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
 {
     v8::HandleScope hscope;
@@ -426,6 +424,7 @@ v8::Handle<v8::Value> Statement_stepArray( v8::Arguments const & argv )
     return hscope.Close(arh);
 }
 
+//! JSPDO.Statement.stepObject() impl.
 v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
 {
     v8::HandleScope hscope;
@@ -446,7 +445,8 @@ v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
 }
 
 /**
-   Statement.columnNames accessor which caches
+   Statement.columnNames accessor which caches the column names in
+   an internal JS object.
 */
 static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > property,
                                                        const v8::AccessorInfo & info )
@@ -490,6 +490,11 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
     }
         
 }
+
+/**
+   Statement.paramNames accessor which caches the column names in
+   an internal JS object.
+*/
 static v8::Handle<v8::Value> Statement_getParamNames( v8::Local< v8::String > property,
                                                        const v8::AccessorInfo & info )
 {
@@ -534,6 +539,7 @@ static v8::Handle<v8::Value> Statement_getParamNames( v8::Local< v8::String > pr
 }
 
 
+//! JSPDO.prepare() impl.
 v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
 {
     if( argv.Length() < 1 )
@@ -565,6 +571,7 @@ v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
     }
 }
 
+//! JSPDO.exec() impl.
 v8::Handle<v8::Value> JSPDO_exec( v8::Arguments const & argv )
 {
     if( argv.Length() < 1 ) {
@@ -587,6 +594,7 @@ v8::Handle<v8::Value> JSPDO_exec( v8::Arguments const & argv )
     }
 }
 
+//! JSPDO.lastInsertId() impl.
 v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
 {
     ASSERT_DRV_DECL(argv.This());
@@ -596,6 +604,7 @@ v8::Handle<v8::Value> JSPDO_lastInsertId( v8::Arguments const & argv )
     return cv::CastToJS( drv->last_insert_id( hint.empty() ? NULL : hint.c_str() ) );
 }
 
+//! JSPDO.driverList generator.
 v8::Local<v8::Array> JSPDO_driverList()
 {
     char const * const * dlist = cpdo_available_drivers();
@@ -609,7 +618,8 @@ v8::Local<v8::Array> JSPDO_driverList()
 }
 
 #if 1
-void ReportException(v8::TryCatch* try_catch, std::ostream & out) {
+//! For internal use by the bindings init code.
+static void ReportException(v8::TryCatch* try_catch, std::ostream & out) {
     // code taken from v8 sample shell
   v8::HandleScope handle_scope;
   //v8::String::Utf8Value exception();
@@ -653,6 +663,31 @@ namespace {
 #include "jspdo-init.cpp" /* generated code (JavaScript source) */
 }
 
+/**
+    This is run during the binding setup to install JSPDO functions which
+    are much easier to implement in JS code (and are thus implemented in JS
+    code which gets compiled into jspdo-init.cpp during the build process).
+
+    This function reads the contents of the global var jspdoInitCode, which
+    is assumed to be defined in jspdo-init.cpp (which is assumed to be
+    generated from jspdo-init.js using js2c.c (or equivalent)) and executes
+    them. The init code is required to dereference an anonymous Function as
+    the final operation in the init code. This function (the "return" value
+    of the init code) will be called and ctor will be the 'this' object in
+    that call. Inside that function, this.prototype will refer to the JSPDO
+    prototype object. Thus 'this' and this.prototype can be used in the init
+    code to extend the functionality of the ctor object (the JSPDO class'
+    constructor).
+
+    If the JS init code fails to compile or throws an exception, the binding
+    process is aborted and a std::exception is thrown to report the error to
+    the client. Since the JS-side init code gets compiled in to this binary,
+    such an error should only ever happen during development of jspdo-init.js.
+
+    This is called at the end of the binding process, meaning the ctor is
+    completely set up at that point with all member functions and whatnot
+    (except for those which are added by the init code, of course).
+*/
 static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 {
     v8::HandleScope scope;

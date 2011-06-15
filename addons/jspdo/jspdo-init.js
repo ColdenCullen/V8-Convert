@@ -37,7 +37,8 @@
     var origImpls = {
         finalize:sp.finalize,
         close:jp.close,
-        prepare:jp.prepare
+        prepare:jp.prepare,
+        exec:jp.exec
     };
     
     sp.finalize = function() {
@@ -57,7 +58,7 @@
     };
 
     /**
-       execForeach() takes an object parameter with the following
+       exec({...}) takes an object parameter with the following
        properties:
 
        .sql (required): SQL code string to run. It may optionally be a
@@ -65,7 +66,7 @@
        case this function DOES NOT finalize() it (regardless of
        success or failure!).
 
-       .foreach: function(row,callbackData,statement) is called for
+       .each: function(row,callbackData,statement) is called for
        each row.  If foreach() is not set then the query is executed
        (only one time) using step(). The exact type of the row param
        depends on the 'mode' option.
@@ -76,7 +77,7 @@
        statement object itself is passed as the first argument to
        foreach().
 
-       .foreachData: optional arbitrary value passed as 2nd argument to
+       .callbackData: optional arbitrary value passed as 2nd argument to
        foreach().
 
        .bind: Optional Array or Object containing values to bind() to
@@ -85,7 +86,11 @@
 
        .bindData: Optional data to passed as the 2nd argument to bind().
     */
-    jp.execForeach = function(opt) {
+    jp.exec = function(opt) {
+        if( 'string' === typeof opt ) return origImpls.exec.apply(this, argvToArray(arguments));
+        else if( !opt || ('object' !== typeof opt) ){
+            throw new Error("exec() requires a string or Object as its only parameter.");
+        }
         try {
             var st = (opt.sql instanceof ctor.Statement) ? opt.sql : this.prepare(opt.sql);
             var bind;
@@ -104,7 +109,7 @@
                     st.bind(opt.bind);
                 }
             }
-            if( ! (opt.foreach instanceof Function) ) {
+            if( ! (opt.each instanceof Function) ) {
                 st.step();
                 return;
             }
@@ -121,7 +126,7 @@
             }
             var row;
             while( row = step(st) ) {
-                opt.foreach( cbArg ? cbArg : row, opt.foreachData, st );
+                opt.each( cbArg ? cbArg : row, opt.callbackData, st );
                 /**if( true === repeatBind ) {
                     st.reset();
                     opt.bind(st, opt.bindData);
@@ -134,7 +139,7 @@
     };
 
     /**
-       A wrapper around execForeach() which fetches all records
+       A wrapper around exec() which fetches all records
        matching the query opt.sql and returns them as a JS object
        with this structure:
 
@@ -142,9 +147,9 @@
 
        The opt parameter must be-a Object with the following properties:
 
-       .sql, .bind, and .bindData are as documented for execForeach()
+       .sql, .bind, and .bindData are as documented for exec()
 
-       .mode is as documented for execForeach() except that it must
+       .mode is as documented for exec() except that it must
        be one of ('array','object') and defaults to 'array'.
 
        Throws an exception if opt is-not-a Object, if opt.sql is not set,
@@ -165,8 +170,8 @@
             sql:opt.sql,
             bind:opt.bind,
             bindData: opt.bindData,
-            foreachData: {columns:[],rows:[]},
-            foreach:function(row,data,st) {
+            callbackData: {columns:[],rows:[]},
+            each:function(row,data,st) {
                 if( ! data.columns.length ) {
                     var k, i = 0;
                     for( ; i < st.columnCount; ++i ) {
@@ -177,8 +182,8 @@
                 data.rows.push(row);
             }
         };
-        this.execForeach(fo);
-        return fo.foreachData;
+        this.exec(fo);
+        return fo.callbackData;
 
     };
 
