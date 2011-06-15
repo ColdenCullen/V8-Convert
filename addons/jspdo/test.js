@@ -7,7 +7,21 @@ var App = {
 drv:null,
 user:"",
 password:"",
-tableName:'mytbl'
+tableName:'mytbl',
+CREATE:{
+    mysql5:"CREATE TABLE IF NOT EXISTS mytbl("+
+             "id INTEGER PRIMARY KEY DEFAULT NULL AUTO_INCREMENT, "+
+             "a INTEGER DEFAULT NULL,"+
+             "b DOUBLE DEFAULT NULL,"+
+             "c VARCHAR(127) DEFAULT NULL"+
+             ")",
+    sqlite3:"CREATE TABLE IF NOT EXISTS mytbl("+
+             "id INTEGER PRIMARY KEY DEFAULT NULL,"+
+             "a INTEGER DEFAULT NULL,"+
+             "b DOUBLE DEFAULT NULL,"+
+             "c VARCHAR(127) DEFAULT NULL"+
+             ")"
+}
 };
 if(1) {
     App.dsn = 'sqlite3::memory:';
@@ -23,25 +37,8 @@ function testConnect() {
     print('JSPDO.columnTypes: '+JSON.stringify(JSPDO.columnTypes,0,4));
     print("Available db drivers: "+JSON.stringify(JSPDO.driverList));
     assertThrows(function() { drv.driverName = "should throw"; });
-    if(drv.driverName==='sqlite3') {
-        drv.exec("CREATE TABLE IF NOT EXISTS "+App.tableName+"("+
-             "id INTEGER PRIMARY KEY DEFAULT NULL,"+
-             "a INTEGER DEFAULT NULL,"+
-             "b DOUBLE DEFAULT NULL,"+
-             "c VARCHAR(127) DEFAULT NULL"+
-             ")");
-    }
-    else if(drv.driverName==='mysql5') {
-        drv.exec("CREATE TABLE IF NOT EXISTS "+App.tableName+"("+
-             "id INTEGER PRIMARY KEY DEFAULT NULL AUTO_INCREMENT, "+
-             "a INTEGER DEFAULT NULL,"+
-             "b DOUBLE DEFAULT NULL,"+
-             "c VARCHAR(127) DEFAULT NULL"+
-             ")");
-    }
-    else {
-        asserteq(0,1,'Unknown driver name! How can that be?');
-    }
+    asserteq( true, !!App.CREATE[drv.driverName] );
+    drv.exec(App.CREATE[drv.driverName]);
 }
 
 function testSelect(mode)
@@ -210,6 +207,45 @@ function testExt_fetchAll() {
     asserteq( 2, all.rows.length, 'expecting 2 rows' );
 }
 
+function testCopyDb() {
+    var db1 = App.drv;
+    var db2, st1, st2;
+    try {
+        db2 = new JSPDO('sqlite3::memory:');
+        print("Copying "+App.tableName+".* from "+db1+" to "+db2+"...");
+        db2.exec(App.CREATE[db1.driverName]);
+        db2.exec("DELETE FROM "+App.tableName);
+        st1 = db1.prepare("SELECT * FROM "+App.tableName);
+        var i, f = new Array(st1.columnCount);
+        for( i = 0; i < f.length; ++i ) f[i] = '?';
+        st2 = db2.prepare("INSERT INTO "+App.tableName+" ("+
+                        st1.columnNames.join(',')+
+                        ') VALUES('+f.join(',')+')');
+        f = null;
+        i = 0;
+        db2.begin();
+        while( st1.step() ) {
+            st2.bind(st1);
+            st2.step();
+            st2.reset();
+            ++i;
+        }
+        st1.finalize(); st1 = null;
+        st2.finalize(); st2 = null;
+        db2.commit();
+        print("Copied "+i+" record(s) to second db instance. Results:");
+        db2.exec({
+            sql:"SELECT * FROM "+App.tableName,
+            each:function(row) {print(JSON.stringify(row));},
+            mode:'array'
+        });
+    }
+    finally {
+        if( st1 ) st1.finalize();
+        if( st2 ) st2.finalize();
+        if( db2 ) db2.close();
+    }
+}
 
 try {
     testConnect();
@@ -222,9 +258,10 @@ try {
     testSelect('array');
     testExt_forEach();
     testExt_fetchAll();
+    testCopyDb();
 }
 catch(e) {
-    print("EXCEPTION: "+e);
+    print("GOT AN EXCEPTION: "+e);
     //stacktrace is reset in catch! print("Stacktrace:\n"+JSON.stringify(getStacktrace(),0,4));
 }
 finally {
