@@ -94,7 +94,7 @@ v8::Handle<v8::Value> Load(const v8::Arguments& args)
         if (source.IsEmpty()) {
             return v8::ThrowException(v8::String::New("Error loading file"));
         }
-        if (!ExecuteString(source, v8::String::New(*file), false, false)) {
+        if (!ExecuteString(source, v8::String::New(*file), false, true)) {
             return v8::ThrowException(v8::String::New("Error executing file"));
         }
     }
