@@ -99,7 +99,6 @@ function testSelect(mode)
         print(rowCount+" row(s)");
     }
     finally {
-
         st.finalize();
     }
 
@@ -168,8 +167,8 @@ function testExt_forEach() {
     sql = App.drv.prepare(sql);
     var opt = {
         sql:sql,
-        bind:[20],
-        //bind:function(st){st.bind(1,20);},
+        //bind:[20],
+        bind:function(st){st.bind(1,20)},
         mode:'object',
         //mode:'array',
         foreach:function(row,data){
@@ -182,6 +181,7 @@ function testExt_forEach() {
     try {
         //App.drv.execForeach(opt);
         App.drv.exec(opt);
+        asserteq( 2, opt.foreachData.rows, 'expecting 2 rows' );
     }
     finally {
         if( sql instanceof JSPDO.Statement ) sql.finalize();
@@ -208,6 +208,7 @@ function testExt_fetchAll() {
     var all = App.drv.fetchAll(opt);
     print(JSON.stringify(all));
     print(all.rows.length+" row(s)");
+    asserteq( 2, all.rows.length, 'expecting 2 rows' );
 }
 
 
