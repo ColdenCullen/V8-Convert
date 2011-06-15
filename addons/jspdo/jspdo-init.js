@@ -34,11 +34,13 @@
     function argvToArray(argv) {
         return Array.prototype.slice.apply(argv,[0]);
     }
+
     var origImpls = {
         finalize:sp.finalize,
         close:jp.close,
         prepare:jp.prepare,
-        exec:jp.exec
+        exec:jp.exec,
+        bind:sp.bind
     };
     
     sp.finalize = function() {
@@ -98,8 +100,8 @@
             if( opt.bind ) {
                 if( opt.bind instanceof Function ) {
                     /* todo: see if we can extend this model to support
-                       this. This only makes sense for INSERTs, but then
-                       we need some semantics for the client to tell
+                       this. This only seems to makes sense for INSERTs, but
+                       then we need some semantics for the client to tell
                        us to stop looping.
                     */
                     //repeatBind = opt.bind(st, opt.bindData);
@@ -137,6 +139,27 @@
             if(st && (st !== opt.sql)) st.finalize();
         }
     };
+
+    /**
+        Extends bind() to accept a Statement as its input. If it is-a
+        Statement then this.paramCount and opt.columnCount must match (and
+        be greater than 0) or an exception is thrown. this.bind(N+1,opt.get(N))
+        is called in a loop, where N is the set [0,opt.columnCount).
+    */
+    sp.bind = function(opt) {
+        if( (1!==arguments.length) || !(opt instanceof ctor.Statement) )
+            return origImpls.bind.apply(this, argvToArray(arguments));
+        else if( ! opt.columnCount )
+            throw new Error("Statement to bind from has no result columns.");
+        else if( opt.columnCount !== this.paramCount )
+            throw new Error("Source and destination column counts do not match "+
+                            opt.columnCount+' vs. '+this.paramCount);
+        var i;
+        for( i = 0; i < opt.columnCount;++i ) {
+            this.bind( 1+i, opt.get(i) );
+        }
+    };
+            
 
     /**
        A wrapper around exec() which fetches all records
@@ -184,7 +207,6 @@
         };
         this.exec(fo);
         return fo.callbackData;
-
     };
 
     jp.toJSON = function() {
@@ -193,6 +215,7 @@
             id:this.toString()
         }
     };
+
     sp.toJSON = function() {
         return {
             sql:this.sql,
