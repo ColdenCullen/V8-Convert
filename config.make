@@ -68,9 +68,10 @@ $(ALL_MAKEFILES):
 ifeq (1,$(ENABLE_DEBUG))
   CPPFLAGS += -UNDEBUG -DDEBUG=1
   CFLAGS += -g -O0
-  CXXFLAGS += -g
+  CXXFLAGS += -g -O0
 else
   CFLAGS += -O2
+  CXXFLAGS += -O2
   CPPFLAGS += -UDEBUG -DNDEBUG=1
 endif
 
