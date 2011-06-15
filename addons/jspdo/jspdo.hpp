@@ -65,6 +65,10 @@
 #include <v8.h>
 
 namespace jspdo {
+    /**
+        Adds the JSPDO class to dest. It throws a native exception if
+        something goes horribly wrong.
+    */
     void SetupV8Bindings( v8::Handle<v8::Object> & dest );
 }
 

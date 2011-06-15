@@ -537,7 +537,7 @@ namespace v8 { namespace convert {
        client must define the number of fields by
        specializing/customizing the ClassCreator_InternalFields<T>
        policy class. Additionally, if the client does NOT use the
-       above JSToNative<T> implementation then he create his
+       above JSToNative<T> implementation then he should create his
        implementation by subclassing
        JSToNative_ObjectWithInternalFields<T,N,M>, where (N,M) are the
        number of internals fields and the index of the field where the
@@ -870,29 +870,29 @@ namespace v8 { namespace convert {
            (which _might_ have been re-allocated to a different
            object, even of a different type, in the mean time).
         */
-	static bool DestroyObject( Handle<Object> const & jo )
-	{
-	    T * t = CastFromJS<T>(jo);
-	    if( ! t ) return false;
-            else
-            {
-                v8::Persistent<v8::Object> p( v8::Persistent<v8::Object>::New( jo ) );
-                p.ClearWeak(); // avoid a second call to weak_dtor() via gc!
-                weak_dtor( p, t );
-                return true;
-            }
-	}
+        static bool DestroyObject( Handle<Object> const & jo )
+        {
+            T * t = CastFromJS<T>(jo);
+            if( ! t ) return false;
+                else
+                {
+                    v8::Persistent<v8::Object> p( v8::Persistent<v8::Object>::New( jo ) );
+                    p.ClearWeak(); // avoid a second call to weak_dtor() via gc!
+                    weak_dtor( p, t );
+                    return true;
+                }
+        }
         /**
            If jv is empty or !jv->IsObject() then false is returned,
            otherwise it returns the result of
            DestroyObject(Handle<Object>).
         */
         static bool DestroyObject( v8::Handle<v8::Value> const & jv )
-	{
-            return (jv.IsEmpty() || !jv->IsObject())
-                ? 0
-                : DestroyObject( v8::Handle<v8::Object>( v8::Object::Cast(*jv) ) );
-	}
+        {
+                return (jv.IsEmpty() || !jv->IsObject())
+                    ? 0
+                    : DestroyObject( v8::Handle<v8::Object>( v8::Object::Cast(*jv) ) );
+        }
 
         /**
            A v8::InvocationCallback implementation which calls
@@ -902,10 +902,10 @@ namespace v8 { namespace convert {
            classes which need it. The canonical examples are
            Stream.close() and Database.close().
         */
-	static v8::Handle<v8::Value> DestroyObject( v8::Arguments const & argv )
-	{
-            return convert::CastToJS( DestroyObject(argv.This()) );
-	}
+        static v8::Handle<v8::Value> DestroyObject( v8::Arguments const & argv )
+        {
+                return convert::CastToJS( DestroyObject(argv.This()) );
+        }
 
         /**
            Class ClassCreator_Init<T>::Setup(dest) to initialize the
