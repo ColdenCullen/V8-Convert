@@ -34,26 +34,6 @@ used by MySQL (if any).
 
 namespace cv = v8::convert;
 
-namespace jspdo {
-    /**
-        Not yet used, but something to consider so that we can finalize any
-        statements left open when the db closes. Adding this requires some other
-        refactoring.
-    */
-    class JSPDO {
-        public:
-            typedef std::list< v8::Handle<v8::Object> > StList;
-            StList stmts;            
-            cpdo::driver * drv;
-            JSPDO() : stmts(),drv(NULL)
-            {
-            }
-            ~JSPDO()/*defined out-of-line for templating reasons!*/;
-            operator cpdo::driver *() const {
-                return this->drv;
-            }
-    };
-}
 namespace v8 { namespace convert {
     // Various ClassCreator policy classes specialized for the native types
     // we are binding...
@@ -91,22 +71,6 @@ namespace v8 { namespace convert {
     struct NativeToJS<cpdo_data_type> : NativeToJS<int32_t> {};
 
 } }
-
-namespace jspdo {
-    JSPDO::~JSPDO()
-    {
-        if( ! this->stmts.empty() ) {
-            typedef cv::ClassCreator<cpdo::statement> CC;
-            CC & cc( CC::Instance() );
-            StList::iterator it( stmts.begin() );
-            for( ; stmts.end() != it; ++it ) {
-                cc.DestroyObject(*it);
-            }
-            stmts.clear();
-        }
-        delete this->drv;
-    }
-}
 
 namespace v8 { namespace convert {
     cpdo::driver * ClassCreator_Factory<cpdo::driver>::Create( v8::Handle<v8::Object> & jsSelf,
