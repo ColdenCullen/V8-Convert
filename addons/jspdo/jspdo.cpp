@@ -23,6 +23,7 @@ used by MySQL (if any).
 #include <fstream>
 #include <iterator>
 #include <algorithm>
+#include <map>
 
 #ifndef CERR
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
@@ -33,10 +34,36 @@ used by MySQL (if any).
 #define JSPDO_CLASS_NAME "JSPDO" /* JSPDO class name, as it should appear in JS. */
 
 namespace cv = v8::convert;
-
+namespace jspdo {
+    /**
+        Not yet used, but something to consider so that we can finalize any
+        statements left open when the db closes. Adding this requires some other
+        refactoring.
+    */
+    class JSPDO : public cpdo::driver {
+        public:
+            typedef std::map< void const *, v8::Handle<v8::Object> > StmtMap;
+            StmtMap stmts;
+            //cpdo::driver * drv;
+            JSPDO( char const * dsn, char const * user, char const * pw )
+                : cpdo::driver(dsn,user,pw),
+                  stmts()
+            {}
+            //~ JSPDO() : stmts()//,drv(NULL)
+            //~ {
+            //~ }
+            virtual ~JSPDO()/*defined out-of-line for templating reasons!*/;
+    };
+}
 namespace v8 { namespace convert {
     // Various ClassCreator policy classes specialized for the native types
     // we are binding...
+
+    template <>
+    struct ClassCreator_InternalFields<cpdo::statement>
+        : ClassCreator_InternalFields_Base<cpdo::statement,2,0>
+    {
+    };
 
     template <>
     class ClassCreator_Factory<cpdo::driver>
@@ -71,8 +98,162 @@ namespace v8 { namespace convert {
     struct NativeToJS<cpdo_data_type> : NativeToJS<int32_t> {};
 
 } }
+namespace jspdo {
+    JSPDO::~JSPDO()
+    {
+        if( ! this->stmts.empty() ) {
+            typedef cv::ClassCreator<cpdo::statement> CC;
+            CC & cc( CC::Instance() );
+            StmtMap map;
+            map.swap( this->stmts );
+            StmtMap::iterator it( map.begin() );
+            for( ; map.end() != it; ++it ) {
+                cc.DestroyObject((*it).second);
+            }
+        }
+        //delete this->drv;
+    }
+
+    /**
+        Map of cpdo::statement to their JS selves.
+    */
+    typedef std::map< void const *, v8::Handle<v8::Object> > StmtMap;
+    /**
+        Map of cpdo::driver to StmtMap.
+    */
+    typedef std::map< void const *, StmtMap > DbMap;
+
+
+    /**
+        Shared DbMap instance. This is used to we can add plumbing to
+        "safely" close statement handles at db close()-time if the
+        client failed to do so earlier (in strict violation of the
+        documentation, i might add!).
+    */
+    struct DbMapLocker
+    {
+    private:
+        v8::Locker lock;
+    public:
+        DbMapLocker() : lock()
+        {
+        }
+
+        DbMap & map()
+        {
+            static DbMap bob;
+            return bob;
+        }
+        
+    };
+
+    /**
+        returns true if JSPDO.enableDebug == true.
+    */
+    static bool IsDebugEnabled();
+}
 
 namespace v8 { namespace convert {
+
+
+    /**
+        This specialization adds some plumbing to allow the framework
+        to gracefully clean up any Statement objects which clients fail
+        to close.
+    */
+    template <>
+    struct ClassCreator_WeakWrap<cpdo::statement>
+    {
+    private:
+        static cpdo::driver const * getDriverForStmt( void const * self, v8::Handle<v8::Object> const & jsSelf )
+        {
+            assert( 2 == jsSelf->InternalFieldCount() );
+            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(1) );
+            cpdo::driver const * drv = cv::CastFromJS<cpdo::driver>( db );
+            if( 0 && !drv )
+            { // this happens when... not exactly sure...
+                CERR << "Driver is NULL for cpdo::statement@"<<self<<'\n';
+                assert( 0 && "Driver is NULL!" );
+            }
+            return drv;
+        }
+    public:
+        typedef cpdo::statement * NativeHandle;
+        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf, v8::Arguments const & argv )
+        {
+            if( argv.Length() > 1 )
+            {
+                jsSelf->Set(JSTR("sql"),argv[1]);
+            }
+            return;
+        }
+        static void Wrap( v8::Persistent<v8::Object> const & jsSelf, NativeHandle nativeSelf )
+        {
+            cpdo::driver const * drv = getDriverForStmt(nativeSelf,jsSelf);
+            if( drv )
+            {
+                v8::Locker const lock;
+                jspdo::DbMapLocker().map()[drv][nativeSelf] = jsSelf;
+            }
+            return;
+        }
+        static void Unwrap( v8::Handle<v8::Object> const & jsSelf, NativeHandle nativeSelf )
+        {
+            if( ! nativeSelf ) return /* happens in some (invalid) combinations of cleanup. */;
+            cpdo::driver const * drv = getDriverForStmt(nativeSelf,jsSelf);
+            if( drv )
+            {
+                jspdo::DbMapLocker().map()[drv].erase(nativeSelf);
+            }
+            return;
+        }
+    };
+
+    
+    cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Handle<v8::Object> & jsSelf,
+                                                                     v8::Arguments const & argv )
+    {
+        if( argv.Length() < 2 )
+        {
+            throw std::range_error("The JSPDO constructor requires 1-3 arguments.");
+        }
+        v8::Handle<v8::Value> const & jdrv(argv[0]);
+        cpdo::driver * drv = cv::CastFromJS<cpdo::driver>(jdrv);
+        if( ! drv )
+        {
+            throw std::range_error("The Statement ctor must not be called directly from client code.");
+        }
+        v8::Handle<v8::String> const & sql(argv[1]->ToString());
+        v8::String::Utf8Value const u8v(sql);
+        cpdo::statement * rc = drv->prepare( *u8v );
+        assert( jsSelf->InternalFieldCount() == 2 );
+        jsSelf->SetInternalField(1,jdrv);
+        if( jspdo::IsDebugEnabled() )
+        {
+            CERR << "Created cpdo::statement@"<<(void const *)rc<<'\n';
+        }
+        return rc;
+    }
+
+    void ClassCreator_Factory<cpdo::statement>::Delete( cpdo::statement * st )
+    {
+        if( jspdo::IsDebugEnabled() )
+        {
+            CERR << "Destroying cpdo::statement@"<<(void const *)st<<'\n';
+        }
+        jspdo::DbMapLocker ml;
+        jspdo::DbMap & map(ml.map());
+        jspdo::DbMap::iterator it = map.begin();
+        for( ; map.end() != it; ++it )
+        {
+            jspdo::StmtMap::iterator sit = (*it).second.find(st);
+            if( (*it).second.end() == sit ) continue;
+            (*it).second.erase(st);
+            break;
+        }
+        delete st;
+    }
+
     cpdo::driver * ClassCreator_Factory<cpdo::driver>::Create( v8::Handle<v8::Object> & jsSelf,
                                                                v8::Arguments const & argv )
     {
@@ -85,38 +266,54 @@ namespace v8 { namespace convert {
         std::string pass = (argv.Length()>2) ? cv::CastFromJS<std::string>(argv[2]) : std::string();
         cpdo::driver * db = new cpdo::driver( dsn.c_str(), user.c_str(), pass.c_str() );
         jsSelf->Set(JSTR("dsn"), argv[0]);
+        if( jspdo::IsDebugEnabled() )
+        {
+            CERR << "Created cpdo::driver@"<<(void const *)db<<'\n';
+        }
         return db;
     }
 
     void ClassCreator_Factory<cpdo::driver>::Delete( cpdo::driver * drv )
     {
+        if( jspdo::IsDebugEnabled() )
+        {
+            CERR << "Destroying cpdo::driver@"<<(void const *)drv<<'\n';
+        }
+        jspdo::DbMapLocker mo;
+        jspdo::DbMap & map(mo.map());
+        jspdo::DbMap::iterator it = map.find(drv);
+        if( map.end() != it )
+        {
+            typedef cv::ClassCreator<cpdo::statement> CCS;
+            jspdo::StmtMap smap;
+            {
+                jspdo::StmtMap & smapX((*it).second);
+                smap.swap(smapX);
+                map.erase(drv);
+            }
+            jspdo::StmtMap::iterator sit(smap.begin());
+            for( ; smap.end() != sit; ++sit ) {
+                if( jspdo::IsDebugEnabled() )
+                {
+                    CERR << "JSPDO.close() is cleaning up a dangling/unclosed cpdo::statement@"<<(*sit).first<<'\n';
+                }
+                CCS::Instance().DestroyObject( (*sit).second );
+            }
+        }
+        
         delete drv;
     }
-
-    cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Handle<v8::Object> & jsSelf,
-                                                                     v8::Arguments const & argv )
-    {
-        if( argv.Length() < 2 )
-        {
-            throw std::range_error("The JSPDO constructor requires 1-3 arguments.");
-        }
-        cpdo::driver * drv = cv::CastFromJS<cpdo::driver>(argv[0]);
-        if( ! drv )
-        {
-            throw std::range_error("The Statement ctor must not be called directly from client code.");
-        }
-        v8::Handle<v8::Value> const & sql(argv[1]);
-        cpdo::statement * rc = drv->prepare( cv::CastFromJS<std::string>(sql) );
-        jsSelf->Set(JSTR("sql"), sql);
-        return rc;
-    }
-
-    void ClassCreator_Factory<cpdo::statement>::Delete( cpdo::statement * drv )
-    {
-        delete drv;
-    }
-
 }}
+
+namespace jspdo {
+    bool IsDebugEnabled()
+    {
+        typedef cv::ClassCreator<cpdo::driver> CC;
+        CC & cc( CC::Instance() );
+        v8::Handle<v8::Value> const & x( cc.CtorFunction()->Get(JSTR("enableDebug")) );
+        return x.IsEmpty() ? false : x->BooleanValue();
+    }
+}
 
 // Internal convenience macros...
 #define STMT_DECL(JVAL) cpdo::statement * st = cv::CastFromJS<cpdo::statement>(JVAL)
@@ -144,8 +341,14 @@ v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
 v8::Handle<v8::Value> Statement_toString( v8::Arguments const & argv )
 {
     STMT_DECL(argv.This());
-    return cv::StringBuffer()
-        << "[cpdo::statement@"<<(void const *)st << ']';
+    cv::StringBuffer sb;
+    sb << "[cpdo::statement@"<<(void const *)st;
+    if( st )
+    {
+        v8::Handle<v8::Value> const v(argv.This()->Get(JSTR("sql")));
+        if( !v.IsEmpty() && v->IsString()) sb << ", sql=["<<v<<"]";
+    }
+    return sb << ']';
 }
 
 //! JSPDO.Statement.get() impl for Number values.

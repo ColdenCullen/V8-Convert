@@ -55,7 +55,7 @@
     
     jp.prepare = function() {
         var st = origImpls.prepare.apply(this,argvToArray(arguments));
-        debug("Prepared statement: "+JSON.stringify(st));
+        debug("Prepared statement: "+st);
         return st;        
     };
 

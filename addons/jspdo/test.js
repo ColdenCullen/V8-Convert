@@ -201,7 +201,13 @@ function testExt_fetchAll() {
         //mode:'object'
     };
     print("Trying db.fetchAll( "+JSON.stringify(opt)+" )");
-    var all = App.drv.fetchAll(opt);
+    var all;
+    try {
+        all = App.drv.fetchAll(opt);
+    }
+    finally {
+        if( sql instanceof JSPDO.Statement ) sql.finalize();
+    }
     print(JSON.stringify(all));
     print(all.rows.length+" row(s)");
     asserteq( 2, all.rows.length, 'expecting 2 rows' );
@@ -247,6 +253,23 @@ function testCopyDb() {
     }
 }
 
+function testUnclosedHandles() {
+    var count = 3;
+    var db = 1 ? new JSPDO('sqlite3::memory:') : App.drv;
+    print("Testing closing of danging statement handles...");
+    try {
+        for( var i = 0; i < count; ++i ) {
+            var st = db.prepare("SELECT COUNT(*) sqlite_master");
+            st.step();
+        }
+    }
+    finally {
+        print("If JSPDO.enableDebug is on you should see several Statement dtors...");
+        print("At the very least, it shouldn't crash during GC as a result of these leaked statements.");
+        if( App.drv !== db ) db.close();
+    }
+}
+
 try {
     testConnect();
     testCleanup();
@@ -259,6 +282,9 @@ try {
     testExt_forEach();
     testExt_fetchAll();
     testCopyDb();
+    if( 'sqlite3' === App.drv.driverName ) {
+        testUnclosedHandles();
+    }
 }
 catch(e) {
     print("GOT AN EXCEPTION: "+e);
