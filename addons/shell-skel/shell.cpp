@@ -39,6 +39,38 @@ typedef v8::Handle<v8::Value> ValueHandle;
 #  include INCLUDE_SHELL_BINDINGS // "shell_bindings.hpp"
 #endif
 
+/**
+    Returns a JS Array containing all arguments from argv _after_ 
+    the argument "--". If no '--' argument is found, or it has no 
+    arguments after it, an empty array is returned.
+*/
+static v8::Handle<v8::Array> get_script_args( int argc, char const * const * argv )
+{
+    v8::HandleScope scope;
+    v8::Handle<v8::Array> li( v8::Array::New() );
+    int i = 1;
+    char const * arg;
+    bool gotDashDash = false;
+    for( ; i < argc; ++i )
+    {
+        arg = argv[i];
+        if( 0 == strcmp("--",arg) )
+        {
+            gotDashDash = true;
+            ++i;
+            break;
+        }
+    }
+    if( ! gotDashDash ) return li;
+    uint32_t c = 0;
+    for( ; i < argc; ++i )
+    {
+        arg = argv[i];
+        li->Set(c++, v8::String::New(arg));
+    }
+    return scope.Close(li);
+}
+
 static int v8_main(int argc, char const * const * argv)
 {
     using namespace v8;
@@ -58,7 +90,6 @@ static int v8_main(int argc, char const * const * argv)
     global->Set(JSTR("gc"),
                 FunctionTemplate::New(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
                 );
-
     /**
        Reminder to self: changes to global template must apparently
        come before the context is created, otherwise they appear to
@@ -68,8 +99,11 @@ static int v8_main(int argc, char const * const * argv)
        PRODUCTIVELY INSTEAD OF HAVING TO FIGHT WITH IT!!!
     */
     context = Context::New(NULL, global);
+
+
     Context::Scope context_scope(context);
     Handle<Object> gobj = context->Global();
+    gobj->Set(JSTR("arguments"), get_script_args(argc,argv));
     try
     {
 #if defined(SETUP_SHELL_BINDINGS)
