@@ -121,8 +121,8 @@ EXT.JS := jspdo-init.js
 EXT.CPP := jspdo-init.cpp
 $(EXT.JS):
 
-js2c: js2c.o
+js2c: js2c.c $(MAKEFILE_LIST)
+	$(CC) -o $@ js2c.c
 CLEAN_FILES += js2c
 $(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)
 	./js2c jspdoInitCode < $(EXT.JS) > $@
-jspdo.o: $(EXT.CPP)
