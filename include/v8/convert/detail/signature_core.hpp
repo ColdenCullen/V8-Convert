@@ -113,7 +113,7 @@ struct MethodSignature;
    @endcode
 
 */
-template <typename T, typename F>
+template <typename T, typename Sig>
 struct ConstMethodSignature;
 
 template <typename RV >

@@ -14,7 +14,7 @@ namespace tmp {
     /**
        An utmost most-basic compile-time assertion template.
        If Condition is false, an incomplete specialization of
-       this type is invoced, causing a compile-time error.
+       this type is invoked, causing a compile-time error.
     */
     template <bool Condition>
     struct Assertion
