@@ -44,10 +44,10 @@ typedef v8::Handle<v8::Value> ValueHandle;
     the argument "--". If no '--' argument is found, or it has no 
     arguments after it, an empty array is returned.
 */
-static v8::Handle<v8::Array> get_script_args( int argc, char const * const * argv )
+v8::Handle<v8::Array> get_script_args( int argc, char const * const * argv )
 {
-    v8::HandleScope scope;
-    v8::Handle<v8::Array> li( v8::Array::New() );
+    //v8::HandleScope scope; // this is causing a crash on SOME days for me, but not always. Grrr.
+    v8::Local<v8::Array> li( v8::Array::New() );
     int i = 1;
     char const * arg;
     bool gotDashDash = false;
@@ -68,7 +68,8 @@ static v8::Handle<v8::Array> get_script_args( int argc, char const * const * arg
         arg = argv[i];
         li->Set(c++, v8::String::New(arg));
     }
-    return scope.Close(li);
+    //return scope.Close(li);
+    return li;
 }
 
 static int v8_main(int argc, char const * const * argv)
