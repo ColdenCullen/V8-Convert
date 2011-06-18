@@ -389,15 +389,16 @@ namespace v8 { namespace convert {
        A utility function primarily intended to support various
        ClassCreator policy implementations.
 
-       This function tries to extract a native from jo using
-       CastFromJS<T>().  If a native is found and it is the same as
-       nh, then jo is returned. If none is found, jo's prototype
-       object is searched, recursively, until either nh is found in
-       the prototype chain or the end of the chain is reached. If a
-       match is found, the object in which the data were found is
-       returned.
+       This function tries to extract a native handle from jo by
+       looking in the internal field defined by
+       ClassCreator_InternalFields<T>::NativeIndex.  If a native is
+       found in that field and it is the same as nh, then jo is
+       returned. If none is found, jo's prototype object is searched,
+       recursively, until either nh is found in the prototype chain or
+       the end of the chain is reached. If a match is found, the JS
+       object in which the native was found is returned.
 
-       If nh is found nowhere in the chain, an empty handle is
+       If nh is not found anywhere in the chain, an empty handle is
        returned.
 
        Note that T must be non-cv qualified, so it is generally
