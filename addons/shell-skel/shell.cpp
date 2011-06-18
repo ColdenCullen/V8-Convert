@@ -152,7 +152,7 @@ int main(int argc, char const * const * argv)
 {
 
     if( 1 == argc ) {
-        CERR << "Usage:\n\t" << argv[0] << " file1.js [-- [script arguments]]"
+        CERR << "Usage:\n\t" << argv[0] << " script.js [-- [script arguments]]"
              << "\nAll arguments after '--' are available in the script via "
              << "the global 'arguments' Array object.\n";
         
