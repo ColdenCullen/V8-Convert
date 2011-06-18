@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-JSPDO.enableDebug = true;
+//JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -86,7 +86,7 @@ function testSelect(mode)
                 cols.length = 0;
                 for(i=0; i < colCount;++i ) {
                     v = st.get(i);
-                    cols.push('[type='+st.columnType(i)+']'+
+                    cols.push('[type='+st.columnTypes[i]+']'+
                               ( (v===null) ? 'NULL' : v )
                               );
                 }
@@ -280,6 +280,7 @@ try {
     testSelect('object');
     testInsertNamedParams();
     testSelect('array');
+    testSelect();
     testExt_forEach();
     testExt_fetchAll();
     testCopyDb();

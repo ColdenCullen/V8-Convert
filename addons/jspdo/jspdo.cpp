@@ -647,7 +647,7 @@ v8::Handle<v8::Value> Statement_stepObject( v8::Arguments const & argv )
 
 /**
    Statement.columnNames accessor which caches the column names in
-   an internal JS object.
+   an internal JS array.
 */
 static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > property,
                                                        const v8::AccessorInfo & info )
@@ -691,6 +691,53 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
     }
         
 }
+
+/**
+   Statement.columnTypes accessor which caches the column types in
+   an internal JS array.
+*/
+static v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > property,
+                                                       const v8::AccessorInfo & info )
+{
+    try
+    {
+        ASSERT_STMT_DECL(info.This());
+        v8::Handle<v8::Object> self( info.This() );
+        char const * prop = "columnTypes";
+        v8::Handle<v8::String> jProp(JSTR(prop));
+        v8::Handle<v8::Value> val( self->GetHiddenValue(jProp) );
+        if( val.IsEmpty() )
+        {
+            uint16_t colCount = st->col_count();
+            if( ! colCount )
+            {
+                val = v8::Null();
+            }
+            else
+            {
+                v8::Handle<v8::Array> ar( v8::Array::New(colCount) );
+                for( uint16_t i = 0; i < colCount; ++i )
+                {
+                    cpdo_data_type const t = st->col_type(i);
+                    ar->Set( i, v8::Integer::New(t) );
+                }
+                val = ar;
+            }
+            self->SetHiddenValue(jProp, val);
+        }
+        return val;
+    }
+    catch(std::exception const & ex)
+    {
+        return cv::CastToJS(ex);
+    }
+    catch(...)
+    {
+        return v8::ThrowException(v8::Exception::Error(JSTR("columnTypes accessor threw an unknown native exception!")));
+    }
+        
+}
+
 
 /**
    Statement.paramNames accessor which caches the column names in
@@ -986,6 +1033,7 @@ namespace v8 { namespace convert {
                                  SPB::MethodToAccessorGetter<uint16_t (),&ST::param_count>,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
+            stProto->SetAccessor(JSTR("columnTypes"), Statement_getColumnTypes, throwOnSet );
             stProto->SetAccessor(JSTR("paramNames"), Statement_getParamNames, throwOnSet );
 
 #if 0
