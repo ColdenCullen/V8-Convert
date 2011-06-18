@@ -547,7 +547,7 @@ namespace v8 { namespace convert {
            Overload for const native getter functions.
         */
         template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> MethodToAccessorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> MethodToAccessorGetterConst( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             NativeHandle const self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
@@ -630,7 +630,7 @@ namespace v8 { namespace convert {
 	{
             if( ! prototype.IsEmpty() )
                 prototype->SetAccessor( v8::String::New( propName ),
-                                        MethodToAccessorGetter<SigGet,Getter>,
+                                        MethodToAccessorGetterConst<SigGet,Getter>,
                                         MethodToAccessorSetter<SigSet,Setter>
                                         );
 	}
