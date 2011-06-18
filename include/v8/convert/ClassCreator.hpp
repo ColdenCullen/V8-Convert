@@ -545,8 +545,8 @@ namespace v8 { namespace convert {
                    bound to.
                 */
                 v8::Handle<v8::Object> nholder = FindHolder<Type>( jobj, native );
-                assert( ! nholder.IsEmpty() );
 #if 1
+                assert( ! nholder.IsEmpty() );
                 WeakWrap::Unwrap( nholder /*jobj? subtle difference*/, native );
                 if( nholder.IsEmpty() || (nholder->InternalFieldCount() != InternalFields::Count) )
                 {
@@ -563,8 +563,10 @@ namespace v8 { namespace convert {
                         << ", jobj field count="<<jobj->InternalFieldCount()
                         << "\nTHIS MAY LEAD TO A CRASH IF THIS JS HANDLE IS USED AGAIN!!!\n"
                         ;
-                    v8::ThrowException(msg);
                     Factory::Delete(native);
+                    pv.Dispose(); pv.Clear(); /* see comments below!*/
+                    v8::ThrowException(msg);
+                    return;
                 }
                 else
                 {
