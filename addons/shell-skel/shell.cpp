@@ -111,8 +111,8 @@ static int v8_main(int argc, char const * const * argv)
         SETUP_SHELL_BINDINGS(gobj);
 #endif
         v8::TryCatch tryCatch;
-        for( int i = 1; i < argc; ++i ) {
-            char const * fname = argv[i];
+        //for( int i = 1; i < argc; ++i ) {
+            char const * fname = argv[1];
             ValueHandle av[] = {
                 cv::CastToJS(fname)
             };
@@ -122,7 +122,7 @@ static int v8_main(int argc, char const * const * argv)
                 ReportException(&tryCatch);
                 return 1;
             }
-        }
+            //}
     }
     catch(std::exception const & ex)
     {
@@ -152,7 +152,10 @@ int main(int argc, char const * const * argv)
 {
 
     if( 1 == argc ) {
-        CERR << "Usage: " << argv[0] << " file1.js [... fileN.js]\n";
+        CERR << "Usage:\n\t" << argv[0] << " file1.js [-- [script arguments]]"
+             << "\nAll arguments after '--' are available in the script via "
+             << "the global 'arguments' Array object.\n";
+        
         return 1;
     }
     int const rc = v8_main(argc, argv);
