@@ -214,7 +214,7 @@ v8::Handle<v8::Value> JSByteArray::indexedPropertySetter(uint32_t index, v8::Loc
 
 v8::Handle<v8::Integer> JSByteArray::indexedPropertyQuery(uint32_t index, const v8::AccessorInfo &info)
 {
-    CERR << "indexed query "<<index<<'\n';
+    //CERR << "indexed query "<<index<<'\n';
     JSByteArray * ar = cv::CastFromJS<JSByteArray*>( info.This() );
     if( ! ar ) return v8::Handle<v8::Integer>();
     else
@@ -298,7 +298,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     typedef JSByteArray N;
     typedef cv::ClassCreator<N> CW;
     CW & cw( CW::Instance() );
-    CERR <<"Binding class "<<BA_JS_CLASS_NAME<<"...\n";
+    //CERR <<"Binding class "<<BA_JS_CLASS_NAME<<"...\n";
     if( cw.IsSealed() )
     {
         cw.AddClassTo( BA_JS_CLASS_NAME, dest );
@@ -324,7 +324,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
                                                              NULL/*JSByteArray::indexedPropertyEnumerator*/
                                                             );
     cw.AddClassTo( BA_JS_CLASS_NAME, dest );
-    CERR <<"Binding done.\n";
+    //CERR <<"Binding done.\n";
     return;
 }
 
@@ -332,6 +332,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
 #undef DBGOUT
 #undef JSTR
 #undef BA_JS_CLASS_NAME
+#undef CERR
 
 void SetupJSByteArray( v8::Handle<v8::Object> dest )
 {
