@@ -1060,7 +1060,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
     v8::Handle<v8::ObjectTemplate> const & proto( cc.Prototype() );
     proto->SetAccessor( JSTR("family"), SPB::MemberToAccessorGetter<int,&N::family>, throwOnSet );
     proto->SetAccessor( JSTR("type"), SPB::MemberToAccessorGetter<int,&N::type>, throwOnSet );
-    proto->SetAccessor( JSTR("timeoutBeforeIO"), SPB::MemberToAccessorGetter<bool,&N::hitTimeout>, throwOnSet );
+    proto->SetAccessor( JSTR("timeoutReached"), SPB::MemberToAccessorGetter<bool,&N::hitTimeout>, throwOnSet );
     proto->SetAccessor( JSTR("peerInfo"), SPB::MethodToAccessorGetter<ValH (),&N::peerInfo>, throwOnSet );
     proto->SetAccessor( JSTR("hostname"), SPB::FunctionToAccesorGetter<std::string (),N::hostname>, throwOnSet );
 

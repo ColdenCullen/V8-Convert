@@ -73,7 +73,7 @@ function test1()
             {
                 if( null === rc )
                 {
-                    print("Apparently ("+c.timeoutBeforeIO+") interrupted by timeout before data arrived.");
+                    print("Apparently ("+c.timeoutReached+") interrupted by timeout before data arrived.");
                     continue;
                 }
                 print("read("+n+") (type="+typeof rc+")=="+(rc.length)+"["+rcVal(rc)+"]");
