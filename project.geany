@@ -16,8 +16,10 @@ long_line_behaviour=1
 long_line_column=80
 
 [files]
-current_page=0
+current_page=5
 FILE_NAME_0=3424;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo-init.js;0
 FILE_NAME_1=57;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/test.js;0
 FILE_NAME_2=13140;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/ClassCreator.hpp;0
 FILE_NAME_3=7116;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo.cpp;0
+FILE_NAME_4=4294;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/shell-skel/shell.cpp;0
+FILE_NAME_5=0;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/shell-skel/arguments.js;0
