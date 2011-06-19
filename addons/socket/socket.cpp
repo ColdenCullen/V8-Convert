@@ -701,7 +701,7 @@ namespace v8 { namespace convert {
         JSSocket * s = NULL;
         int const argc = argv.Length();
         int fam = (argc>0) ? cv::JSToInt32(argv[0]) : AF_INET;
-        int type = (argc>1) ? cv::JSToInt32(argv[1]) : SOCK_DGRAM;
+        int type = (argc>1) ? cv::JSToInt32(argv[1]) : SOCK_STREAM;
         int proto = (argc>2) ? cv::JSToInt32(argv[2]) : 0;
         int sockFD = (argc>3) ? cv::JSToInt32(argv[3]) : -1;
         s = new JSSocket(fam, type, proto, sockFD);

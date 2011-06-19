@@ -114,7 +114,7 @@ public:
        (throws), the caller owns the socket.
     */
     JSSocket(int family = AF_INET,
-             int type = SOCK_DGRAM,
+             int type = SOCK_STREAM,
              int proto = 0,
              int socketFD = -1 );
 
