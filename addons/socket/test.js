@@ -1,6 +1,5 @@
 function test1()
 {
-    function ByteArray() { /* placeholder */ }
     var k,v;
     print("Socket members:");
     for( k in Socket )
