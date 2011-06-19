@@ -131,6 +131,50 @@ public:
 
     /**
        Installs this class' bindings into dest.
+
+       JS Classes:
+
+       - Socket
+
+       Socket ctor properties:
+   
+       - int AF_INET
+       - int AF_INET6
+       - int AF_UNIX
+       - int AF_UNSPEC
+       - int SOCK_DGRAM
+       - int SOCK_STREAM
+       - int SOCK_SEQPACKET
+       - int SOCK_RAW
+   
+       Socket class functions:
+
+       - new Socket( [int family=AF_INET [, int type=SOCK_STREAM [, int protocol=0]]] )
+       - void close()
+       - string toString()
+       - int bind( string hostNameOrAddress, int port )
+       - int connect( string hostNameOrAddress, int port )
+       - string nameToAddress(string host)
+       - string addressToName(string address)
+       - string read(unsigned int length)
+       - int write(string|ByteArray data [,int length=data.length])
+       - int setTimeout( unsigned int seconds[, unsigned int microseconds=0] )
+       - int setTimeoutMs( unsigned int ms )
+
+       Most of the functions throw on error.
+
+       Socket instance properties:
+
+       - Array[address,port] peerInfo, only valid after a connection is
+       established.
+   
+   
+       Socket constructor properties:
+
+       - int getProtoByName( string protocolName )
+       - string nameToAddress( string hostname )
+       - string addressToName( string address )
+   
     */
     static void SetupBindings( v8::Handle<v8::Object> dest );
 
