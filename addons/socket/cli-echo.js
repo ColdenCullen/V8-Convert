@@ -1,0 +1,78 @@
+load('echo-config.inc.js');
+
+function echoClient()
+{
+    var k,v;
+    print("Socket members:");
+    for( k in Socket )
+    {
+        print('\t'+k,'=',Socket[k]);
+    }
+    var s, c, n;
+    try
+    {
+        var rc;
+        s  = new Socket( echo.socketFamily, echo.socketType );
+        print('s =',s);
+        print('s.hostname =',s.hostname);
+        rc = s.setTimeout( 5 );
+        print("s.setTimeout() rc =",rc);
+
+        var msg = ["GET / HTTP/1.1",
+                   "Host: "+echo.host
+                   ].join(echo.crnl)+echo.crnl+echo.crnl;
+        if( Socket.SOCK_STREAM == s.type )
+        {
+            var bufs = [];
+            print("Running in stream mode...");
+            rc = s.connect( echo.host, echo.port );
+            print('s.connect() rc =',rc);
+            print('s.peerInfo: '+JSON.stringify(s.peerInfo));
+            rc = s.write( msg );
+            print( "s.write() rc =",rc);
+            while( undefined !== (rc = s.read(20,false) ) ) {
+                bufs.push(rc);
+            }
+            var buf = bufs.join('');
+            print("Read in "+buf.length+" bytes ("+typeof buf+"):\n"+buf);
+        }
+        else if( Socket.SOCK_DGRAM == s.type )
+        {
+            rc = s.sendTo( echo.host, echo.port, msg, msg.length );
+            print('s.sendTo() rc =',rc);
+        }
+        else
+        {
+            throw new Error("Unknown socket type!");
+        }
+    }
+    catch(e) {
+        print("EXCEPTION: "+e);
+    }
+    finally
+    {
+        print("Closing client socket...");
+        if( s ) s.close();
+        print("Closed client socket.");
+    }
+        
+}
+
+try
+{
+    if(0) { // is crashing on me :(
+        for( var i = 1; i < 4; ++i ) {
+            setTimeout( echoClient, 1 );
+        }
+        sleep(7);
+    }
+    else {
+        echoClient();
+    }
+    print("Done!");
+}
+catch(e)
+{
+    print("EXCEPTION:",e);
+    throw e;
+}
