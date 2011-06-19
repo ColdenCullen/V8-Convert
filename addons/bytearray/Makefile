@@ -41,5 +41,5 @@ BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_JSPDO) #$(LDFLAGS_DRIVERS)
 
 
 SHELL_BINDINGS_HEADER := bytearray.hpp
-SHELL_BINDINGS_FUNC := SetupJSByteArray
+SHELL_BINDINGS_FUNC := v8::convert::JSByteArray::SetupBindings
 include ../shell-common.make
