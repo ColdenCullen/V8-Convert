@@ -106,7 +106,7 @@ LDFLAGS_JSPDO := -L. -ljspdo
 BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_JSPDO) #$(LDFLAGS_DRIVERS)
 
 SHELL_BINDINGS_HEADER := jspdo.hpp
-SHELL_BINDINGS_FUNC := jspdo::SetupV8Bindings
+SHELL_BINDINGS_FUNC := v8::convert::JSPDO::SetupBindings
 include ../shell-common.make
 
 .PHONY: amal-cpp

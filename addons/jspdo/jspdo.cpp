@@ -18,6 +18,7 @@ used by MySQL (if any).
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
+#include "jspdo.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -1150,17 +1151,15 @@ namespace v8 { namespace convert {
 } }
 
 
-namespace jspdo {
-    /**
-       Pass the JS engine's global object (or a "virtual" global
-       object of your choice) to add the JSPDO class to it.
-    */
-    void SetupV8Bindings( v8::Handle<v8::Object> & dest )
-    {
-        cv::ClassCreator_Init<cpdo::driver>::InitBindings(dest);
-    }
-
+/**
+   Pass the JS engine's global object (or a "virtual" global
+   object of your choice) to add the JSPDO class to it.
+*/
+void cv::JSPDO::SetupBindings( v8::Handle<v8::Object> dest )
+{
+    cv::ClassCreator_Init<cpdo::driver>::InitBindings(dest);
 }
+
 #undef ASSERT_ARGV
 #undef DRV_DECL
 #undef ASSERT_DRV_DECL

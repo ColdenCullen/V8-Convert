@@ -64,12 +64,20 @@
 
 #include <v8.h>
 
-namespace jspdo {
-    /**
-        Adds the JSPDO class to dest. It throws a native exception if
-        something goes horribly wrong.
-    */
-    void SetupV8Bindings( v8::Handle<v8::Object> & dest );
-}
+namespace v8 { namespace convert {
+    class JSPDO {
+    private:
+        JSPDO();
+        JSPDO(JSPDO const &);
+        JSPDO & operator=(JSPDO const &);
+    public:
+        /**
+           Adds the JSPDO class to dest. It throws a native exception if
+           something goes horribly wrong.
+        */
+        static void SetupBindings( v8::Handle<v8::Object> dest );
+    };
+}}
+
 
 #endif
