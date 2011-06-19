@@ -271,7 +271,7 @@ namespace v8 { namespace convert {
                  cv::MethodToInvocationCallback<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
                 ("cstr",
                  cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
-                ("destroy", CC::DestroyObject )
+                ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
                 ("anton", InvocationCallbackToInvocationCallback<test_anton_callback>)

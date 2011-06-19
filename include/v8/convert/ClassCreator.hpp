@@ -752,7 +752,7 @@ namespace v8 { namespace convert {
 
            To get the native object (which is owned by v8).
         */
-        inline v8::Handle<v8::Value> NewInstance( int argc, v8::Handle<v8::Value> argv[] )
+        inline v8::Handle<v8::Object> NewInstance( int argc, v8::Handle<v8::Value> argv[] )
         {
             return this->CtorFunction()->NewInstance(argc, argv);
         }
@@ -816,13 +816,13 @@ namespace v8 { namespace convert {
         {
             T * t = CastFromJS<T>(jo);
             if( ! t ) return false;
-                else
-                {
-                    v8::Persistent<v8::Object> p( v8::Persistent<v8::Object>::New( jo ) );
-                    p.ClearWeak(); // avoid a second call to weak_dtor() via gc!
-                    weak_dtor( p, t );
-                    return true;
-                }
+            else
+            {
+                v8::Persistent<v8::Object> p( v8::Persistent<v8::Object>::New( jo ) );
+                p.ClearWeak(); // avoid a second call to weak_dtor() via gc!
+                weak_dtor( p, t );
+                return true;
+            }
         }
         /**
            If jv is empty or !jv->IsObject() then false is returned,
@@ -831,9 +831,9 @@ namespace v8 { namespace convert {
         */
         static bool DestroyObject( v8::Handle<v8::Value> const & jv )
         {
-                return (jv.IsEmpty() || !jv->IsObject())
-                    ? 0
-                    : DestroyObject( v8::Handle<v8::Object>( v8::Object::Cast(*jv) ) );
+            return (jv.IsEmpty() || !jv->IsObject())
+                ? 0
+                : DestroyObject( v8::Handle<v8::Object>( v8::Object::Cast(*jv) ) );
         }
 
         /**
@@ -843,8 +843,11 @@ namespace v8 { namespace convert {
            It is intended to be used as a "manual destructor" for
            classes which need it. The canonical examples are
            Stream.close() and Database.close().
+
+           This function is not called DestroyObject to avoid name
+           collisions during binding using Set(...,DestroyCallback).
         */
-        static v8::Handle<v8::Value> DestroyObject( v8::Arguments const & argv )
+        static v8::Handle<v8::Value> DestroyObjectCallback( v8::Arguments const & argv )
         {
                 return convert::CastToJS( DestroyObject(argv.This()) );
         }

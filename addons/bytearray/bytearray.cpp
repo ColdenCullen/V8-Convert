@@ -307,7 +307,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     typedef cv::MemberPropertyBinder<N> SPB;
     cw
         .Set( "toString", cv::ConstMethodToInvocationCallback<N, std::string (),&N::toString> )
-        .Set( "destroy", (v8::InvocationCallback)CW::DestroyObject )
+        .Set( "destroy", CW::DestroyObjectCallback )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),

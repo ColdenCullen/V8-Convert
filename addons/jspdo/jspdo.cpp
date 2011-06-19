@@ -103,12 +103,11 @@ namespace jspdo {
     {
         if( ! this->stmts.empty() ) {
             typedef cv::ClassCreator<cpdo::statement> CC;
-            CC & cc( CC::Instance() );
             StmtMap map;
             map.swap( this->stmts );
             StmtMap::iterator it( map.begin() );
             for( ; map.end() != it; ++it ) {
-                cc.DestroyObject((*it).second);
+                CC::DestroyObject((*it).second);
             }
         }
         //delete this->drv;
@@ -1000,7 +999,7 @@ namespace v8 { namespace convert {
 #define CATCHER cv::InCaCatcher_std
 #define M2I cv::MethodToInvocationCallback
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
-            wst("finalize", WST::DestroyObject )
+            wst("finalize", WST::DestroyObjectCallback )
                 ("step", CATCHER< M2I<ST, bool (),&ST::step> >::Call)
                 ("stepArray", CATCHER< Statement_stepArray >::Call)
                 ("stepObject", CATCHER< Statement_stepObject >::Call)
@@ -1058,7 +1057,7 @@ namespace v8 { namespace convert {
             ////////////////////////////////////////////////////////////////////////
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
-            wdrv("close", WDRV::DestroyObject )
+            wdrv("close", WDRV::DestroyObjectCallback )
                 ("begin", CATCHER< M2I<DRV,void (),&DRV::begin> >::Call )
                 ("commit", CATCHER< M2I<DRV,void (),&DRV::commit> >::Call )
                 ("rollback", CATCHER< M2I<DRV,void (),&DRV::rollback> >::Call)
