@@ -318,12 +318,12 @@ int cv::JSSocket::bind( char const * where, int port )
     }
     if( 0 == rc )
     {
-        CERR << "bind()ing...\n";
+        //CERR << "bind()ing...\n";
         {
             v8::Unlocker const unl;
             CSignalSentry const sigSentry;
             rc = ::bind( this->fd, (sockaddr *)&addr, len );
-            CERR << "bind() rc="<<rc<<'\n';
+            //CERR << "bind() rc="<<rc<<'\n';
         }
         if( 0 != rc )
         {
@@ -397,9 +397,6 @@ v8::Handle<v8::Value> cv::JSSocket::nameToAddress( char const * name, int family
     if( rv->IsObject() )
     {
         item = rv->ToObject();
-    }
-    if( ! item.IsEmpty() )
-    {
         return item->Get(cv::CastToJS<int>(0));
     }
     else
@@ -407,6 +404,7 @@ v8::Handle<v8::Value> cv::JSSocket::nameToAddress( char const * name, int family
         return v8::Undefined();
     }
 }
+
 v8::Handle<v8::Value> cv::JSSocket::nameToAddress( char const * name )
 {
     return nameToAddress( name, 0 );
@@ -1032,7 +1030,7 @@ cv::JSSocket * cv::JSSocket::accept()
    - string nameToAddress(string host)
    - string addressToName(string address)
    - string read(unsigned int length)
-   - string write(string data [,int length=data.length])
+   - int write(string|ByteArray data [,int length=data.length])
    - int setTimeout( unsigned int seconds[, unsigned int microseconds=0] )
    - int setTimeoutMs( unsigned int ms )
 
