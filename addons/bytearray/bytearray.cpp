@@ -311,10 +311,10 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),
-                        SPB::MethodToAccessorGetterConst<uint32_t(),&N::length>,
+                        SPB::ConstMethodToAccessorGetter<uint32_t(),&N::length>,
                         SPB::MethodToAccessorSetter<uint32_t (uint32_t), &N::length> );
     proto->SetAccessor( JSTR("stringValue"),
-                        SPB::MethodToAccessorGetterConst<std::string(),&N::stringValue>,
+                        SPB::ConstMethodToAccessorGetter<std::string(),&N::stringValue>,
                         SPB::AccessorSetterThrow );
     v8::Handle<v8::FunctionTemplate> ctorTmpl = cw.CtorTemplate();
     ctorTmpl->InstanceTemplate()->SetIndexedPropertyHandler( JSByteArray::indexedPropertyGetter,

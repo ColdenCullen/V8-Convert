@@ -1078,7 +1078,7 @@ namespace v8 { namespace convert {
             //PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
             //PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
             dProto->SetAccessor(JSTR("driverName"),
-                                PB::MethodToAccessorGetterConst< char const * (),&DRV::driver_name >,
+                                PB::ConstMethodToAccessorGetter< char const * (),&DRV::driver_name >,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorText"),
                                 PB::MethodToAccessorGetter< std::string (),&DRV::error_text >,
