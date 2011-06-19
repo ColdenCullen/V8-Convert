@@ -18,7 +18,6 @@ by Ondrej Zara
 #define _POSIX_C_SOURCE 200112L
 #endif
 
-#include <v8/convert/ClassCreator.hpp>
 #include <v8/convert/convert.hpp>
 #include <v8/convert/properties.hpp>
 
@@ -39,41 +38,45 @@ using cv::JSByteArray;
 
 
 #define BA_JS_CLASS_NAME "ByteArray"
-namespace v8 { namespace convert
-{
 
-    template <>
-    struct JSToNative< JSByteArray > : cv::JSToNative_ClassCreator< JSByteArray >
-    {};
+namespace v8 { namespace convert {
 
-    template <>
-    class ClassCreator_Factory<JSByteArray>
+    JSByteArray * ClassCreator_Factory<JSByteArray>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
-    public:
-        typedef JSByteArray * ReturnType;
-        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
+        int const argc  = argv.Length();
+        JSByteArray * ba = NULL;
+        if(1==argc)
         {
-            int const argc  = argv.Length();
-            if( argc <= 0 )
-            {
-                throw std::range_error(BA_JS_CLASS_NAME" ctor requires (string[,int]) or (int) argumemtns.");
-            }
-            JSByteArray * ba = (1==argc)
-                ? new JSByteArray( argv[0] )
-                : new JSByteArray( argv[0], cv::CastFromJS<unsigned int>(argv[1]) );
-            return ba;
+            ba = new JSByteArray( argv[0] );
         }
-        static void Delete( JSByteArray * obj )
+        else if( 2 == argc )
         {
-            delete obj;
+            ba = new JSByteArray( argv[0], cv::CastFromJS<unsigned int>(argv[1]) );
         }
-    };
+        else if( ! argc )
+        {
+            ba = new JSByteArray();
+        }
+        if( !ba )
+        {
+            throw std::runtime_error("Could not create new JS-side "BA_JS_CLASS_NAME" instance.");
+        }
+        return ba;
+    }
+
+    void ClassCreator_Factory<JSByteArray>::Delete( JSByteArray * obj )
+    {
+        delete obj;
+    }
     
 } } // v8::convert
 
 /************************************************************************
    Down here is where the runtime setup parts of the bindings take place...
 ************************************************************************/
+JSByteArray::~JSByteArray()
+{
+}
 
 JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
     : vec()
@@ -107,6 +110,11 @@ JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
             }
         }
     }
+}
+
+void JSByteArray::swapBuffer( BufferType & buf )
+{
+    this->vec.swap(buf);
 }
 
 v8::Handle<v8::Value> JSByteArray::indexedPropertyGetter(uint32_t index, const v8::AccessorInfo &info)
@@ -212,6 +220,22 @@ std::string JSByteArray::toString() const
     return os.str();
 }
 
+#if 0
+void * JSByteArray::rawBuffer()
+{
+    return this->vec.empty()
+        ? NULL
+        : &this->vec[0];
+}
+#endif
+
+void const * JSByteArray::rawBuffer() const
+{
+    return this->vec.empty()
+        ? NULL
+        : &this->vec[0];
+}
+
 uint32_t JSByteArray::length( uint32_t sz )
 {
     //CERR << "length("<<sz<<")!\n";
@@ -234,8 +258,7 @@ uint32_t JSByteArray::length( uint32_t sz )
 void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
 {
     using namespace v8;
-
-    //HandleScope scope;
+    HandleScope scope;
     typedef JSByteArray N;
     typedef cv::ClassCreator<N> CW;
     CW & cw( CW::Instance() );
