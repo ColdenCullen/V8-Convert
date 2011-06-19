@@ -1293,10 +1293,19 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
             this->os << t;
             return *this;
         }
+
+        /**
+           Returns this buffer's value wrapped in
+           a JS Error object.
+         */
+        v8::Local<v8::Value> toError() const
+        {
+            return v8::Exception::Error(*this);
+        }
     };
 
     /** Outputs sb.Content() to os and returns os. */
-inline std::ostream & operator<<( std::ostream & os, StringBuffer const & sb )
+    inline std::ostream & operator<<( std::ostream & os, StringBuffer const & sb )
     {
         os << sb.Content();
         return os;
