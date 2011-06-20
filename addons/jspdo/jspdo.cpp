@@ -1033,7 +1033,10 @@ namespace v8 { namespace convert {
                                  SPB::MethodToAccessorGetter<uint16_t (),&ST::param_count>,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
-            stProto->SetAccessor(JSTR("columnTypes"), Statement_getColumnTypes, throwOnSet );
+            // do not bind columnTypes for the time being because
+            // the same column in different rows CAN have different
+            // types (this is how we know if a field is NULL).
+            // stProto->SetAccessor(JSTR("columnTypes"), Statement_getColumnTypes, throwOnSet );
             stProto->SetAccessor(JSTR("paramNames"), Statement_getParamNames, throwOnSet );
 
 #if 0

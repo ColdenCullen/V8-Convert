@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-//JSPDO.enableDebug = true;
+JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -10,7 +10,7 @@ password:"",
 tableName:'mytbl',
 CREATE:{
     mysql5:"CREATE TABLE IF NOT EXISTS mytbl("+
-             "id INTEGER PRIMARY KEY DEFAULT NULL AUTO_INCREMENT, "+
+             "id INTEGER NOT NULL AUTO_INCREMENT, "+
              "a INTEGER DEFAULT NULL,"+
              "b DOUBLE DEFAULT NULL,"+
              "c VARCHAR(127) DEFAULT NULL"+
@@ -23,7 +23,7 @@ CREATE:{
              ")"
 }
 };
-if(1) {
+if(0) {
     App.dsn = 'sqlite3::memory:';
 }
 else {
@@ -86,7 +86,7 @@ function testSelect(mode)
                 cols.length = 0;
                 for(i=0; i < colCount;++i ) {
                     v = st.get(i);
-                    cols.push('[type='+st.columnTypes[i]+']'+
+                    cols.push('[type='+st.columnType(i)+']'+
                               ( (v===null) ? 'NULL' : v )
                               );
                 }
