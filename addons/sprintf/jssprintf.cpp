@@ -33,7 +33,6 @@ get a more custom-fit/efficient solution.
 #include <vector>
 
 #include "jssprintf.hpp"
-#include "v8/convert/convert.hpp"
 
 namespace v8 {
 namespace convert {
