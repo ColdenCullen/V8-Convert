@@ -21,6 +21,9 @@ namespace v8 { namespace convert {
         see:
         
         http://code.google.com/p/v8-juice/source/browse/trunk/src/lib/juice/whprintf.h
+        
+        But note that the %%z format option documented there is 
+        disabled in this implementation.        
     */
     v8::Handle< v8::Value > sprintf( ::v8::Arguments const & argv );
 }}
