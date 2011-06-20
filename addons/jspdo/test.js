@@ -10,7 +10,7 @@ password:"",
 tableName:'mytbl',
 CREATE:{
     mysql5:"CREATE TABLE IF NOT EXISTS mytbl("+
-             "id INTEGER NOT NULL AUTO_INCREMENT, "+
+             "id INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT, "+
              "a INTEGER DEFAULT NULL,"+
              "b DOUBLE DEFAULT NULL,"+
              "c VARCHAR(127) DEFAULT NULL"+
@@ -23,7 +23,7 @@ CREATE:{
              ")"
 }
 };
-if(0) {
+if(1) {
     App.dsn = 'sqlite3::memory:';
 }
 else {
@@ -114,14 +114,14 @@ function testInsert()
         var ds = (new Date()).toString();
         st = App.drv.prepare(sql);
         print("Inserting: "+st);
-        st.bind(1,24.42);
-        st.bind(2);
+        st.bind(1);
+        st.bind(2,24.42);
         st.bind(3, ds);
         //assertThrows( function() { st.bind(4); } );
         st.step();
         print('Inserted new record. ID='+App.drv.lastInsertId("ignored"));
         st.reset();
-        st.bind([42.24, null, ds]);
+        st.bind([42, 42.24, null]);
         st.step();
         print('Inserted new record. ID='+App.drv.lastInsertId());
         print('SQL = '+st.sql);
@@ -159,13 +159,13 @@ function testInsertNamedParams() {
 }
 
 function testExt_forEach() {
-    var st, sql = "SELECT * FROM "+App.tableName+" WHERE a > ? LIMIT 3";
+    var st, sql = "SELECT * FROM "+App.tableName+" WHERE a IS NOT NULL LIMIT 3";
     var st;
     sql = App.drv.prepare(sql);
     var opt = {
         sql:sql,
         //bind:[20],
-        bind:function(st){st.bind(1,20)},
+        //bind:function(st){st.bind(1,20)},
         mode:'object',
         //mode:'array',
         each:function(row,data){
@@ -196,7 +196,7 @@ function testExt_fetchAll() {
     }
     var opt = {
         sql:sql,
-        bind:{pA:20},
+        bind:{pA:5},
         mode:'array'
         //mode:'object'
     };
@@ -219,7 +219,7 @@ function testCopyDb() {
     try {
         db2 = new JSPDO('sqlite3::memory:');
         print("Copying "+App.tableName+".* from "+db1+" to "+db2+"...");
-        db2.exec(App.CREATE[db1.driverName]);
+        db2.exec(App.CREATE[db2.driverName]);
         db2.exec("DELETE FROM "+App.tableName);
         st1 = db1.prepare("SELECT * FROM "+App.tableName);
         var i, f = new Array(st1.columnCount);
@@ -291,6 +291,7 @@ try {
 catch(e) {
     print("GOT AN EXCEPTION: "+e);
     //stacktrace is reset in catch! print("Stacktrace:\n"+JSON.stringify(getStacktrace(),0,4));
+    throw e;
 }
 finally {
     if( App.drv ) {
