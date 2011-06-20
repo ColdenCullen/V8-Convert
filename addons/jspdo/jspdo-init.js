@@ -80,22 +80,24 @@
        foreach().
 
        .callbackData: optional arbitrary value passed as 2nd argument to
-       foreach().
+       each().
 
        .bind: Optional Array or Object containing values to bind() to
        the sql code. It may be a function, in which case
        bind(statement,bindOpt) is called to initialize the bindings.
 
        .bindData: Optional data to passed as the 2nd argument to bind().
+       If bind() is not a Function then bindData is not used.
     */
     jp.exec = function(opt) {
         if( 'string' === typeof opt ) return origImpls.exec.apply(this, argvToArray(arguments));
         else if( !opt || ('object' !== typeof opt) ){
             throw new Error("exec() requires a string or Object as its only parameter.");
         }
+        var st;
         try {
-            var st = (opt.sql instanceof ctor.Statement) ? opt.sql : this.prepare(opt.sql);
-            var bind;
+            st = (opt.sql instanceof ctor.Statement) ? opt.sql : this.prepare(opt.sql);
+            //var bind;
             //var repeatBind = false;
             if( opt.bind ) {
                 if( opt.bind instanceof Function ) {
@@ -112,8 +114,7 @@
                 }
             }
             if( ! (opt.each instanceof Function) ) {
-                st.step();
-                return;
+                return st.step();
             }
             var step, cbArg;
             if('object'===opt.mode) {
