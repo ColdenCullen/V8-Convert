@@ -696,7 +696,7 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
    Statement.columnTypes accessor which caches the column types in
    an internal JS array.
 */
-static v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > property,
+/*static*/ v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > property,
                                                        const v8::AccessorInfo & info )
 {
     try
