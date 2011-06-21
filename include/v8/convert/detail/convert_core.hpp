@@ -1,14 +1,14 @@
 #if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_CORE_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_P_V8_CONVERT_CORE_HPP_INCLUDED 1
 /*
-   A min-framework to simplify casting between v8 JavaScript and
-   C++ native objects.
+  A min-framework to simplify casting between v8 JavaScript and
+  C++ native objects.
 
-   v8: http://code.google.com/p/v8/
+  v8: http://code.google.com/p/v8/
 
-   Author: Stephan Beal (http://wanderinghorse.net/home/stephan/)
+  Author: Stephan Beal (http://wanderinghorse.net/home/stephan/)
 
-   License: same as v8 (see below)
+  License: same as v8 (see below)
 */
 // Copyright 2008-2011 Stephan Beal. All rights reserved.
 // Redistribution and use in source and binary forms, with or without
@@ -145,14 +145,14 @@ namespace v8 { namespace convert {
     */
     template <typename NT>
     struct NativeToJS<NT const *> : NativeToJS<NT> {};
-//     {
-//         typedef typename TypeInfo<NT>::Type const * ArgType;
-// 	v8::Handle<v8::Value> operator()( ArgType n ) const
-//         {
-//             typedef NativeToJS<NT*> Proxy;
-//             return Proxy()( n );
-//         }
-//     };
+    //     {
+    //         typedef typename TypeInfo<NT>::Type const * ArgType;
+    // 	v8::Handle<v8::Value> operator()( ArgType n ) const
+    //         {
+    //             typedef NativeToJS<NT*> Proxy;
+    //             return Proxy()( n );
+    //         }
+    //     };
 
     /**
        Specialization to treat (NT const &) as (NT).
@@ -366,8 +366,8 @@ namespace v8 { namespace convert {
     template <typename T>
     inline v8::Handle<v8::Value> CastToJS( T const & v )
     {
-	typedef NativeToJS<T const> F;
-	return F()( v );
+        typedef NativeToJS<T const> F;
+        return F()( v );
     }
 
     /**
@@ -375,8 +375,8 @@ namespace v8 { namespace convert {
     */
     static inline v8::Handle<v8::Value> CastToJS( char const * v )
     {
-	typedef NativeToJS<char const *> F;
-	return F()( v );
+        typedef NativeToJS<char const *> F;
+        return F()( v );
     }
 
     /**
@@ -393,8 +393,8 @@ namespace v8 { namespace convert {
     */
     static inline v8::Handle<v8::Value> CastToJS( char * v )
     {
-	typedef NativeToJS<char const *> F;
-	return F()( v );
+        typedef NativeToJS<char const *> F;
+        return F()( v );
     }
 
     /** Convenience instance of NativeToJS. */
@@ -419,21 +419,21 @@ namespace v8 { namespace convert {
     /**
        Converts a native std::exception to a JS exception and throws
        that exception via v8::ThrowException().
-     */
+    */
     template <>
     struct NativeToJS<std::exception>
     {
-        /** Calls v8::ThrowException(ex.what()) and returns the
+        /** Calls v8::ThrowException(v8::Exception::Error(ex.what())) and returns the
             results of that call (maybe an empty handle???). It must
             call ThrowException() because that is apparently the only
             way to create an Error object from the native API.
         */
-	v8::Handle<v8::Value> operator()( std::exception const & ex ) const
-	{
+        v8::Handle<v8::Value> operator()( std::exception const & ex ) const
+        {
             char const * msg = ex.what();
-	    return v8::ThrowException(v8::Exception::Error(String::New( msg ? msg : "unknown std::exception!" ) ));
-	    /** ^^^ String::New() internally calls strlen(), which hates it when string==0. */
-	}
+            return v8::ThrowException(v8::Exception::Error(String::New( msg ? msg : "unknown std::exception!" ) ));
+            /** ^^^ String::New() internally calls strlen(), which hates it when string==0. */
+        }
     };
     
     /**
@@ -453,9 +453,9 @@ namespace v8 { namespace convert {
     template <typename JST>
     struct JSToNative
     {
-	typedef typename TypeInfo<JST>::NativeHandle ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const;
-        // Must be specialized to be useful
+        typedef typename TypeInfo<JST>::NativeHandle ResultType;
+        //! Must be specialized to be useful.
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const;
     };
     /** Specialization to treat (JST*) as JST. */
     template <typename JST>
@@ -521,22 +521,22 @@ namespace v8 { namespace convert {
     template <typename T>
     struct JSToNative<v8::Handle<T> >
     {
-	typedef v8::Handle<T> ResultType;
-	ResultType operator()( v8::Handle<T> const & h ) const
-	{
-	    return h;
-	}
+        typedef v8::Handle<T> ResultType;
+        ResultType operator()( v8::Handle<T> const & h ) const
+        {
+            return h;
+        }
     };
 
     /** Specialization which passes on v8 local Handles as-is. */
     template <typename T>
     struct JSToNative<v8::Local<T> >
     {
-	typedef v8::Local<T> ResultType;
-	ResultType operator()( v8::Local<T> const & h ) const
-	{
-	    return h;
-	}
+        typedef v8::Local<T> ResultType;
+        ResultType operator()( v8::Local<T> const & h ) const
+        {
+            return h;
+        }
     };
 
     /**
@@ -546,11 +546,11 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<void>
     {
-	typedef void ResultType;
-	ResultType operator()( ... ) const
-	{
-	    return;
-	}
+        typedef void ResultType;
+        ResultType operator()( ... ) const
+        {
+            return;
+        }
     };
 
     /**
@@ -560,12 +560,12 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<void *>
     {
-	typedef void * ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    if( h.IsEmpty() || ! h->IsExternal() ) return 0;
-	    return External::Cast(*h)->Value();
-	}
+        typedef void * ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            if( h.IsEmpty() || ! h->IsExternal() ) return 0;
+            return External::Cast(*h)->Value();
+        }
     };
 
 
@@ -653,40 +653,40 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<int16_t>
     {
-	typedef int16_t ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->IsNumber()
-		? static_cast<ResultType>(h->Int32Value())
-		: 0;
-	}
+        typedef int16_t ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+                ? static_cast<ResultType>(h->Int32Value())
+                : 0;
+        }
     };	
 
     /** Specialization to convert JS values to uint16_t. */
     template <>
     struct JSToNative<uint16_t>
     {
-	typedef uint16_t ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->IsNumber()
-		? static_cast<ResultType>(h->Int32Value())
-		: 0;
-	}
+        typedef uint16_t ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+                ? static_cast<ResultType>(h->Int32Value())
+                : 0;
+        }
     };
 
     /** Specialization to convert JS values to int32_t. */
     template <>
     struct JSToNative<int32_t>
     {
-	typedef int32_t ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    // FIXME: try to lexically cast, if we can
-	    return h->IsNumber()
-		? h->Int32Value()
-		: 0;
-	}
+        typedef int32_t ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            // FIXME: try to lexically cast, if we can
+            return h->IsNumber()
+                ? h->Int32Value()
+                : 0;
+        }
     };
 
     /** Specialization to convert JS values to uint32_t. */
@@ -707,50 +707,50 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<int64_t>
     {
-	typedef int64_t ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->IsNumber()
-		? static_cast<ResultType>(h->IntegerValue())
-		: 0;
-	}
+        typedef int64_t ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+                ? static_cast<ResultType>(h->IntegerValue())
+                : 0;
+        }
     };
 
     /** Specialization to convert JS values to uint64_t. */
     template <>
     struct JSToNative<uint64_t>
     {
-	typedef uint64_t ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->IsNumber()
-		? static_cast<ResultType>(h->IntegerValue())
-		: 0;
-	}
+        typedef uint64_t ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+                ? static_cast<ResultType>(h->IntegerValue())
+                : 0;
+        }
     };
 
     /** Specialization to convert JS values to double. */
     template <>
     struct JSToNative<double>
     {
-	typedef double ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->IsNumber()
-		? h->NumberValue()
-		: 0;
-	}
+        typedef double ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+                ? h->NumberValue()
+                : 0;
+        }
     };
 
     /** Specialization to convert JS values to bool. */
     template <>
     struct JSToNative<bool>
     {
-	typedef bool ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->BooleanValue();
-	}
+        typedef bool ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->BooleanValue();
+        }
     };
 
     /** Specialization to convert JS values to std::string. */
@@ -760,18 +760,26 @@ namespace v8 { namespace convert {
         typedef std::string ResultType;
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
-                static const std::string emptyString;
+            static const std::string emptyString;
             v8::String::Utf8Value const utf8String( h );
-                const char* s = *utf8String;
-                return s
-                    ? std::string(s, utf8String.length())
-                    : emptyString;
+            const char* s = *utf8String;
+            return s
+                ? std::string(s, utf8String.length())
+                : emptyString;
         }
     };
     
     /**
-        Specialization necessary to avoid incorrect default behaviour
-        for this special case.
+       Specialization necessary to avoid incorrect default behaviour
+       for this special case.
+        
+       Reminder to self: we'll need a specialization like this any 
+       time we want to use a type which is returned by VALUE from 
+       JSToNative() and might be passed as a const reference as a 
+       function argument type. The vast majority of bound native 
+       types are bound internally as pointers (and don't need a 
+       specialization like this one), whereas the std::string 
+       conversion uses value semantics to simplify usage.
     */
     template <>
     struct JSToNative<std::string const &> : public JSToNative<std::string> {};
@@ -790,8 +798,8 @@ namespace v8 { namespace convert {
     struct JSToNative<char const *>
     {
     public:
-	typedef char const * ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h );
+        typedef char const * ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h );
     };
 #else
     /** Not great, but a happy medium. */
@@ -815,43 +823,44 @@ namespace v8 { namespace convert {
     } // namespace
 
     /**
-        This specialization is a kludge/workaround for use in cases
-        where (unsigned long int) is:
+       This specialization is a kludge/workaround for use in cases
+       where (unsigned long int) is:
 
-        1) The same type as the platform's pointer type.
-        2) Somehow NOT the same as one of the standard uintNN_t types.
-        3) Used in CastToJS() or CastFromJS() calls.
+       1) The same type as the platform's pointer type.
+       2) Somehow NOT the same as one of the standard uintNN_t types.
+       3) Used in CastToJS() or CastFromJS() calls.
 
-        If ulong and uint64 are the same type then this specialization
-        is a no-op (it generates a converter for a type which will
-        never be converted), otherwords it performs a numeric conversion.
+       If ulong and uint64 are the same type then this specialization
+       is a no-op (it generates a converter for a type which will
+       never be converted), otherwords it performs a numeric conversion.
     */
     template <>
     struct NativeToJS< tmp::IfElse< tmp::SameType<unsigned long int,uint64_t>::Value,
-                                               Detail::UselessConversionType<unsigned long>,
-                                               unsigned long >::Type >
-                                    : NativeToJS_int_big<unsigned long int>
+                                    Detail::UselessConversionType<unsigned long>,
+                                    unsigned long >::Type >
+    : NativeToJS_int_big<unsigned long int>
     {
     };
 
     /**
-        This is a kludge/workaround for use in cases where (unsigned
-        long int) is:
+       This is a kludge/workaround for use in cases where (unsigned
+       long int) is:
 
-        1) The same type as the platform's pointer type.
-        2) Somehow NOT the same as one of the standard uintNN_t types.
-        3) Used in CastToJS() or CastFromJS() calls.
+       1) The same type as the platform's pointer type.
+       2) Somehow NOT the same as one of the standard uintNN_t types.
+       3) Used in CastToJS() or CastFromJS() calls.
 
-        If ulong and uint64 are the same type then this specialization
-        is a no-op (it generates a converter for a type which will
-        never be converted), otherwords it performs a numeric
-        conversion.
+       If ulong and uint64 are the same type then this specialization
+       is a no-op (it generates a converter for a type which will
+       never be converted), otherwords it performs a numeric
+       conversion.
     */
     template <>
-struct JSToNative< tmp::IfElse<
-    tmp::SameType<unsigned long int,uint64_t>::Value,
+    struct JSToNative< tmp::IfElse<
+        tmp::SameType<unsigned long int,uint64_t>::Value,
         Detail::UselessConversionType<unsigned long>,
-        unsigned long >::Type > : JSToNative<uint64_t>
+        unsigned long >::Type >
+    : JSToNative<uint64_t>
     {
     };
 
@@ -859,10 +868,10 @@ struct JSToNative< tmp::IfElse<
        See the equivalent NativeToJS kludge for unsigned long.
     */
     template <>
-struct NativeToJS< tmp::IfElse< tmp::SameType<long,int64_t>::Value,
-                                               Detail::UselessConversionType<long>,
-                                               long >::Type >
-                                : NativeToJS_int_big<int64_t>
+    struct NativeToJS< tmp::IfElse< tmp::SameType<long,int64_t>::Value,
+                                    Detail::UselessConversionType<long>,
+                                    long >::Type >
+    : NativeToJS_int_big<int64_t>
     {
     };
 
@@ -870,8 +879,8 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long,int64_t>::Value,
        See the equivalent JSToNative kludge for unsigned long.
     */
     template <>
-struct JSToNative< tmp::IfElse<
-    tmp::SameType<long,int64_t>::Value,
+    struct JSToNative< tmp::IfElse<
+        tmp::SameType<long,int64_t>::Value,
         Detail::UselessConversionType<long>,
         long >::Type > : JSToNative<int64_t>
     {
@@ -886,8 +895,8 @@ struct JSToNative< tmp::IfElse<
        conversion compile-time error.
     */
     template <>
-struct JSToNative< tmp::IfElse<
-    tmp::SameType<long long int,int64_t>::Value,
+    struct JSToNative< tmp::IfElse<
+        tmp::SameType<long long int,int64_t>::Value,
         Detail::UselessConversionType<long long>,
         long long int >::Type > : JSToNative<int64_t>
     {
@@ -900,10 +909,10 @@ struct JSToNative< tmp::IfElse<
        causes a link-time error.
     */
     template <>
-struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
-                                               Detail::UselessConversionType<long long>,
-                                               long long int >::Type >
-                                : NativeToJS_int_big<int64_t>
+    struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
+                                    Detail::UselessConversionType<long long>,
+                                    long long int >::Type >
+    : NativeToJS_int_big<int64_t>
     {
     };
 #endif
@@ -919,39 +928,6 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
         typedef JSToNative<NT> F;
         return F()( h );
     }
-// These seem to be unnecessary:
-//     template <typename NT>
-//     typename JSToNative<NT>::ResultType CastFromJS( v8::Handle<v8::Object> const & h )
-//     {
-// #if defined(CERR)
-//         CERR << "CastFromJS(Object)\n";
-// #endif
-// 	//typedef JSToNative<NT> F;
-// 	//return F()( h );
-//         return CastFromJS<NT>( v8::Handle<v8::Value>(h) );
-//     }
-
-//     template <typename NT, typename VT>
-//     typename JSToNative<NT>::ResultType CastFromJS( Handle< VT > const & h )
-//     {
-// #if defined(CERR)
-//         CERR << "CastFromJS(Handle<T>)\n";
-// #endif
-// #if 0
-//  	typedef JSToNative<NT> F;
-//  	return F()( h );
-// #else
-//         return CastFromJS<NT>( v8::Handle<v8::Value>( h ) );
-// #endif
-//     }
-
-//    template <typename NT>
-//    typename JSToNative<NT>::ResultType CastFromJS( ::v8::Local< ::v8::Value > const & h )
-//    {
-// 	typedef JSToNative<NT> F;
-// 	return F()( h );
-//     }
-
 
     /** Convenience instance of JSToNative. */
     static const JSToNative<int16_t> JSToInt16 = JSToNative<int16_t>();
@@ -981,67 +957,67 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
        Handle<Object> obj = ...;
        ObjectPropSetter set(obj);
        set("propOne", CastToJS(32) )
-          ("propTwo", ... )
-	  (32, ... )
-	  ("func1", CastToJS( anInvocationCallback ) )
-	  ;
+       ("propTwo", ... )
+       (32, ... )
+       ("func1", CastToJS( anInvocationCallback ) )
+       ;
        \endcode
     */
     class ObjectPropSetter
     {
     private:
-	v8::Handle< ::v8::Object > target;
+        v8::Handle< ::v8::Object > target;
     public:
-	/**
-	   Initializes this object to use the given array
-	   as its append target. Results are undefined if
-	   target is not a valid Object.
-	*/
-	explicit ObjectPropSetter( v8::Handle< v8::Object > obj ) :target(obj)
-	{}
-	~ObjectPropSetter(){}
+        /**
+           Initializes this object to use the given array
+           as its append target. Results are undefined if
+           target is not a valid Object.
+        */
+        explicit ObjectPropSetter( v8::Handle< v8::Object > obj ) :target(obj)
+        {}
+        ~ObjectPropSetter(){}
 
-	/**
-       Adds an arbitrary property to the target object using
-       CastToJS(v).
-	*/
-	template <typename T>
-	ObjectPropSetter & operator()( v8::Handle<v8::Value> key, T const & v )
-	{
-	    this->target->Set(key, CastToJS(v));
-	    return *this;
-	}
+        /**
+           Adds an arbitrary property to the target object using
+           CastToJS(v).
+        */
+        template <typename T>
+        ObjectPropSetter & operator()( v8::Handle<v8::Value> key, T const & v )
+        {
+            this->target->Set(key, CastToJS(v));
+            return *this;
+        }
 
-	/**
-	   Adds a numeric property to the target object.
-	*/
-	template <typename T>
-	ObjectPropSetter & operator()( int32_t ndx, T const & v )
-	{
-	    return this->operator()( Integer::New(ndx), v );
-	}
+        /**
+           Adds a numeric property to the target object.
+        */
+        template <typename T>
+        ObjectPropSetter & operator()( int32_t ndx, T const & v )
+        {
+            return this->operator()( Integer::New(ndx), v );
+        }
 
-	/**
-	   Adds a string-keyed property to the target object.
-	*/
-	template <typename T>
-	ObjectPropSetter & operator()( char const * key, T const & v )
-	{
-	    return this->operator()( String::New(key), v );
-	}
+        /**
+           Adds a string-keyed property to the target object.
+        */
+        template <typename T>
+        ObjectPropSetter & operator()( char const * key, T const & v )
+        {
+            return this->operator()( String::New(key), v );
+        }
 
-	/**
-	   Adds an arbtirary property to the target object.
+        /**
+           Adds an arbtirary property to the target object.
 
            WTF did i add the tmpl args here for? They DO make
            a difference, but i can't for the life of me remember
            why.          
-	*/
-	template <typename T1, typename T2>
-	ObjectPropSetter & operator()( v8::Handle<v8::Value> key, v8::Handle<v8::Value> v )
-	{
-	    return this->operator()( key, v );
-	}
+        */
+        template <typename T1, typename T2>
+        ObjectPropSetter & operator()( v8::Handle<v8::Value> key, v8::Handle<v8::Value> v )
+        {
+            return this->operator()( key, v );
+        }
 
         /**
            Adds the given function as a member of the target object.
@@ -1051,14 +1027,14 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
             return this->operator()( name,
                                      v8::FunctionTemplate::New(pf)->GetFunction() );
         }
-        
-	/**
-	   Returns this object's JS object.
-	*/
-	Handle< ::v8::Object > Object() const
-	{
-	    return this->target;
-	}
+            
+        /**
+           Returns this object's JS object.
+        */
+        Handle< ::v8::Object > Object() const
+        {
+            return this->target;
+        }
     };
 
     /**
@@ -1102,23 +1078,23 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
        NativeToJS classes which act on map types compatible with the
        STL can subclass this to get an implementation.
 
-   Both the key and mapped types of the given Map Type must be
-   converitible to v8 types using CastToJS().
+       Both the key and mapped types of the given Map Type must be
+       converitible to v8 types using CastToJS().
     */
     template <typename MapT>
     struct NativeToJS_map
     {
-	v8::Handle<v8::Value> operator()( MapT const & li ) const
-	{
-	    typedef typename MapT::const_iterator IT;
-	    IT it( li.begin() );
-	    Handle<Object> rv( Object::New() );
-	    for( int i = 0; li.end() != it; ++it, ++i )
-	    {
-		rv->Set( CastToJS( (*it).first ), CastToJS( (*it).second ) );
-	    }
-	    return rv;
-	}
+        v8::Handle<v8::Value> operator()( MapT const & li ) const
+        {
+            typedef typename MapT::const_iterator IT;
+            IT it( li.begin() );
+            Handle<Object> rv( Object::New() );
+            for( int i = 0; li.end() != it; ++it, ++i )
+            {
+                rv->Set( CastToJS( (*it).first ), CastToJS( (*it).second ) );
+            }
+            return rv;
+        }
     };
 
     /** Partial specialization for std::map<>. */
@@ -1155,20 +1131,20 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
            possible to know if this routine got an empty Array object
            or a non-Array object.
         */
-	ResultType operator()( v8::Handle<v8::Value> jv ) const
-	{
-	    //typedef typename ListT::value_type VALT;
+        ResultType operator()( v8::Handle<v8::Value> jv ) const
+        {
+            //typedef typename ListT::value_type VALT;
             typedef ValueType VALT;
-	    ListT li;
-	    if( jv.IsEmpty() || ! jv->IsArray() ) return li;
-	    Handle<Array> ar( Array::Cast(*jv) );
-	    uint32_t ndx = 0;
-	    for( ; ar->Has(ndx); ++ndx )
-	    {
-		li.push_back( CastFromJS<VALT>( ar->Get(Integer::New(ndx)) ) );
-	    }
-	    return li;
-	}
+            ListT li;
+            if( jv.IsEmpty() || ! jv->IsArray() ) return li;
+            Handle<Array> ar( Array::Cast(*jv) );
+            uint32_t ndx = 0;
+            for( ; ar->Has(ndx); ++ndx )
+            {
+                li.push_back( CastFromJS<VALT>( ar->Get(Integer::New(ndx)) ) );
+            }
+            return li;
+        }
     };
 
     /** Partial specialization for std::list<>. */
@@ -1191,7 +1167,7 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
               typename ValueType = typename MapT::value_type>
     struct JSToNative_map
     {
-	typedef MapT ResultType;
+        typedef MapT ResultType;
         /**
            Converts jv to a MapT object.
 
@@ -1201,22 +1177,22 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
            possible to know if this routine got an empty Array object
            or a non-Array object.
         */
-	ResultType operator()( v8::Handle<v8::Value> jv ) const
-	{
+        ResultType operator()( v8::Handle<v8::Value> jv ) const
+        {
             typedef ValueType VALT;
-	    MapT map;
-	    if( jv.IsEmpty() || ! jv->IsObject() ) return map;
-	    Local<Object> obj( Object::Cast(*jv) );
+            MapT map;
+            if( jv.IsEmpty() || ! jv->IsObject() ) return map;
+            Local<Object> obj( Object::Cast(*jv) );
             Local<Array> ar( obj->GetPropertyNames() );
-	    uint32_t ndx = 0;
-	    for( ; ar->Has(ndx); ++ndx )
-	    {
+            uint32_t ndx = 0;
+            for( ; ar->Has(ndx); ++ndx )
+            {
                 Local<Value> const & k = ar->Get(Integer::New(ndx));
                 if( ! obj->HasRealNamedProperty(k) ) continue;
                 map[CastFromJS<KeyType>(k)] = CastFromJS<ValueType>(obj->Get(k));
-	    }
-	    return map;
-	}
+            }
+            return map;
+        }
     };
 #endif
     /**
@@ -1229,9 +1205,9 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
        @code
        StringBuffer msg;
        msg << "Could not set property "
-           << "'" << propName
-           <<"' on object " << myJSObject << '!';
-       return v8::ThrowException(msg);
+       << "'" << propName
+       <<"' on object " << myJSObject << '!';
+       return v8::ThrowException(msg.toError());
        @endcode
     */
     class StringBuffer
@@ -1258,7 +1234,7 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
 
         /**
            Returns a copy of the current message content.
-         */
+        */
         inline std::string Content() const
         {
             return this->os.str();
@@ -1324,7 +1300,7 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
         /**
            Returns this buffer's value wrapped in
            a JS Error object.
-         */
+        */
         v8::Local<v8::Value> toError() const
         {
             return v8::Exception::Error(*this);
@@ -1356,8 +1332,8 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
     template <typename T>
     struct ArgCaster
     {
-        typedef typename TypeInfo<T>::Type Type;
-        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        //typedef typename TypeInfo<T>::Type Type;
+        //typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         typedef typename JSToNative<T>::ResultType ResultType;
         /**
            Default impl simply returns CastFromJS<T>(v).
@@ -1365,7 +1341,7 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
            conversion, as long as they release it when the destruct.
            See ArgCaster<char const *> for an example of that.
         */
-    inline ResultType ToNative( v8::Handle<v8::Value> const & v )
+        inline ResultType ToNative( v8::Handle<v8::Value> const & v )
         {
             return CastFromJS<T>( v );
         }
@@ -1382,7 +1358,7 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
 
        BEWARE OF THESE LIMITATIONS:
 
-       1) This will only work properly for null-terminated strings,
+       1) This will only work properly for nul-terminated strings,
        and not binary data!
 
        2) Do not use this to pass (char const *) as a function
@@ -1394,8 +1370,8 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
        arguments, as each call to ToNative() will invalidate the
        pointer returned by previous calls.
 
-       4) The conversion assumes the data is ASCII, though UTF8
-       "should" also work.
+       4) The to-string conversion uses whatever encoding 
+       JSToNative<std::string> uses.
 
        Violating any of those leads to undefined behaviour, and
        very possibly memory corruption for cases 2 or 3.
@@ -1405,8 +1381,8 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
     {
     private:
         std::string val;
-    public:
         typedef char Type;
+    public:
         typedef Type const * ResultType;
         /**
            Returns the toString() value of v unless:
