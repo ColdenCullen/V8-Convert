@@ -1,5 +1,6 @@
 #if !defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED 1
+#include "tmp.hpp"
 namespace v8 { namespace convert {
 /** @file signature_core.hpp
 
