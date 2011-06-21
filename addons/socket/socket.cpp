@@ -753,21 +753,21 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
     int rc = 0;
     {
         v8::Unlocker unl;
-        rc = create_addr(where.c_str(), port, so->family, &addr, &alen);
+        rc = ::create_addr(where.c_str(), port, so->family, &addr, &alen);
     }
     if( 0 != rc )
-    {
+    {   // Connect using address failed. Try using a hostname...
         v8::Handle<v8::Value> ip = cv::JSSocket::nameToAddress( where.c_str() );
         if( ! ip.IsEmpty() )
         {
             where = cv::JSToStdString(ip);
             v8::Unlocker unl;
-            rc = create_addr( where.c_str(), port, so->family, &addr, &alen );
+            rc = ::create_addr( where.c_str(), port, so->family, &addr, &alen );
         }
         if( 0 != rc )
         {
             cv::StringBuffer msg;
-            msg << "Malformed address: "<<where;
+            msg << "Malformed address(?): "<<where;
             return JSTOSS(msg.toError());
         }
     }
@@ -833,14 +833,15 @@ v8::Handle<v8::Value> cv::JSSocket::writeN( v8::Arguments const & argv )
     unsigned int len = 0;
     if( argv[0]->IsString() )
     {
-        std::string const val = cv::JSToStdString(argv[0]);
+        v8::String::Utf8Value const val(argv[0]);
+        unsigned int const vlen = static_cast<unsigned int>(val.length());
         if( argv.Length() > 1 )
         {
             len = cv::JSToUInt32(argv[1]);
-            if( len > val.size() ) len = val.size();
+            if( len > vlen) len = vlen;
         }
-        else len = val.size();
-        return cv::CastToJS( so->write2( val.c_str(), len ) );
+        else len = vlen;
+        return cv::CastToJS( so->write2( *val, len ) );
     }
     else
     {
@@ -914,8 +915,8 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
         rc = ::read(this->fd, &vec[0], n);
 #endif
         DBGOUT << "read("<<n<<", "<<binary<<") == "<<rc<<"\n";
-        if( 0 == rc ) /*EOF*/ return v8::Undefined();
     }
+    if( 0 == rc ) /*EOF*/ return v8::Undefined();
     if( (ssize_t)-1 == rc )
     {
 #if 1

@@ -9,13 +9,24 @@ function echoClient()
         print('\t'+k,'=',Socket[k]);
     }
     var s, c, n;
+    
+    function readAll(sock, bufsz, binary, callback) {
+        var x, len;
+        v
+        while( x = sock.read(bufsz,binary) ) {
+            len = x.length;
+            callback(x);
+            if(len < bufsz) break /* assume EOF, though this is not correct for UTF8 in non-binary mode */;
+        }
+        if( sock.timeoutReached ) throw new Error("Timeout reached while reading.");
+    }
     try
     {
         var rc;
         s  = new Socket( echo.socketFamily, echo.socketType );
         print('s =',s);
         print('s.hostname =',s.hostname);
-        rc = s.setTimeout( 5 );
+        rc = s.setTimeout( 10 );
         print("s.setTimeout() rc =",rc);
 
         var msg = ["GET / HTTP/1.1",
@@ -30,11 +41,11 @@ function echoClient()
             print('s.peerInfo: '+JSON.stringify(s.peerInfo));
             rc = s.write( msg );
             print( "s.write() rc =",rc);
-            while( undefined !== (rc = s.read(20,false) ) ) {
-                bufs.push(rc);
-            }
-            var buf = bufs.join('');
-            print("Read in "+buf.length+" bytes ("+typeof buf+"):\n"+buf);
+            // ACHTUNG: this code is NOT safe vis-a-vis utf8 because we can end
+            // a read block in the middle of a multi-byte character!
+            var buf = new Socket.ByteArray();
+            readAll(s, 20, true, function(x) { print("Read in: "+x); buf.append(x); x.destroy(); });
+            print("Read in "+buf.length+" characters:\n"+buf.stringValue);
         }
         else if( Socket.SOCK_DGRAM == s.type )
         {

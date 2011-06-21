@@ -107,11 +107,43 @@ function test1()
         
 }
 
+function test2()
+{
+    var s = new Socket();
+    var host = 'www.google.com';
+    var crnl = '\r\n';
+    var msg = ["GET / HTTP/1.1",
+              "Host: "+host
+              ].join(crnl)+crnl+crnl;
+    function readAll(sock, bufsz, binary, callback) {
+        var x;
+        bufsz = bufsz || 1024;
+        while( undefined != (x = sock.read(bufsz,binary)) ) {
+            callback(x);
+            if( sock.timeoutReached ) continue;
+            else if(x.length < bufsz) break /* assume EOF */;
+        }
+    }
+    try {
+        print("Sending:\n"+msg);
+        s.setTimeout(3);
+        s.connect(host,80);
+        //s.sendTo( host, 80, msg );
+        s.write(msg);
+        var x;
+        print("Reading...\n");
+        readAll( s, 64, false, function(x){
+            print("READ BLOCK ["+x+"]");
+        });
+    }
+    finally { s.close(); }
+}
 
 try
 {
     print('Socket.hostname='+Socket.hostname);
-    test1();
+    //test1();
+    test2();
     print("Done!");
 }
 catch(e)

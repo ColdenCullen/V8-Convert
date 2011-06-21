@@ -237,9 +237,18 @@ public:
     */
     int connect( char const * where, int port );
     
+    /**
+        Equivalent to this->connect(addr,0).
+    */
     int connect( char const * addr );
 
+    /**
+        Returns this environment's host name, as reported by
+        gethostname(). On error it triggers a JS exception before
+        returning.
+    */
     static std::string hostname();
+    
     /**
        Reads n bytes from the socket and returns them
        as described below.
@@ -250,14 +259,12 @@ public:
        by a timeout and no bytes were read before the
        timeout expired.
 
-       - (val===undefined) means that a read error
-       occured, but this function will throw
-       a v8 exception in that case.
+       - (val===undefined) EOF.
 
-       If binary is true then the returned value is a JSByteArray
+       If binary is true then the returned value is a ByteArray
        object. If binary is false then the data is returned as a
        string (which will fail with undefined behaviour if the string
-       is not encoded in a way which v8 requires).
+       is not encoded in a way which v8 requires (UTF-8)).
        
        When the length of the returned data is less than n, it
        could mean any of:
@@ -269,6 +276,16 @@ public:
        There is unfortunately currently no way to distinguish.
        We may need to add an error id property to the class so
        that clients can tell the difference.
+       
+       BIG FAT HAIRY WARNING:
+       
+       If binary is false and the read-in block ends in the middle
+       of a multi-byte UTF8 character then results are technically
+       undefined because that (incomplete/invalid) string will be given
+       to the v8 String constructor.
+       
+       The same applies when using ByteArray.stringValue to append
+       the results of reads to a string.
     */
     v8::Handle<v8::Value> read( unsigned int n, bool binary );
 
@@ -313,7 +330,6 @@ public:
 
        int sendTo( string hostNameOrAddress, int port, ByteArray|string src [, int len=src.length] );
 
-       
     */
     static v8::Handle<v8::Value> sendTo( v8::Arguments const & argv );
 

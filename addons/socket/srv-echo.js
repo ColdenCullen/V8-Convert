@@ -43,16 +43,29 @@ function echoServer()
                     continue;
                 }
                 print("Got peer: "+c.peerInfo.join(':'));
-                function doit(conn) {
-                    var buf = "";
+                c.setTimeout( 10 );
+                function doit(sock) {
+                    var buf = new Socket.ByteArray();
                     var x;
-                    while( undefined != (x = conn.read(1024)) ) {
-                        buf += x;
+                    var bufsz = 1024;
+                    var len;
+                    while( undefined !== (x = sock.read(bufsz,true)) ) {
+                        len = 0;
+                        if( x ) {
+                            len = x.length;
+                            buf.append(x);
+                            x.destroy();
+                        }
+                        if( sock.timeoutReached ) throw new Error("Timeout hit while reading request.");
+                        else if(len < bufsz) break /* assume EOF */;
+                        // else keep reading.
                     }
-                    print("Writing back "+buf.length+" bytes to the client:\n"+buf);
-                    conn.write(buf, buf.length);
-                    conn.close();
-                    //},100);
+                    print("Writing back "+buf.length+" characters to the client:\n"+buf);
+                    x = sock.write(buf);
+                    buf.destroy();
+                    print("Write rc="+x+". Closing client connection...");
+                    sock.close();
+                    print("Closed client connection.");
                 };
                 if(1) {
                     //setTimeout(function(){doit(c);},1);

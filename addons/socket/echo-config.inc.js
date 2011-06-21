@@ -1,7 +1,7 @@
 var echo = {
 host:'127.0.0.1',
 //port:9090,
-port:8080,
+port:8081,
 socketPath:'/tmp/v8socket.sock',
 crnl:'\r\n'
 };
