@@ -109,14 +109,14 @@ namespace v8 { namespace convert {
         */
         struct NativeToJSImpl
         {
-            v8::Handle<v8::Value> operator()( T const * n ) const
+            v8::Handle<v8::Value> operator()( Type const * n ) const
             {
                 typedef NativeToJSMap<T> BM;
                 v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
                 if( rc.IsEmpty() ) return v8::Null();
                 else return rc;
             }
-            v8::Handle<v8::Value> operator()( T const & n ) const
+            v8::Handle<v8::Value> operator()( Type const & n ) const
             {
                 return this->operator()( &n );
             }
