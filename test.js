@@ -119,6 +119,10 @@ function test1()
 
     assertThrows( function(){ f.anton(); } );
     assertThrows( function(){ f.anton2(); } );
+    assertThrows( function(){ f.nativeParamRef(null); } );
+    assertThrows( function(){ f.nativeParamConstRef(null); } );
+    f.nativeParamRef(f);
+    f.nativeParamConstRef(f);
 
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );

@@ -80,6 +80,17 @@ public:
     {
         CERR << '@'<<(void const *)this<<"->nativeParam(@"<<(void const *)other<<")\n";
     }
+    
+    void nativeParamRef( BoundNative & other )
+    {
+        CERR << '@'<<(void const *)this<<"->nativeParam(@"<<(void const *)&other<<")\n";
+    }
+
+    void nativeParamConstRef( BoundNative const & other ) const
+    {
+        CERR << '@'<<(void const *)this<<"->nativeParam(@"<<(void const *)&other<<")\n";
+    }
+
 #if 0
     /**
        Binding his to JS requires that CastToJS<T>() work so that we

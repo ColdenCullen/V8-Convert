@@ -269,6 +269,10 @@ namespace v8 { namespace convert {
                  cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
                 ("nativeParam",
                  cv::MethodToInvocationCallback<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
+                ("nativeParamRef",
+                 cv::MethodToInvocationCallback<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef>)
+                ("nativeParamConstRef",
+                 cv::ConstMethodToInvocationCallback<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>)
                 ("cstr",
                  cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
                 ("destroy", CC::DestroyObjectCallback )
