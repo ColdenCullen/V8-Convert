@@ -254,6 +254,48 @@ uint32_t JSByteArray::length( uint32_t sz )
     return this->vec.size();
 }
 
+void JSByteArray::append( void const * src, unsigned int len )
+{
+    if( ! src || !len ) return;
+    size_t const newLen = this->length() + len;
+    this->vec.reserve( newLen );
+    unsigned char const * beg = (unsigned char const *)src;
+    std::copy( beg, beg + len, std::back_inserter(this->vec) );
+}
+void JSByteArray::append( JSByteArray const & other )
+{
+    std::copy( other.vec.begin(), other.vec.end(), std::back_inserter(this->vec) );
+}
+
+
+void JSByteArray::append( v8::Handle<v8::Value> val )
+{
+    if( val->IsString() )
+    {
+        v8::String::Utf8Value asc(val);
+        this->append( *asc, static_cast<unsigned int>(asc.length()) );
+        return;
+    }
+    else if( val->IsNumber() )
+    {
+        unsigned char x = (unsigned char)val->Int32Value();
+        this->append( &x, 1 );
+        return;
+    }
+    else
+    {
+        JSByteArray * ba = cv::CastFromJS<JSByteArray>(val);
+        if( !ba )
+        {
+            goto toss;
+        }
+        this->append( ba->rawBuffer(), ba->length() );
+        return;
+    }
+    toss:
+    v8::ThrowException(v8::Exception::Error(JSTR("Argument to append() must be one of (Number,String,ByteArray)")));
+    return;
+}
     
 void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
 {
@@ -272,6 +314,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     cw
         .Set( "toString", cv::ConstMethodToInvocationCallback<N, std::string (),&N::toString> )
         .Set( "destroy", CW::DestroyObjectCallback )
+        .Set( "append", cv::MethodToInvocationCallback<N, void (v8::Handle<v8::Value>), &N::append> )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),

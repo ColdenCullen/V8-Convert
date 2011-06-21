@@ -108,6 +108,26 @@ namespace v8 { namespace convert {
         */
         void swapBuffer( BufferType & buf );
 
+        /**
+            Appends len bytes from src to this object's buffer.
+        */
+        void append( void const * src, unsigned int len );
+        /**
+            Appends all bytes from other to this object's buffer, increasing
+            the size if necessary.
+        */
+        void append( JSByteArray const & other );
+        
+        /**
+            val must be one of (Number, String, ByteArray).
+            
+            A Number value is treated as a single byte value and is appended
+            to this buffer. A String is treated as UTF-8 bytes and appended.
+            A ByteArray is of course appended in the expected manner.
+            
+        */
+        void append( v8::Handle<v8::Value> val );
+
         //     std::string asString() const;
         //     std::string asString( unsigned int fromOffset ) const;
         //     std::string asString( unsigned int fromOffset, unsigned int len ) const;

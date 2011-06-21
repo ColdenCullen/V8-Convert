@@ -8,6 +8,21 @@ function test1()
     ba.destroy();
     ba = new ByteArray("hi, world");
     print("new ba="+ba+': '+ba.stringValue);
+    var i, b2;
+    for( i = 0; i < 3; ++i ) {
+        b2 = new ByteArray("!");
+        ba.append(b2);
+        b2.destroy();
+    }
+    print("Appended ba ("+ba.length+" bytes): "+ba.stringValue);
+    for( i = 0; i < 3; ++i ) {
+        ba.append("?");
+    }
+    print("Appended ba ("+ba.length+" bytes): "+ba.stringValue);
+    for( i = 0; i < 3; ++i ) {
+        ba.append(42 /* '*' */);
+    }
+    print("Appended ba ("+ba.length+" bytes): "+ba.stringValue);
 }
 
 
