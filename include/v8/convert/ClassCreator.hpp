@@ -102,7 +102,7 @@ namespace v8 { namespace convert {
            
            The default implementation simply return (new T).
         */
-        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
+        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
         {
             return new T;
         }
