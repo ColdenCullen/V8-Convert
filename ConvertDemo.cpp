@@ -413,7 +413,7 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 #undef JSTR
 
 
-#if 1 // just an experiment.
+#if 0 // just an experiment.
 template <typename Sig>
 struct Arity;
 
