@@ -99,9 +99,26 @@ public:
        normally in the class binding code, to map native objects
        to their JS counterparts.
     */
-    BoundNative * nativeReturn()
+    BoundNative * nativeReturnConst()
     {
         CERR << '@'<<(void const *)this<<"->nativeReturn()\n";
+        return this;
+    }
+    BoundNative const * nativeReturnConst() const
+    {
+        CERR << '@'<<(void const *)this<<"->nativeReturnConst()\n";
+        return this;
+    }
+    
+    BoundNative & nativeReturnRef()
+    {
+        CERR << '@'<<(void const *)this<<"->nativeReturnRef()\n";
+        return *this;
+    }
+    BoundNative const & nativeReturnConstRef() const
+    {
+        CERR << '@'<<(void const *)this<<"->nativeReturnConstRef()\n";
+        return *this;
     }
 #endif
     double doFoo2(int i, double x)

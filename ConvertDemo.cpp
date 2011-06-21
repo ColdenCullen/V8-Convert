@@ -281,6 +281,10 @@ namespace v8 { namespace convert {
                 ("anton", InvocationCallbackToInvocationCallback<test_anton_callback>)
                 ("anton2", InvocationCallbackExceptionWrapper<std::exception,char const *(), &std::exception::what,
                  test_anton_callback> )
+#if 0 // converting natives to JS requires more lower-level plumbing...
+                 ("nativeReturnConst",
+                 cv::ConstMethodToInvocationCallback<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst>)
+#endif
                 ;
 
             ////////////////////////////////////////////////////////////////////////
