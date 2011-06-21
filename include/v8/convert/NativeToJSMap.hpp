@@ -118,10 +118,7 @@ namespace v8 { namespace convert {
             }
             v8::Handle<v8::Value> operator()( T const & n ) const
             {
-                typedef NativeToJSMap<T> BM;
-                v8::Handle<v8::Value> const & rc( BM::GetJSObject(&n) );
-                if( rc.IsEmpty() ) return v8::Null();
-                else return rc;
+                return this->operator()( &n );
             }
         };
     };
