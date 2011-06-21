@@ -196,6 +196,11 @@ public:
     {
         CERR << "@"<<(void const *)this<<"->overload2()\n";
     }
+
+    BoundNative * self() { return this; }
+    BoundNative & selfRef() { return *this; }
+    BoundNative const * self() const { return this; }
+    BoundNative const & selfRefConst() const { return *this; }
     
 };
 

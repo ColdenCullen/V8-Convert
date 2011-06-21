@@ -127,6 +127,13 @@ function test1()
     print("Return native const pointer : "+f.nativeReturnConst());
     print("Return native reference : "+f.nativeReturnRef());
     print("Return native const ref : "+f.nativeReturnConstRef());
+    asserteq( true, !!f.self );
+    asserteq( true, !!f.selfConst );
+    asserteq( f.self, f.selfConst );
+    asserteq( f.selfRef, f.selfConst );
+    asserteq( f.selfConstRef, f.self );
+    assertThrows( function() { f.self = 'configured to throw when set.'; } );
+    assertThrows( function() { f.selfConstRef = 'configured to throw when set.'; } );
 
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );

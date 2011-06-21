@@ -24,7 +24,7 @@ int doSomething(int x)
 ValueHandle sampleCallback( v8::Arguments const & argv )
 {
     CERR << "sampleCallback() Arity=-1\n";
-    return ValueHandle();
+    return v8::Undefined();
 }
 
 namespace v8 { namespace convert {
@@ -267,7 +267,7 @@ namespace v8 { namespace convert {
 #endif
             
             ////////////////////////////////////////////////////////////
-            // Bind some member functions and properties...
+            // Bind some member functions...
             cc("cputs",
                cv::FunctionToInvocationCallback<int (char const *),::puts>)
                 ("doFoo",
@@ -330,7 +330,21 @@ namespace v8 { namespace convert {
             PB::BindSharedVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
             PB::BindSharedVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
             PB::BindSharedVar<std::string,&sharedString>("staticString", proto );
-            PB::BindSharedVarRO<std::string,&sharedString>("staticStringRO", proto, true );     
+            PB::BindSharedVarRO<std::string,&sharedString>("staticStringRO", proto, true );
+            // More generically, accessors can be bound using this approach:
+            proto->SetAccessor( JSTR("self"),
+                                PB::MethodToAccessorGetter< BoundNative * (), &BoundNative::self>,
+                                PB::AccessorSetterThrow );
+            proto->SetAccessor( JSTR("selfRef"),
+                                PB::MethodToAccessorGetter< BoundNative & (), &BoundNative::selfRef>,
+                                PB::AccessorSetterThrow );
+            proto->SetAccessor( JSTR("selfConst"),
+                                PB::ConstMethodToAccessorGetter< BoundNative const * (), &BoundNative::self>,
+                                PB::AccessorSetterThrow );
+            proto->SetAccessor( JSTR("selfConstRef"),
+                                PB::ConstMethodToAccessorGetter< BoundNative const & (), &BoundNative::selfRefConst>,
+                                PB::AccessorSetterThrow );
+            
 #if 0
             PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
 #else
