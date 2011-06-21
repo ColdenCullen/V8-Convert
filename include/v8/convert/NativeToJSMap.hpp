@@ -7,6 +7,14 @@ namespace v8 { namespace convert {
        A helper class to assist in the "two-way-binding" of
        natives to JS objects. This class holds native-to-JS
        binding information.
+       
+       In the general case, a native-to-JS conversion is only
+       needed at the framework-level if bound/converted
+       functions/methods will _return_ bound native
+       pointers/references. If they only return "core" types (numbers
+       and strings, basically), or explicitly return v8-supported
+       types (e.g. v8::Handle<v8::Value>) then no native-to-JS
+       conversion is typically needed.
     */
     template <typename T>
     struct NativeToJSMap
@@ -88,29 +96,34 @@ namespace v8 { namespace convert {
             if( Map().end() == it ) return v8::Handle<v8::Object>();
             else return (*it).second.second;
         }
-    };
-
-    /**
-        A base NativeToJS<T> implementation for classes which use NativeToJSMap<T>
-        to hold their native-to-JS bindings.
-    */
-    template <typename T>
-    struct NativeToJS_NativeToJSMap
-    {
-        v8::Handle<v8::Value> operator()( T const * n ) const
+        
+        /**
+            A base NativeToJS<T> implementation for classes which use NativeToJSMap<T>
+            to hold their native-to-JS bindings. To be used like this:
+            
+            @code
+            // must be in the v8::convert namespace!
+            template <>
+            struct NativeToJS<MyType> : NativeToJSMap<MyType>::NativeToJSImpl {};
+            @endcode
+        */
+        struct NativeToJSImpl
         {
-            typedef NativeToJSMap<T> BM;
-            v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
-            if( rc.IsEmpty() ) return v8::Undefined();
-            else return rc;
-        }
-        v8::Handle<v8::Value> operator()( T const & n ) const
-        {
-            typedef NativeToJSMap<T> BM;
-            v8::Handle<v8::Value> const & rc( BM::GetJSObject(&n) );
-            if( rc.IsEmpty() ) return v8::Undefined();
-            else return rc;
-        }
+            v8::Handle<v8::Value> operator()( T const * n ) const
+            {
+                typedef NativeToJSMap<T> BM;
+                v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
+                if( rc.IsEmpty() ) return v8::Null();
+                else return rc;
+            }
+            v8::Handle<v8::Value> operator()( T const & n ) const
+            {
+                typedef NativeToJSMap<T> BM;
+                v8::Handle<v8::Value> const & rc( BM::GetJSObject(&n) );
+                if( rc.IsEmpty() ) return v8::Null();
+                else return rc;
+            }
+        };
     };
 
 }} // namespaces

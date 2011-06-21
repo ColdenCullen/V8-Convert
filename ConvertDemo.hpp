@@ -310,7 +310,7 @@ namespace v8 { namespace convert {
     {};
     template <>
     struct NativeToJS<BoundNative>
-        : NativeToJS_NativeToJSMap<BoundNative>
+        :  NativeToJSMap<BoundNative>::NativeToJSImpl
     {};
 
     /**
@@ -322,6 +322,6 @@ namespace v8 { namespace convert {
     {};
     template <>
     struct NativeToJS<BoundSubNative>
-        : NativeToJS_NativeToJSMap<BoundSubNative>
+        :  NativeToJSMap<BoundSubNative>::NativeToJSImpl
     {};
 } }
