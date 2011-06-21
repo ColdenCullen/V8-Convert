@@ -412,3 +412,67 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 }
 #undef JSTR
 
+
+#if 1 // just an experiment.
+template <typename Sig>
+struct Arity;
+
+template <typename R>
+struct Arity<R ()>
+{
+    enum { Value = 0 };
+};
+
+template <typename R, typename A0>
+struct Arity<R (A0)>
+{
+    enum { Value = 1 };
+};
+template <typename R>
+struct Arity<R (v8::Arguments const &)>
+{
+    enum { Value = -1 };
+};
+template <typename Sig>
+struct Arity< cv::FunctionSignature<Sig> >
+{
+    enum { Value = cv::FunctionSignature<Sig>::Arity };
+};
+template <typename T, typename Sig>
+struct Arity< cv::MethodSignature<T, Sig> >
+{
+    enum { Value = cv::MethodSignature<T,Sig>::Arity };
+};
+template <typename T, typename Sig>
+struct Arity< cv::ConstMethodSignature<T, Sig> >
+{
+    enum { Value = cv::ConstMethodSignature<T,Sig>::Arity };
+};
+
+static void arity_test()
+{
+    typedef Arity< int (int) > ArityCheck1;
+    typedef Arity< cv::FunctionSignature<int (int)> > ArityCheck1b;
+    //typedef Arity< int (int,int,int,int) > ArityCheck4;
+    typedef Arity< cv::FunctionSignature<int (int,int,int,int)> > ArityCheck4b;
+    //typedef Arity< int (BoundNative::*)(int) > ArityCheckT1;
+    typedef Arity< cv::MethodSignature<BoundNative, int (int)> > ArityCheckT1;
+    //typedef Arity< int (BoundNative::*)(int,int) > ArityCheckTC1;
+
+#define OUT(X) CERR << #X << "::Value == " << X::Value << '\n'
+    OUT(ArityCheck1);
+    OUT(ArityCheck1b);
+    //OUT(ArityCheck4);
+    OUT(ArityCheck4b);
+    OUT(ArityCheckT1);
+#undef OUT
+}
+static const bool arity_test_bogo = (arity_test(),true);
+enum {
+    experimentA = Arity<char ()>::Value,
+    experimentB = Arity<char (int)>::Value,
+    experimentC = Arity<int (v8::Arguments const &)>::Value,
+    //experimentD = Arity<int (int, int)>::Value,
+    experimentZ = 0
+};    
+#endif // experiment
