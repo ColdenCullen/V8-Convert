@@ -123,6 +123,10 @@ function test1()
     assertThrows( function(){ f.nativeParamConstRef(null); } );
     f.nativeParamRef(f);
     f.nativeParamConstRef(f);
+    print("Return native pointer : "+f.nativeReturn());
+    print("Return native const pointer : "+f.nativeReturnConst());
+    print("Return native reference : "+f.nativeReturnRef());
+    print("Return native const ref : "+f.nativeReturnConstRef());
 
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );

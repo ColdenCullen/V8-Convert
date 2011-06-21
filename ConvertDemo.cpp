@@ -28,15 +28,30 @@ ValueHandle sampleCallback( v8::Arguments const & argv )
 }
 
 namespace v8 { namespace convert {
-    BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
+    typedef NativeToJSMap<BoundNative> BMap;
+    typedef NativeToJSMap<BoundSubNative> BSubMap;
+    BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
-        return new BoundNative;
+        BoundNative * b = new BoundNative;
+        BMap::Insert( jsSelf, b );
+        return b;
     }
     void ClassCreator_Factory<BoundNative>::Delete( BoundNative * obj )
     {
+        BMap::Remove( obj );
         delete obj;
     }
-
+    BoundSubNative * ClassCreator_Factory<BoundSubNative>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
+    {
+        BoundSubNative * b = new BoundSubNative;
+        BSubMap::Insert( jsSelf, b );
+        return b;
+    }
+    void ClassCreator_Factory<BoundSubNative>::Delete( BoundSubNative * obj )
+    {
+        BSubMap::Remove( obj );
+        delete obj;
+    }
 
 
 #if 0 // don't use this - it doesn't work
@@ -281,9 +296,15 @@ namespace v8 { namespace convert {
                 ("anton", InvocationCallbackToInvocationCallback<test_anton_callback>)
                 ("anton2", InvocationCallbackExceptionWrapper<std::exception,char const *(), &std::exception::what,
                  test_anton_callback> )
-#if 0 // converting natives to JS requires more lower-level plumbing...
+#if 1 // converting natives to JS requires more lower-level plumbing...
+                 ("nativeReturn",
+                 cv::MethodToInvocationCallback<BoundNative, BoundNative * (), &BoundNative::nativeReturn>)
                  ("nativeReturnConst",
                  cv::ConstMethodToInvocationCallback<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst>)
+                 ("nativeReturnRef",
+                 cv::MethodToInvocationCallback<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef>)
+                 ("nativeReturnConstRef",
+                 cv::ConstMethodToInvocationCallback<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef>)
 #endif
                 ;
 

@@ -15,6 +15,7 @@
   best practices.
 */
 #include "v8/convert/v8-convert.hpp"
+#include "v8/convert/NativeToJSMap.hpp"
 #ifndef CERR
 #include <iostream> /* only for debuggering */
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" << __FUNCTION__<< "(): "
@@ -91,7 +92,7 @@ public:
         CERR << '@'<<(void const *)this<<"->nativeParam(@"<<(void const *)&other<<")\n";
     }
 
-#if 0
+#if 1
     /**
        Binding his to JS requires that CastToJS<T>() work so that we
        can cast the return type. No generic impl of CastToJS() is
@@ -99,7 +100,7 @@ public:
        normally in the class binding code, to map native objects
        to their JS counterparts.
     */
-    BoundNative * nativeReturnConst()
+    BoundNative * nativeReturn()
     {
         CERR << '@'<<(void const *)this<<"->nativeReturn()\n";
         return this;
@@ -274,10 +275,17 @@ namespace v8 { namespace convert {
     {
     public:
         typedef BoundNative * ReturnType;
-        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
-        static void Delete( BoundNative * obj );
+        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv );
+        static void Delete( ReturnType obj );
     };
-
+    template <>
+    class ClassCreator_Factory<BoundSubNative>
+    {
+    public:
+        typedef BoundSubNative * ReturnType;
+        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv );
+        static void Delete( ReturnType obj );
+    };
     /**
        Optional: enable function calls to BoundNative() to work like a
        constructor call. Without this, calling BoundNative() without
@@ -300,6 +308,10 @@ namespace v8 { namespace convert {
     struct JSToNative<BoundNative>
         : JSToNative_ClassCreator<BoundNative>
     {};
+    template <>
+    struct NativeToJS<BoundNative>
+        : NativeToJS_NativeToJSMap<BoundNative>
+    {};
 
     /**
        Required: Install js-to-native conversion for BoundSubNative.
@@ -307,5 +319,9 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<BoundSubNative>
         : JSToNative_ClassCreator<BoundSubNative>
+    {};
+    template <>
+    struct NativeToJS<BoundSubNative>
+        : NativeToJS_NativeToJSMap<BoundSubNative>
     {};
 } }
