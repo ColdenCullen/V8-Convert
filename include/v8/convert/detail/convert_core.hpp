@@ -465,10 +465,6 @@ namespace v8 { namespace convert {
     template <typename JST>
     struct JSToNative<JST const *> : JSToNative<JST> {};
 
-    /** Specialization to treat (JST const &) as (JST). */
-    template <typename JST>
-    struct JSToNative<JST const &> : JSToNative<JST> {};
-
     /**
        A specialization to convert from JS to (T&).
     */
@@ -483,8 +479,8 @@ namespace v8 { namespace convert {
            because the only other other option is has is to
            dereference null and crash your app.
         */
-	typedef typename TypeInfo<JST>::Type & ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        typedef typename TypeInfo<JST>::Type & ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
             typedef JSToNative<JST*> Cast;
             typedef typename Cast::ResultType NH;
@@ -496,6 +492,30 @@ namespace v8 { namespace convert {
             else return *n;
         }
     };
+
+    /** Specialization to treat (JST const &) as (JST). */
+    template <typename JST>
+    struct JSToNative<JST const &>
+    {
+        typedef typename TypeInfo<JST>::Type const & ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            typedef JSToNative<JST &> Cast;
+            typedef typename Cast::ResultType NH;
+#if 0
+            NH n = Cast()( h );
+            if( ! n )
+            {
+                throw std::runtime_error("JSToNative<T const &> could not get native pointer. Throwing to avoid dereferencing null!");
+            }
+            else return *n;
+#else
+            return Cast()(h);
+#endif
+        }
+    };
+
+
     
     /** Specialization which passes on v8 Handles as-is. */
     template <typename T>
@@ -737,17 +757,24 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<std::string>
     {
-	typedef std::string ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-            static const std::string emptyString;
-	    v8::String::Utf8Value const utf8String( h );
-            const char* s = *utf8String;
-            return s
-                ? std::string(s, utf8String.length())
-                : emptyString;
-	}
+        typedef std::string ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+                static const std::string emptyString;
+            v8::String::Utf8Value const utf8String( h );
+                const char* s = *utf8String;
+                return s
+                    ? std::string(s, utf8String.length())
+                    : emptyString;
+        }
     };
+    
+    /**
+        Specialization necessary to avoid incorrect default behaviour
+        for this special case.
+    */
+    template <>
+    struct JSToNative<std::string const &> : public JSToNative<std::string> {};
 
 #if 0 // leave this unused code here for the sake of the next guy who tries to re-add it
     /**
@@ -889,8 +916,8 @@ struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
     template <typename NT>
     typename JSToNative<NT>::ResultType CastFromJS( v8::Handle<v8::Value> const & h )
     {
-	typedef JSToNative<NT> F;
-	return F()( h );
+        typedef JSToNative<NT> F;
+        return F()( h );
     }
 // These seem to be unnecessary:
 //     template <typename NT>
