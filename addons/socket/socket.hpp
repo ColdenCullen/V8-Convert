@@ -100,10 +100,8 @@ private:
     int type;
     bool hitTimeout;
     /** JS-side 'this' object. Set by v8::juice::cw::WeakWrap<JSSocket>::Wrap(). */
-    v8::Handle<v8::Array> dgramPeer;
 public:
     v8::Handle<v8::Object> jsSelf;
-    
 private:
     void init(int family, int type, int proto, int socketFD );
 public:
