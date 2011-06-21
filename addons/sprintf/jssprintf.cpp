@@ -730,19 +730,10 @@ static long spech_sqlstring3( whprintf_appender pf,
    some extended ones.
 
    INPUTS:
-
-     pfAppend : The is a whprintf_appender function which is responsible
-     for accumulating the output. If pfAppend returns a negative integer
-     then processing stops immediately.
-
-     pfAppendArg : is ignored by this function but passed as the first
-     argument to pfAppend. pfAppend will presumably use it as a data
-     store for accumulating its string.
-
-     fmt : This is the format string, as in the usual printf().
-
-     ap : This is a pointer to a list of arguments.  Same as in
-     vprintf() and friends.
+   
+    argv[0] is assumed to be a printf-style format string. arguments
+    1+ are the values for the format string. It will throw a JS exception
+    if there are too few arguments for the format string.
 
    OUTPUTS:
 
@@ -862,8 +853,8 @@ do{				       \
     {
 	obuf.str("");
 	obuf << "Not enough arguments for format specifier #"<<argpos;
-	return ThrowException(String::New(obuf.str().c_str(),
-					  static_cast<int>(obuf.str().size()) ));
+	return ThrowException(v8::Exception::Error(String::New(obuf.str().c_str(),
+					  static_cast<int>(obuf.str().size()) )));
     }
     /* Find out what flags are present */
     flag_leftjustify = flag_plussign = flag_blanksign = 
