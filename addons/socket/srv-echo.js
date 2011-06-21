@@ -15,8 +15,17 @@ function echoServer()
         print('s =',s);
         print('s.hostname =',s.hostname);
         var rc;
-        rc = s.bind( echo.host, echo.port );
-        print( "s.bind(",echo.host+":"+echo.port,") rc =",rc);
+        var host, port;
+        if( echo.socketFamily===Socket.AF_UNIX) {
+            host = echo.socketPath;
+            port = 0;
+        } else {
+            host = echo.host;
+            port = echo.port;
+        }
+        var port = 
+        rc = s.bind( host, echo.port );
+        print( "s.bind("+host+(port ? (":"+port) : '')+") rc = "+rc);
         rc = s.setTimeout( 3 );
         print("s.setTimeout() rc =",rc);
         if( Socket.SOCK_STREAM == s.type )

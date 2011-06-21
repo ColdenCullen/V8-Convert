@@ -131,6 +131,11 @@ static struct
  */
 static int create_addr(char const * address, int port, int family, sock_addr_t * result, socklen_t * len)
 {
+    if( !address || !result || !len )
+    {
+        JSTOSS(JSERR(JSTR("BUG: invalid arguments passed to internal function create_addr().")));
+        return 1;
+    }
     unsigned int length = strlen(address);
     switch (family) {
 #ifndef windows
@@ -191,7 +196,7 @@ static int create_addr(char const * address, int port, int family, sock_addr_t *
  * AF_INET6, array contains [address, port].
  * Returns v8::Undefined() on error.
  */
-static v8::Handle<v8::Value> create_peer(sockaddr * addr)
+static v8::Handle<v8::Array> create_peer(sockaddr * addr)
 {
     switch (addr->sa_family) {
 #ifndef windows
@@ -236,7 +241,9 @@ static v8::Handle<v8::Value> create_peer(sockaddr * addr)
           return result;
       } break;
     }
-    return v8::Undefined();
+    v8::Handle<v8::Array> const &bogo(v8::Array::New(0))/* must create before Throw if we want to be v8-legal */;
+    JSTOSS(JSERR(JSTR("UNHANDLED CASE IN INTERNAL FUNCTION create_addr()!")));
+    return bogo;
 }
 
 
@@ -339,8 +346,10 @@ int cv::JSSocket::bind( char const * where, int port )
 
 int cv::JSSocket::listen( int backlog )
 {
+    if( backlog <= 0 ) backlog = 8;
     int rc = -1;
     {
+        
         v8::Unlocker const unlocker;
         CSignalSentry const sigSentry;
         rc = ::listen( this->fd, backlog );
@@ -557,7 +566,7 @@ unsigned int cv::JSSocket::write1( char const * src )
 
 v8::Handle<v8::Value> cv::JSSocket::peerInfo()
 {
-    if( ! this->jsSelf->Get(JSTR(socket_strings.fieldPeer))->IsTrue() )
+    if( this->dgramPeer.IsEmpty() )
     {
         sock_addr_t addr;
         memset( &addr, 0, sizeof(sock_addr_t) );
@@ -569,7 +578,8 @@ v8::Handle<v8::Value> cv::JSSocket::peerInfo()
         }
         if (0 == rc)
         {
-            this->jsSelf->Set(JSTR(socket_strings.fieldPeer), create_peer( (sockaddr*) &addr ) );
+            this->dgramPeer = create_peer( (sockaddr*) &addr );
+            //this->jsSelf->SetHiddenValue(JSTR(socket_strings.fieldPeer), check );
         }
         else
         {
@@ -579,7 +589,7 @@ v8::Handle<v8::Value> cv::JSSocket::peerInfo()
             return JSTOSS(msg.toError());
         }
     }
-    return this->jsSelf->Get(JSTR(socket_strings.fieldPeer));
+    return this->dgramPeer;
 }
 
 int cv::JSSocket::setOpt( int key, int val )
