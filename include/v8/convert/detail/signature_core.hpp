@@ -183,8 +183,10 @@ struct FunctionPtr : FunctionSignature<Sig>
     {
         return FuncPtr;
     }
+    static const FunctionType Function;
 };
-
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType FuncPtr>
+typename FunctionPtr<Sig,FuncPtr>::FunctionType const FunctionPtr<Sig,FuncPtr>::Function = FuncPtr;
 /**
    Used like FunctionPtr, but in conjunction with non-const
    member functions ("methods") of the T class. See FunctionPtr
@@ -196,11 +198,15 @@ struct MethodPtr : MethodSignature<T,Sig>
     typedef MethodSignature<T,Sig> SignatureType;
     typedef typename SignatureType::ReturnType ReturnType;
     typedef typename SignatureType::FunctionType FunctionType;
+    static const FunctionType Function;
     static const FunctionType GetFunction()
     {
         return FuncPtr;
     }
+
 };
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType FuncPtr>
+typename MethodPtr<T,Sig,FuncPtr>::FunctionType const MethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
 
 /**
    Used like MethodPtr, but in conjunction with const methods of the T
@@ -212,11 +218,14 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
     typedef ConstMethodSignature<T,Sig> SignatureType;
     typedef typename SignatureType::ReturnType ReturnType;
     typedef typename SignatureType::FunctionType FunctionType;
+    static const FunctionType Function;
     static const FunctionType GetFunction()
     {
         return FuncPtr;
     }
 };
+template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType FuncPtr>
+typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
 
 namespace Detail
 {
