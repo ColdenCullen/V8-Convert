@@ -7,9 +7,6 @@
 
 #include <cassert>
 #include <iostream>
-#include <fstream>
-#include <iterator>
-#include <algorithm>
 
 #ifndef CERR
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
@@ -20,71 +17,29 @@
 #endif
 
 
-#include <iostream>
-
 #include "v8/convert/v8-convert.hpp"
 #include "v8/convert/V8Shell.hpp"
 namespace cv = ::v8::convert;
-typedef v8::Handle<v8::Value> ValueHandle;
 
-#define JSTR(X) v8::String::New(X)
-
-#include <cstdio> /* puts() */
-
-#include "../../demo_shellfuncs.cpp"
-
-
-/* manual declarations of code from jspdo.cpp */
-//namespace jspdo { void SetupV8Bindings( v8::Handle<v8::Object> & dest ); }
-#if defined(INCLUDE_SHELL_BINDINGS)
-#  include INCLUDE_SHELL_BINDINGS // "shell_bindings.hpp"
+#if !defined(_WIN32)
+#  include <unistd.h> /* only for sleep() */
+#  define do_sleep ::sleep
+#else
+#  include <windows.h> /* only for Sleep() */
+#  define do_sleep(N) ::Sleep((N)*1000)
 #endif
 
-/**
-    Returns a JS Array containing all arguments from argv _after_ 
-    the argument "--". If no '--' argument is found, or it has no 
-    arguments after it, an empty array is returned.
-*/
-v8::Handle<v8::Array> get_script_args( int argc, char const * const * argv )
-{
-    //v8::HandleScope scope; // this is causing a crash on SOME days for me, but not always. Grrr.
-    v8::Local<v8::Array> li( v8::Array::New() );
-    int i = 1;
-    char const * arg;
-    bool gotDashDash = false;
-    for( ; i < argc; ++i )
-    {
-        arg = argv[i];
-        if( 0 == strcmp("--",arg) )
-        {
-            gotDashDash = true;
-            ++i;
-            break;
-        }
-    }
-    if( ! gotDashDash ) return li;
-    uint32_t c = 0;
-    for( ; i < argc; ++i )
-    {
-        arg = argv[i];
-        li->Set(c++, v8::String::New(arg));
-    }
-    //return scope.Close(li);
-    return li;
-}
+#if defined(INCLUDE_SHELL_BINDINGS)
+#  include INCLUDE_SHELL_BINDINGS
+#endif
 
 static int v8_main(int argc, char const * const * argv)
 {
+    typedef v8::Handle<v8::Value> ValueHandle;
     using namespace v8;
-    cv::V8Shell<> shell;
-    shell.ProcessMainArgv(argc,argv);
+    cv::Shell shell(NULL, argc, argv);
     v8::Handle<v8::Object> global = shell.Global();
-    v8::Handle<v8::FunctionTemplate> fntmLoad( FunctionTemplate::New(Load) );
-    v8::Handle<v8::Function> fnLoad( fntmLoad->GetFunction() );
-    shell("load", fnLoad)
-        ("print", Print)
-        ("sleep", JsSleep)
-        ("getStacktrace", GetV8StackTrace)
+    shell.SetupDefaultBindings()
         ("gc", cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
     ;
     try
@@ -98,15 +53,8 @@ static int v8_main(int argc, char const * const * argv)
             //ValueHandle av[] = { cv::CastToJS(fname) };
             //ValueHandle rc = fnLoad->Call(global,1,av);
             ValueHandle rc = shell.ExecuteFile( fname, &tryCatch );
-#if 0
-            if( shell.ExecThrewException() )
-            {
-                return 1;
-            }
-#endif
             if( rc.IsEmpty() )
-            {
-                //ReportException(&tryCatch);
+            { // exception was reported by shell already
                 return 2;
             }
         //}

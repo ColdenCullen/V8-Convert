@@ -35,11 +35,8 @@ all: $(libv8bytearray.DLL)
 
 
 ########################################################################
-# Binaries...
-LDFLAGS_JSPDO := -L. -lv8bytearray
-BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_JSPDO) #$(LDFLAGS_DRIVERS)
-
-
+# shell app...
+SHELL_LDFLAGS := $(LDFLAGS_V8) -L. -lv8bytearray
 SHELL_BINDINGS_HEADER := bytearray.hpp
 SHELL_BINDINGS_FUNC := v8::convert::JSByteArray::SetupBindings
 include ../shell-common.make

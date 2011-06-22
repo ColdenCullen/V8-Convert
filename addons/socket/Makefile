@@ -40,8 +40,8 @@ CLEAN_FILES += bytearray.cpp bytearray.hpp
 
 
 ########################################################################
-# Binaries...
-BINS_LDFLAGS += $(LDFLAGS_V8) -L. -lv8socket
+# shell app...
+SHELL_LDFLAGS := -L. -lv8socket
 SHELL_BINDINGS_HEADER := socket.hpp
 SHELL_BINDINGS_FUNC := v8::convert::JSSocket::SetupBindings
 include ../shell-common.make

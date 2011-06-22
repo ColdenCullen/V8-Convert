@@ -31,6 +31,15 @@ typedef v8::Handle<v8::Value> ValueHandle;
 
 #include <cstdio> /* puts() */
 
+#if !defined(_WIN32)
+#  include <unistd.h> /* only for sleep() */
+#  define do_sleep ::sleep
+#else
+#  include <windows.h> /* only for Sleep() */
+#  define do_sleep(N) ::Sleep((N)*1000)
+#endif
+
+
 ValueHandle test1_callback( v8::Arguments const & argv )
 {
     using namespace v8;
@@ -166,9 +175,9 @@ ValueHandle test1_callback( v8::Arguments const & argv )
          ;
      return v8::Undefined();
 }
-#include "demo_shellfuncs.cpp"
+//#include "demo_shellfuncs.cpp"
 
-void test1()
+void test1(cv::Shell & shell)
 {
 
     using namespace v8;
@@ -185,7 +194,7 @@ void test1()
 
     char const * extScr = "./test.js";
     CERR << "Calling external script ["<<extScr<<"]...\n";
-    if(0)
+    if(1)
     {
         Local<Object> global( v8::Context::GetCurrent()->Global() );
         assert( ! global.IsEmpty() );
@@ -196,28 +205,21 @@ void test1()
     }
     else if(1)
     {
-        cv::StringBuffer code;
-        code << "load(\"" << extScr << "\")";
-        ExecuteString( JSTR(code.Content().c_str()), JSTR(extScr),
-                       false, true);
+        shell.ExecuteFile( extScr );
     }
     CERR << "Returned from external script\n";
 }
 
 static int v8_main(int argc, char const * const * argv)
 {
-    cv::V8Shell<> shell;
-    shell.ProcessMainArgv(argc,argv);
-    v8::Handle<v8::Object> global = shell.Global();
-    shell("load", Load)
-        ("print", Print)
-        ("sleep", JsSleep)
-        ("getStacktrace", GetV8StackTrace)
+    cv::Shell shell(NULL,argc,argv);
+    //v8::Handle<v8::Object> global = shell.Global();
+    shell.SetupDefaultBindings()
         ("gc", cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
     ;
     try
     {
-        test1();
+        test1(shell);
     }
     catch(std::exception const & ex)
     {

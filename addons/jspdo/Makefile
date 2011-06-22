@@ -14,10 +14,11 @@
 # - Google v8 headers + libs.
 #
 # - At least one of sqlite3 and/or MySQLv5 dev files (headers and
-# libraries)
+# libraries).
 #
 # - v8::convert: http://code.google.com/p/v8-juice/wiki/V8Convert
-#   (it's a header-only library, so required to special installation)
+#   (it's a header-only library, so required to special installation).
+#   This makefile assumes it lives at ../../include.
 #
 ########################################################################
 include ../../config.make # see that file for certain configuration options.
@@ -90,10 +91,19 @@ libjspdo.DLL.LDFLAGS += $(LDFLAGS_DRIVERS)
 
 libjspdo.DLL.OBJECTS := $(libjspdo.LIB.OBJECTS)
 libjspdo.DLL: $(libjspdo.LIB.OBJECTS)
-#$(eval $(call ShakeNMake.CALL.RULES.LIBS,libjspdo))
-#all: $(libjspdo.LIB)
 $(eval $(call ShakeNMake.CALL.RULES.DLLS,libjspdo))
 all: $(libjspdo.DLL)
+ifeq (0,$(CPDO_ENABLE_MYSQL5))
+  # MySQL cannot be linked to statically on Linux platforms (and
+  # possibly others) because it uses network-level libraries which do
+  # not support static linking. Or so g++ tells me.
+  # v8 appears to have this same problem, but i can't imagine why
+  # it uses getaddrinfo()
+  $(eval $(call ShakeNMake.CALL.RULES.LIBS,libjspdo))
+  all: $(libjspdo.LIB)
+else
+  $(info MySQL is enabled, so we are NOT building a static library.)
+endif
 
 OBJS_NEEDING_DB_CPPFLAGS := cpdo_amalgamation.o jspdo.o
 $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3)
@@ -102,11 +112,14 @@ $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5
 
 ########################################################################
 # Binaries...
-LDFLAGS_JSPDO := -L. -ljspdo
-BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_JSPDO) #$(LDFLAGS_DRIVERS)
-
+LDFLAGS_JSPDO := -L. -ljspdo #$(LDFLAGS_DRIVERS)
+SHELL_LDFLAGS := $(LDFLAGS_JSPDO)
+#ifeq (0,$(CPDO_ENABLE_MYSQL5))
+#  SHELL_LDFLAGS += -static $(LDFLAGS_DRIVERS)
+#endif
 SHELL_BINDINGS_HEADER := jspdo.hpp
 SHELL_BINDINGS_FUNC := v8::convert::JSPDO::SetupBindings
+SHELL_DEPS := $(libjspdo.DLL) $(libjspdo.LIB)
 include ../shell-common.make
 
 .PHONY: amal-cpp
@@ -121,7 +134,8 @@ EXT.JS := jspdo-init.js
 EXT.CPP := jspdo-init.cpp
 $(EXT.JS):
 
-js2c: js2c.c $(MAKEFILE_LIST)
+js2c: js2c.c Makefile
+# adding $(MAKEFILE_LIST) as a dep causes a circular dep on .make.c_deps and js2c???
 	$(CC) -o $@ js2c.c
 CLEAN_FILES += js2c
 $(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)

@@ -11,17 +11,25 @@ ifeq (,$(SHELL_BINDINGS_HEADER))
 $(error Define SHELL_BINDINGS_HEADER to a header file containing the function defined in SHELL_BINDINGS_FUNC.)
 endif
 
+ifeq (,$(SHELL_LDFLAGS))
+$(warning You have not set SHELL_LDFLAGS, which means we are not linking the shell to the add-on code.)
+endif
+
 ifeq (1,1)
   SHELL.DIR := ../shell-skel
-  shell.cpp: $(SHELL.DIR)/shell.cpp
+#  shell.cpp: $(SHELL.DIR)/shell.cpp
+#	cp $< $@
+  SHELL.LOCAL := _shell
+  $(SHELL.LOCAL).cpp: $(SHELL.DIR)/shell.cpp
 	cp $< $@
-  CLEAN_FILES += shell.cpp
-  shell.BIN.OBJECTS := shell.o
-  shell.BIN.LDFLAGS += $(BINS_LDFLAGS)
+  $(SHELL.LOCAL).o: $(SHELL.LOCAL).cpp
+  CLEAN_FILES += $(SHELL.LOCAL).cpp $(SHELL.LOCAL).cpp
+  shell.BIN.OBJECTS := $(SHELL.LOCAL).o
+  shell.BIN.LDFLAGS := $(LDFLAGS_V8) $(SHELL_LDFLAGS)
   $(eval $(call ShakeNMake.CALL.RULES.BINS,shell))
-  shell.o: shell.cpp $(ALL_MAKEFILES)
-  shell.o: CPPFLAGS+=-DSETUP_SHELL_BINDINGS=$(SHELL_BINDINGS_FUNC)
-  shell.o: CPPFLAGS+=-DINCLUDE_SHELL_BINDINGS='"$(SHELL_BINDINGS_HEADER)"'
-  $(shell.BIN): $(libv8bytearray.DLL)
+  $(SHELL.LOCAL).o: CPPFLAGS+=-DSETUP_SHELL_BINDINGS=$(SHELL_BINDINGS_FUNC)
+  $(SHELL.LOCAL).o: CPPFLAGS+=-DINCLUDE_SHELL_BINDINGS='"$(SHELL_BINDINGS_HEADER)"'
+  $(SHELL.LOCAL).o: $(ALL_MAKEFILES)
+  $(shell.BIN): $(SHELL_DEPS)
   all: $(shell.BIN)
 endif

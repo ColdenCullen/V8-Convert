@@ -1,3 +1,5 @@
+#error "Obsoleted code. Don't include this."
+
 // utility code for test/demo apps. Mostly taken from the v8 sample shell
 
 void ReportException(v8::TryCatch* try_catch) {

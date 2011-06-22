@@ -1,6 +1,6 @@
 
 arguments.parseArgs = function() {
-    var i, k, v, m, l;
+    var i, m, l;
     var rxNonFlag = /^[^-]+$/; /* -arg */
 
     var rx0a = /^--?([^=]+)$/; /* -[-]arg */
@@ -29,6 +29,11 @@ arguments.parseArgs = function() {
     return rc;
 };
 
+if( 0 === arguments.length ) {
+    print("You can pass arguments to this script by passing them AFTER "+
+            "an argument in the form '--'. Example:");
+    print("\tshell script.js -- -a=1 --b=2 --c");
+}
 print('arguments ='+JSON.stringify(arguments));
 print('arguments.parseArgs ='+JSON.stringify(arguments.parseArgs()));
 

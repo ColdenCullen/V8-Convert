@@ -34,9 +34,8 @@ all: $(libv8sprintf.DLL)
 
 
 ########################################################################
-# Binaries...
-LDFLAGS_SPRINTF := -L. -lv8sprintf
-BINS_LDFLAGS += $(LDFLAGS_V8) $(LDFLAGS_SPRINTF) #$(LDFLAGS_DRIVERS)
+# shell app...
+SHELL_LDFLAGS += -L. -lv8sprintf
 SHELL_BINDINGS_HEADER := jssprintf.hpp
 SHELL_BINDINGS_FUNC := v8::convert::SetupJSPrintf
 include ../shell-common.make
