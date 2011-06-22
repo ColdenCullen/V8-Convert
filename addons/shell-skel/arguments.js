@@ -31,3 +31,18 @@ arguments.parseArgs = function() {
 
 print('arguments ='+JSON.stringify(arguments));
 print('arguments.parseArgs ='+JSON.stringify(arguments.parseArgs()));
+
+function testV8ShellStuff()
+{
+    throw new Error("Hello, world!");
+}
+
+if(0) {
+    try {
+        testV8ShellStuff();
+    }
+    catch(e) {
+        print("EXCEPTION: "+e);
+        throw e;
+    }
+}

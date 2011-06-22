@@ -22,6 +22,7 @@
 #include <iostream>
 
 #include "v8/convert/v8-convert.hpp"
+#include "v8/convert/V8Shell.hpp"
 namespace cv = ::v8::convert;
 typedef v8::Handle<v8::Value> ValueHandle;
 
@@ -205,31 +206,15 @@ void test1()
 
 static int v8_main(int argc, char const * const * argv)
 {
-    v8::Locker locker;
-    v8::HandleScope handle_scope;
-    v8::Persistent<v8::Context> context;
-    v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
-    global->Set(JSTR("load"), v8::FunctionTemplate::New(Load) )
-        /* Reminder: Calling CastToJS(Load) this early in the v8
-           startup process apparently segfaults v8.
-        */
-        ;
-    global->Set(JSTR("print"), v8::FunctionTemplate::New( Print ));
-    global->Set(JSTR("getStacktrace"), v8::FunctionTemplate::New( GetV8StackTrace ));
-    global->Set(JSTR("gc"),
-                v8::FunctionTemplate::New(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
-                );
-    global->Set(JSTR("sleep"), v8::FunctionTemplate::New( JsSleep ));
-    /**
-       Reminder to self: changes to global template must apparently
-       come before the context is created, otherwise they appear to
-       have no effect.
-       
-       GODDAMMIT, GOOGLE, DOCUMENT V8 SO THAT PEOPLE CAN USE IT
-       PRODUCTIVELY INSTEAD OF HAVING TO FIGHT WITH IT!!!
-    */
-    context = v8::Context::New(NULL, global);
-    v8::Context::Scope context_scope(context);
+    cv::V8Shell<> shell;
+    shell.ProcessMainArgv(argc,argv);
+    v8::Handle<v8::Object> global = shell.Global();
+    shell("load", Load)
+        ("print", Print)
+        ("sleep", JsSleep)
+        ("getStacktrace", GetV8StackTrace)
+        ("gc", cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+    ;
     try
     {
         test1();
@@ -244,7 +229,6 @@ static int v8_main(int argc, char const * const * argv)
         CERR << "UNKNOWN EXCEPTION!\n";
         return 1;
     }
-    context.Dispose();
     if(1)
     {
         CERR << "Trying to force GC... This will likely take 5-10 seconds... "

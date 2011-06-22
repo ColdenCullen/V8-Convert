@@ -23,6 +23,7 @@
 #include <iostream>
 
 #include "v8/convert/v8-convert.hpp"
+#include "v8/convert/V8Shell.hpp"
 namespace cv = ::v8::convert;
 typedef v8::Handle<v8::Value> ValueHandle;
 
@@ -75,66 +76,51 @@ v8::Handle<v8::Array> get_script_args( int argc, char const * const * argv )
 static int v8_main(int argc, char const * const * argv)
 {
     using namespace v8;
-    Locker locker;
-    HandleScope handle_scope;
-    Persistent<Context> context;
-    Handle<ObjectTemplate> global = ObjectTemplate::New();
-    Handle<FunctionTemplate> fntmLoad = FunctionTemplate::New(Load);
-    global->Set(JSTR("load"), fntmLoad )
-        /* Reminder: Calling CastToJS(Load) this early in the v8
-           startup process apparently segfaults v8.
-        */
-        ;
-    global->Set(JSTR("print"), FunctionTemplate::New( Print ));
-    global->Set(JSTR("sleep"), FunctionTemplate::New( JsSleep ));
-    global->Set(JSTR("getStacktrace"), FunctionTemplate::New( GetV8StackTrace ));
-    global->Set(JSTR("gc"),
-                FunctionTemplate::New(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
-                );
-    /**
-       Reminder to self: changes to global template must apparently
-       come before the context is created, otherwise they appear to
-       have no effect.
-       
-       GODDAMMIT, GOOGLE, DOCUMENT V8 SO THAT PEOPLE CAN USE IT
-       PRODUCTIVELY INSTEAD OF HAVING TO FIGHT WITH IT!!!
-    */
-    context = Context::New(NULL, global);
-
-
-    Context::Scope context_scope(context);
-    Handle<Object> gobj = context->Global();
-    gobj->Set(JSTR("arguments"), get_script_args(argc,argv));
+    cv::V8Shell<> shell;
+    shell.ProcessMainArgv(argc,argv);
+    v8::Handle<v8::Object> global = shell.Global();
+    v8::Handle<v8::FunctionTemplate> fntmLoad( FunctionTemplate::New(Load) );
+    v8::Handle<v8::Function> fnLoad( fntmLoad->GetFunction() );
+    shell("load", fnLoad)
+        ("print", Print)
+        ("sleep", JsSleep)
+        ("getStacktrace", GetV8StackTrace)
+        ("gc", cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+    ;
     try
     {
 #if defined(SETUP_SHELL_BINDINGS)
-        SETUP_SHELL_BINDINGS(gobj);
+        SETUP_SHELL_BINDINGS(global);
 #endif
         v8::TryCatch tryCatch;
         //for( int i = 1; i < argc; ++i ) {
             char const * fname = argv[1];
-            ValueHandle av[] = {
-                cv::CastToJS(fname)
-            };
-            ValueHandle rc = fntmLoad->GetFunction()->Call(gobj,1,av);
-            if( rc.IsEmpty() )
+            //ValueHandle av[] = { cv::CastToJS(fname) };
+            //ValueHandle rc = fnLoad->Call(global,1,av);
+            ValueHandle rc = shell.ExecuteFile( fname, &tryCatch );
+#if 0
+            if( shell.ExecThrewException() )
             {
-                ReportException(&tryCatch);
                 return 1;
             }
-            //}
+#endif
+            if( rc.IsEmpty() )
+            {
+                //ReportException(&tryCatch);
+                return 2;
+            }
+        //}
     }
     catch(std::exception const & ex)
     {
         CERR << "EXCEPTION: " << ex.what() << '\n';
-        return 1;
+        return 3;
     }
     catch(...)
     {
         CERR << "UNKNOWN EXCEPTION!\n";
-        return 1;
+        return 4;
     }
-    context.Dispose();
     if(0)
     {
         CERR << "Trying to force GC... This will likely take 5-10 seconds...\n";
