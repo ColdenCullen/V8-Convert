@@ -862,7 +862,7 @@ namespace v8 { namespace convert {
            that return value wouldn't give access to them to the
            caller.
         */
-        v8::Handle<v8::Value> InitBindings( v8::Handle<v8::Object> & dest )
+        v8::Handle<v8::Value> InitBindings( v8::Handle<v8::Object> dest )
         {
             try
             {
@@ -876,7 +876,7 @@ namespace v8 { namespace convert {
             }
             catch(...)
             {
-                return v8::ThrowException(v8::String::New("Native class bindings threw an unspecified exception during setup."));
+                return v8::ThrowException(v8::Exception::Error(v8::String::New("Native class bindings threw an unspecified exception during setup.")));
             }
         }
         
