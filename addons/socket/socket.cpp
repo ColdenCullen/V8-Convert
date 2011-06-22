@@ -278,6 +278,7 @@ void cv::JSSocket::close()
     if( this->fd >= 0 )
     {
         DBGOUT << "JSSocket@"<<(void const *)this<<"->close()\n";
+        ::shutdown( this->fd, 2 );
         CloseSocket( this->fd );
         this->fd = -1;
     }
