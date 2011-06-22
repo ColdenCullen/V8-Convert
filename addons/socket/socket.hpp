@@ -85,6 +85,7 @@
 #include <v8.h>
 
 namespace v8 { namespace convert {
+
 /**
    A thin wrapper around socket() and friends, providing
    a C++/JS binding for the v8-juice framework.
@@ -99,9 +100,10 @@ private:
     int proto;
     int type;
     bool hitTimeout;
-    /** JS-side 'this' object. Set by v8::juice::cw::WeakWrap<JSSocket>::Wrap(). */
 public:
+    /** JS-side 'this' object. Set by v8::juice::cw::WeakWrap<JSSocket>::Wrap(). */
     v8::Handle<v8::Object> jsSelf;
+    
 private:
     void init(int family, int type, int proto, int socketFD );
 public:
