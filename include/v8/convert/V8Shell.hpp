@@ -207,7 +207,7 @@ namespace v8 { namespace convert {
                 // output decoration pointing to error location...
                 int start = message->GetStartColumn();
                 for (int i = 0; i < start; i++) {
-                    os << ' ';
+                    os << '-';
                 }
                 int end = message->GetEndColumn();
                 for (int i = start; i < end; i++) {
