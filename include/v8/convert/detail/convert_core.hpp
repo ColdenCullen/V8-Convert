@@ -435,6 +435,13 @@ namespace v8 { namespace convert {
             /** ^^^ String::New() internally calls strlen(), which hates it when string==0. */
         }
     };
+    template <>
+    struct NativeToJS<std::runtime_error> : NativeToJS<std::exception> {};
+    template <>
+    struct NativeToJS<std::range_error> : NativeToJS<std::exception> {};
+    template <>
+    struct NativeToJS<std::logic_error> : NativeToJS<std::exception> {};
+    
     
     /**
        Base interface for converting from native objects to JS
