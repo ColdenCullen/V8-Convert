@@ -870,16 +870,16 @@ unsigned int cv::JSSocket::write2( char const * src, unsigned int n )
         CSignalSentry const sig;
         rc = ::write(this->fd, src, n );
         // reminder: ^^^^ affected by socket timeout. reminder: though
-        // src technically came from v8, it actually lives in a
+        // src technically comes from v8, it actually lives in a
         // std::string object (as a side-effect of the bindings' type
         // conversions, for the very reason of avoiding lifetime
         // issues) and therefore is not subject to v8 lifetime issues
-        // during our unlocked time. Or that's the theory.
+        // during our Unlocker'd time. Or that's the theory.
     }
     if( (ssize_t)-1 == rc )
     {
         if( (EAGAIN==errno) || (EWOULDBLOCK==errno) )
-        { /* Presumably interrupted by a timeout. */
+        { /* Presumably(!) interrupted by a timeout. */
             this->hitTimeout = true;
             rc = 0;
         }
@@ -1053,7 +1053,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
         .Set( "nameToAddress", F2I< ValH (const char *), N::nameToAddress> )
         .Set( "addressToName", F2I< ValH (const char *), N::addressToName> )
         .Set( "write", cv::JSSocket::writeN )
-        .Set( "sendTo", cv::JSSocket::sendTo )
+        // is this useful? .Set( "sendTo", cv::JSSocket::sendTo )
         .Set( socket_strings.fieldPeer, false )
         ;
     typedef cv::MemberPropertyBinder<N> SPB;
