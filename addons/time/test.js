@@ -39,19 +39,19 @@ function test3()
     
     var e;
     t.setInterval( function() {
-        print("Hit interval #1: "+iv1);
+        print("Hit interval #1: "+iv1+'ms');
         }, iv1 );
     var iv2 = 500;
     t.setInterval( function() {
-        print("Hit interval  #2: "+iv2);
+        print("Hit interval  #2: "+iv2+'ms');
         }, iv2);
     t.setTimeout( function() { print("One-shot event."); }, 799 );
-    var duration = 2500;
-    var precision = 300;
+    var duration = 1300;
+    var precision = 100;
     var vtime = 0;
     var tickcount = 0;
-    function ender(timer) {
-        var e = (new Date()).getTime();
+    function beforeTick(timer) {
+        e = (new Date()).getTime();
         vtime += precision;
         print("Tick #"+(++tickcount)+" at T+"+vtime+ " (real elapsed="+(e-b)+")");
         //return !((e-b) > duration);
@@ -60,9 +60,12 @@ function test3()
     }
     print("Running tick loop with precision of "+precision+"ms for approximately "+duration+"ms...");
     var b = (new Date()).getTime();
-    t.runBlockingTickLoop( precision, ender );
+    t.runBlockingTickLoop( precision, beforeTick );
     e = (new Date()).getTime();
-    print("Done looping. Elapsed time: "+(e-b)+"ms");
+    var diff = e-b;
+    print("Done looping. Elapsed time: "+diff+"ms");
+    print("Time overhead in addition to the requested "+duration+"ms: "+(diff-duration)+"ms ("+
+        (100-(duration/diff*100))+"%)");
 }
 
 //test1();
