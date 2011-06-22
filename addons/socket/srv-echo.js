@@ -60,7 +60,7 @@ function echoServer()
                         else if(len < bufsz) break /* assume EOF */;
                         // else keep reading.
                     }
-                    print("Writing back "+buf.length+" characters to the client:\n"+buf);
+                    print("Writing back "+buf.length+" bytes to the client:\n"+buf+'\n'+buf.stringValue);
                     x = sock.write(buf);
                     buf.destroy();
                     print("Write rc="+x+". Closing client connection...");

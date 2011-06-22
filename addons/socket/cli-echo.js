@@ -29,9 +29,13 @@ function echoClient()
         rc = s.setTimeout( 10 );
         print("s.setTimeout() rc =",rc);
 
-        var msg = ["GET / HTTP/1.1",
+        var msg;
+        
+        if(0) msg = ["GET / HTTP/1.1",
                    "Host: "+echo.host
                    ].join(echo.crnl)+echo.crnl+echo.crnl;
+        else msg = 'Äöü';
+                   
         if( Socket.SOCK_STREAM == s.type )
         {
             var bufs = [];
@@ -45,7 +49,7 @@ function echoClient()
             // a read block in the middle of a multi-byte character!
             var buf = new Socket.ByteArray();
             readAll(s, 20, true, function(x) { print("Read in: "+x); buf.append(x); x.destroy(); });
-            print("Read in "+buf.length+" characters:\n"+buf.stringValue);
+            print("Read in "+buf.length+" bytes:\n"+buf.stringValue);
         }
         else if( Socket.SOCK_DGRAM == s.type )
         {
