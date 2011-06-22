@@ -316,12 +316,19 @@ namespace v8 { namespace convert {
            Convenience form of ExecuteString() reading from an opened input stream.
         */
         v8::Handle<v8::Value> ExecuteStream( std::istream & is, std::string const & name,
-                            v8::TryCatch * reportExceptions = NULL,
-                            std::ostream * resultGoesTo = NULL )
+                                            v8::TryCatch * reportExceptions = NULL,
+                                            std::ostream * resultGoesTo = NULL )
         {
             std::ostringstream os;
             is >> std::noskipws;
-            std::copy( std::istream_iterator<char>(is), std::istream_iterator<char>(), std::ostream_iterator<char>(os) );
+            try
+            {
+                std::copy( std::istream_iterator<char>(is), std::istream_iterator<char>(), std::ostream_iterator<char>(os) );
+            }
+            catch(std::exception const & ex)
+            {
+                return CastToJS(ex);
+            }
             return this->ExecuteString( os.str(), name, reportExceptions, resultGoesTo );
         }
         
@@ -332,11 +339,15 @@ namespace v8 { namespace convert {
                                             v8::TryCatch * reportExceptions = NULL,
                                             std::ostream * resultGoesTo = NULL )
         {
+            if( ! filename || !*filename )
+            {
+                return CastToJS(std::runtime_error("filename argument must not be NULL/empty."));
+            }
             std::ifstream inf(filename);
             if( ! inf.good() )
             {
                 // FIXME: throw a v8 exception and report it via our reporter.
-                // Nevermind: the result is useless b/c the exception has no proper vm state info here...
+                // Nevermind: the result is useless b/c the exception has no proper vm stack/state info here...
                 StringBuffer msg;
                 msg << "Could not open file ["<<filename<<"].";
                 
