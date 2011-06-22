@@ -71,11 +71,11 @@ namespace v8 { namespace convert {
            The "handle" type used to pass around native objects
            between the JS and Native worlds.
 
-           In _theory_ we can also use shared/smart pointers with this
-           typedef, but that requires custom handling in other
-           ClassWrap policies (mainly because we cannot store a
-           full-fledged shared pointer object directly inside a JS
-           object).
+           In _theory_ we can also use shared/smart pointers with 
+           this typedef, but that requires custom handling in other 
+           template code (mainly because we cannot store a 
+           full-fledged shared pointer object directly inside a JS 
+           object).           
         */
         typedef NHT NativeHandle;
 
@@ -175,7 +175,7 @@ namespace v8 { namespace convert {
        Be very careful with this, and make sure that
        NativeToJS<NT*> has its own specialization,
        as this implementation uses that one as its
-       bases.
+       basis.
     */
     template <typename NT>
     struct NativeToJS<NT &>
@@ -424,9 +424,12 @@ namespace v8 { namespace convert {
     struct NativeToJS<std::exception>
     {
         /** Calls v8::ThrowException(v8::Exception::Error(ex.what())) and returns the
-            results of that call (maybe an empty handle???). It must
-            call ThrowException() because that is apparently the only
-            way to create an Error object from the native API.
+            results of that call (maybe an empty handle???).
+            
+            This function not only converts the value but also throws the JS
+            exception. This is largely for historical reasons, before i learned
+            about v8::Exception::Error() and friends. Lots of code now
+            relies on that behaviour, so it won't be changed.
         */
         v8::Handle<v8::Value> operator()( std::exception const & ex ) const
         {
