@@ -41,6 +41,12 @@ using cv::JSByteArray;
 
 namespace v8 { namespace convert {
 
+    //! In bytearray_z.cpp
+    int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level = 3 );
+    //! In bytearray_z.cpp    
+    int GUnzipJSByteArray( JSByteArray const & src, JSByteArray & dest );
+
+    
     JSByteArray * ClassCreator_Factory<JSByteArray>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
         int const argc  = argv.Length();
@@ -296,7 +302,65 @@ void JSByteArray::append( v8::Handle<v8::Value> val )
     v8::ThrowException(v8::Exception::Error(JSTR("Argument to append() must be one of (Number,String,ByteArray)")));
     return;
 }
-    
+
+int JSByteArray::gzipTo( JSByteArray & dest, int level ) const
+{
+    return GZipJSByteArray( *this, dest, level );
+}
+int JSByteArray::gzipTo( JSByteArray & dest ) const
+{
+    return GZipJSByteArray( *this, dest, 3 );
+}
+
+int JSByteArray::gunzipTo( JSByteArray & dest ) const
+{
+    return GUnzipJSByteArray( *this, dest );
+}
+
+v8::Handle<v8::Value> JSByteArray::gzip() const
+{
+    v8::HandleScope sc;
+    typedef cv::ClassCreator<JSByteArray> CW;
+    v8::Handle<v8::Object> jba =
+        CW::Instance().NewInstance( 0, NULL );
+    JSByteArray * ba = cv::CastFromJS<JSByteArray>( jba );
+    if( ! ba )
+    {
+        cv::StringBuffer msg;
+        msg << "Creation of ByteArray object failed!";
+        return v8::ThrowException( msg.toError() );
+    }
+    int const rc = this->gzipTo( *ba );
+    if( rc )
+    {
+        CW::Instance().DestroyObject( jba );
+        return v8::Null();
+    }
+    return sc.Close(jba);
+}
+v8::Handle<v8::Value> JSByteArray::gunzip() const
+{
+    v8::HandleScope sc;
+    typedef cv::ClassCreator<JSByteArray> CW;
+    v8::Handle<v8::Object> jba =
+        CW::Instance().NewInstance( 0, NULL );
+    JSByteArray * ba = cv::CastFromJS<JSByteArray>( jba );
+    if( ! ba )
+    {
+        cv::StringBuffer msg;
+        msg << "Creation of ByteArray object failed!";
+        return v8::ThrowException( msg.toError() );
+    }
+    int const rc = this->gunzipTo( *ba );
+    if( rc )
+    {
+        CW::Instance().DestroyObject( jba );
+        return v8::Null();
+    }
+    return sc.Close(jba);
+}
+
+
 void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
 {
     using namespace v8;
@@ -315,6 +379,10 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         .Set( "toString", cv::ConstMethodToInvocationCallback<N, std::string (),&N::toString> )
         .Set( "destroy", CW::DestroyObjectCallback )
         .Set( "append", cv::MethodToInvocationCallback<N, void (v8::Handle<v8::Value>), &N::append> )
+        .Set( "gzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gzipTo> )
+        .Set( "gunzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gunzipTo> )
+        .Set( "gzip", cv::ConstMethodToInvocationCallback<N, v8::Handle<v8::Value> (), &N::gzip> )
+        .Set( "gunzip", cv::ConstMethodToInvocationCallback<N, v8::Handle<v8::Value> (), &N::gunzip> )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),

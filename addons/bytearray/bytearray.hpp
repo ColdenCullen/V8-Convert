@@ -59,9 +59,12 @@ namespace v8 { namespace convert {
 
         /**
            Returns a pointer to the underlying raw buffer, or NULL
-           if length() is 0.
+           if length() is 0. The pointer may be invalidated by
+           any operation which changes this object's size or
+           replaces the buffer (e.g. swapBuffer()).
         */
         void const * rawBuffer() const;
+        //void * rawBuffer();
 
         /**
            Adds the ByteArray class to the given destination object.
@@ -131,6 +134,28 @@ namespace v8 { namespace convert {
         //     std::string asString() const;
         //     std::string asString( unsigned int fromOffset ) const;
         //     std::string asString( unsigned int fromOffset, unsigned int len ) const;
+
+
+        int gzipTo( JSByteArray & dest, int level ) const;
+        int gzipTo( JSByteArray & dest ) const;
+        int gunzipTo( JSByteArray & dest ) const;
+
+        /**
+           Creates a new JSByteArray and calls gzipTo(*this,
+           thatObject).  Throws if there is a binding-level error,
+           returns v8::Null() if gzipping fails, or a handle to a new
+           JSByteArray object on success. The new object contains the
+           compressed data.
+        */
+        v8::Handle<v8::Value> gzip() const;
+        /**
+           The converse of gzip(), this creates a new
+           JSByteArray containing the decompressed version
+           of this object.
+
+           See gzip() for details about the return value.
+        */
+        v8::Handle<v8::Value> gunzip() const;
     private:
         static v8::Handle<v8::Value> indexedPropertyGetter(uint32_t index, const v8::AccessorInfo &info);
         static v8::Handle<v8::Value> indexedPropertySetter(uint32_t index, v8::Local< v8::Value > value, const v8::AccessorInfo &info);

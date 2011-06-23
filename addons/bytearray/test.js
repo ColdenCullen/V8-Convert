@@ -1,3 +1,4 @@
+load('../test-common.js');
 
 function test1()
 {
@@ -25,11 +26,42 @@ function test1()
     print("Appended ba ("+ba.length+" bytes): "+ba.stringValue);
 }
 
+function testGZip()
+{
+    print("Starting gzip tests...");
+    var ba = new ByteArray();
+    var i;
+    for( i = 0; i < 10; ++i ) ba.append("Line #"+i+"\n");
+    var origString = ba.stringValue;
+    var z = new ByteArray();
+    var rc = ba.gzipTo(z);
+    print("gzipTo() rc = "+rc);
+    print("ba.length="+ba.length+", z.length="+z.length);
+    assertneq( ba.length, z.length );
+    print("First few bytes of z:");
+    var li = [];
+    for( i = 0; i < 5; ++i ) {
+        li.push( z[i] );
+    }
+    print( JSON.stringify(li) );
+    var u = new ByteArray();
+    rc = z.gunzipTo(u);
+    print("Unzip rc="+rc+", u.length="+u.length);
+    asserteq( ba.length, u.length );
+    print("Unzipped data:\n"+u.stringValue);
+    var z2 = ba.gzip();
+    asserteq( z2.length, z.length );
+    u.destroy();
+    z.destroy();
 
-try {
-    test1();
+    u = z2.gunzip();
+    z2.destroy;
+    asserteq( ba.length, u.length );
+    ba.destroy();
+    asserteq( origString===u.stringValue, true );
+    u.destroy();
 }
-catch(e) {
-    print("EXCEPTION: "+e);
-    throw e;
-}
+
+
+test1();
+testGZip();
