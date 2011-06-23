@@ -275,7 +275,12 @@ uint32_t JSByteArray::length( uint32_t sz )
     }
     if( sz != this->vec.size() )
     {
+        if( ! this->vec.empty() )
+        {
+            v8::V8::AdjustAmountOfExternalAllocatedMemory( - static_cast<int>(this->vec.size()) );
+        }
         this->vec.resize(sz,0);
+        v8::V8::AdjustAmountOfExternalAllocatedMemory( static_cast<int>(this->vec.size()) );
     }
     return this->vec.size();
 }
@@ -398,6 +403,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     cw
         .Set( "toString", cv::ConstMethodToInvocationCallback<N, std::string (),&N::toString> )
         .Set( "destroy", CW::DestroyObjectCallback )
+        .Set( "stringValue", cv::ConstMethodToInvocationCallback<N, std::string (),&N::stringValue> )
         .Set( "append", cv::MethodToInvocationCallback<N, void (v8::Handle<v8::Value>), &N::append> )
         .Set( "gzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gzipTo> )
         .Set( "gunzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gunzipTo> )
@@ -408,9 +414,11 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     proto->SetAccessor( JSTR("length"),
                         SPB::ConstMethodToAccessorGetter<uint32_t(),&N::length>,
                         SPB::MethodToAccessorSetter<uint32_t (uint32_t), &N::length> );
+#if 0
     proto->SetAccessor( JSTR("stringValue"),
                         SPB::ConstMethodToAccessorGetter<std::string(),&N::stringValue>,
                         SPB::AccessorSetterThrow );
+#endif
     v8::Handle<v8::FunctionTemplate> ctorTmpl = cw.CtorTemplate();
     ctorTmpl->InstanceTemplate()->SetIndexedPropertyHandler( JSByteArray::indexedPropertyGetter,
                                                              JSByteArray::indexedPropertySetter,

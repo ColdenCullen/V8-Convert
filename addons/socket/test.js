@@ -63,7 +63,7 @@ function test1()
         }
         function rcVal(BA)
         {
-            return ( BA instanceof Socket.ByteArray ) ? BA.stringValue : BA.toString();
+            return ( BA instanceof Socket.ByteArray ) ? BA.stringValue() : BA.toString();
         }
         if( c.type === Socket.SOCK_STREAM )
         {

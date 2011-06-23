@@ -27,6 +27,7 @@ bytearray.hpp:
 	cp $(BA.DIR)/$@ .
 bytearray.cpp: bytearray.hpp
 	cp $(BA.DIR)/$@ .
+CLEAN_FILES += bytearray.cpp bytearray.hpp
 bytearray.o socket.o: bytearray.cpp
 libv8socket.LIB.OBJECTS := socket.o bytearray.o
 libv8socket.DLL.LDFLAGS += -lz# for ByteArray.gzip() and friends
@@ -36,7 +37,6 @@ $(eval $(call ShakeNMake.CALL.RULES.LIBS,libv8socket))
 all: $(libv8socket.LIB)
 $(eval $(call ShakeNMake.CALL.RULES.DLLS,libv8socket))
 all: $(libv8socket.DLL)
-CLEAN_FILES += bytearray.cpp bytearray.hpp
 
 
 ########################################################################
