@@ -75,7 +75,7 @@
 
        .mode: 'object' means stepArray(), 'array' means stepArray(),
        and anything else means step(). In the case of object/array,
-       foreach() is passed an object/array. In the case of step(), the
+       each() is passed an object/array. In the case of step(), the
        statement object itself is passed as the first argument to
        foreach().
 
@@ -125,7 +125,7 @@
             }
             else {
                 step = step1;
-                cbArg = sp;
+                cbArg = st;
             }
             var row;
             while( row = step(st) ) {
