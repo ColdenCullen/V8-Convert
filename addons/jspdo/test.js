@@ -2,7 +2,7 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-JSPDO.enableDebug = true;
+//JSPDO.enableDebug = true;
 var App = {
 drv:null,
 user:"",
@@ -13,13 +13,15 @@ CREATE:{
              "id INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT, "+
              "a INTEGER DEFAULT NULL,"+
              "b DOUBLE DEFAULT NULL,"+
-             "c VARCHAR(127) DEFAULT NULL"+
+             "c VARCHAR(127) DEFAULT NULL, "+
+             "d TEXT DEFAULT NULL"+
              ")",
     sqlite3:"CREATE TABLE IF NOT EXISTS mytbl("+
              "id INTEGER PRIMARY KEY DEFAULT NULL,"+
              "a INTEGER DEFAULT NULL,"+
              "b DOUBLE DEFAULT NULL,"+
-             "c VARCHAR(127) DEFAULT NULL"+
+             "c VARCHAR(127) DEFAULT NULL, "+
+             "d BLOB DEFAULT NULL"+
              ")"
 }
 };
@@ -45,7 +47,7 @@ function testSelect(mode)
 {
     var drv = App.drv;
     var st;
-    var sql = "select id as id, a as a,b as b,c as c from "+App.tableName;
+    var sql = "select id as id, a as a,b as b,c as c, d as d from "+App.tableName;
     try {
         st = drv.prepare(sql);
     }
@@ -110,13 +112,16 @@ function testInsert()
 {
     var st;
     try {
-        var sql = "INSERT INTO "+App.tableName+"(a,b,c) VALUES(?,?,?)";
+        var sql = "INSERT INTO "+App.tableName+"(a,b,c,d) VALUES(?,?,?,?)";
         var ds = (new Date()).toString();
         st = App.drv.prepare(sql);
         print("Inserting: "+st);
         st.bind(1);
         st.bind(2,24.42);
         st.bind(3, ds);
+        var d = new JSPDO.ByteArray("this is a ByteArray");
+        st.bind(4, d);
+        d.destroy();
         //assertThrows( function() { st.bind(4); } );
         st.step();
         print('Inserted new record. ID='+App.drv.lastInsertId("ignored"));
@@ -136,17 +141,19 @@ function testInsert()
 function testInsertNamedParams() {
     var st;
     try {
-        var sql = "INSERT INTO "+App.tableName+"(a,b,c) VALUES(:pA,:pB,:pC)";
+        var sql = "INSERT INTO "+App.tableName+"(a,b,c,d) VALUES(:pA,:pB,:pC,:pD)";
         var ds = (new Date()).toString();
         st = App.drv.prepare(sql);
         asserteq(3,st.paramIndex(':pC'));
         asserteq(0,st.paramIndex(':pX'));
         st.bind(':pB', 32.23);
-        st.bind({pA:7, ':pC':ds});
+        var d = new JSPDO.ByteArray("this is a ByteArray");
+        st.bind({pA:7, ':pC':ds, pD:d});
+        d.destroy();
         print("Inserting: "+st);
         print('Parameter names: '+JSON.stringify(st.paramNames));
         assertThrows(function(){st.paramNames="should throw";});
-        assertThrows( function() { st.bind(':pD'); } );
+        assertThrows( function() { st.bind(':pX'); } );
         st.step();
         print('Inserted new record using named params. ID='+App.drv.lastInsertId());
     }
@@ -271,6 +278,55 @@ function testUnclosedHandles() {
     }
 }
 
+function testGzippedJSON()
+{
+    var db = App.drv;
+    db.exec("DROP TABLE IF EXISTS ziptest");
+    db.exec("CREATE TABLE ziptest(name VARCHAR(50) NOT NULL, json BLOB DEFAULT NULL)");
+    var st;
+    var theObj = {
+        a:"Äaöoüu",
+        b:42,
+        db:db.toJSON(),
+        list:[]
+    };
+    // Add some filler so that the data can actually compress a bit...
+    var i;
+    for( i = 1; i <= 10; ++i ) { theObj.list.push("Line #"+i+"\n"); };
+    var json = JSON.stringify(theObj);
+    try {
+        print("Inserting compressed data....");
+        st = db.prepare("INSERT INTO ziptest (name,json) VALUES (?,?)");
+        st.bind(1,"bogo");
+        var bac, ba = new JSPDO.ByteArray( json );
+        bac = ba.gzip();
+        ba.destroy();
+        st.bind(2,bac);
+        bac.destroy();
+        st.step();
+        print("Inserted compressed data.");
+        st.finalize();
+        st = null;
+        db.exec({
+            sql:"SELECT name as name,json as json FROM ziptest",
+            each:function(st) {
+                var ba = st.get(1);
+                assert(ba instanceof JSPDO.ByteArray,'Field is-a ByteArray');
+                print("Got compressed field data: "+ba);
+                var buc = ba.gunzip();
+                ba.destroy();
+                var sv = buc.stringValue();
+                print("Uncompressed JSON data: "+buc+" Length: "+buc.length+" bytes/"+sv.length+' characters:\n'+sv);
+                buc.destroy();
+                assert( sv === json, "Decompressed JSON matches original" );
+            }
+        });
+    }
+    finally {
+        if(st) st.finalize();
+    }
+}
+
 try {
     testConnect();
     testCleanup();
@@ -284,7 +340,9 @@ try {
     testExt_forEach();
     testExt_fetchAll();
     testCopyDb();
-    if( 1 && ('sqlite3' === App.drv.driverName) ) {
+    
+    testGzippedJSON();
+    if( 0 && ('sqlite3' === App.drv.driverName) ) {
         testUnclosedHandles();
     }
 }

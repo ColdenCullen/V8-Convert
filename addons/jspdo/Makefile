@@ -74,8 +74,16 @@ endif
 ########################################################################
 # Build shared library and link it against the underlying db libs
 # (so client binaries won't have to)...
+BA.DIR := ../bytearray
+bytearray.hpp:
+	cp $(BA.DIR)/$@ .
+bytearray.cpp: bytearray.hpp
+	cp $(BA.DIR)/$@ .
+bytearray.o: bytearray.cpp
+CLEAN_FILES += bytearray.cpp bytearray.hpp
 LDFLAGS_DRIVERS :=
-libjspdo.LIB.OBJECTS := cpdo_amalgamation.o jspdo.o
+jspdo.o: bytearray.cpp# w/o this dep, bytearray.hpp is not being copied?
+libjspdo.LIB.OBJECTS := cpdo_amalgamation.o jspdo.o bytearray.o
 #libjspdo.DLL.LDFLAGS := $(LDFLAGS_V8)
 ifeq (1,$(CPDO_ENABLE_SQLITE3))
     LDFLAGS_DRIVERS += $(LDFLAGS_SQLITE3)
@@ -88,6 +96,7 @@ ifeq (1,$(CPDO_ENABLE_MYSQL5))
 
 endif
 libjspdo.DLL.LDFLAGS += $(LDFLAGS_DRIVERS)
+libjspdo.DLL.LDFLAGS += -lz# for ByteArray
 
 libjspdo.DLL.OBJECTS := $(libjspdo.LIB.OBJECTS)
 libjspdo.DLL: $(libjspdo.LIB.OBJECTS)

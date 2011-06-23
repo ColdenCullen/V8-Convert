@@ -19,6 +19,7 @@ used by MySQL (if any).
 #include "v8/convert/properties.hpp"
 
 #include "jspdo.hpp"
+#include "bytearray.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -375,50 +376,42 @@ v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
     }
 }
 
-//! JSPDO.Statement.get() impl for String values.
+//! JSPDO.Statement.get() impl for String/Blob values.
 static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
                                                  uint16_t ndx )
 {
-    switch( st->col_type(ndx) )
+    cpdo_data_type const colType = st->col_type(ndx);
+    switch( colType )
     {
       case CPDO_TYPE_NULL:
           return v8::Null();
       case CPDO_TYPE_INT8:
-          return cv::StringBuffer() << st->get_int8(ndx);
+          return cv::StringBuffer() << (int)st->get_int8(ndx);
       case CPDO_TYPE_INT16:
           return cv::StringBuffer() << st->get_int16(ndx);
       case CPDO_TYPE_INT32:
           return cv::StringBuffer() << st->get_int32(ndx);
       case CPDO_TYPE_INT64:
-          /*this is evil b/c v8 doesn't support 64-bit integers.*/
+          /*This is arguably evil b/c v8 doesn't support 64-bit integers.*/
           return cv::StringBuffer() << st->get_int64(ndx);
       case CPDO_TYPE_FLOAT:
           return cv::StringBuffer() << st->get_float(ndx);
       case CPDO_TYPE_DOUBLE:
           return cv::StringBuffer() << st->get_double(ndx);
+      case CPDO_TYPE_STRING: {
+          char const * str = NULL;
+          uint32_t len = 0;
+          str = st->get_string(ndx,&len);
+          if( str && len ) return v8::String::New(str,len);
+          else return v8::Null();
+      }
       default: {
-          /** We will assume that blob fields contain string data, as
-              there are very valid reason for generically storing
-              string data in BLOB format (i do it a lot in the whiki
-              project for storing JSON data). If the client tries to
-              read image data, or similar, this way, results are of
-              course completely undefined. v8 makes assumptions about
-              encoding, and binary image data certainly won't pass
-              those assumptions.
-          */
-          unsigned char const * str = NULL;
-          void const * blob = NULL;
-          str = reinterpret_cast<unsigned char const *>(st->get_string(ndx));
-          uint32_t slen = 0;
-          if( ! str )
-          {
-              blob = st->get_blob(ndx, &slen);
-              if( blob ) str = reinterpret_cast<unsigned char const *>(blob);
-          }
-          else slen = strlen((char const *)str);
-          return str
-              ? v8::String::New(reinterpret_cast<char const *>(str), slen)
-              : v8::Null();
+          // reminder to self: why might need to treat CPDO_TYPE_CUSTOM as string for the
+          // sake of MySQL DATE/TIME-related fields.
+          cv::StringBuffer msg;
+          msg << "Internal error: unhandled db field type (CPDO_TYPE code "
+              <<(int)colType<<") found for result column "<<ndx<<'.';
+          return v8::ThrowException(msg.toError());
       }
     }
 }
@@ -427,8 +420,11 @@ static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
 static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
                                             uint16_t ndx )
 {
-    switch( st->col_type(ndx) )
+    cpdo_data_type const colType = st->col_type(ndx);
+    switch( colType )
     {
+      case CPDO_TYPE_NULL:
+          return v8::Null();
       case CPDO_TYPE_INT8:
       case CPDO_TYPE_INT16:
       case CPDO_TYPE_INT32:
@@ -436,8 +432,29 @@ static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
       case CPDO_TYPE_FLOAT:
       case CPDO_TYPE_DOUBLE:
           return Statement_getNumber(st, ndx);
-      default:
+      case CPDO_TYPE_STRING:
           return Statement_getString(st, ndx);
+      case CPDO_TYPE_BLOB: {
+          void const * blob = NULL;
+          uint32_t slen = 0;
+          blob = st->get_blob(ndx, &slen);
+          if( !blob || !slen ) return v8::Null();
+          typedef cv::ClassCreator<cv::JSByteArray> BAC;
+          v8::Handle<v8::Object> baObj( BAC::Instance().NewInstance( 0, NULL ) );
+          if( baObj.IsEmpty() ) return v8::Undefined() /* assume exception is propagating. */;
+          cv::JSByteArray * ba = cv::CastFromJS<cv::JSByteArray>(baObj);
+          assert( 0 != ba );
+          ba->append( blob, slen );
+          return baObj;
+      }
+      default: {
+          // reminder to self: why might need to treat CPDO_TYPE_CUSTOM as string for the
+          // sake of MySQL DATE/TIME-related fields.
+          cv::StringBuffer msg;
+          msg << "Internal error: unhandled db field type (CPDO_TYPE code "
+              <<(int)colType<<") found for result column "<<ndx<<'.';
+          return v8::ThrowException(msg.toError());
+      }
     }
 }
 
@@ -474,6 +491,22 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
             st->bind( ndx, val->NumberValue() );
         }
     }
+    else if( val->IsObject() )
+    {
+        cv::JSByteArray const * other = cv::CastFromJS<cv::JSByteArray>(val);
+        if( ! other )
+        {
+            return v8::ThrowException(v8::Exception::Error(JSTR("bind(Object) was passed a non-ByteArray object.")));
+        }
+        if( other->length() )
+        {
+            st->bind( ndx, other->rawBuffer(), other->length() );
+        }
+        else
+        {
+            st->bind( ndx );
+        }
+    }
     else if( val->IsString() )
     {
         v8::String::Utf8Value const ustr(val);
@@ -498,9 +531,9 @@ static v8::Handle<v8::Value> Statement_bind(cpdo::statement * st,
     }
     else
     {
-        return v8::ThrowException(cv::StringBuffer()
+        return v8::ThrowException((cv::StringBuffer()
                                   << "bind() was given an invalid parameter "
-                                  << "type for column "<<ndx<<".");
+                                  << "type for column "<<ndx<<".").toError());
     }
     return v8::Undefined();
 }
@@ -1098,6 +1131,7 @@ namespace v8 { namespace convert {
             // is effectively "sealed" - further changes made here won't show up
             // in new JS instances.
             v8::Handle<v8::Function> dCtor = wdrv.CtorFunction();
+            JSByteArray::SetupBindings( dCtor );
             /**
                We don't want clients to instantiate Statement objects
                except via JSPDO.prepare(). So we don't add its
