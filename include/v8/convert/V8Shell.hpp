@@ -177,33 +177,28 @@ namespace v8 { namespace convert {
         void ReportException(v8::TryCatch* try_catch)
         {
             if( !try_catch || ! this->reporter ) return;
-            v8::HandleScope handle_scope;
-            v8::String::Utf8Value exception(try_catch->Exception());
+            v8::HandleScope hsc;
+            v8::String::Utf8Value const excUtf(try_catch->Exception());
 #define TOCSTR(X) (*X ? *X : "<exception string conversion failed!>")
-            const char* exception_string = TOCSTR(exception);
-            v8::Handle<v8::Message> message = try_catch->Message();
-            std::ostringstream os;
+            const char* excCstr = TOCSTR(excUtf);
+            v8::Handle<v8::Message> const & message( try_catch->Message() );
+            StringBuffer os;
             os << "V8Shell Exception Reporter: ";
             if (message.IsEmpty())
             {
                 // V8 didn't provide any extra information about this error; just
                 // print the exception.
-                os << exception_string << '\n';
+                os << excCstr << '\n';
             }
             else
             {
                 // output (filename):(line number): (message)...
-                v8::String::Utf8Value const filename(message->GetScriptResourceName());
-                const char* filename_string = TOCSTR(filename);
                 int linenum = message->GetLineNumber();
-                os << filename_string << ':'
+                os << message->GetScriptResourceName() << ':'
                    << linenum << ": "
-                   << exception_string << '\n';
+                   << excCstr << '\n';
                 // output source code line...
-                v8::String::Utf8Value const sourceline(message->GetSourceLine());
-                const char* sourceline_string = TOCSTR(sourceline);
-#undef TOCSTR
-                os << sourceline_string << '\n';
+                os << message->GetSourceLine() << '\n';
                 // output decoration pointing to error location...
                 int start = message->GetStartColumn();
                 for (int i = 0; i < start; i++) {
@@ -215,12 +210,16 @@ namespace v8 { namespace convert {
                 }
                 os << '\n';
             }
-            std::string const & str = os.str();
+            std::string const & str( os.Content() );
+            os.Clear();
             this->reporter( str.c_str() );
+#undef TOCSTR
         }
         
         /**
             Adds the given function to the global object.
+            
+            Returns this object.
         */
         V8Shell & operator()( char const * name, v8::Handle<v8::Function> const & f )
         {
@@ -230,6 +229,8 @@ namespace v8 { namespace convert {
 
         /**
             Adds the given function to the global object.
+            
+            Returns this object.
         */
         V8Shell & operator()( char const * name, v8::Handle<v8::FunctionTemplate> const & f )
         {
@@ -238,6 +239,8 @@ namespace v8 { namespace convert {
 
         /**
             Adds the given function to the global object.
+            
+            Returns this object.
         */
         V8Shell & operator()( char const * name, v8::InvocationCallback const f )
         {
@@ -577,6 +580,8 @@ namespace v8 { namespace convert {
             getStacktrace([int limit]) (see GetStackTrace())
             
             load(filename) (see CreateIncludeFunction())
+            
+            Returns this object, for use in chaining.
         */
         V8Shell & SetupDefaultBindings()
         {
