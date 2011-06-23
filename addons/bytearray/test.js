@@ -29,6 +29,12 @@ function test1()
     asserteq( ba.length, b2.length );
     ba.destroy();
     b2.destroy();
+    
+    var str = 'Äaöoüu';
+    ba = new ByteArray(str);
+    asserteq( 9, ba.length );
+    asserteq( str, ba.stringValue() );
+    ba.destroy();
 }
 
 function testGZip()
@@ -70,3 +76,4 @@ function testGZip()
 
 test1();
 testGZip();
+print("If you made it this far without an exception then you win!");
