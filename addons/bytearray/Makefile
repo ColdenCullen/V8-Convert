@@ -23,7 +23,7 @@ include ../../config.make # see that file for certain configuration options.
 # If needed, append the CPPFLAGS to point to where <v8/convert/*.hpp> can
 # be found.
 
-libv8bytearray.LIB.OBJECTS := bytearray.o bytearray_z.o
+libv8bytearray.LIB.OBJECTS := bytearray.o
 libv8bytearray.DLL.LDFLAGS += -lz
 libv8bytearray.DLL.OBJECTS := $(libv8bytearray.LIB.OBJECTS)
 libv8bytearray.DLL: $(libv8bytearray.LIB.OBJECTS)
