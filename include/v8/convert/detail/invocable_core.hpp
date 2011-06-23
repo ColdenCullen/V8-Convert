@@ -1192,35 +1192,10 @@ forwardConstMethod(FSig func, v8::Arguments const & argv )
    sometimes convenient to be able to use a typedef to create an alias
    for a given InvocationCallback. Since we cannot typedef function
    templates this way, this class can fill that gap.
-   
-   The Arity argument is a _hint_ to some other code as to how many
-   arguments ICB wants to receive. It is not enforced by this code,
-   but may be enforced by downstream wrappers. An Arity value of
-   less than 0 is reserved for InvocationCallback-like functions
-   (which can take any number of arguments).
 */
-template <v8::InvocationCallback ICB, int Arity_ = -1>
-struct InCa
+template <v8::InvocationCallback ICB>
+struct InCa : FunctionToInCa< v8::Handle<v8::Value> (v8::Arguments const &), ICB>
 {
-    /**
-        A HINT about the number of arguments.
-    */
-    enum { Arity = Arity_ };
-    /**
-       Implements the v8::InvocationCallback() interface.
-       Simply passes on the call to ICB(argv).
-    */
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-    {
-        return ICB(argv);
-    }
-    /**
-       Returns Call(argv).
-    */
-    v8::Handle<v8::Value> operator()( v8::Arguments const & argv ) const
-    {
-        return Call(argv);
-    }
 };
 
 /**
@@ -1353,6 +1328,8 @@ struct NativeToJS< InCa<ICB> >
 template < typename ExceptionT,
            typename SigGetMsg,
            typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           // how to do something like this: ???
+           // template <class ET, class SGM> class SigT::FunctionType Getter,
            v8::InvocationCallback ICB,
            bool PropagateOtherExceptions = false
     >
@@ -1399,6 +1376,10 @@ namespace Detail {
    runtime.
 
    See Call() for more details.
+   
+   Using this class almost always requires more code than
+   doing the equivalent with InCaOverload. The exception to that
+   guideline is when we have only two overloads.
 */
 template < int Arity,
            v8::InvocationCallback ICB,
