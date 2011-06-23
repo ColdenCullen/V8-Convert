@@ -3,6 +3,7 @@ print("Starting tests...");
 load('../test-common.js');
 
 //JSPDO.enableDebug = true;
+//JSPDO.enableDestructorDebug(true);
 var App = {
 drv:null,
 user:"",
@@ -283,8 +284,7 @@ function testGzippedJSON()
     var db = App.drv;
     db.exec("DROP TABLE IF EXISTS ziptest");
     db.exec("CREATE TABLE ziptest(name VARCHAR(50) NOT NULL, json BLOB DEFAULT NULL)");
-    var st;
-    var theObj = {
+    var theObj = { // an object to store in the DB as compressed JSON
         a:"Äaöoüu",
         b:42,
         db:db.toJSON(),
@@ -293,7 +293,9 @@ function testGzippedJSON()
     // Add some filler so that the data can actually compress a bit...
     var i;
     for( i = 1; i <= 10; ++i ) { theObj.list.push("Line #"+i+"\n"); };
-    var json = JSON.stringify(theObj);
+    var json = JSON.stringify(theObj,0,4);
+    // Stuff it into the database...
+    var st;    
     try {
         print("Inserting compressed data....");
         st = db.prepare("INSERT INTO ziptest (name,json) VALUES (?,?)");
@@ -307,6 +309,7 @@ function testGzippedJSON()
         print("Inserted compressed data.");
         st.finalize();
         st = null;
+        // Now read it back and compare it ot the original...
         db.exec({
             sql:"SELECT name as name,json as json FROM ziptest",
             each:function(st) {
@@ -316,7 +319,8 @@ function testGzippedJSON()
                 var buc = ba.gunzip();
                 ba.destroy();
                 var sv = buc.stringValue();
-                print("Uncompressed JSON data: "+buc+" Length: "+buc.length+" bytes/"+sv.length+' characters:\n'+sv);
+                print("Uncompressed JSON data: "+buc+" Length: "+
+                    buc.length+" bytes/"+sv.length+' UTF8 characters');
                 buc.destroy();
                 assert( sv === json, "Decompressed JSON matches original" );
             }
@@ -325,6 +329,8 @@ function testGzippedJSON()
     finally {
         if(st) st.finalize();
     }
+
+
 }
 
 try {
