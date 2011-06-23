@@ -65,7 +65,6 @@ namespace v8 { namespace convert {
         v8::Context::Scope cxscope;
         v8::Handle<v8::Object> global;
         ErrorMessageReporter reporter;
-        //bool executeThrew;
         static void DefaultErrorMessageReporter( char const * msg )
         {
             if( msg && *msg ) std::cerr
@@ -111,7 +110,19 @@ namespace v8 { namespace convert {
             return v8::Undefined();
         }
 
-        
+        void init( char const * globalObjectName,
+                    int argc, char const * const * argv,
+                    unsigned short argOffset )
+        {
+            if( globalObjectName && *globalObjectName )
+            {
+                this->global->Set( v8::String::New(globalObjectName), this->global );
+            }
+            if( (0 < argc) && (NULL != argv) )
+            {
+                this->ProcessMainArgv( argc, argv, argOffset );
+            }
+        }
     public:
         /**
            Initialize a v8 context and global object belonging to this object.
@@ -134,16 +145,8 @@ namespace v8 { namespace convert {
             cxscope(context),
             global( context->Global() ),
             reporter( DefaultErrorMessageReporter )
-            //executeThrew(false)
         {
-            if( globalObjectName && *globalObjectName )
-            {
-                this->global->Set( v8::String::New(globalObjectName), this->global );
-            }
-            if( (0 < argc) && (NULL != argv) )
-            {
-                this->ProcessMainArgv( argc, argv, argOffset );
-            }
+            this->init( globalObjectName, argc, argv, argOffset );
         }
 
         /**
@@ -287,9 +290,9 @@ namespace v8 { namespace convert {
 
            This function does no interpretation of the arguments.
         */
-        void ProcessMainArgv( int argc, char const * const * _argv, unsigned short offset = 1 )
+        V8Shell & ProcessMainArgv( int argc, char const * const * _argv, unsigned short offset = 1 )
         {
-            if( (argc<1) || !_argv ) return;
+            if( (argc<1) || !_argv ) return *this;
             char const * endofargs = "--";
             v8::Handle<v8::Array> argv( v8::Array::New() );
             int i = (int)offset;
@@ -311,6 +314,7 @@ namespace v8 { namespace convert {
                 }
             }
             this->global->Set( v8::String::New("arguments"), argv );
+            return *this;
         }
         
         /**
