@@ -14,7 +14,7 @@ struct SignatureBase< RV (*)( A0), 1 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 1, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 1, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -33,7 +33,7 @@ struct FunctionToInvocable< 1, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 1, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 1, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -56,7 +56,7 @@ struct FunctionToInvocableVoid< 1, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -83,7 +83,7 @@ struct MethodToInvocable<T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -113,7 +113,7 @@ struct MethodToInvocableVoid< T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -140,7 +140,7 @@ struct ConstMethodToInvocable<T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -305,7 +305,7 @@ struct SignatureBase< RV (*)( A0,  A1), 2 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 2, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 2, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -324,7 +324,7 @@ struct FunctionToInvocable< 2, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 2, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 2, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -347,7 +347,7 @@ struct FunctionToInvocableVoid< 2, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -374,7 +374,7 @@ struct MethodToInvocable<T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -404,7 +404,7 @@ struct MethodToInvocableVoid< T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -431,7 +431,7 @@ struct ConstMethodToInvocable<T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -597,7 +597,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2), 3 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 3, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 3, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -616,7 +616,7 @@ struct FunctionToInvocable< 3, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 3, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 3, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -639,7 +639,7 @@ struct FunctionToInvocableVoid< 3, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -666,7 +666,7 @@ struct MethodToInvocable<T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -696,7 +696,7 @@ struct MethodToInvocableVoid< T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -723,7 +723,7 @@ struct ConstMethodToInvocable<T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -890,7 +890,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3), 4 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 4, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 4, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -909,7 +909,7 @@ struct FunctionToInvocable< 4, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 4, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 4, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -932,7 +932,7 @@ struct FunctionToInvocableVoid< 4, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -959,7 +959,7 @@ struct MethodToInvocable<T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -989,7 +989,7 @@ struct MethodToInvocableVoid< T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1016,7 +1016,7 @@ struct ConstMethodToInvocable<T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1184,7 +1184,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4), 5 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 5, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 5, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -1203,7 +1203,7 @@ struct FunctionToInvocable< 5, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 5, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 5, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -1226,7 +1226,7 @@ struct FunctionToInvocableVoid< 5, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -1253,7 +1253,7 @@ struct MethodToInvocable<T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -1283,7 +1283,7 @@ struct MethodToInvocableVoid< T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1310,7 +1310,7 @@ struct ConstMethodToInvocable<T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1479,7 +1479,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5), 6 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 6, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 6, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -1498,7 +1498,7 @@ struct FunctionToInvocable< 6, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 6, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 6, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -1521,7 +1521,7 @@ struct FunctionToInvocableVoid< 6, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -1548,7 +1548,7 @@ struct MethodToInvocable<T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -1578,7 +1578,7 @@ struct MethodToInvocableVoid< T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1605,7 +1605,7 @@ struct ConstMethodToInvocable<T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1775,7 +1775,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6), 7 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 7, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 7, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -1794,7 +1794,7 @@ struct FunctionToInvocable< 7, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 7, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 7, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -1817,7 +1817,7 @@ struct FunctionToInvocableVoid< 7, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -1844,7 +1844,7 @@ struct MethodToInvocable<T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -1874,7 +1874,7 @@ struct MethodToInvocableVoid< T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -1901,7 +1901,7 @@ struct ConstMethodToInvocable<T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -2072,7 +2072,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7), 8 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 8, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 8, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -2091,7 +2091,7 @@ struct FunctionToInvocable< 8, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 8, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 8, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -2114,7 +2114,7 @@ struct FunctionToInvocableVoid< 8, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -2141,7 +2141,7 @@ struct MethodToInvocable<T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -2171,7 +2171,7 @@ struct MethodToInvocableVoid< T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -2198,7 +2198,7 @@ struct ConstMethodToInvocable<T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -2370,7 +2370,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8), 9 >
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 9, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 9, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -2389,7 +2389,7 @@ struct FunctionToInvocable< 9, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 9, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 9, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -2412,7 +2412,7 @@ struct FunctionToInvocableVoid< 9, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -2439,7 +2439,7 @@ struct MethodToInvocable<T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -2469,7 +2469,7 @@ struct MethodToInvocableVoid< T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -2496,7 +2496,7 @@ struct ConstMethodToInvocable<T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -2669,7 +2669,7 @@ struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9), 
 
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< 10, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< 10, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -2688,7 +2688,7 @@ struct FunctionToInvocable< 10, Sig, Func > : FunctionPtr< Sig, Func >
         }
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< 10, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< 10, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -2711,7 +2711,7 @@ struct FunctionToInvocableVoid< 10, Sig, Func > : FunctionPtr< Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable<T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCa<T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -2738,7 +2738,7 @@ struct MethodToInvocable<T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
 };
 template <typename T, typename Sig,
 typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocableVoid< T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
+struct MethodToInCaVoid< T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
 {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -2768,7 +2768,7 @@ struct MethodToInvocableVoid< T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
 namespace Detail {
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable<T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCa<T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -2795,7 +2795,7 @@ struct ConstMethodToInvocable<T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func 
 };
 template <typename T, typename Sig,
 typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocableVoid< T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func >
+struct ConstMethodToInCaVoid< T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func >
 {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;

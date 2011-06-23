@@ -254,11 +254,11 @@ namespace v8 { namespace convert {
             }
 
             typedef cv::tmp::TypeList<
-                cv::MethodToInvocable<BoundNative, void(), &BoundNative::overload0>,
-                cv::MethodToInvocable<BoundNative, void(int), &BoundNative::overload1>,
+                cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
+                cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
                 //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2>, 2 >
-                cv::MethodToInvocable<BoundNative, void(int,int), &BoundNative::overload2>,
-                cv::MethodToInvocable<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
+                cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>,
+                cv::MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
             > OverloadList;
             typedef cv::InCaOverloadList< OverloadList > OverloadInCas;
 #if 0

@@ -16,11 +16,24 @@ long_line_behaviour=1
 long_line_column=80
 
 [files]
-current_page=1
-FILE_NAME_0=9246;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/ConvertDemo.hpp;0
-FILE_NAME_1=17283;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/ConvertDemo.cpp;0
-FILE_NAME_2=4421;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/test.js;0
-FILE_NAME_3=4361;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/ClassCreator.hpp;0
-FILE_NAME_4=2339;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/convert_core.hpp;0
-FILE_NAME_5=545;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/invocable_core.hpp;0
-FILE_NAME_6=0;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/signature_core.hpp;0
+current_page=4
+FILE_NAME_0=8147;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/V8Shell.hpp;0
+FILE_NAME_1=251;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/ConvertDemo.hpp;0
+FILE_NAME_2=11107;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/socket/socket.cpp;0
+FILE_NAME_3=12671;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo.cpp;0
+FILE_NAME_4=2524;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/bytearray/bytearray.cpp;0
+FILE_NAME_5=942;Make;0;16;1;1;0;/home/stephan/cvs/v8-juice/convert/addons/bytearray/Makefile;0
+FILE_NAME_6=2823;Make;0;16;1;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/Makefile;0
+FILE_NAME_7=4628;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo-init.js;0
+FILE_NAME_8=119;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/test.js;0
+FILE_NAME_9=67;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/bytearray/test.js;0
+FILE_NAME_10=1931;Javascript;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/socket/test.js;0
+FILE_NAME_11=2821;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/addons/jspdo/jspdo.hpp;0
+
+[build-menu]
+NF_01_LB=Make Custom _Target
+NF_01_CM=make
+NF_01_WD=
+NF_03_LB=Clean
+NF_03_CM=make clean
+NF_03_WD=

@@ -228,13 +228,13 @@ EOF
 }
 
 ########################################################################
-# Create FunctionToInvocable<> and friends...
-function makeFunctionToInvocable()
+# Create FunctionToInCa<> and friends...
+function makeFunctionToInCa()
 {
     cat <<EOF
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInvocable< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCa< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -256,7 +256,7 @@ EOF
 
     cat <<EOF
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocableVoid< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
+struct FunctionToInCaVoid< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
 {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -280,15 +280,15 @@ EOF
 }
 
 ########################################################################
-# Create MethodToInvocable<> and friends...
-function makeMethodToInvocable_impl()
+# Create MethodToInCa<> and friends...
+function makeMethodToInCa_impl()
 {
-    local class=MethodToInvocable
+    local class=MethodToInCa
     local parent=MethodPtr
     local msig=MethodSignature
     local constness=""
     if [[ "x$1" = "xconst" ]]; then
-        class=ConstMethodToInvocable
+        class=ConstMethodToInCa
         parent=ConstMethodPtr
         msig=ConstMethodSignature
         constness="const"
@@ -356,10 +356,10 @@ struct ${class}Void< T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
 } // namespace
 EOF
 }
-function makeMethodToInvocable()
+function makeMethodToInCa()
 {
-    makeMethodToInvocable_impl
-    makeMethodToInvocable_impl const
+    makeMethodToInCa_impl
+    makeMethodToInCa_impl const
 }
 
 ########################################################################
@@ -498,7 +498,7 @@ case $command in
 #    'CtorForwarder')
 #	makeCtorForwarder
 #	;;
-    *Signature|SignatureBase|FunctionToInvocable|MethodToInvocable|ArgsTo*Forwarder)
+    *Signature|SignatureBase|FunctionToInCa|MethodToInCa|ArgsTo*Forwarder)
 	make${command}
 	;;
     *)

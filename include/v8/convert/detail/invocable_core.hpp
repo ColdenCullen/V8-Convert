@@ -135,13 +135,13 @@ struct ConstMethodPtr<T, RV (T::*)(v8::Arguments const &) const,FuncPtr>
 namespace Detail {
     template <int Arity_, typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionToInvocable;
+    struct FunctionToInCa;
     using v8::Arguments;
 
     template <typename VT,
               typename FunctionSignature<VT (v8::Arguments const &)>::FunctionType Func
               >
-    struct FunctionToInvocable<-1,
+    struct FunctionToInCa<-1,
                                VT (Arguments const &),
                                Func
                                >
@@ -158,7 +158,7 @@ namespace Detail {
     
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionToInvocable<0,Sig,Func> : FunctionPtr<Sig, Func>
+    struct FunctionToInCa<0,Sig,Func> : FunctionPtr<Sig, Func>
     {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -172,10 +172,10 @@ namespace Detail {
 
     template <int Arity_, typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionToInvocableVoid;
+    struct FunctionToInCaVoid;
 
     template <typename VT, VT (*Func)(Arguments const &) >
-    struct FunctionToInvocableVoid<-1, VT (Arguments const &), Func>
+    struct FunctionToInCaVoid<-1, VT (Arguments const &), Func>
         : FunctionPtr<VT (Arguments const &), Func>
     {
     private:
@@ -190,7 +190,7 @@ namespace Detail {
     
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionToInvocableVoid<0,Sig,Func> : FunctionPtr<Sig, Func>
+    struct FunctionToInCaVoid<0,Sig,Func> : FunctionPtr<Sig, Func>
     {
     private:
         typedef FunctionPtr<Sig, Func> ParentType;
@@ -207,13 +207,13 @@ namespace Detail {
 namespace Detail {
     template <typename T, int Arity_, typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodToInvocable;
+    struct MethodToInCa;
 
     template <typename T,
               typename VT,
               typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct MethodToInvocable<T, -1, VT (T::*)(Arguments const &), Func>
+    struct MethodToInCa<T, -1, VT (T::*)(Arguments const &), Func>
         : MethodPtr<T, VT (Arguments const &), Func>
     {
     private:
@@ -235,13 +235,13 @@ namespace Detail {
               typename VT,
               typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct MethodToInvocable<T, -1, VT (Arguments const &), Func>
-        : MethodToInvocable<T, -1, VT (T::*)(Arguments const &), Func>
+    struct MethodToInCa<T, -1, VT (Arguments const &), Func>
+        : MethodToInCa<T, -1, VT (T::*)(Arguments const &), Func>
     {};
     
     template <typename T, typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodToInvocable<T, 0,Sig,Func> : MethodPtr<T, Sig, Func>
+    struct MethodToInCa<T, 0,Sig,Func> : MethodPtr<T, Sig, Func>
     {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -261,13 +261,13 @@ namespace Detail {
 
     template <typename T, int Arity_, typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodToInvocableVoid;
+    struct MethodToInCaVoid;
 
     template <typename T,
               typename VT,
               typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct MethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &), Func>
+    struct MethodToInCaVoid<T, -1, VT (T::*)(Arguments const &), Func>
         : MethodPtr<T, VT (T::*)(Arguments const &), Func>
     {
     private:
@@ -290,13 +290,13 @@ namespace Detail {
               typename VT,
               typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct MethodToInvocableVoid<T, -1, VT (Arguments const &), Func>
-        : MethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &), Func>
+    struct MethodToInCaVoid<T, -1, VT (Arguments const &), Func>
+        : MethodToInCaVoid<T, -1, VT (T::*)(Arguments const &), Func>
     {};
     
     template <typename T, typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodToInvocableVoid<T, 0,Sig,Func> : MethodPtr<T, Sig, Func>
+    struct MethodToInCaVoid<T, 0,Sig,Func> : MethodPtr<T, Sig, Func>
     {
     private:
         typedef MethodPtr<T, Sig, Func> ParentType;
@@ -319,13 +319,13 @@ namespace Detail {
 namespace Detail {
     template <typename T, int Arity_, typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func>
-    struct ConstMethodToInvocable;
+    struct ConstMethodToInCa;
 
     template <typename T,
               typename VT,
               typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct ConstMethodToInvocable<T, -1, VT (T::*)(Arguments const &) const, Func>
+    struct ConstMethodToInCa<T, -1, VT (T::*)(Arguments const &) const, Func>
         : ConstMethodPtr<T, VT (Arguments const &), Func>
     {
     private:
@@ -347,13 +347,13 @@ namespace Detail {
               typename VT,
               typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct ConstMethodToInvocable<T, -1, VT (Arguments const &) const, Func>
-        : ConstMethodToInvocable<T, -1, VT (T::*)(Arguments const &) const, Func>
+    struct ConstMethodToInCa<T, -1, VT (Arguments const &) const, Func>
+        : ConstMethodToInCa<T, -1, VT (T::*)(Arguments const &) const, Func>
     {};
 
     template <typename T, typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func>
-    struct ConstMethodToInvocable<T, 0,Sig,Func> : ConstMethodPtr<T, Sig, Func>
+    struct ConstMethodToInCa<T, 0,Sig,Func> : ConstMethodPtr<T, Sig, Func>
     {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -373,13 +373,13 @@ namespace Detail {
 
     template <typename T, int Arity_, typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func>
-    struct ConstMethodToInvocableVoid;
+    struct ConstMethodToInCaVoid;
 
     template <typename T,
               typename VT,
               typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct ConstMethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &) const, Func>
+    struct ConstMethodToInCaVoid<T, -1, VT (T::*)(Arguments const &) const, Func>
         : ConstMethodPtr<T, VT (Arguments const &), Func>
     {
     private:
@@ -402,13 +402,13 @@ namespace Detail {
               typename VT,
               typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func
     >
-    struct ConstMethodToInvocableVoid<T, -1, VT (Arguments const &) const, Func>
-        : ConstMethodToInvocableVoid<T, -1, VT (T::*)(Arguments const &) const, Func>
+    struct ConstMethodToInCaVoid<T, -1, VT (Arguments const &) const, Func>
+        : ConstMethodToInCaVoid<T, -1, VT (T::*)(Arguments const &) const, Func>
     {};
     
     template <typename T, typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func>
-    struct ConstMethodToInvocableVoid<T, 0,Sig,Func> : ConstMethodPtr<T, Sig, Func>
+    struct ConstMethodToInCaVoid<T, 0,Sig,Func> : ConstMethodPtr<T, Sig, Func>
     {
     private:
         typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -439,7 +439,7 @@ namespace Detail {
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInvocable : FunctionPtr<Sig,Func>
+struct FunctionToInCa : FunctionPtr<Sig,Func>
 {
 private:
     /** Select the exact implementation dependent on whether
@@ -447,9 +447,9 @@ private:
     */
     typedef 
     typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
-                 Detail::FunctionToInvocableVoid< FunctionSignature<Sig>::Arity,
+                 Detail::FunctionToInCaVoid< FunctionSignature<Sig>::Arity,
                                                   Sig, Func>,
-                 Detail::FunctionToInvocable< FunctionSignature<Sig>::Arity,
+                 Detail::FunctionToInCa< FunctionSignature<Sig>::Arity,
                                               Sig, Func>
     >::Type
     ProxyType;
@@ -474,7 +474,7 @@ public:
 /**
    A template for converting non-const member function pointers to
    v8::InvocationCallback. For const member functions use
-   ConstMethodToInvocable instead.
+   ConstMethodToInCa instead.
 
    To convert JS objects to native 'this' pointers this API uses
    CastFromJS<T>(arguments.This()), where arguments is the
@@ -488,7 +488,7 @@ public:
    that signature.
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInvocable : MethodPtr<T, Sig,Func>
+struct MethodToInCa : MethodPtr<T, Sig,Func>
 {
 private:
     /** Select the exact implementation dependent on whether
@@ -496,9 +496,9 @@ private:
     */
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T, Sig>::ReturnType>::Value,
-                 Detail::MethodToInvocableVoid< T, MethodSignature<T, Sig>::Arity,
+                 Detail::MethodToInCaVoid< T, MethodSignature<T, Sig>::Arity,
                                                 typename MethodSignature<T, Sig>::FunctionType, Func>,
-                 Detail::MethodToInvocable< T, MethodSignature<T, Sig>::Arity,
+                 Detail::MethodToInCa< T, MethodSignature<T, Sig>::Arity,
                                             typename MethodSignature<T, Sig>::FunctionType, Func>
     >::Type
     ProxyType;
@@ -545,10 +545,10 @@ public:
 };
 
 /**
-   Identical to MethodToInvocable, but for const member functions.
+   Identical to MethodToInCa, but for const member functions.
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInvocable : ConstMethodPtr<T, Sig, Func>
+struct ConstMethodToInCa : ConstMethodPtr<T, Sig, Func>
 {
 private:
     /** Select the exact implementation dependent on whether
@@ -556,9 +556,9 @@ private:
     */
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
-                 Detail::ConstMethodToInvocableVoid< T, ConstMethodSignature<T, Sig>::Arity,
+                 Detail::ConstMethodToInCaVoid< T, ConstMethodSignature<T, Sig>::Arity,
                                                      typename ConstMethodSignature<T, Sig>::FunctionType, Func>,
-                 Detail::ConstMethodToInvocable< T, ConstMethodSignature<T, Sig>::Arity,
+                 Detail::ConstMethodToInCa< T, ConstMethodSignature<T, Sig>::Arity,
                                                  typename ConstMethodSignature<T, Sig>::FunctionType, Func>
     >::Type
     ProxyType;
@@ -611,7 +611,7 @@ template <typename FSig,
           typename FunctionSignature<FSig>::FunctionType Func>
 v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
 {
-    return FunctionToInvocable<FSig,Func>::Call(argv);
+    return FunctionToInCa<FSig,Func>::Call(argv);
 }
 
 /**
@@ -633,7 +633,7 @@ template <typename T,typename FSig,
           typename MethodSignature<T,FSig>::FunctionType Func>
 v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
 {
-    return MethodToInvocable<T,FSig,Func>::Call(argv);
+    return MethodToInCa<T,FSig,Func>::Call(argv);
 }
 
 
@@ -649,7 +649,7 @@ template <typename T,typename FSig,
           typename ConstMethodSignature<T,FSig>::FunctionType Func>
 v8::Handle<v8::Value> ConstMethodToInvocationCallback( v8::Arguments const & argv )
 {
-    return ConstMethodToInvocable<T,FSig,Func>::Call(argv);
+    return ConstMethodToInCa<T,FSig,Func>::Call(argv);
 }
 
 
@@ -1541,9 +1541,9 @@ namespace Detail
    // Overload 3 variants of a member function:
    namespace cv = v8::convert;
    typedef cv::tmp::TypeList<
-            cv::MethodToInvocable<BoundNative, void(), &BoundNative::overload0>,
-            cv::MethodToInvocable<BoundNative, void(int), &BoundNative::overload1>,
-            cv::MethodToInvocable<BoundNative, void(int,int), &BoundNative::overload2>
+            cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
+            cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
+            cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>
         > OverloadList;
    typedef cv::InCaOverloadList< OverloadList > MyOverloads;
    v8::InvocationCallback cb = MyOverloads::Call;     
