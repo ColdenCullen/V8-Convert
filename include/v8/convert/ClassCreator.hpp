@@ -298,7 +298,7 @@ namespace v8 { namespace convert {
     template <typename T>
     struct ClassCreator_WeakWrap
     {
-        typedef typename convert::TypeInfo<T>::NativeHandle NativeHandle;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
 
         /**
            Similar to Wrap(), but this is called before the native constructor is called.
@@ -832,7 +832,7 @@ namespace v8 { namespace convert {
         static bool DestroyObject( v8::Handle<v8::Value> const & jv )
         {
             return (jv.IsEmpty() || !jv->IsObject())
-                ? 0
+                ? false
                 : DestroyObject( v8::Handle<v8::Object>( v8::Object::Cast(*jv) ) );
         }
 
@@ -849,7 +849,7 @@ namespace v8 { namespace convert {
         */
         static v8::Handle<v8::Value> DestroyObjectCallback( v8::Arguments const & argv )
         {
-                return convert::CastToJS( DestroyObject(argv.This()) );
+                return DestroyObject(argv.This()) ? v8::True() : v8::False();
         }
 
         /**
