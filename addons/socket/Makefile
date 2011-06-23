@@ -29,7 +29,7 @@ bytearray.cpp: bytearray.hpp
 	cp $(BA.DIR)/$@ .
 bytearray.o socket.o: bytearray.cpp
 libv8socket.LIB.OBJECTS := socket.o bytearray.o
-libv8socket.DLL.LDFLAGS += $(LDFLAGS_DRIVERS)
+libv8socket.DLL.LDFLAGS += -lz# for ByteArray.gzip() and friends
 libv8socket.DLL.OBJECTS := $(libv8socket.LIB.OBJECTS)
 libv8socket.DLL: $(libv8socket.LIB.OBJECTS)
 $(eval $(call ShakeNMake.CALL.RULES.LIBS,libv8socket))
