@@ -67,6 +67,13 @@
        Statement object which has already been prepared, but in that
        case this function DOES NOT finalize() it (regardless of
        success or failure!).
+       
+       .finalizeStatement: bool (default=false). IF sql is-a 
+       Statement and this is true then the statement will be 
+       finalized by exec, regardless of success or failure. By 
+       default it does not finalize a statement object passed in by 
+       the caller. If sql is-not-a Statement then this option is 
+       ignored.
 
        .each: function(row,callbackData,statement) is called for
        each row.  If foreach() is not set then the query is executed
@@ -79,15 +86,17 @@
        statement object itself is passed as the first argument to
        foreach().
 
-       .callbackData: optional arbitrary value passed as 2nd argument to
+       .callbackData: Optional arbitrary value passed as 2nd argument to
        each().
 
        .bind: Optional Array or Object containing values to bind() to
        the sql code. It may be a function, in which case
-       bind(statement,bindOpt) is called to initialize the bindings.
+       bind(statement,bindOpt) is called (one time) to initialize the
+       bindings. The second argument is the value of the bindData
+       property.
 
        .bindData: Optional data to passed as the 2nd argument to bind().
-       If bind() is not a Function then bindData is not used.
+       If bind is not a Function then bindData is not used.
     */
     jp.exec = function(opt) {
         if( 'string' === typeof opt ) return origImpls.exec.apply(this, argvToArray(arguments));
@@ -137,7 +146,9 @@
             }
         }
         finally {
-            if(st && (st !== opt.sql)) st.finalize();
+            if(st) {
+                if( (st !== opt.sql) || opt.finalizeStatement ) st.finalize();
+            }
         }
     };
 
