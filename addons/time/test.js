@@ -55,7 +55,7 @@ function test3()
         vtime += precision;
         print("Tick #"+(++tickcount)+" at T+"+vtime+ " (real elapsed="+(e-b)+")");
         //return !((e-b) > duration);
-        if( (e-b) > duration ) timer.stopBlockingTickLoop();
+        if( (e-b) > duration ) return false; //timer.stopBlockingTickLoop();
         return true;
     }
     print("Running tick loop with precision of "+precision+"ms for approximately "+duration+"ms...");
@@ -68,6 +68,6 @@ function test3()
         (100-(duration/diff*100))+"%)");
 }
 
-//test1();
-//test2();
+test1();
+test2();
 test3();
