@@ -48,7 +48,7 @@ namespace v8 { namespace convert {
     int GUnzipJSByteArray( JSByteArray const & src, JSByteArray & dest );
 
     
-    JSByteArray * ClassCreator_Factory<JSByteArray>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
+    JSByteArray * ClassCreator_Factory<JSByteArray>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
         int const argc  = argv.Length();
         JSByteArray * ba = NULL;
