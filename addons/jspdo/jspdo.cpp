@@ -35,8 +35,17 @@ used by MySQL (if any).
 
 #define JSPDO_CLASS_NAME "JSPDO" /* JSPDO class name, as it should appear in JS. */
 
+namespace {
+    bool enableDestructorDebug = false;
+    
+    void setEnableDestructorDebug( bool b )
+    {
+        enableDestructorDebug = b;
+    }
+}
 namespace cv = v8::convert;
 namespace jspdo {
+#if 0
     /**
         Not yet used, but something to consider so that we can finalize any
         statements left open when the db closes. Adding this requires some other
@@ -56,7 +65,9 @@ namespace jspdo {
             //~ }
             virtual ~JSPDO()/*defined out-of-line for templating reasons!*/;
     };
+#endif
 }
+
 namespace v8 { namespace convert {
     // Various ClassCreator policy classes specialized for the native types
     // we are binding...
@@ -101,8 +112,13 @@ namespace v8 { namespace convert {
 
 } }
 namespace jspdo {
+#if 0
     JSPDO::~JSPDO()
     {
+        if( enableDestructorDebug )
+        {
+            CERR << "Destructing native JSPDO@"<<(void const *)this<<'\n';
+        }
         if( ! this->stmts.empty() ) {
             typedef cv::ClassCreator<cpdo::statement> CC;
             StmtMap map;
@@ -114,6 +130,7 @@ namespace jspdo {
         }
         //delete this->drv;
     }
+#endif
 
     /**
         Map of cpdo::statement to their JS selves.
@@ -126,20 +143,34 @@ namespace jspdo {
 
 
     /**
-        Shared DbMap instance. This is used to we can add plumbing to
-        "safely" close statement handles at db close()-time if the
-        client failed to do so earlier (in strict violation of the
-        documentation, i might add!).
+        Shared DbMap instance. This is used so we can add plumbing to
+        "safely" close statement handles at db close()-time if the 
+        client failed to do so earlier (in strict violation of the 
+        documentation, i might add!). Though this whole mess is 
+        unsightly, it's less unsightly than seeing a script crash 
+        one's app due to stepping on an invalidated native pointer 
+        during garbage collection.
+        
+        Reminder about locking: v8 only runs in one thread at a time
+        and will only switch threads under specific conditions (e.g.
+        at certain function boundaries), none of which
+        we meet while using this data. i.e. we are piggybacking on
+        v8's locking semantics here.
     */
     struct DbMapLocker
     {
+#if 0 // we probably don't need this, since this class is only used from inside called-from-v8 code.
     private:
         v8::Locker lock;
     public:
         DbMapLocker() : lock()
         {
         }
-
+#else
+        DbMapLocker()
+        {
+        }
+#endif
         DbMap & map()
         {
             static DbMap bob;
@@ -149,7 +180,9 @@ namespace jspdo {
     };
 
     /**
-        returns true if JSPDO.enableDebug == true.
+        Returns true if JSPDO.enableDebug == true. Must not be called
+        before JSPDO::SetupBindings() has been called, nor after
+        v8 cleans up/shuts down.
     */
     static bool IsDebugEnabled();
 }
@@ -236,10 +269,11 @@ namespace v8 { namespace convert {
 
     void ClassCreator_Factory<cpdo::statement>::Delete( cpdo::statement * st )
     {
-        if( jspdo::IsDebugEnabled() )
+        if( jspdo::IsDebugEnabled() || enableDestructorDebug )
         {
             CERR << "Destroying cpdo::statement@"<<(void const *)st<<'\n';
         }
+
         jspdo::DbMapLocker ml;
         jspdo::DbMap & map(ml.map());
         jspdo::DbMap::iterator it = map.begin();
@@ -274,10 +308,17 @@ namespace v8 { namespace convert {
 
     void ClassCreator_Factory<cpdo::driver>::Delete( cpdo::driver * drv )
     {
-        if( jspdo::IsDebugEnabled() )
+        if( jspdo::IsDebugEnabled() || enableDestructorDebug )
         {
             CERR << "Destroying cpdo::driver@"<<(void const *)drv<<'\n';
         }
+        /**
+            The following code (everything but the (delete drv)) is only
+            here to try to clean up statements which the client failed
+            to clean up. We must do this or risk a crash (or other
+            Undefined Behaviour) if the statement is later
+            garbage-collected.
+        */
         jspdo::DbMapLocker mo;
         jspdo::DbMap & map(mo.map());
         jspdo::DbMap::iterator it = map.find(drv);
@@ -291,7 +332,8 @@ namespace v8 { namespace convert {
                 map.erase(drv);
             }
             jspdo::StmtMap::iterator sit(smap.begin());
-            for( ; smap.end() != sit; ++sit ) {
+            for( ; smap.end() != sit; ++sit )
+            {
                 if( jspdo::IsDebugEnabled() )
                 {
                     CERR << "JSPDO.close() is cleaning up a dangling/unclosed cpdo::statement@"<<(*sit).first<<'\n';
@@ -1147,6 +1189,7 @@ namespace v8 { namespace convert {
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             dCtor->Set( JSTR("enableDebug"), v8::False() );
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
+            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInvocationCallback< void (bool), setEnableDestructorDebug>) );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, replacing them with a bool or an exception.
