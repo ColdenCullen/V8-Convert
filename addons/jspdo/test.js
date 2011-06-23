@@ -3,33 +3,34 @@ print("Starting tests...");
 load('../test-common.js');
 
 //JSPDO.enableDebug = true;
+//JSPDO.ByteArray.enableDestructorDebug(true);
 //JSPDO.enableDestructorDebug(true);
 var App = {
-drv:null,
-user:"",
-password:"",
-tableName:'mytbl',
-CREATE:{
-    mysql5:"CREATE TABLE IF NOT EXISTS mytbl("+
-             "id INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT, "+
-             "a INTEGER DEFAULT NULL,"+
-             "b DOUBLE DEFAULT NULL,"+
-             "c VARCHAR(127) DEFAULT NULL, "+
-             "d TEXT DEFAULT NULL"+
-             ")",
-    sqlite3:"CREATE TABLE IF NOT EXISTS mytbl("+
-             "id INTEGER PRIMARY KEY DEFAULT NULL,"+
-             "a INTEGER DEFAULT NULL,"+
-             "b DOUBLE DEFAULT NULL,"+
-             "c VARCHAR(127) DEFAULT NULL, "+
-             "d BLOB DEFAULT NULL"+
-             ")"
-}
+    drv:null,
+    user:"",
+    password:"",
+    tableName:'mytbl',
+    CREATE:{
+        mysql5:"CREATE TABLE IF NOT EXISTS mytbl("+
+                 "id INTEGER PRIMARY KEY NOT NULL AUTO_INCREMENT, "+
+                 "a INTEGER DEFAULT NULL,"+
+                 "b DOUBLE DEFAULT NULL,"+
+                 "c VARCHAR(127) DEFAULT NULL, "+
+                 "d TEXT DEFAULT NULL"+
+                 ")",
+        sqlite3:"CREATE TABLE IF NOT EXISTS mytbl("+
+                 "id INTEGER PRIMARY KEY DEFAULT NULL,"+
+                 "a INTEGER DEFAULT NULL,"+
+                 "b DOUBLE DEFAULT NULL,"+
+                 "c VARCHAR(127) DEFAULT NULL, "+
+                 "d BLOB DEFAULT NULL"+
+                 ")"
+    }
 };
-if(1) {
+if(1) { // sqlite3 ...
     App.dsn = 'sqlite3::memory:';
 }
-else {
+else { // MySQL...
     App.dsn = 'mysql5:host=localhost;dbname=cpdo';
     App.user = App.password = 'cpdo';
 }
@@ -310,9 +311,12 @@ function testGzippedJSON()
         st.finalize();
         st = null;
         // Now read it back and compare it ot the original...
+        var cbData = {rows:0};
         db.exec({
             sql:"SELECT name as name,json as json FROM ziptest",
-            each:function(st) {
+            callbackData:cbData,
+            each:function(st,data) {
+                ++data.rows;
                 var ba = st.get(1);
                 assert(ba instanceof JSPDO.ByteArray,'Field is-a ByteArray');
                 print("Got compressed field data: "+ba);
@@ -325,6 +329,7 @@ function testGzippedJSON()
                 assert( sv === json, "Decompressed JSON matches original" );
             }
         });
+        asserteq( 1, cbData.rows, "Row count is 1." );
     }
     finally {
         if(st) st.finalize();
