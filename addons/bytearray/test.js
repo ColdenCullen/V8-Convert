@@ -1,5 +1,5 @@
 load('../test-common.js');
-
+//ByteArray.enableDestructorDebug(true);
 function test1()
 {
     var ba = new ByteArray(10);

@@ -78,11 +78,24 @@ namespace v8 { namespace convert {
     
 } } // v8::convert
 
+
+namespace {
+    bool enableDestructorDebug = false;
+    
+    void setEnableDestructorDebug( bool b )
+    {
+        enableDestructorDebug = b;
+    }
+}
 /************************************************************************
    Down here is where the runtime setup parts of the bindings take place...
 ************************************************************************/
 JSByteArray::~JSByteArray()
 {
+    if( enableDestructorDebug )
+    {
+        CERR << "Destructing native JSByteArray@"<<(void const *)this<<'\n';
+    }
 }
 
 JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
@@ -436,6 +449,9 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
                                                              NULL/*JSByteArray::indexedPropertyDeleter*/,
                                                              NULL/*JSByteArray::indexedPropertyEnumerator*/
                                                             );
+    v8::Handle<v8::Function> ctor = cw.CtorFunction();
+    
+    ctor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInvocationCallback< void (bool), setEnableDestructorDebug>) );
     cw.AddClassTo( BA_JS_CLASS_NAME, dest );
     //CERR <<"Binding done.\n";
     return;
