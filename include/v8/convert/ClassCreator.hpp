@@ -490,6 +490,9 @@ namespace v8 { namespace convert {
        bound classes from JS space, and possibly not even when
        inheriting bound natives from one another. That depends on
        several factors too complex to summarize here.
+       
+       - See how much of the v8::juice::cw::ClassWrap 
+       inheritance-related code we can salvage for re-use here.
     */
     template <typename T>
     class ClassCreator
@@ -878,6 +881,28 @@ namespace v8 { namespace convert {
             {
                 return v8::ThrowException(v8::Exception::Error(v8::String::New("Native class bindings threw an unspecified exception during setup.")));
             }
+        }
+
+        /**
+            Tells v8 that this bound type inherits ParentType. 
+            ParentType _must_ be a class wrapped by ClassCreator. 
+            This function throws if it believes something evil is 
+            afoot (e.g. ClassCreator<ParentType>::Instance() has not 
+            yet been sealed). We require that the parent class be 
+            sealed to avoid accidental mis-use caused by registering
+            a subclass of a class which has not yet been bound (and may
+            may never be bound).
+        */
+        template <typename ParentType>
+        void Inherit()
+        {
+            typedef ClassCreator<ParentType> PT;
+            PT & p(PT::Instance());
+            if( ! p.IsSealed() )
+            {
+                throw std::runtime_error("ClassCreator<ParentType> has not been sealed yet!");
+            }
+            this->CtorTemplate()->Inherit( p.CtorTemplate() );
         }
         
     };
