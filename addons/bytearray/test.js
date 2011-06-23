@@ -5,6 +5,7 @@ function test1()
     var ba = new ByteArray(10);
     print('ba='+ba);
     ba[0] = 72; ba[1]=105;
+    assertThrows( function() { ba[0] = 256; } );
     print('as string: '+ba.stringValue());
     ba.destroy();
     ba = new ByteArray("hi, world");

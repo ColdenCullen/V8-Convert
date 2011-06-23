@@ -183,7 +183,17 @@ v8::Handle<v8::Value> JSByteArray::indexedPropertySetter(uint32_t index, v8::Loc
     }
     else
     {
-        return cv::CastToJS<uint16_t>( ar->vec[index] = static_cast<unsigned char>( cv::CastFromJS<uint16_t>(value) ) );
+        // reminder: we don't convert as uint8_t due to collisions with char/int8_t.
+        int32_t const ival = value->Int32Value()
+            /* when is Apple going to get around to trademarking iNt32_t? */
+        ;
+        if( (ival < 0) || (ival > 255) )
+        {
+            cv::StringBuffer msg;
+            msg << "Byte value "<<ival<<" is out of range. It must be between 0 and 255, inclusive.";
+            return v8::ThrowException(msg.toError());
+        }
+        return cv::CastToJS<uint16_t>( ar->vec[index] = (unsigned char)(ival & 0xff) );
     }
 }
 
