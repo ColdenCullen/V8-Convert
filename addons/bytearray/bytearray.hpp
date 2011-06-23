@@ -27,6 +27,11 @@ namespace v8 { namespace convert {
            or:
            
            new ByteArray( string data [, int length=data.length] )
+
+           or:
+           
+           new ByteArray( ByteArray data )
+
         */
         JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len = 0 );
 

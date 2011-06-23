@@ -24,6 +24,10 @@ function test1()
         ba.append(42 /* '*' */);
     }
     print("Appended ba ("+ba.length+" bytes): "+ba.stringValue);
+    b2 = new ByteArray(ba);
+    asserteq( ba.length, b2.length );
+    ba.destroy();
+    b2.destroy();
 }
 
 function testGZip()

@@ -92,6 +92,7 @@ JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
         && !val->IsUndefined()
         )
     {
+        
         if( val->IsNumber() )
         {
             const int32_t x = cv::JSToInt32( val );
@@ -103,6 +104,23 @@ JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
                 throw std::runtime_error( msg.str().c_str() );
             }
             this->length( (unsigned int)x );
+            return;
+        }
+        else if( val->IsObject() )
+        { // TODO: honor len here.
+            JSByteArray * other = CastFromJS<JSByteArray>(val);
+            if( other )
+            {
+                this->append( *other );
+                return;
+            }
+            else
+            {
+                std::ostringstream msg;
+                msg << BA_JS_CLASS_NAME
+                    << " ctor argument is not a "<<BA_JS_CLASS_NAME<<" object.";
+                throw std::range_error( msg.str().c_str() );
+            }
         }
         else
         {
@@ -114,6 +132,7 @@ JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
                 this->length( len );
                 this->vec.assign( x.begin(), x.end() );
             }
+            return;
         }
     }
 }
