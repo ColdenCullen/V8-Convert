@@ -65,20 +65,20 @@
 
        .sql (required): SQL code string to run. It may optionally be a
        Statement object which has already been prepared, but in that
-       case this function DOES NOT finalize() it (regardless of
-       success or failure!).
+       case the caller must be aware of ownership: see the next option.
        
-       .finalizeStatement: bool (default=false). IF sql is-a 
+       .finalizeStatement: bool (default=true). IF sql is-a 
        Statement and this is true then the statement will be 
-       finalized by exec, regardless of success or failure. By 
-       default it does not finalize a statement object passed in by 
-       the caller. If sql is-not-a Statement then this option is 
-       ignored.
+       finalized by exec, regardless of success or failure. If sql 
+       is-not-a Statement then this option is ignored.
 
        .each: function(row,callbackData,statement) is called for
        each row.  If foreach() is not set then the query is executed
        (only one time) using step(). The exact type of the row param
-       depends on the 'mode' option.
+       depends on the 'mode' option. If each() returns a literal
+       false (as opposed to an arbitrary false value like null or
+       undefined) then looping stops without an error. To report
+       an error each() should throw an exception.
 
        .mode: 'object' means stepArray(), 'array' means stepArray(),
        and anything else means step(). In the case of object/array,
@@ -104,6 +104,7 @@
             throw new Error("exec() requires a string or Object as its only parameter.");
         }
         var st;
+        if( undefined === opt.finalizeStatement ) opt.finalizeStatement = true;
         try {
             st = (opt.sql instanceof ctor.Statement) ? opt.sql : this.prepare(opt.sql);
             //var bind;
@@ -136,13 +137,14 @@
                 step = step1;
                 cbArg = st;
             }
-            var row;
+            var row, rc;
             while( row = step(st) ) {
-                opt.each( cbArg ? cbArg : row, opt.callbackData, st );
+                rc = opt.each( cbArg ? cbArg : row, opt.callbackData, st );
                 /**if( true === repeatBind ) {
                     st.reset();
                     opt.bind(st, opt.bindData);
                 }*/
+                if( false === rc ) break;
             }
         }
         finally {
@@ -219,6 +221,51 @@
         };
         this.exec(fo);
         return fo.callbackData;
+    };
+    
+    /**
+        Executs a SELECT-style query and returns one value from
+        the first result row.
+        
+        The parameter may be an SQL string or an options object
+        using the same options as exec() with these exceptions:
+        
+        - The (each, callbackData, mode) properties are ignored.
+        
+        - If the 'column' property is set then that result column 
+        (0-based index) is used for fetching the return value. The 
+        default is to use result column 0.
+        
+        Examples:
+        
+        @code
+        var count = db.selectValue("SELECT COUNT(*) FROM T");
+        
+        var otherCount = db.selectValue({sql:"SELECT A, B, COUNT(*) FROM T", column:2});
+        @endcode
+    */
+    jp.selectValue = function(opt) {
+        var xopt;
+        if( 'string' === typeof opt ) {
+            xopt = {sql:opt, column:0};
+        }
+        else if( ! (opt instanceof Object) ) {
+            throw new Error("selectValue() requires a string or Object as its only argument.");
+        }
+        else xopt = opt;
+        if( ! xopt.sql ) {
+            throw new Error("selectValue(opt) requires that opt.sql be set.");
+        }
+        if(!xopt.column) xopt.column = 0;
+        xopt.mode = undefined/* force Statement mode */;
+        delete xopt.callbackData;
+        var rcVal;
+        xopt.each = function(st,cbd) {
+            rcVal = st.get(xopt.column);
+            return false/*tells exec() to stop looping w/o an error.*/;
+        };
+        this.exec(xopt);
+        return rcVal;
     };
 
     jp.toJSON = function() {

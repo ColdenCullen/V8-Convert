@@ -27,7 +27,7 @@ var App = {
                  ")"
     }
 };
-if(1) { // sqlite3 ...
+if(0) { // sqlite3 ...
     App.dsn = 'sqlite3::memory:';
 }
 else { // MySQL...
@@ -43,6 +43,7 @@ function testConnect() {
     assertThrows(function() { drv.driverName = "should throw"; });
     asserteq( true, !!App.CREATE[drv.driverName] );
     drv.exec(App.CREATE[drv.driverName]);
+    drv.exec("DELETE FROM "+App.tableName);
 }
 
 function testSelect(mode)
@@ -168,11 +169,10 @@ function testInsertNamedParams() {
 }
 
 function testExt_forEach() {
-    var st, sql = "SELECT * FROM "+App.tableName+" WHERE a IS NOT NULL LIMIT 3";
-    var st;
-    sql = App.drv.prepare(sql);
+    var sql = "SELECT * FROM "+App.tableName+" WHERE a IS NOT NULL LIMIT 3";
+    var st = App.drv.prepare(sql);
     var opt = {
-        sql:sql,
+        sql:st,
         //bind:[20],
         //bind:function(st){st.bind(1,20)},
         mode:'object',
@@ -184,13 +184,18 @@ function testExt_forEach() {
         callbackData:{rows:0}
     };
     print("Trying db.exec("+JSON.stringify(opt)+")");
+    JSPDO.enableDestructorDebug(true);
     try {
         App.drv.exec(opt);
-        asserteq( 2, opt.callbackData.rows, 'expecting 2 rows' );
+        
     }
     finally {
-        if( sql instanceof JSPDO.Statement ) sql.finalize();
+        //if( sql instanceof JSPDO.Statement ) sql.finalize();
+        //asserteq( false, sql.finalize(), 'sql was finalized by exec()');
+        //WTF? finalize() is returning undefined instead of bool???
+        JSPDO.enableDestructorDebug(false);
     }
+    asserteq( 2, opt.callbackData.rows, 'expecting 2 rows' );
     print(opt.callbackData.rows+" row(s)");
 }
 
@@ -298,13 +303,15 @@ function testGzippedJSON()
     // Stuff it into the database...
     var st;    
     try {
+        var bac, ba, compressedSize;
         print("Inserting compressed data....");
         st = db.prepare("INSERT INTO ziptest (name,json) VALUES (?,?)");
         st.bind(1,"bogo");
-        var bac, ba = new JSPDO.ByteArray( json );
+        ba = new JSPDO.ByteArray( json );
         bac = ba.gzip();
         ba.destroy();
         st.bind(2,bac);
+        compressedSize = bac.length;
         bac.destroy();
         st.step();
         print("Inserted compressed data.");
@@ -330,6 +337,16 @@ function testGzippedJSON()
             }
         });
         asserteq( 1, cbData.rows, "Row count is 1." );
+        var sizeSQL = "SELECT name, LENGTH(json) FROM ziptest";
+        db.exec({
+            sql:sizeSQL,
+            callbackData:cbData,
+            each:function(st,data) {
+                cbData.dataLength = st.get(1);
+            }
+        });
+        asserteq( compressedSize, cbData.dataLength, 'Db-side and JS-side blob sizes match');
+        asserteq( db.selectValue({sql:sizeSQL,column:1}), cbData.dataLength, 'db.selectValue() agrees on the size.' );
     }
     finally {
         if(st) st.finalize();
