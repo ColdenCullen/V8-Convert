@@ -16,7 +16,7 @@ var App = {
                  "a INTEGER DEFAULT NULL,"+
                  "b DOUBLE DEFAULT NULL,"+
                  "c VARCHAR(127) DEFAULT NULL, "+
-                 "d TEXT DEFAULT NULL"+
+                 "d BLOB DEFAULT NULL"+
                  ")",
         sqlite3:"CREATE TABLE IF NOT EXISTS mytbl("+
                  "id INTEGER PRIMARY KEY DEFAULT NULL,"+
