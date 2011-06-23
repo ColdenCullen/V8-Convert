@@ -97,6 +97,9 @@
 
        .bindData: Optional data to passed as the 2nd argument to bind().
        If bind is not a Function then bindData is not used.
+       
+       .limit: For SELECT-like queries, this option can be used to limit
+       the number of values fetched. The default is 0, meaning no limit.
     */
     jp.exec = function(opt) {
         if( 'string' === typeof opt ) return origImpls.exec.apply(this, argvToArray(arguments));
@@ -137,14 +140,16 @@
                 step = step1;
                 cbArg = st;
             }
-            var row, rc;
+            var row, rc, count = 0;
             while( row = step(st) ) {
                 rc = opt.each( cbArg ? cbArg : row, opt.callbackData, st );
+                if( false === rc ) break;
+                else if( opt.limit && (opt.limit == ++count) ) break;
                 /**if( true === repeatBind ) {
                     st.reset();
                     opt.bind(st, opt.bindData);
                 }*/
-                if( false === rc ) break;
+                
             }
         }
         finally {
@@ -259,10 +264,11 @@
         if(!xopt.column) xopt.column = 0;
         xopt.mode = undefined/* force Statement mode */;
         delete xopt.callbackData;
+        xopt.limit = 1;
         var rcVal;
         xopt.each = function(st,cbd) {
             rcVal = st.get(xopt.column);
-            return false/*tells exec() to stop looping w/o an error.*/;
+            //return false/*tells exec() to stop looping w/o an error.*/;
         };
         this.exec(xopt);
         return rcVal;
