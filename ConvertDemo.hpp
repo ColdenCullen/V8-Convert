@@ -274,9 +274,9 @@ namespace v8 { namespace convert {
     };
 #endif
 
-    /*
-      This class is required unless you just want to bind to the
-      default constructor. It creates native objects for the
+    /**
+      This policy class is required unless you just want to bind to 
+      the default constructor. It creates native objects for the 
       underlying binding code.
      */
     template <>
@@ -317,6 +317,19 @@ namespace v8 { namespace convert {
     struct JSToNative<BoundNative>
         : JSToNative_ClassCreator<BoundNative>
     {};
+    /**
+        Native-to-JS conversion. This conversion is only possible when
+        we explicitly add support to the class-binding code to add
+        the necessary binding metadata. Alternately, if the bound class
+        contains v8-defined data types, e.g. a Handle<Object> referring
+        to itself then implementing NativeToJS is easy to do - just
+        return the handle held by the native.
+        
+        In this example we're using the NativeToJSMap helper code to 
+        plug in/unplug our bindings during native object 
+        construction/destruction via the the ClassCreator's factory 
+        policy (ClassCreator_Factory<BoundNative>).        
+    */
     template <>
     struct NativeToJS<BoundNative>
         :  NativeToJSMap<BoundNative>::NativeToJSImpl
