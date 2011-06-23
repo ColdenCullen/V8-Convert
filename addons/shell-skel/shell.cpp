@@ -76,7 +76,7 @@ static int v8_main(int argc, char const * const * argv)
     assert( argc >= 2 );
     cv::Shell shell(NULL, argc, argv);
     shell.SetupDefaultBindings()
-        ("gc", cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+        ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
     ;
     try
     {
@@ -91,16 +91,12 @@ static int v8_main(int argc, char const * const * argv)
         }
 #endif
         v8::TryCatch tryCatch;
-        //for( int i = 1; i < argc; ++i ) {
-            char const * fname = argv[1];
-            //ValueHandle av[] = { cv::CastToJS(fname) };
-            //ValueHandle rc = fnLoad->Call(global,1,av);
-            v8::Handle<v8::Value> rc = shell.ExecuteFile( fname, &tryCatch );
-            if( rc.IsEmpty() )
-            { // exception was reported by shell already
-                return 2;
-            }
-        //}
+        char const * fname = argv[1];
+        v8::Handle<v8::Value> rc = shell.ExecuteFile( fname, &tryCatch );
+        if( rc.IsEmpty() )
+        { // exception was reported by shell already
+            return 2;
+        }
     }
     catch(std::exception const & ex)
     {
