@@ -5842,6 +5842,17 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
             }
             return 0;
         }
+#if 0
+        else if( CPDO_TYPE_BLOB == bv->type )
+        { /* Arguable: optimistically assume blob is a legal string */
+            *val = (char const *)bv->valu.blob.mem;
+            if( len )
+            {
+                *len = bv->valu.blob.length;
+            }
+            return 0;
+        }
+#endif
         else
         { /* convert numbers to strings... */
             cpdo_bind_val * scratch = &stmt->rbind.convBuf[ndx];
@@ -6304,11 +6315,11 @@ namespace cpdo {
         return rc;
     }
 
-    char const * statement::get_string( uint16_t ndx )
+    char const * statement::get_string( uint16_t ndx, uint32_t * size )
     {
         CPDO_STMT_CHECK_ALIVE;
         char const * rc = NULL;
-        this->check_code( st->api->get.string( st, ndx, &rc, NULL) );
+        this->check_code( st->api->get.string(st, ndx, &rc, size) );
         return rc;
     }
     

@@ -3048,8 +3048,10 @@ Temporary (file-scope) macro to mark functions which throw on error.
             /**
                 See cpdo_stmt_api::get::string(). Throws if ndx is out of bounds
                 or there is a driver-level error while fetching the data.
+                If size is not NULL then the length of the fetched string
+                is written to it.
             */
-            char const * get_string( uint16_t ndx ) THROWS_ON_ERROR;
+            char const * get_string( uint16_t ndx, uint32_t * size = NULL ) THROWS_ON_ERROR;
 
             /**
                 Fetches blob data from the given 0-based column.
