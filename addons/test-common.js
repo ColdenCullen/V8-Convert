@@ -53,6 +53,31 @@ function asserteq(got,expect,msg)
         
 }
 
+function assertneq(got,expect,msg)
+{
+    msg = msg || (got+' != '+expect);
+    if(1) {
+        if( got == expect ) {
+            var st = getStacktrace(2);
+            var loc = st[1];
+            msg = 'Assertion failed in ['+loc.scriptName+
+                '] at (or around) line '+
+                loc.line+': '+
+                msg +
+                '\nStacktrace: '+JSON.stringify(st,0,4);
+            throw new Error(msg);
+        }
+        else print("Assertion OK: "+msg);
+    }
+    else {
+        if( got == expect ) {
+            throw new Error('Assertion failed: '+msg);
+        }
+        else print("Assertion OK: "+msg);
+    }
+        
+}
+
 function assertThrows( func ) {
     var ex = undefined;
     try { func(); }
