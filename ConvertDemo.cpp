@@ -53,7 +53,6 @@ namespace v8 { namespace convert {
         delete obj;
     }
 
-
 #if 0 // don't use this - it doesn't work
     // An experiment.
     v8::Handle<v8::Value> ICListEnd( v8::Arguments const & )
@@ -254,6 +253,14 @@ namespace v8 { namespace convert {
                 return;
             }
 
+            typedef cv::tmp::TypeList<
+                cv::MethodToInvocable<BoundNative, void(), &BoundNative::overload0>,
+                cv::MethodToInvocable<BoundNative, void(int), &BoundNative::overload1>,
+                //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2>, 2 >
+                cv::MethodToInvocable<BoundNative, void(int,int), &BoundNative::overload2>,
+                cv::MethodToInvocable<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
+            > OverloadList;
+            typedef cv::InCaOverloadList< OverloadList > OverloadInCas;
 #if 0
             typedef FunctionPtr<InvocationCallback,ICListEnd> FPLE;
             CERR << "Arity == "<< FPLE::Arity << '\n';
@@ -270,6 +277,8 @@ namespace v8 { namespace convert {
             // Bind some member functions...
             cc("cputs",
                cv::FunctionToInvocationCallback<int (char const *),::puts>)
+                ("overloaded",
+                  OverloadInCas::Call )
                 ("doFoo",
                  cv::MethodToInvocationCallback<BoundNative,void (void),&BoundNative::doFoo>)
                 ("doFoo2",

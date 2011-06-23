@@ -1192,10 +1192,20 @@ forwardConstMethod(FSig func, v8::Arguments const & argv )
    sometimes convenient to be able to use a typedef to create an alias
    for a given InvocationCallback. Since we cannot typedef function
    templates this way, this class can fill that gap.
+   
+   The Arity argument is a _hint_ to some other code as to how many
+   arguments ICB wants to receive. It is not enforced by this code,
+   but may be enforced by downstream wrappers. An Arity value of
+   less than 0 is reserved for InvocationCallback-like functions
+   (which can take any number of arguments).
 */
-template <v8::InvocationCallback ICB>
+template <v8::InvocationCallback ICB, int Arity_ = -1>
 struct InCa
 {
+    /**
+        A HINT about the number of arguments.
+    */
+    enum { Arity = Arity_ };
     /**
        Implements the v8::InvocationCallback() interface.
        Simply passes on the call to ICB(argv).
@@ -1431,6 +1441,134 @@ struct InCaCatcher_std :
                 >
 {};
 
+
+
+namespace Detail
+{
+    namespace cv = v8::convert;
+    namespace tmp = cv::tmp;
+    template <typename FWD>
+    struct ArityOverloaderOne
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            if( (FWD::Arity<0) || (FWD::Arity == argv.Length()) )
+            {
+                return FWD::Call( argv );
+            }
+            else
+            {
+                cv::StringBuffer msg;
+                msg << "ArityOverloaderOne<>::Call(): "
+                    //<< argv.Callee()->GetName()
+                    << "called with "<<argv.Length()<<" arguments, "
+                    << "but requires "<<(int)FWD::Arity<<"!\n";
+                return v8::ThrowException(msg.toError());
+            }
+        }
+    };
+    /**
+       Internal dispatch end-of-list routine.
+    */
+    template <>
+    struct ArityOverloaderOne<tmp::NilType>
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            return v8::ThrowException(v8::Exception::Error(v8::String::New("ArityOverloaderOne<> end-of-list specialization should not have been called!")));
+        }
+    };
+    /**
+       FwdList must be-a TypeList of classes with Call() and Arity members.
+    */
+    template <typename List>
+    struct ArityOverloaderList
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            typedef typename List::Head FWD;
+            typedef typename List::Tail Tail;
+            if( (FWD::Arity == argv.Length()) || (FWD::Arity<0) )
+            {
+                return ArityOverloaderOne< FWD >::Call( argv );
+            }
+            {
+                return ArityOverloaderList< Tail >::Call(argv);
+            }
+            return v8::Undefined(); // can't get this far.
+        }
+    };
+
+    /**
+       End-of-list specialization.
+    */
+    template <>
+    struct ArityOverloaderList<tmp::NilType>
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            cv::StringBuffer msg;
+            msg << "ArityOverloaderList<>::Call() there is no overload "
+                //<< argv.Callee()->GetName() // name is normally empty
+                << "taking "<<argv.Length()<<" arguments!\n";
+            return v8::ThrowException( msg.toError() );
+        }
+    };       
+} // namespace Detail
+
+/**
+   A helper class which allows us to dispatch to multiple
+   overloaded native functions from JS, depending on the argument
+   count.
+
+   FwdList must be-a v8::convert::tmp::TypeList (or 
+   interface-compatible type list) containing types which have the 
+   following function:
+
+   static v8::Handle<v8::Value> Call( v8::Arguments const & argv );
+
+   And a static const integer (or enum) value called Arity, 
+   which must specify the expected number of arguments, or be 
+   negative specify that the function accepts any number of 
+   arguments.
+
+   In other words, all entries in FwdList must implement the
+   interface used by most of the InCa-related API.
+   
+   Example:
+   
+   @code
+   // Overload 3 variants of a member function:
+   namespace cv = v8::convert;
+   typedef cv::tmp::TypeList<
+            cv::MethodToInvocable<BoundNative, void(), &BoundNative::overload0>,
+            cv::MethodToInvocable<BoundNative, void(int), &BoundNative::overload1>,
+            cv::MethodToInvocable<BoundNative, void(int,int), &BoundNative::overload2>
+        > OverloadList;
+   typedef cv::InCaOverloadList< OverloadList > MyOverloads;
+   v8::InvocationCallback cb = MyOverloads::Call;     
+   @endcode
+   
+   Note that only one line of that code is evaluated at runtime - the rest
+   is all done at compile-time.
+*/
+template < typename FwdList >
+struct InCaOverloadList
+{
+    // arguable: static const Arity = -1;
+    /**
+       Tries to dispatch argv to one of the bound functions defined
+       in FwdList, based on the number of arguments in argv and
+       the Arity 
+
+       Implements the v8::InvocationCallback interface.
+    */
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        typedef Detail::ArityOverloaderList<FwdList> X;
+        return X::Call( argv );
+    }
+};
 
 #include "invocable_generated.hpp"
 

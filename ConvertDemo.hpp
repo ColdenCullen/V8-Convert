@@ -188,13 +188,17 @@ public:
     {
         CERR << "@"<<(void const *)this<<"->overload0()\n";
     }
-    void overload1(int)
+    void overload1(int a)
     {
-        CERR << "@"<<(void const *)this<<"->overload1()\n";
+        CERR << "@"<<(void const *)this<<"->overload1("<<a<<")\n";
     }
-    void overload2(int,int)
+    void overload2(int a,int b)
     {
-        CERR << "@"<<(void const *)this<<"->overload2()\n";
+        CERR << "@"<<(void const *)this<<"->overload2("<<a<<", "<<b<<")\n";
+    }
+    void overloadN( v8::Arguments const & argv )
+    {
+        CERR << "@"<<(void const *)this<<"->overloadN("<<argv.Length()<<" arg(s))\n";
     }
 
     BoundNative * self() { return this; }

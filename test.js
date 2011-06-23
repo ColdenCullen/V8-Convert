@@ -83,6 +83,11 @@ function test1()
     f.nativeParam(f);
     f.runGC();
 
+    f.overloaded();
+    f.overloaded(1);
+    f.overloaded(2,3);
+    //assertThrows( function() { f.overloaded(1,2,3); } );
+    f.overloaded(1,2,3);
     // We set up f.publicIntRO to throw on write.
     assertThrows( function(){ f.publicIntRO = 1;} );
 
