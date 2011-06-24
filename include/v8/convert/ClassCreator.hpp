@@ -937,8 +937,8 @@ namespace v8 { namespace convert {
         namespace cv = v8::convert;
         namespace tmp = cv::tmp;
         /**
-           A base class for the Factory_CtorForwarder#
-           family of classes.
+           A base class for ClassCreator_Factory_CtorForwarder.
+           We don't really need this level of indirection, i think.
         */
         template <typename T>
         struct Factory_CtorForwarder_Base
@@ -967,77 +967,33 @@ namespace v8 { namespace convert {
                 }
             }
         };
-
-        /**
-           Internal dispatch routine. CTOR _must_ be a convert::CtorForwardN implementation,
-           where N is 0..N.
-        */
-        template <typename T,typename CTOR>
-        struct CtorFwdDispatch
-        {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Instantiate( v8::Arguments const &  argv )
-            {
-                return CTOR::Ctor( argv );
-            }
-        };
-        /**
-           Internal dispatch end-of-list routine.
-        */
-        template <typename T>
-        struct CtorFwdDispatch<T,tmp::NilType>
-        {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Instantiate( Arguments const &  argv )
-            {
-                return 0;
-            }
-        };
-        /**
-           Internal type to dispatch a v8::Arguments list to one of
-           several a bound native constructors, depending on on the
-           argument count.
-        
-           List MUST be a tmp::TypeList< ... > containing ONLY
-           convert::CtorFowarderXXX implementations, where XXX is an
-           integer value.
-        */
-        template <typename T,typename List>
-        struct CtorFwdDispatchList
-        {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            /**
-               Tries to dispatch Arguments to one of the constructors
-               in the List type, based on the argument count.
-             */
-            static NativeHandle Instantiate( Arguments const &  argv )
-            {
-                typedef typename List::Head CTOR;
-                typedef typename List::Tail Tail;
-                return ( (CTOR::Arity < 0) || (CTOR::Arity == argv.Length()) )
-                    ?  CtorFwdDispatch< T, CTOR >::Instantiate(argv )
-                    : CtorFwdDispatchList<T,Tail>::Instantiate(argv);
-            }
-        };
-        /**
-           End-of-list specialization.
-        */
-        template <typename T>
-        struct CtorFwdDispatchList<T,tmp::NilType>
-        {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            /** Writes an error message to errmsg and returns 0. */
-            static NativeHandle Instantiate( Arguments const &  argv )
-            {
-                cv::StringBuffer msg;
-                msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
-                throw std::range_error(msg.Content().c_str());
-                return 0;
-            }
-        };
     }
 #endif // !DOXYGEN
 
+    /**
+        Can be used as a concrete ClassCreator_Factor<T> 
+        specialization to forward JS ctor calls directly to native 
+        ctors.
+        
+        T must (or is assumed to) be a ClassCreator<T>-wrapped 
+        class. CtorForwarderList must be a tmp::TypeList of 
+        CtorForwarder types.
+        
+        Example:
+        
+        @code
+        typedef CtorFwdTest CFT;
+        typedef cv::CtorForwarder<CFT, CFT *()> C0;
+        typedef cv::CtorForwarder<CFT, CFT *(int)> C1;
+        typedef cv::CtorForwarder<CFT, SomeCFTSubType *(int,int)> C2;
+        typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
+        
+        // Then create Factory specialization based on those:
+        template <>
+        struct ClassCreator_Factory<CFT> : 
+            ClassCreator_Factory_CtorForwarder<CFT, CtorList> {};
+        @endcode
+    */
     template <typename T,typename CtorForwarderList>
     struct ClassCreator_Factory_CtorForwarder : Detail::Factory_CtorForwarder_Base<T>
     {
@@ -1045,7 +1001,8 @@ namespace v8 { namespace convert {
         typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
         {
-            return Detail::CtorFwdDispatchList<T,CtorForwarderList>::Instantiate( argv );
+            typedef CtorForwarderDispatcher<CtorForwarderList> Proxy;
+            return Proxy::Ctor( argv );
         }
         static void Delete( NativeHandle obj )
         {

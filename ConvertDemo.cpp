@@ -242,7 +242,16 @@ namespace v8 { namespace convert {
         CtorFwdTest(int){}
         CtorFwdTest(){}
         CtorFwdTest(int,int){}
+        CtorFwdTest(v8::Arguments const &) {}
+        virtual ~CtorFwdTest() {}
     };
+    
+    struct CtorFwdTestSub : CtorFwdTest
+    {
+        CtorFwdTestSub(){}
+        virtual ~CtorFwdTestSub() {}
+    };
+    
 
     template <>
     struct ClassCreator_Init<BoundNative>
@@ -406,18 +415,27 @@ namespace v8 { namespace convert {
             }
             bind_BoundSubNative(dest);
             CERR << "Finished binding BoundNative.\n";
-
-            if(0)
+            if(0) // just experimenting...
             {
                 typedef CtorFwdTest CFT;
-                typedef cv::CtorForwarder<CFT,0> C0;
-                typedef cv::CtorForwarder<CFT,1> C1;
-                typedef cv::CtorForwarder<CFT,2> C2;
+                typedef cv::CtorForwarder<CFT *()> C0;
+                //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
+                typedef cv::CtorForwarder<CFT * (int)> C1;
+                typedef cv::CtorForwarder<CFT *(int,int)> C2;
+                typedef cv::CtorForwarder<CFT *(v8::Arguments const &)> Cn;
+                assert( Cn::Arity < 0 );
                 typedef CFT * (*CFTCtor)( v8::Arguments const & );
                 CFTCtor ctor;
                 ctor = C0::Ctor;
-                ctor = C1::Ctor<int>;
-                ctor = C2::Ctor<int,int>;
+                ctor = C1::Ctor;
+                ctor = C2::Ctor;
+                //ctor = C0Sub::Ctor;
+                typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
+                //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
+                typedef CtorForwarderDispatcher<CtorList> CDispatch;
+                typedef CtorFwdTest * (*FacT)( Arguments const &  argv );
+                FacT fac;
+                fac = CDispatch::Ctor;
             }
         }
     };

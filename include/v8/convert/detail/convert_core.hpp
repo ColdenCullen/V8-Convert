@@ -27,6 +27,8 @@
 #  define V8_CONVERT_HAS_LONG_LONG 0
 #endif
 #include "TypeList.hpp"
+#include "signature_core.hpp" /* only need for the SignatureTypeList used by the generated code. */
+
 namespace v8 { namespace convert {
 
 
@@ -1394,69 +1396,192 @@ namespace v8 { namespace convert {
         }
     };
 
+
+    namespace Detail {
+        /**
+            Default (unimplemented) CtorForwarderProxy impl. A helper
+            for the CtorForwarder class. All specializations except
+            the 0-arity one are generated from script code.
+        */
+        template <int Arity>
+        struct CtorForwarderProxy
+        {
+            template <typename Sig>
+            static typename SignatureTypeList<Sig>::ReturnType Ctor( v8::Arguments const & );
+        };
+
+        //! Specialization for 0-arity ctors.
+        template <>
+        struct CtorForwarderProxy<0>
+        {
+            template <typename Sig>
+            static typename SignatureTypeList<Sig>::ReturnType Ctor( v8::Arguments const & )
+            {
+                typedef typename SignatureTypeList<Sig>::ReturnType RC;
+                typedef typename TypeInfo<RC>::Type RType;
+                return new RType;
+            }
+        };
+    }
     /**
-       Must be specialized (or partially specialized) to be useful.
-
+       A utility type to help forward v8::Arguments to native 
+       constructors. This type is intended to assist in the creation 
+       of ctor functions for JS-bound C++ classes.
+       
        Requirements:
+       
+       - Sig is "almost" a function-signature-style type, but 
+       because ctors don't have a return value in the conventional 
+       sense, we have to use a tiny workaround. Sig should be passed 
+       in like this from client code:
 
-       - (new T) must be legal, taking a number of arguments equal
-       to the Arity parameter.
+       @code
+       typedef CtorForwarder<T * (argType1, argType2)> CF;
+       @endcode
+
+       - (new T(...)) must be legal, taking a number of 
+       arguments equal to Sig's Arity.
 
        - All arguments to the native ctor must be convertible
        using CastFromJS().
 
-       - CastToJS<T*>() must be legal (i.e. it must return an object
-       or throw).
-
-       This type is intended to assist in the creation of ctor
-       functions for JS-bound C++ classes.
-
-       They are used something like:
-
+        Example:
+       
        @code
-       T * x = 0;
-       if( argv.Length() < 1 ) x = CtorForwarder<T,0>::Ctor(argv);
-       else if( argv.Length() < 3 ) x = CtorForwarder<T,2>::Ctor<int,int>(argv);
-       ...
+       typedef CtorForwarder<MyType *()> CF0;
+       typedef CtorForwarder<MyType *(int)> CF1;
+       typedef CtorForwarder<MyType *(double,int)> CF2;
        @endcode
     */
-    template <typename T, int Arity_>
+    template <typename Sig>
     struct CtorForwarder
     {
-        enum { Arity = Arity_ };
-        typedef typename TypeInfo<T>::Type Type;
-        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        typedef SignatureTypeList<Sig> STL;
+        typedef typename STL::ReturnType Type_;
+        enum { Arity = STL::Arity };
+        typedef typename TypeInfo<Type_>::Type Type;
+        typedef typename TypeInfo<Type_>::NativeHandle NativeHandle;
+        
         /**
-           Must be specialized.
-
-           For all specializations, the caller owns the returned
-           object.
-
-           On error the function may trigger a v8 exception
-           or if it likes.
+            If argv.Length() is at least Arity or Arity is less than 0,
+            then the constructor is called with Arity arguments
+            (if it >=0) or with 1 v8::Arguments parameter (for Arity<0).
+            
+            Returns the result of (new Type(...)).
+            
+            May propagate native exceptions.
         */
-        static NativeHandle Ctor( v8::Arguments const & );
-    };
-
-    /**
-       Partial specialization for default constructors.
-     */
-    template <typename T>
-    struct CtorForwarder<T,0>
-    {
-        enum { Arity = 0 };
-        typedef typename TypeInfo<T>::Type Type;
-        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-        /**
-           Returns (new Type). The caller owns the returned object.
-        */
-        static NativeHandle Ctor( v8::Arguments const & )
+        static NativeHandle Ctor( v8::Arguments const & argv )
         {
-            return new Type;
+            typedef Detail::CtorForwarderProxy<Arity> Proxy;
+            return Proxy::template Ctor<Sig>( argv );
         }
     };
-#include "convert_generated.hpp"
+
+#if !defined(DOXYGEN)
+    namespace Detail
+    {
+        namespace cv = v8::convert;
+        namespace tmp = cv::tmp;
+
+        /**
+           Internal dispatch routine. CTOR _must_ be a CtorForwarder implementation,
+           where N is 0..N.
+        */
+        template <typename T,typename CTOR>
+        struct CtorFwdDispatch
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            static NativeHandle Ctor( v8::Arguments const &  argv )
+            {
+                return CTOR::Ctor( argv );
+            }
+        };
+        /**
+           Internal dispatch end-of-list routine.
+        */
+        template <typename T>
+        struct CtorFwdDispatch<T,tmp::NilType>
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            static NativeHandle Ctor( Arguments const &  argv )
+            {
+                return 0;
+            }
+        };
+        /**
+           Internal type to dispatch a v8::Arguments list to one of
+           several a bound native constructors, depending on on the
+           argument count.
+        
+           List MUST be a tmp::TypeList< ... > containing ONLY
+           CtorFowarder types (or compatible).
+        */
+        template <typename T,typename List>
+        struct CtorFwdDispatchList
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            /**
+               Tries to dispatch Arguments to one of the constructors
+               in the List type, based on the argument count.
+             */
+            static NativeHandle Ctor( Arguments const &  argv )
+            {
+                typedef typename List::Head CTOR;
+                typedef typename List::Tail Tail;
+                return ( (CTOR::Arity < 0) || (CTOR::Arity == argv.Length()) )
+                    ?  CtorFwdDispatch< T, CTOR >::Ctor(argv )
+                    : CtorFwdDispatchList<T,Tail>::Ctor(argv);
+            }
+        };
+        /**
+           End-of-list specialization.
+        */
+        template <typename T>
+        struct CtorFwdDispatchList<T,tmp::NilType>
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            /** Writes an error message to errmsg and returns 0. */
+            static NativeHandle Ctor( Arguments const &  argv )
+            {
+                cv::StringBuffer msg;
+                msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
+                throw std::range_error(msg.Content().c_str());
+                return 0;
+            }
+        };
+    }
     
+    /**
+        Given a tmp::TypeList of CtorForwarder instances, this type
+        can dispatch v8::Arguments to the ctor with a matching arity.
+        
+        CtorList must be a tmp::TypeList containing CtorForwarder
+        types (or compatible).
+        
+        To figure out what base native type we're working with,
+        the Type typedef of the first CtorForwarder in the list
+        is used.
+    */
+    template <typename CtorList>
+    struct CtorForwarderDispatcher
+    {
+        typedef typename tmp::TypeAt<CtorList,0>::Type FirstCtor;
+        typedef typename FirstCtor::Type Type;
+        typedef typename TypeInfo<Type>::NativeHandle NativeHandle;
+        static NativeHandle Ctor( v8::Arguments const & argv )
+        {
+            typedef Detail::CtorFwdDispatchList<Type, CtorList> Proxy;
+            return Proxy::Ctor( argv );
+        }
+    };
+#endif // !DOXYGEN
+
 } } // namespaces
+
+
+namespace v8 { namespace convert {
+#include "convert_generated.hpp"
+}}
 
 #endif /* CODE_GOOGLE_COM_P_V8_CONVERT_CORE_HPP_INCLUDED */

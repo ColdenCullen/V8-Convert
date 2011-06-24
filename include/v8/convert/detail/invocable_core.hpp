@@ -17,7 +17,7 @@ conversion.
 #include "TypeList.hpp"
 
 //! Refactoring-related macro. Will go away.
-#define V8_CONVERT_CATCH_BOUND_FUNCS 0
+#define V8_CONVERT_CATCH_BOUND_FUNCS 1
 namespace v8 { namespace convert {
 
 

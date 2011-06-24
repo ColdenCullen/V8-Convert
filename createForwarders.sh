@@ -55,7 +55,7 @@ function makeLists()
 	    aTDecl="${aTDecl}, "
 	    aTParam="${aTParam}, "
 	    castCalls="${castCalls}, "
-            callArgs="${callArgs}, "
+        callArgs="${callArgs}, "
 	}
     done
     #tmplsig="${tmplsig} RV (WrappedType::*Func)(${aTParam})";
@@ -75,46 +75,61 @@ function makeCtorForwarder()
     local err_exception="CtorForwarder<T,${count}>::Ctor() Native ctor threw an unknown native exception type!"
 
     cat <<EOF
-/** Specialization for ${count} arguments. */
-template <typename T>
-struct CtorForwarder<T,${count}>
+namespace Detail {
+template <>
+struct CtorForwarderProxy<${count}>
 {
     enum { Arity = ${count} };
-    typedef typename TypeInfo<T>::Type Type;
-    typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-    template < ${aTDecl} >
-    static NativeHandle Ctor( ::v8::Arguments const & argv )
+    template <typename Sig>
+    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
-        ${castOps}
-	if( argv.Length() < Arity )
+        if( argv.Length() < Arity )
         {
             throw std::range_error("${err_too_few_args}");
         }
         else
         {
+            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename TypeInfo<Type_>::Type Type;
+            ${sigTypeDecls}
+            ${castTypedefs}
+            ${castInits}
+            return new Type( ${castCalls} );
+        }
+    }
+};
+}
+EOF
+
+: <<EOF
+/** Specialization for ${count} arguments. */
+template <typename Sig>
+struct CtorForwarderProxy<Sig>
+{
+    typedef SignatureTypeList<Sig> STL;
+    typedef typename STL::ReturnType Type_;
+    enum { Arity = STL::Arity };
+    //enum { Arity = ${count} };
+    typedef typename TypeInfo<Type_>::Type Type;
+    typedef typename TypeInfo<Type_>::NativeHandle NativeHandle;
+    static NativeHandle Ctor( ::v8::Arguments const & argv )
+    {
+        if( argv.Length() < Arity )
+        {
+            throw std::range_error("${err_too_few_args}");
+        }
+        else
+        {
+            ${sigTypeDecls}
+            ${castTypedefs}
+            ${castInits}
             return new Type( ${castCalls} );
         }
     }
 
 };
-EOF
-: <<EOF
-/** A CtorForwarder<T,${count}> workalike which is 
-templatized on the ctor paramter types. */
-template <typename T, ${aTDecl} >
-struct CtorForwarder${count}
-{
-    static const int Arity = ${count};
-    typedef typename TypeInfo<T>::Type Type;
-    typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-    static NativeHandle Ctor( ::v8::Arguments const & argv )
-    {
-        typedef CtorForwarder<T,${count}> CT;
-        return CT::template Ctor< ${aTParam} >( argv );
-    }
-};
-EOF
 
+EOF
 } # makeCtorForwarder
 
 ########################################################################

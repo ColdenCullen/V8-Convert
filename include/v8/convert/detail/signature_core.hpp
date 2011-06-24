@@ -255,40 +255,29 @@ namespace Detail
 */
 template <typename Sig> struct SignatureTypeList;
 
-#if 0
 /**
-   Metatemplate to get the type of the function argument at the given
-   (0-based) position. Signature must be one of FunctionSignature,
-   MethodSignature, or ConstMethodSignature (or
-   compatible). Specializations of this type will have the following
-   members:
-
-   @code
-   typedef Signature::ArgType### Type; // ###==Pos
-   typedef Signature::FunctionType FunctionType;
-   (const) unsigned_numeric_type N = Pos;
-   @endcode
-
-   The ArgType### entry does not exist in the 0-arity variants of the
-   classes.
-
-   If my brain was bigger we'd use a TypeList instead of
-   sequentially-numbered type names.
+    Specialization to give "InvacationCallback-like" functions
+    an Arity value of less than 0.
 */
-template <typename Signature, unsigned int Pos>
-struct SignatureArgAt;
+template <typename RV>
+struct SignatureTypeList<RV (v8::Arguments const &)>
+{
+    typedef RV ReturnType;
+    enum { Arity = -1 };
+};
 
+template <typename RV>
+struct SignatureTypeList<RV (*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
+{};
 
-#define ARGAT(N) template <typename Signature> struct SignatureArgAt<Signature,N> : \
-    Detail::SignatureArgAt_Base<Signature,N> { typedef typename Signature::ArgType##N Type; }
-ARGAT(0); ARGAT(1);
-ARGAT(2); ARGAT(3);
-ARGAT(4); ARGAT(5);
-ARGAT(6); ARGAT(7);
-ARGAT(8); ARGAT(9);
-ARGAT(10); ARGAT(11);
-#undef ARGAT
-#endif
+template <typename T, typename RV>
+struct SignatureTypeList<RV (T::*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
+{};
+
+template <typename T, typename RV>
+struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureTypeList<RV (v8::Arguments const &)>
+{};
+
 
 #include "signature_generated.hpp"
 }} // namespaces
