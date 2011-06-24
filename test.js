@@ -116,7 +116,7 @@ function test1()
     assertThrows( function(){ f.staticStringRO = 'bye';} );
 
     asserteq(42, f.answer);
-    assert( /BoundNative/.exec(f.toString()), 'toString() seems to work: '+f);
+    assert( /BoundNative/.test(f.toString()), 'toString() seems to work: '+f);
 
     asserteq( f.theInt, f.theIntNC );
     asserteq( ++f.theInt, f.theIntNC );
@@ -149,7 +149,7 @@ function test2()
     var s = new BoundSubNative();
     assert(s instanceof BoundNative, "BoundSubNative is-a BoundNative");
     print('s='+s);
-    assert( /BoundSubNative/.exec(s.toString()), 'toString() seems to work: '+s);
+    assert( /BoundSubNative/.test(s.toString()), 'toString() seems to work: '+s);
     asserteq(true, s.destroy(), 's.destroy()');
 }
 

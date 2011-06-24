@@ -265,7 +265,8 @@ namespace v8 { namespace convert {
             try
             {
                 typedef FunctionSignature<Sig> FT;
-                (*Func)( CastFromJS<typename FT::ArgType0>( value ) );
+                typedef SignatureTypeList<Sig> STL;
+                (*Func)( CastFromJS<typename tmp::TypeAt<STL,0>::Type>( value ) );
             }
             catch( std::exception const & ex )
             {

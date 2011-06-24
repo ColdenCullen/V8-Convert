@@ -28,6 +28,7 @@ ValueHandle sampleCallback( v8::Arguments const & argv )
 }
 
 namespace v8 { namespace convert {
+    // A helper to support converting from BoundNative to its JS handle.
     typedef NativeToJSMap<BoundNative> BMap;
     typedef NativeToJSMap<BoundSubNative> BSubMap;
     BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
@@ -142,7 +143,7 @@ ValueHandle BoundNative_toString( v8::Arguments const & argv )
       
     */
     BoundNative * f = cv::CastFromJS<BoundNative>(argv.This());
-    return cv::StringBuffer() << "[BoundNative Object@"<<f<<"]";
+    return cv::StringBuffer() << "[object BoundNative@"<<f<<"]";
 }
 
 v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest );
@@ -235,6 +236,16 @@ v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
 
 namespace v8 { namespace convert {
 
+
+#if 0
+        template <typename Sig>
+        struct FuncSigTypeList;    
+        typedef FuncSigTypeList ThisType;
+        template <unsigned char Pos>
+        struct TypeAt : tmp::TypeAt<ThisType,Pos> {};
+#endif
+
+
     template <>
     struct ClassCreator_Init<BoundNative>
     {
@@ -261,17 +272,28 @@ namespace v8 { namespace convert {
                 cv::MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
             > OverloadList;
             typedef cv::InCaOverloadList< OverloadList > OverloadInCas;
-#if 0
-            typedef FunctionPtr<InvocationCallback,ICListEnd> FPLE;
-            CERR << "Arity == "<< FPLE::Arity << '\n';
-            assert( -2 == FPLE::Arity );
-            typedef ICForwardByArity<
-            FunctionPtr< v8::InvocationCallback, MethodToInvocationCallback<BoundNative, void(), &BoundNative::overload0> >,
-                FunctionPtr< v8::InvocationCallback, MethodToInvocationCallback<BoundNative, void(int), &BoundNative::overload1> >,
-                FunctionPtr< v8::InvocationCallback, MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
-                > ICOverloads;
-            cc( "overloaded", ICOverloads::Call );
-#endif
+
+            if(1) // just an experiment
+            {
+                typedef SignatureTypeList<void (int,double)> AL2;
+                assert( 2 == AL2::Arity );
+                assert( 2 == tmp::LengthOf<AL2>::Value );
+                assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
+                assert( (tmp::SameType< int, tmp::TypeAt<AL2,0>::Type >::Value) );
+                assert( (tmp::SameType< double, tmp::TypeAt<AL2,1>::Type >::Value) );
+                //assert( (tmp::SameType< double, AL2::TypeAt<1>::Type >::Value) );
+                
+                typedef cv::FunctionPtr< int(char const *), ::puts> FPPuts;
+                FPPuts::Function("Hi, world.");
+                typedef SignatureTypeList< FPPuts::FunctionType > ALPuts;
+                assert( 1 == ALPuts::Arity );
+                
+                typedef SignatureTypeList< int (BoundNative::*)(char const *) const > BNPutsC;
+                typedef SignatureTypeList< int (BoundNative::*)(char const *) > BNPuts;
+                assert( 1 == tmp::LengthOf<BNPutsC>::Value );
+                assert( 1 == tmp::LengthOf<BNPuts>::Value );
+                assert( 0 != (tmp::SameType< char const *, tmp::TypeAt<BNPuts,0>::Type >::Value) );
+            }
             
             ////////////////////////////////////////////////////////////
             // Bind some member functions...
@@ -408,14 +430,15 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 
     cc
         ("subFunc",
-         cv::ConstMethodToInvocationCallback<BoundSubNative,void (),&BoundSubNative::subFunc>)
+         cv::ConstMethodToInCa<BoundSubNative,void (),&BoundSubNative::subFunc>::Call)
         ("toString",
-         cv::ConstMethodToInvocationCallback<BoundSubNative,ValueHandle (),&BoundSubNative::toString>)
+         cv::ConstMethodToInCa<BoundSubNative,ValueHandle (),&BoundSubNative::toString>::Call)
         ;
 
     typedef cv::ClassCreator<BoundNative> CCFoo;
-    cc.CtorTemplate()->Inherit( CCFoo::Instance().CtorTemplate() );
-    
+    //cc.CtorTemplate()->Inherit( CCFoo::Instance().CtorTemplate() );
+    cc.Inherit<BoundNative>();
+
     cc.AddClassTo("BoundSubNative",dest);
     return dest;
 }

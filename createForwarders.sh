@@ -45,7 +45,8 @@ function makeLists()
 	aTDecl="${aTDecl} typename ${AT}"
 	aTParam="${aTParam} ${AT}"
 	callArgs="${callArgs}${AT}"
-        sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
+        #sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
+        sigTypeDecls="${sigTypeDecls}typedef typename tmp::TypeAt< SignatureTypeList<Sig>, ${at}>::Type ${AT};"
 	#castCalls="${castCalls} CastFromJS< ${AT} >(argv[${at}])"
         castTypedefs="${castTypedefs} typedef ArgCaster<${AT}> AC${at};"
         castInits="${castInits} AC${at} ac${at};"
@@ -126,7 +127,7 @@ struct SignatureBase< RV (${aTParam}), ${count} > : SignatureBase< RV, ${count} 
 EOF
     local i=0
     while [ $i -lt $count ]; do
-        echo -e "\ttypedef A${i} ArgType${i};"
+        #echo -e "\ttypedef A${i} ArgType${i};"
         i=$((i + 1))
     done
     
@@ -154,7 +155,7 @@ struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV, ${count} >
 EOF
     local i=0
     while [ $i -lt $count ]; do
-        echo -e "\ttypedef A${i} ArgType${i};"
+        #echo -e "\ttypedef A${i} ArgType${i};"
         i=$((i + 1))
     done
     
@@ -183,7 +184,7 @@ struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV, ${count} >
 EOF
     local i=0
     while [ $i -lt $count ]; do
-        echo -e "\ttypedef A${i} ArgType${i};"
+        #echo -e "\ttypedef A${i} ArgType${i};"
         i=$((i + 1))
     done
     
@@ -212,7 +213,7 @@ struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV, ${count} 
 EOF
     local i=0
     while [ $i -lt $count ]; do
-        echo -e "\ttypedef A${i} ArgType${i};"
+        #echo -e "\ttypedef A${i} ArgType${i};"
         i=$((i + 1))
     done
     

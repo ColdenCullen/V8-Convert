@@ -79,15 +79,15 @@ ValueHandle test1_callback( v8::Arguments const & argv )
     }
 
     typedef cv::FunctionPtr< int (char const *), ::puts > PUTS;
-    PUTS::FunctionType putstr = PUTS::GetFunction();
+    PUTS::FunctionType putstr = PUTS::Function;
     putstr("roundabout use of puts()");
     
     typedef cv::FunctionPtr< void (), doNothing > DoNothingFP;
-    DoNothingFP::GetFunction()();
+    DoNothingFP::Function();
     typedef cv::FunctionPtr< void (), doNothing > DoNothingFP2;
-    DoNothingFP2::GetFunction()();
+    DoNothingFP2::Function();
     typedef cv::FunctionPtr< int (int), doSomething > DoSomething;
-    DoSomething::GetFunction()(13);
+    DoSomething::Function(13);
 
     
     typedef cv::MethodPtr< BoundNative, void (void), &BoundNative::doFoo > DoFoo;
@@ -215,7 +215,7 @@ static int v8_main(int argc, char const * const * argv)
     cv::Shell shell(NULL,argc,argv);
     //v8::Handle<v8::Object> global = shell.Global();
     shell.SetupDefaultBindings()
-        ("gc", cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+        ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
     ;
     try
     {

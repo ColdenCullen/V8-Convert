@@ -154,9 +154,9 @@ namespace v8 { namespace convert { namespace tmp {
 
     /** @struct TypeAt
         
-       A template metafunction to type at a specific offset in a TypeList.
-       ListT must be a TypeList, or otherwise conform to the TypeChain
-       interface.
+       A template metafunction to get the type at a specific offset 
+       in a TypeList. ListT must be a TypeList, or otherwise conform 
+       to the TypeChain interface.       
     */
     template <typename ListT, unsigned char Index>
     struct TypeAt

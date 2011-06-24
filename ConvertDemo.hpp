@@ -233,7 +233,7 @@ struct BoundSubNative : public BoundNative
      */
     v8::Handle<v8::Value> toString() const
     {
-        return v8::convert::StringBuffer() << "[BoundSubNative Object@"<<(void const *)this<<"]";
+        return v8::convert::StringBuffer() << "[object BoundSubNative@"<<(void const *)this<<"]";
     }
 };
 

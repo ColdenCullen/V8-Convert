@@ -4,7 +4,6 @@ template <typename RV,  typename A0 >
 struct SignatureBase< RV ( A0), 1 > : SignatureBase< RV, 1 >
 {
     typedef RV (*FunctionType)( A0);
-	typedef A0 ArgType0;
 };
 
 template <typename RV,  typename A0 >
@@ -26,7 +25,7 @@ struct FunctionToInCa< 1, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 1 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             return CastToJS( Func( ac0.ToNative(argv[0]) ) );
@@ -45,7 +44,7 @@ struct FunctionToInCaVoid< 1, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 1 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             Func( ac0.ToNative(argv[0]));
@@ -68,7 +67,7 @@ struct MethodToInCa<T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 1 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]) ) );
@@ -95,7 +94,7 @@ struct MethodToInCaVoid< T, 1, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 1 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             (self.*Func)(  ac0.ToNative(argv[0]) );
@@ -125,7 +124,7 @@ struct ConstMethodToInCa<T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 1 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]) ) );
@@ -152,7 +151,7 @@ struct ConstMethodToInCaVoid< T, 1, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 1 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             (self.*Func)(  ac0.ToNative(argv[0]) );
@@ -176,7 +175,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]) ) );
@@ -190,7 +189,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             (*func)(  ac0.ToNative(argv[0]) );
@@ -207,7 +206,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]) ) );
@@ -229,7 +228,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             (self.*func)(  ac0.ToNative(argv[0]) );
@@ -253,7 +252,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]) ) );
@@ -275,7 +274,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
              typedef ArgCaster<A0> AC0;
              AC0 ac0;
             (self.*func)(  ac0.ToNative(argv[0]) );
@@ -294,8 +293,6 @@ template <typename RV,  typename A0,  typename A1 >
 struct SignatureBase< RV ( A0,  A1), 2 > : SignatureBase< RV, 2 >
 {
     typedef RV (*FunctionType)( A0,  A1);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
 };
 
 template <typename RV,  typename A0,  typename A1 >
@@ -317,7 +314,7 @@ struct FunctionToInCa< 2, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 2 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) ) );
@@ -336,7 +333,7 @@ struct FunctionToInCaVoid< 2, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 2 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]));
@@ -359,7 +356,7 @@ struct MethodToInCa<T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 2 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) ) );
@@ -386,7 +383,7 @@ struct MethodToInCaVoid< T, 2, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 2 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) );
@@ -416,7 +413,7 @@ struct ConstMethodToInCa<T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 2 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) ) );
@@ -443,7 +440,7 @@ struct ConstMethodToInCaVoid< T, 2, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 2 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) );
@@ -467,7 +464,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) ) );
@@ -481,7 +478,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) );
@@ -498,7 +495,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) ) );
@@ -520,7 +517,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) );
@@ -544,7 +541,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) ) );
@@ -566,7 +563,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
              AC0 ac0; AC1 ac1;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) );
@@ -585,9 +582,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2 >
 struct SignatureBase< RV ( A0,  A1,  A2), 3 > : SignatureBase< RV, 3 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2 >
@@ -609,7 +603,7 @@ struct FunctionToInCa< 3, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 3 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) ) );
@@ -628,7 +622,7 @@ struct FunctionToInCaVoid< 3, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 3 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]));
@@ -651,7 +645,7 @@ struct MethodToInCa<T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 3 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) ) );
@@ -678,7 +672,7 @@ struct MethodToInCaVoid< T, 3, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 3 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) );
@@ -708,7 +702,7 @@ struct ConstMethodToInCa<T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 3 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) ) );
@@ -735,7 +729,7 @@ struct ConstMethodToInCaVoid< T, 3, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 3 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) );
@@ -759,7 +753,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) ) );
@@ -773,7 +767,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) );
@@ -790,7 +784,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) ) );
@@ -812,7 +806,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) );
@@ -836,7 +830,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) ) );
@@ -858,7 +852,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
              AC0 ac0; AC1 ac1; AC2 ac2;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) );
@@ -877,10 +871,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
 struct SignatureBase< RV ( A0,  A1,  A2,  A3), 4 > : SignatureBase< RV, 4 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
@@ -902,7 +892,7 @@ struct FunctionToInCa< 4, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 4 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) ) );
@@ -921,7 +911,7 @@ struct FunctionToInCaVoid< 4, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 4 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]));
@@ -944,7 +934,7 @@ struct MethodToInCa<T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 4 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) ) );
@@ -971,7 +961,7 @@ struct MethodToInCaVoid< T, 4, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 4 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) );
@@ -1001,7 +991,7 @@ struct ConstMethodToInCa<T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 4 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) ) );
@@ -1028,7 +1018,7 @@ struct ConstMethodToInCaVoid< T, 4, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 4 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) );
@@ -1052,7 +1042,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) ) );
@@ -1066,7 +1056,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) );
@@ -1083,7 +1073,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) ) );
@@ -1105,7 +1095,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) );
@@ -1129,7 +1119,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) ) );
@@ -1151,7 +1141,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) );
@@ -1170,11 +1160,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  
 struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4), 5 > : SignatureBase< RV, 5 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
-	typedef A4 ArgType4;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
@@ -1196,7 +1181,7 @@ struct FunctionToInCa< 5, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 5 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) ) );
@@ -1215,7 +1200,7 @@ struct FunctionToInCaVoid< 5, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 5 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]));
@@ -1238,7 +1223,7 @@ struct MethodToInCa<T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 5 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) ) );
@@ -1265,7 +1250,7 @@ struct MethodToInCaVoid< T, 5, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 5 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) );
@@ -1295,7 +1280,7 @@ struct ConstMethodToInCa<T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 5 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) ) );
@@ -1322,7 +1307,7 @@ struct ConstMethodToInCaVoid< T, 5, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 5 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) );
@@ -1346,7 +1331,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) ) );
@@ -1360,7 +1345,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) );
@@ -1377,7 +1362,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) ) );
@@ -1399,7 +1384,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) );
@@ -1423,7 +1408,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) ) );
@@ -1445,7 +1430,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) );
@@ -1464,12 +1449,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  
 struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5), 6 > : SignatureBase< RV, 6 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
-	typedef A4 ArgType4;
-	typedef A5 ArgType5;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
@@ -1491,7 +1470,7 @@ struct FunctionToInCa< 6, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 6 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) ) );
@@ -1510,7 +1489,7 @@ struct FunctionToInCaVoid< 6, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 6 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]));
@@ -1533,7 +1512,7 @@ struct MethodToInCa<T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 6 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) ) );
@@ -1560,7 +1539,7 @@ struct MethodToInCaVoid< T, 6, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 6 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) );
@@ -1590,7 +1569,7 @@ struct ConstMethodToInCa<T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 6 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) ) );
@@ -1617,7 +1596,7 @@ struct ConstMethodToInCaVoid< T, 6, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 6 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) );
@@ -1641,7 +1620,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) ) );
@@ -1655,7 +1634,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) );
@@ -1672,7 +1651,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) ) );
@@ -1694,7 +1673,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) );
@@ -1718,7 +1697,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) ) );
@@ -1740,7 +1719,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) );
@@ -1759,13 +1738,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  
 struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6), 7 > : SignatureBase< RV, 7 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
-	typedef A4 ArgType4;
-	typedef A5 ArgType5;
-	typedef A6 ArgType6;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
@@ -1787,7 +1759,7 @@ struct FunctionToInCa< 7, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 7 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) ) );
@@ -1806,7 +1778,7 @@ struct FunctionToInCaVoid< 7, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 7 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]));
@@ -1829,7 +1801,7 @@ struct MethodToInCa<T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 7 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) ) );
@@ -1856,7 +1828,7 @@ struct MethodToInCaVoid< T, 7, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 7 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) );
@@ -1886,7 +1858,7 @@ struct ConstMethodToInCa<T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 7 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) ) );
@@ -1913,7 +1885,7 @@ struct ConstMethodToInCaVoid< T, 7, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 7 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) );
@@ -1937,7 +1909,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) ) );
@@ -1951,7 +1923,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) );
@@ -1968,7 +1940,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) ) );
@@ -1990,7 +1962,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) );
@@ -2014,7 +1986,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) ) );
@@ -2036,7 +2008,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) );
@@ -2055,14 +2027,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  
 struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7), 8 > : SignatureBase< RV, 8 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
-	typedef A4 ArgType4;
-	typedef A5 ArgType5;
-	typedef A6 ArgType6;
-	typedef A7 ArgType7;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
@@ -2084,7 +2048,7 @@ struct FunctionToInCa< 8, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 8 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) ) );
@@ -2103,7 +2067,7 @@ struct FunctionToInCaVoid< 8, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 8 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]));
@@ -2126,7 +2090,7 @@ struct MethodToInCa<T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 8 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) ) );
@@ -2153,7 +2117,7 @@ struct MethodToInCaVoid< T, 8, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 8 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) );
@@ -2183,7 +2147,7 @@ struct ConstMethodToInCa<T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 8 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) ) );
@@ -2210,7 +2174,7 @@ struct ConstMethodToInCaVoid< T, 8, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 8 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) );
@@ -2234,7 +2198,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) ) );
@@ -2248,7 +2212,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) );
@@ -2265,7 +2229,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) ) );
@@ -2287,7 +2251,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) );
@@ -2311,7 +2275,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) ) );
@@ -2333,7 +2297,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) );
@@ -2352,15 +2316,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  
 struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8), 9 > : SignatureBase< RV, 9 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
-	typedef A4 ArgType4;
-	typedef A5 ArgType5;
-	typedef A6 ArgType6;
-	typedef A7 ArgType7;
-	typedef A8 ArgType8;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
@@ -2382,7 +2337,7 @@ struct FunctionToInCa< 9, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 9 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) ) );
@@ -2401,7 +2356,7 @@ struct FunctionToInCaVoid< 9, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 9 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]));
@@ -2424,7 +2379,7 @@ struct MethodToInCa<T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 9 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) ) );
@@ -2451,7 +2406,7 @@ struct MethodToInCaVoid< T, 9, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 9 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) );
@@ -2481,7 +2436,7 @@ struct ConstMethodToInCa<T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 9 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) ) );
@@ -2508,7 +2463,7 @@ struct ConstMethodToInCaVoid< T, 9, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 9 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) );
@@ -2532,7 +2487,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) ) );
@@ -2546,7 +2501,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) );
@@ -2563,7 +2518,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) ) );
@@ -2585,7 +2540,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) );
@@ -2609,7 +2564,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) ) );
@@ -2631,7 +2586,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) );
@@ -2650,16 +2605,6 @@ template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  
 struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9), 10 > : SignatureBase< RV, 10 >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9);
-	typedef A0 ArgType0;
-	typedef A1 ArgType1;
-	typedef A2 ArgType2;
-	typedef A3 ArgType3;
-	typedef A4 ArgType4;
-	typedef A5 ArgType5;
-	typedef A6 ArgType6;
-	typedef A7 ArgType7;
-	typedef A8 ArgType8;
-	typedef A9 ArgType9;
 };
 
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
@@ -2681,7 +2626,7 @@ struct FunctionToInCa< 10, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 10 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             return CastToJS( Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) ) );
@@ -2700,7 +2645,7 @@ struct FunctionToInCaVoid< 10, Sig, Func > : FunctionPtr< Sig, Func >
             {
                 return JS_THROW("This function requires at least 10 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             Func( ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]));
@@ -2723,7 +2668,7 @@ struct MethodToInCa<T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 10 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) ) );
@@ -2750,7 +2695,7 @@ struct MethodToInCaVoid< T, 10, Sig, Func > : MethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 10 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) );
@@ -2780,7 +2725,7 @@ struct ConstMethodToInCa<T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func >
             {
                 return JS_THROW("This function requires at least 10 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             return CastToJS( (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) ) );
@@ -2807,7 +2752,7 @@ struct ConstMethodToInCaVoid< T, 10, Sig, Func > : ConstMethodPtr< T, Sig, Func 
             {
                 return JS_THROW("This function requires at least 10 arguments!");
             }
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             (self.*Func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) );
@@ -2831,7 +2776,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             return CastToJS( (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) ) );
@@ -2845,7 +2790,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             (*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) );
@@ -2862,7 +2807,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) ) );
@@ -2884,7 +2829,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) );
@@ -2908,7 +2853,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             return CastToJS( (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) ) );
@@ -2930,7 +2875,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename SignatureType::ArgType0 A0;typedef typename SignatureType::ArgType1 A1;typedef typename SignatureType::ArgType2 A2;typedef typename SignatureType::ArgType3 A3;typedef typename SignatureType::ArgType4 A4;typedef typename SignatureType::ArgType5 A5;typedef typename SignatureType::ArgType6 A6;typedef typename SignatureType::ArgType7 A7;typedef typename SignatureType::ArgType8 A8;typedef typename SignatureType::ArgType9 A9;
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
              typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
              AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
             (self.*func)(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) );
