@@ -1605,25 +1605,85 @@ struct InCaOverloadList
 namespace Detail {
     namespace cv = v8::convert;
 
-    template <int IsConst, typename T, typename Sig>
-    struct ConstOrNotSig : cv::ConstMethodSignature<T,Sig>
-    {};
+    template <bool IsConst, typename T, typename Sig>
+    struct ConstOrNotSig;
+    
     template <typename T, typename Sig>
-    struct ConstOrNotSig<0,T,Sig> : cv::MethodSignature<T,Sig>
+    struct MethodOrFunctionSig : cv::MethodSignature<T,Sig> {};
+    template <typename Sig>
+    struct MethodOrFunctionSig<void,Sig> : cv::FunctionSignature<Sig> {};
+    
+    template <typename T, typename Sig>
+    struct ConstOrNotSig<true,T,Sig> : cv::ConstMethodSignature<T,Sig>
     {};
     
-    template <int IsConst, typename T, typename Sig, typename cv::ConstMethodSignature<T,Sig>::FunctionType Func>
-    struct ConstOrNotMethodToInCa : cv::ConstMethodToInCa<T,Sig,Func>
+    template <typename T, typename Sig>
+    struct ConstOrNotSig<false,T,Sig> : MethodOrFunctionSig<T,Sig>
+    {
+    };
+    
+    template <bool IsConst, typename T, typename Sig, typename ConstOrNotSig<IsConst,T,Sig>::FunctionType Func>
+    struct ConstOrNotMethodToInCa;
+    
+    template <typename T, typename Sig, typename cv::ConstMethodSignature<T,Sig>::FunctionType Func>
+    struct ConstOrNotMethodToInCa<true,T,Sig,Func> : cv::ConstMethodToInCa<T,Sig,Func>
     {};
     
     template <typename T, typename Sig, typename cv::MethodSignature<T,Sig>::FunctionType Func>
-    struct ConstOrNotMethodToInCa<0,T,Sig,Func> : cv::MethodToInCa<T,Sig,Func>
+    struct ConstOrNotMethodToInCa<false,T,Sig,Func> : cv::MethodToInCa<T,Sig,Func>
     {};
 }
 
-template <typename T, typename Sig, typename Detail::ConstOrNotSig<tmp::IsConst<Sig>::Value,T,Sig>::FunctionType Func>
-struct MethodInCa : Detail::ConstOrNotMethodToInCa<tmp::IsConst<Sig>::Value,T,Sig,Func>
-{};
+/**
+    A wrapper for MethodToInCa, ConstMethodToInCa, and 
+    FunctionToInCa, which determines which one of those to use based 
+    on the type of T and the constness of the method signature Sig.
+
+    For non-member functions, T must be void.
+
+    Examples:
+
+    @code
+    typedef ToInCa<MyT, int (int), &MyT::nonConstFunc> NonConstMethod;
+    typedef ToInCa<MyT, void (int) const, &MyT::constFunc> ConstMethod;
+    typedef ToInCa<void, int (char const *), ::puts> Func;
+    
+    v8::InvocationCallback cb;
+    cb = NonConstMethod::Call;
+    cb = ConstMethod::Call;
+    cb = Func::Call;
+    @endcode
+
+    Note the extra 'const' qualification for const method. This is
+    unfortunately neccessary (or at least i haven't found a way around
+    it yet). Also note that 'void' 1st parameter for non-member
+    functions (another minor hack).
+
+    It is unknown whether or not this template will work in Microsoft
+    compilers which reportedly have trouble differentiating 
+    constness in templates. The whole reason why (Const)MethodToInCa 
+    is split into const- and non-const forms is to be able to 
+    work around that shortcoming :/.
+
+    Maintenance reminder: we need the extra level of indirection
+    (the classes in the Detail namespace) to avoid instantiating
+    both ConstMethodToInCa and MethodToInCa with the given
+    singature/function combination (which won't compile).
+*/
+template <typename T, typename Sig, typename Detail::ConstOrNotSig<SignatureTypeList<Sig>::IsConst,T,Sig>::FunctionType Func>
+struct ToInCa : Detail::ConstOrNotMethodToInCa<SignatureTypeList<Sig>::IsConst,T,Sig,Func>
+{
+};
+/**
+    Specialization for FunctionToInCa behaviour.
+*/
+template <typename Sig,
+    typename FunctionSignature<Sig>::FunctionType Func
+    //typename Detail::ConstOrNotSig<SignatureTypeList<Sig>::IsConst,void,Sig>::FunctionType Func
+    >
+struct ToInCa<void,Sig,Func> : FunctionToInCa<Sig,Func>
+{
+};
 #endif
 
 }} // namespaces

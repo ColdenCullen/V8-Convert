@@ -22,11 +22,16 @@ template <typename RV>
 struct SignatureTypeList< RV () > : tmp::TypeList<>
 {
     typedef RV ReturnType;
-    enum { Arity = 0 };
+    enum { Arity = 0, IsConst = 0 };
 };
 template <typename RV>
 struct SignatureTypeList< RV (*)() > : SignatureTypeList<RV ()>
 {};
+template <typename RV>
+struct SignatureTypeList< RV () const > : SignatureTypeList<RV ()>
+{
+    enum { IsConst = 1 };
+};
 EOF
 from=$((from + 1))
 fi
@@ -46,7 +51,14 @@ struct SignatureTypeList< RV (${targs}) > : tmp::TypeList<${targs}>
 {
     typedef RV ReturnType;
     //typedef RV (*Signature)(${targs});
-    enum { Arity = ${i} };
+    enum { Arity = ${i}, IsConst = 0 };
+};
+
+//! Specialization for ${i} arg(s).
+template <$tparam>
+struct SignatureTypeList< RV (${targs}) const > : SignatureTypeList<RV (${targs})>
+{
+    enum { IsConst = 1 };
 };
 
 //! Specialization for ${i} arg(s).
@@ -68,6 +80,7 @@ struct SignatureTypeList< RV (T::*)(${targs}) const > : SignatureTypeList<RV (${
 {
     //typedef RV (T::*Signature)(${targs}) const;
     typedef T ClassType;
+    enum { IsConst = 1 };
 };
 EOF
     #echo $tparam

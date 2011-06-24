@@ -198,7 +198,7 @@ function makeMethodSignature()
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
-    typedef T Type;
+    typedef T ClassType;
     typedef RV (T::*FunctionType)(${aTParam});
 EOF
     local i=0
@@ -227,7 +227,7 @@ function makeConstMethodSignature()
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
-    typedef T Type;
+    typedef T ClassType;
     typedef RV (T::*FunctionType)(${aTParam}) const;
 EOF
     local i=0

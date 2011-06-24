@@ -54,7 +54,7 @@ struct SignatureTypeList<RV (v8::Arguments const &)> : tmp::TypeList<v8::Argumen
 {
     typedef RV ReturnType;
     //typedef RV (*Signature)(v8::Arguments const &);
-    enum { Arity = -1 };
+    enum { Arity = -1, IsConst = 0 };
 };
 
 template <typename RV>
@@ -67,7 +67,9 @@ struct SignatureTypeList<RV (T::*)(v8::Arguments const &)> : SignatureTypeList<R
 
 template <typename T, typename RV>
 struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureTypeList<RV (v8::Arguments const &)>
-{};
+{
+    enum { IsConst = 1 };
+};
 
 
 /**
@@ -188,9 +190,13 @@ struct MethodSignature;
 template <typename T, typename Sig>
 struct ConstMethodSignature;
 
+//template <typename T, typename Sig>
+//struct ConstMethodSignature<const T,Sig> : ConstMethodSignature<T,Sig> {};
+
 template <typename RV >
 struct FunctionSignature< RV () > : SignatureBase< RV () >
 {
+    typedef void ClassType;
     typedef RV (*FunctionType)();
 };
 
@@ -202,7 +208,7 @@ struct FunctionSignature< RV (*)() > : FunctionSignature< RV () >
 template <typename T, typename RV >
 struct MethodSignature< T, RV () > : SignatureBase< RV () >
 {
-    typedef T Type;
+    typedef T ClassType;
     typedef RV (T::*FunctionType)();
 };
 
@@ -214,7 +220,7 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : SignatureBase< RV () >
 {
-    typedef T Type;
+    typedef T ClassType;
     typedef RV (T::*FunctionType)() const;
 };
 
@@ -224,13 +230,15 @@ struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV
 {
 };
 
-#if 0
+#if 1
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () >
+struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () const >
 {
-    typedef T Type;
+    typedef T ClassType;
     typedef RV (T::*FunctionType)() const;
 };
+#endif
+#if 0
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV (T::*)() > : ConstMethodSignature<T, RV ()>
 {

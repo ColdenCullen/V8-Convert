@@ -305,8 +305,6 @@ namespace v8 { namespace convert {
                 assert( 0 != (tmp::SameType< char const *, tmp::TypeAt<BNPuts,0>::Type >::Value) );
             }
 #define CATCHER cv::InCaCatcher_std
-#define M2I cv::MethodToInvocationCallback
-#define C2I cv::ConstMethodToInvocationCallback
 #define F2I cv::FunctionToInvocationCallback
             ////////////////////////////////////////////////////////////
             // Bind some member functions...
@@ -315,25 +313,26 @@ namespace v8 { namespace convert {
                 ("overloaded",
                   OverloadInCas::Call )
                 ("doFoo",
-                 M2I<BoundNative,void (void),&BoundNative::doFoo>)
+                 cv::ToInCa<BoundNative,void (),&BoundNative::doFoo>::Call)
                 ("doFoo2",
-                 M2I<BoundNative,double (int,double),&BoundNative::doFoo2>)
+                 cv::ToInCa<BoundNative,double (int,double),&BoundNative::doFoo2>::Call)
                 ("toString",
-                 cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &),BoundNative_toString>)
+                 F2I<ValueHandle (v8::Arguments const &),BoundNative_toString>)
                 ("puts",
-                 C2I<BoundNative,void (char const *),&BoundNative::puts>)
+                 cv::ToInCa<BoundNative,void (char const *) const,&BoundNative::puts>::Call)
                 ("doFooConst",
-                 C2I<BoundNative,void (),&BoundNative::doFooConst>)
+                 cv::ToInCa<BoundNative,void () const,&BoundNative::doFooConst>::Call)
                 ("invoInt",
-                 M2I<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
+                 cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Call)
                 ("nativeParam",
-                 M2I<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
+                 cv::ToInCa<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>::Call)
                 ("nativeParamRef",
-                 CATCHER< M2I<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef> >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef>::Call >::Call)
                 ("nativeParamConstRef",
-                 CATCHER< C2I<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef> >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef>::Call >::Call)
                 ("cstr",
-                 cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
+                 //cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
+                 cv::ToInCa< void, char const * (char const *), cstring_test>::Call)
                 ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
@@ -342,17 +341,15 @@ namespace v8 { namespace convert {
                  test_anton_callback> )
 #if 1 // converting natives to JS requires more lower-level plumbing...
                  ("nativeReturn",
-                 M2I<BoundNative, BoundNative * (), &BoundNative::nativeReturn>)
+                 cv::ToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn>::Call)
                  ("nativeReturnConst",
-                 C2I<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst>)
+                 cv::ToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst>::Call)
                  ("nativeReturnRef",
-                 CATCHER< M2I<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef> >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef>::Call >::Call)
                  ("nativeReturnConstRef",
-                 CATCHER< C2I<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef> >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef>::Call >::Call)
 #endif
                 ;
-#undef M2I
-#undef C2I
 #undef CATCHER
             ////////////////////////////////////////////////////////////////////////
             // We can of course bind them directly to the prototype, instead
@@ -423,7 +420,7 @@ namespace v8 { namespace convert {
             }
             bind_BoundSubNative(dest);
             CERR << "Finished binding BoundNative.\n";
-            if(0) // just experimenting...
+            if(1) // just experimenting...
             {
                 typedef CtorFwdTest CFT;
                 typedef cv::CtorForwarder<CFT * ()> C0;
@@ -444,23 +441,48 @@ namespace v8 { namespace convert {
                 typedef CtorFwdTest * (*FacT)( Arguments const &  argv );
                 FacT fac;
                 fac = CDispatch::Ctor;
-                
+#if 1 // reminder to self: IsConst won't doesn't work on func signatures w/o specializations.
+    // and i don't think we can specialize it b/c we'd need one more tmpl arg than IsConst really wants.
                 typedef int (CFT::*M1)(int) ;
                 typedef int (CFT::*M2)(int,int) const;
-                assert( !tmp::IsConst<M1>::Value );
-                assert( tmp::IsConst<M2>::Value );
-                assert( !(tmp::IsConst<int (int)>::Value) );
-                assert( (tmp::IsConst<int (CFT::*)(int) const>::Value) );
-                assert( (tmp::IsConst<int (int) const>::Value) );
-                //assert( 1 == (cv::MethodInCa<CFT, int (int), &CFT::afunc>::Arity) );
-                //assert( 1 == (cv::MethodInCa<CFT,M1,&CFT::afunc>::Arity) );
-                //assert( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) );
-                //assert( 2 == (cv::MethodInCa<CFT,M2,&CFT::bfunc>::Arity) );
+                //assert( !tmp::IsConst<M1>::Value );
+                //assert( tmp::IsConst<M2>::Value );
+                //assert( !(tmp::IsConst<int (int)>::Value) );
+                //assert( !(tmp::IsConst< cv::MethodSignature<CFT,int (int)>::FunctionType >::Value) );
+                //assert( (tmp::IsConst< cv::ConstMethodSignature<CFT,int (int,int) const>::FunctionType >::Value) );
+                //assert( !(tmp::IsConst<int (CFT::*)(int)>::Value) );
+                //assert( (tmp::IsConst<int (CFT::*)(int) const>::Value) );
+                //assert( (tmp::IsConst<int (int) const>::Value) );
+                assert( !(tmp::IsConst<CFT>::Value) );
+                assert( (tmp::IsConst<CFT const>::Value) );
+                //assert( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) );
+                assert( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) );
+                typedef int (CFT::*X2)(int,int) const;
+                assert( 2 == (cv::SignatureTypeList<X2>::Arity) );
+                assert( !(cv::SignatureTypeList< M1 >::IsConst) );
+                assert( (cv::SignatureTypeList< M2 >::IsConst) );
+                assert( !(cv::SignatureTypeList< int (int) >::IsConst) );
+                assert( (cv::SignatureTypeList< int () const >::IsConst) );
+                assert( (cv::SignatureTypeList<X2>::IsConst) );
+                assert( !(cv::SignatureTypeList<int (int)>::IsConst) );
+                assert( 1 == (cv::ToInCa<CFT,M1,&CFT::afunc>::Arity) );
+                assert( 1 == (cv::ToInCa<CFT,int (int),&CFT::afunc>::Arity) );
+                assert( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) );
+                assert( 2 == (cv::ToInCa<CFT,int (int,int) const,&CFT::bfunc>::Arity) );
+                //assert( 2 == (cv::ToInCa<CFT,int (int,int),&CFT::bfunc>::Arity) );
+                assert( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) );
+                assert( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) );
+                //assert( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) );
+#endif
                 typedef cv::FunctionSignature<FacT> FacSig;
                 assert( FacSig::Arity < 0 );
                 typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
+                assert( (tmp::SameType< int, A0>::Value));
+                typedef cv::ArgTypeAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
+                assert( (tmp::SameType< char const *, A1>::Value));
                 assert( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) );
                 assert( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value));
+
                 
             }
         }

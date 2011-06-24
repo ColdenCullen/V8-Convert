@@ -1099,17 +1099,17 @@ namespace v8 { namespace convert {
 #define M2I cv::MethodToInvocationCallback
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObjectCallback )
-                ("step", CATCHER< M2I<ST, bool (),&ST::step> >::Call)
+                ("step", CATCHER< cv::ToInCa<ST, bool (),&ST::step>::Call >::Call)
                 ("stepArray", CATCHER< Statement_stepArray >::Call)
                 ("stepObject", CATCHER< Statement_stepObject >::Call)
-                ("columnName", CATCHER< M2I<ST, char const * (uint16_t),&ST::col_name> >::Call )
-                ("columnType", CATCHER< M2I<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
+                ("columnName", CATCHER< cv::ToInCa<ST, char const * (uint16_t),&ST::col_name>::Call >::Call )
+                ("columnType", CATCHER< M2I<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call ) // ToInCa<> fails here?
                 ("get", CATCHER<Statement_get>::Call )
                 ("bind", CATCHER<Statement_bind>::Call)
-                ("reset", CATCHER< M2I<ST, void (void),&ST::reset> >::Call)
+                ("reset", CATCHER< cv::ToInCa<ST, void (void),&ST::reset>::Call >::Call)
                 ("toString", CATCHER<Statement_toString>::Call )
                 ("paramIndex", M2I<ST, uint16_t (char const *),&ST::param_index> /* doesn't throw */ )
-                ("paramName", CATCHER<M2I<ST, char const *(uint16_t),&ST::param_name> >::Call )
+                ("paramName", CATCHER<cv::ToInCa<ST, char const *(uint16_t),&ST::param_name>::Call >::Call )
                 ;
 
             typedef cv::MemberPropertyBinder<ST> SPB;
@@ -1140,10 +1140,10 @@ namespace v8 { namespace convert {
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
             wdrv("close", WDRV::DestroyObjectCallback )
-                ("begin", CATCHER< M2I<DRV,void (),&DRV::begin> >::Call )
-                ("commit", CATCHER< M2I<DRV,void (),&DRV::commit> >::Call )
-                ("rollback", CATCHER< M2I<DRV,void (),&DRV::rollback> >::Call)
-                ("exec", CATCHER< M2I<DRV,void (std::string const &),&DRV::exec> >::Call)
+                ("begin", CATCHER< cv::ToInCa<DRV,void (),&DRV::begin>::Call >::Call )
+                ("commit", CATCHER< cv::ToInCa<DRV,void (),&DRV::commit>::Call >::Call )
+                ("rollback", CATCHER< cv::ToInCa<DRV,void (),&DRV::rollback>::Call >::Call)
+                ("exec", CATCHER< cv::ToInCa<DRV,void (std::string const &),&DRV::exec>::Call >::Call)
                 ("prepare", CATCHER< JSPDO_prepare >::Call )
                 ("exec", CATCHER<JSPDO_exec>::Call )
                 ("lastInsertId",
@@ -1192,7 +1192,7 @@ namespace v8 { namespace convert {
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             dCtor->Set( JSTR("enableDebug"), v8::False() );
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
-            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
+            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::ToInCa< void, void (bool), setEnableDestructorDebug>::Call) );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, changing the semantics of step()'s return value
