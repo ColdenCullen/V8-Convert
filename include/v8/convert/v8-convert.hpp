@@ -38,43 +38,31 @@ Author: Stephan Beal (http://wanderinghorse.net/home/stephan/)
 
 License: Dual MIT/Public Domain
 
+Project home page: http://code.google.com/p/v8-juice/wiki/V8Convert
 
 The most important functions and types, from a user's perspective,
 include:
 
 Converting types:
 
-- CastToJS()
-- CastFromJS()
+- v8::convert::CastToJS()
+- v8::convert::CastFromJS()
 
 Implementing custom conversions:
 
-- NativeToJS<T>
-- JSToNative<T>
+- v8::convert::NativeToJS<T>
+- v8::convert::JSToNative<T>
 
 Converting functions to v8::InvocationCallback:
 
-- FunctionToInvocationCallback()
-- MethodToInvocationCallback()
-- ConstMethodToInvocationCallback()
-
-By using only those 3 function templates clients can bind
-near-arbitrary native functions arbitrary JS objects (where language
-calling conventions and cross-language type conversions allow).
+- v8::convert::FunctionToInCa<>
+- v8::convert::MethodToInCa<>
+- v8::convert::ConstMethodToInCa<>
 
 Most of the code in this library are internal template specializations
 which take care of the dirty work. Typical clients won't typically need
 more than what's listed above.
 
-Notable TODOs:
-
-- Yet another class-binding mechanism is in development for this lib,
-but just something very basic (as opposed to v8-juice's monster
-class-binding API).
-
-- Binding object accessors to native variables/members. We have this
-code in v8-juice but i'd like to re-implement it based on this API's
-conventions.
 */
 #include "convert.hpp"
 #include "invocable.hpp"
