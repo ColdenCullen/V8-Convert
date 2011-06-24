@@ -14,6 +14,7 @@ conversion.
 
 #include "convert_core.hpp"
 #include "signature_core.hpp"
+#include "TypeList.hpp"
 namespace v8 { namespace convert {
 
 
@@ -1250,18 +1251,6 @@ struct NativeToJS< InCa<ICB> >
    killing v8).
 
 
-   Example:
-
-   @code
-   v8::InvocationCallback cb =
-       InCaCatcher<
-           std::exception, // type to catch
-           char const *(), // signature of message-getter
-           &std::exception::what, // message-fetching method
-           false // whether to propagate other exceptions or not
-       >::Call;
-   @endcode
-
    This type can be used to implement "chaining" of exception
    catching, such that we can use the InCaCatcher
    to catch various distinct exception types in the context
@@ -1409,14 +1398,36 @@ struct InCaOverloader
    Convenience form of InCaCatcher which catches
    std::exception and uses their what() method to
    fetch the error message.
+   
+   The ConcreteException parameter may be std::exception (the 
+   default) or (in theory) any publically derived subclass.
+   When using a non-default value, one can chain exception catchers
+   to catch most-derived types first.
+   
+   PropagateOtherExceptions defaults to false if ConcreteException is
+   std::exception, else it defaults to true. The reasoning is: when chaining
+   these handlers we need to catch the most-derived first. Those handlers
+   need to propagate other exceptions so that we can catch the lesser-derived
+   ones (or those from completely different hierarchies) in subsequent
+   catchers.
+   
+   Here is an example of chaining:
+   
+   @code
+    typedef InCaCatcher_std< MyThrowingCallback, std::logic_error > LECatch;
+    typedef cv::InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
+    typedef cv::InCaCatcher_std< RECatch::Call > BaseCatch;
+    v8::InvocationCallback cb = BaseCatch::Call;
+   @endcode
 */
 template <v8::InvocationCallback ICB,
-          bool PropagateOtherExceptions = false
-          >
+        typename ConcreteException = std::exception,
+        bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
+>
 struct InCaCatcher_std :
-    InCaCatcher<std::exception,
+    InCaCatcher<ConcreteException,
                 char const * (),
-                &std::exception::what,
+                &ConcreteException::what,
                 ICB,
                 PropagateOtherExceptions
                 >
