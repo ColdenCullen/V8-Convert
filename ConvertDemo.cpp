@@ -246,6 +246,7 @@ namespace v8 { namespace convert {
         virtual ~CtorFwdTest() {}
         
         int afunc(int);
+        int bfunc(int,int) const;
     };
     
     struct CtorFwdTestSub : CtorFwdTest
@@ -303,7 +304,10 @@ namespace v8 { namespace convert {
                 assert( 1 == tmp::LengthOf<BNPuts>::Value );
                 assert( 0 != (tmp::SameType< char const *, tmp::TypeAt<BNPuts,0>::Type >::Value) );
             }
-            
+#define CATCHER cv::InCaCatcher_std
+#define M2I cv::MethodToInvocationCallback
+#define C2I cv::ConstMethodToInvocationCallback
+#define F2I cv::FunctionToInvocationCallback
             ////////////////////////////////////////////////////////////
             // Bind some member functions...
             cc("cputs",
@@ -311,23 +315,23 @@ namespace v8 { namespace convert {
                 ("overloaded",
                   OverloadInCas::Call )
                 ("doFoo",
-                 cv::MethodToInvocationCallback<BoundNative,void (void),&BoundNative::doFoo>)
+                 M2I<BoundNative,void (void),&BoundNative::doFoo>)
                 ("doFoo2",
-                 cv::MethodToInvocationCallback<BoundNative,double (int,double),&BoundNative::doFoo2>)
+                 M2I<BoundNative,double (int,double),&BoundNative::doFoo2>)
                 ("toString",
                  cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &),BoundNative_toString>)
                 ("puts",
-                 cv::ConstMethodToInvocationCallback<BoundNative,void (char const *),&BoundNative::puts>)
+                 C2I<BoundNative,void (char const *),&BoundNative::puts>)
                 ("doFooConst",
-                 cv::ConstMethodToInvocationCallback<BoundNative,void (),&BoundNative::doFooConst>)
+                 C2I<BoundNative,void (),&BoundNative::doFooConst>)
                 ("invoInt",
-                 cv::MethodToInvocationCallback<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
+                 M2I<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>)
                 ("nativeParam",
-                 cv::MethodToInvocationCallback<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
+                 M2I<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>)
                 ("nativeParamRef",
-                 cv::MethodToInvocationCallback<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef>)
+                 CATCHER< M2I<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef> >::Call)
                 ("nativeParamConstRef",
-                 cv::ConstMethodToInvocationCallback<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>)
+                 CATCHER< C2I<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef> >::Call)
                 ("cstr",
                  cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
                 ("destroy", CC::DestroyObjectCallback )
@@ -338,16 +342,18 @@ namespace v8 { namespace convert {
                  test_anton_callback> )
 #if 1 // converting natives to JS requires more lower-level plumbing...
                  ("nativeReturn",
-                 cv::MethodToInvocationCallback<BoundNative, BoundNative * (), &BoundNative::nativeReturn>)
+                 M2I<BoundNative, BoundNative * (), &BoundNative::nativeReturn>)
                  ("nativeReturnConst",
-                 cv::ConstMethodToInvocationCallback<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst>)
+                 C2I<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst>)
                  ("nativeReturnRef",
-                 cv::MethodToInvocationCallback<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef>)
+                 CATCHER< M2I<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef> >::Call)
                  ("nativeReturnConstRef",
-                 cv::ConstMethodToInvocationCallback<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef>)
+                 CATCHER< C2I<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef> >::Call)
 #endif
                 ;
-
+#undef M2I
+#undef C2I
+#undef CATCHER
             ////////////////////////////////////////////////////////////////////////
             // We can of course bind them directly to the prototype, instead
             // of via the cc object:
@@ -440,9 +446,16 @@ namespace v8 { namespace convert {
                 fac = CDispatch::Ctor;
                 
                 typedef int (CFT::*M1)(int) ;
-                typedef int (CFT::*M2)(int) const;
-                assert( tmp::IsConst<M2>::Value );
+                typedef int (CFT::*M2)(int,int) const;
                 assert( !tmp::IsConst<M1>::Value );
+                assert( tmp::IsConst<M2>::Value );
+                assert( !(tmp::IsConst<int (int)>::Value) );
+                assert( (tmp::IsConst<int (CFT::*)(int) const>::Value) );
+                assert( (tmp::IsConst<int (int) const>::Value) );
+                //assert( 1 == (cv::MethodInCa<CFT, int (int), &CFT::afunc>::Arity) );
+                //assert( 1 == (cv::MethodInCa<CFT,M1,&CFT::afunc>::Arity) );
+                //assert( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) );
+                //assert( 2 == (cv::MethodInCa<CFT,M2,&CFT::bfunc>::Arity) );
                 typedef cv::FunctionSignature<FacT> FacSig;
                 assert( FacSig::Arity < 0 );
                 typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;

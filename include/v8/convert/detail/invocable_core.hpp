@@ -17,7 +17,7 @@ conversion.
 #include "TypeList.hpp"
 
 //! Refactoring-related macro. Will go away.
-#define V8_CONVERT_CATCH_BOUND_FUNCS 1
+#define V8_CONVERT_CATCH_BOUND_FUNCS 0
 namespace v8 { namespace convert {
 
 
@@ -1222,7 +1222,7 @@ forwardConstMethod(FSig func, v8::Arguments const & argv )
         */
         ;
 }
-
+#if 0
 /**
    A structified/functorified form of v8::InvocationCallback.  It is
    sometimes convenient to be able to use a typedef to create an alias
@@ -1249,6 +1249,7 @@ struct NativeToJS< InCa<ICB> >
         return v8::FunctionTemplate::New(InCa<ICB>::Call)->GetFunction();
     }
 };
+#endif
 
 /**
    InvocationCallback wrapper which calls another InvocationCallback
@@ -1599,19 +1600,31 @@ struct InCaOverloadList
 
 #include "invocable_generated.hpp"
 
-template <typename T, typename Sig,
-        typename tmp::IfElse<
-                        tmp::IsConst<Sig>::Value,
-                        typename ConstMethodSignature<T,Sig>::FunctionType,
-                        typename MethodSignature<T,Sig>::FunctionType
-                    >::Type Func
->
-struct MemberInCa : tmp::IfElse<
-                        tmp::IsConst<Sig>::Value,
-                        ConstMethodToInCa<T, Sig, Func>,
-                        MethodToInCa<T, Sig, Func>
-                        >::Type
+
+#if 1
+namespace Detail {
+    namespace cv = v8::convert;
+
+    template <int IsConst, typename T, typename Sig>
+    struct ConstOrNotSig : cv::ConstMethodSignature<T,Sig>
+    {};
+    template <typename T, typename Sig>
+    struct ConstOrNotSig<0,T,Sig> : cv::MethodSignature<T,Sig>
+    {};
+    
+    template <int IsConst, typename T, typename Sig, typename cv::ConstMethodSignature<T,Sig>::FunctionType Func>
+    struct ConstOrNotMethodToInCa : cv::ConstMethodToInCa<T,Sig,Func>
+    {};
+    
+    template <typename T, typename Sig, typename cv::MethodSignature<T,Sig>::FunctionType Func>
+    struct ConstOrNotMethodToInCa<0,T,Sig,Func> : cv::MethodToInCa<T,Sig,Func>
+    {};
+}
+
+template <typename T, typename Sig, typename Detail::ConstOrNotSig<tmp::IsConst<Sig>::Value,T,Sig>::FunctionType Func>
+struct MethodInCa : Detail::ConstOrNotMethodToInCa<tmp::IsConst<Sig>::Value,T,Sig,Func>
 {};
+#endif
 
 }} // namespaces
 

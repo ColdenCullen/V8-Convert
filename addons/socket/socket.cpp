@@ -1095,14 +1095,14 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
     cb = F2I< int (char const *), &N::getProtoByName >;
     F("getProtoByName");
 
-    typedef cv::InCa< F2I<ValH (char const *), &N::nameToAddress> > N2A1;
-    typedef cv::InCa< F2I<ValH (char const *,int), &N::nameToAddress> > N2A2;
+    typedef cv::FunctionToInCa<ValH (char const *), &N::nameToAddress> N2A1;
+    typedef cv::FunctionToInCa<ValH (char const *,int), &N::nameToAddress> N2A2;
     typedef cv::InCaOverloader< 1, N2A1::Call, cv::InCaOverloader< 2, N2A2::Call >::Call > OloadN2A;
     cb = OloadN2A::Call;
     F("nameToAddress");
 
-    typedef cv::InCa< F2I<ValH (char const *), &N::nameToAddress> > A2N1;
-    typedef cv::InCa< F2I<ValH (char const *,int), &N::nameToAddress> > A2N2;
+    typedef cv::FunctionToInCa<ValH (char const *), &N::nameToAddress> A2N1;
+    typedef cv::FunctionToInCa<ValH (char const *,int), &N::nameToAddress> A2N2;
     typedef cv::InCaOverloader< 1, A2N1::Call, cv::InCaOverloader< 2, A2N2::Call >::Call > OloadA2N;
     cb = OloadA2N::Call;
     F("addressToName");
