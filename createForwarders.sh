@@ -136,9 +136,11 @@ EOF
 # Create SignatureBase<> and friends...
 function makeSignatureBase()
 {
+    echo "Don't call makeSignatureBase()! It's not needed anymore :-D" 1>&2
+    exit 1
     cat <<EOF
 template <typename RV, ${aTDecl} >
-struct SignatureBase< RV (${aTParam}), ${count} > : SignatureBase< RV, ${count} >
+struct SignatureBase< RV (${aTParam}) > : SignatureBase< RV, ${count} >
 {
     typedef RV (*FunctionType)(${aTParam});
 EOF
@@ -166,7 +168,7 @@ function makeFunctionSignature()
 {
     cat <<EOF
 template <typename RV, ${aTDecl} >
-struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV, ${count} >
+struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
     typedef RV (*FunctionType)(${aTParam});
 EOF
@@ -194,7 +196,7 @@ function makeMethodSignature()
     cat <<EOF
 
 template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV, ${count} >
+struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(${aTParam});
@@ -223,7 +225,7 @@ function makeConstMethodSignature()
 {
     cat <<EOF
 template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV, ${count} >
+struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(${aTParam}) const;

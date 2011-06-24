@@ -39,7 +39,6 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	echo "#if !defined(DOXYGEN)" >> $@; \
 	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
 		bash $(TMPL_GENERATOR) $$i \
-			SignatureBase \
 			FunctionToInCa \
 			MethodToInCa \
 			ArgsToFunctionForwarder \

@@ -35,6 +35,13 @@ function/method signatures as full-fleged types.
     
     - Arity enum value holding thier arity.
     - ReturnType defines the return type of the function signature.
+
+   Functions taking one (v8::Arguments const &) argument and returning
+   any type are considered to be "InvocationCallback-like" and are treated
+   specially. They have an Arity value of "less than 0", which can be used
+   as a hint by binding code that the function can accept any number of
+   arguments.
+
 */
 template <typename Sig> struct SignatureTypeList;
 
@@ -66,17 +73,22 @@ struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureType
    Base type for FunctionSignature, MethodSignature,
    and ConstMethodSignature.
 
-   The Arity argument must specify how many arguments the function
-   requires. Values less than 0 are reserved for the special case of
-   passing v8::Arguments (which represent any number of arguments)
-   (value=-1) or potential future use (e.g. using -2 as an end-of-list
-   marker for an overload-by-arity handler).
+    Sig must be a function-style parameter list in the form:
+    
+    ReturnType (args types...)
+    
+    e.g.
+    
+    double (int, double)
+
 */
-template <typename T, int Arity_>
-struct SignatureBase
+template <typename Sig>
+struct SignatureBase : SignatureTypeList<Sig>
 {
-    static const int Arity = Arity_;
-    typedef T ReturnType;
+    typedef typename SignatureTypeList<Sig>::ReturnType ReturnType;
+    enum { Arity = SignatureTypeList<Sig>::Arity };
+    typedef Sig SignatureType;
+    //typedef Sig FunctionType;
 };
 
 /**
@@ -172,7 +184,7 @@ template <typename T, typename Sig>
 struct ConstMethodSignature;
 
 template <typename RV >
-struct FunctionSignature< RV () > : SignatureBase< RV, 0 >
+struct FunctionSignature< RV () > : SignatureBase< RV () >
 {
     typedef RV (*FunctionType)();
 };
@@ -183,7 +195,7 @@ struct FunctionSignature< RV (*)() > : FunctionSignature< RV () >
 };
 
 template <typename T, typename RV >
-struct MethodSignature< T, RV () > : SignatureBase< RV, 0 >
+struct MethodSignature< T, RV () > : SignatureBase< RV () >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)();
@@ -195,7 +207,7 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 };
 
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () > : SignatureBase< RV, 0 >
+struct ConstMethodSignature< T, RV () > : SignatureBase< RV () >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)() const;
@@ -209,7 +221,7 @@ struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV
 
 #if 0
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () const > : SignatureBase< RV, 0 >
+struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)() const;

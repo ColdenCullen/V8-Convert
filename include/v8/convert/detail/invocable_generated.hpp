@@ -1,16 +1,5 @@
 /* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */
 #if !defined(DOXYGEN)
-template <typename RV,  typename A0 >
-struct SignatureBase< RV ( A0), 1 > : SignatureBase< RV, 1 >
-{
-    typedef RV (*FunctionType)( A0);
-};
-
-template <typename RV,  typename A0 >
-struct SignatureBase< RV (*)( A0), 1 >
-  : SignatureBase< RV ( A0), 1 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 1, Sig, Func > : FunctionPtr< Sig, Func >
@@ -289,17 +278,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1 >
-struct SignatureBase< RV ( A0,  A1), 2 > : SignatureBase< RV, 2 >
-{
-    typedef RV (*FunctionType)( A0,  A1);
-};
-
-template <typename RV,  typename A0,  typename A1 >
-struct SignatureBase< RV (*)( A0,  A1), 2 >
-  : SignatureBase< RV ( A0,  A1), 2 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 2, Sig, Func > : FunctionPtr< Sig, Func >
@@ -578,17 +556,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2 >
-struct SignatureBase< RV ( A0,  A1,  A2), 3 > : SignatureBase< RV, 3 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2 >
-struct SignatureBase< RV (*)( A0,  A1,  A2), 3 >
-  : SignatureBase< RV ( A0,  A1,  A2), 3 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 3, Sig, Func > : FunctionPtr< Sig, Func >
@@ -867,17 +834,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3), 4 > : SignatureBase< RV, 4 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3), 4 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3), 4 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 4, Sig, Func > : FunctionPtr< Sig, Func >
@@ -1156,17 +1112,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4), 5 > : SignatureBase< RV, 5 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4), 5 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4), 5 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 5, Sig, Func > : FunctionPtr< Sig, Func >
@@ -1445,17 +1390,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5), 6 > : SignatureBase< RV, 6 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5), 6 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5), 6 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 6, Sig, Func > : FunctionPtr< Sig, Func >
@@ -1734,17 +1668,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6), 7 > : SignatureBase< RV, 7 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6), 7 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6), 7 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 7, Sig, Func > : FunctionPtr< Sig, Func >
@@ -2023,17 +1946,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7), 8 > : SignatureBase< RV, 8 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7), 8 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7), 8 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 8, Sig, Func > : FunctionPtr< Sig, Func >
@@ -2312,17 +2224,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8), 9 > : SignatureBase< RV, 9 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8), 9 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8), 9 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 9, Sig, Func > : FunctionPtr< Sig, Func >
@@ -2601,17 +2502,6 @@ namespace Detail {
         }
     };
 }
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9), 10 > : SignatureBase< RV, 10 >
-{
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9);
-};
-
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct SignatureBase< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9), 10 >
-  : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9), 10 >
-{};
-
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
 struct FunctionToInCa< 10, Sig, Func > : FunctionPtr< Sig, Func >

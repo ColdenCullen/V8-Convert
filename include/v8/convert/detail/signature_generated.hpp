@@ -271,7 +271,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) con
     typedef T ClassType;
 };
 template <typename RV,  typename A0 >
-struct FunctionSignature< RV ( A0) > : SignatureBase< RV, 1 >
+struct FunctionSignature< RV ( A0) > : SignatureBase< RV ( A0) >
 {
     typedef RV (*FunctionType)( A0);
 };
@@ -283,7 +283,7 @@ struct FunctionSignature< RV (*)( A0) >
 
 
 template <typename T, typename RV,  typename A0 >
-struct MethodSignature< T, RV ( A0) > : SignatureBase< RV, 1 >
+struct MethodSignature< T, RV ( A0) > : SignatureBase< RV ( A0) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0);
@@ -295,7 +295,7 @@ struct MethodSignature< T, RV (T::*)( A0) > :
 
 
 template <typename T, typename RV,  typename A0 >
-struct ConstMethodSignature< T, RV ( A0) > : SignatureBase< RV, 1 >
+struct ConstMethodSignature< T, RV ( A0) > : SignatureBase< RV ( A0) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0) const;
@@ -312,7 +312,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0) const > :
     ConstMethodSignature< T, RV ( A0) >
 {};
 template <typename RV,  typename A0,  typename A1 >
-struct FunctionSignature< RV ( A0,  A1) > : SignatureBase< RV, 2 >
+struct FunctionSignature< RV ( A0,  A1) > : SignatureBase< RV ( A0,  A1) >
 {
     typedef RV (*FunctionType)( A0,  A1);
 };
@@ -324,7 +324,7 @@ struct FunctionSignature< RV (*)( A0,  A1) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1 >
-struct MethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV, 2 >
+struct MethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV ( A0,  A1) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1);
@@ -336,7 +336,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1 >
-struct ConstMethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV, 2 >
+struct ConstMethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV ( A0,  A1) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1) const;
@@ -353,7 +353,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1) const > :
     ConstMethodSignature< T, RV ( A0,  A1) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2 >
-struct FunctionSignature< RV ( A0,  A1,  A2) > : SignatureBase< RV, 3 >
+struct FunctionSignature< RV ( A0,  A1,  A2) > : SignatureBase< RV ( A0,  A1,  A2) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2);
 };
@@ -365,7 +365,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct MethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV, 3 >
+struct MethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV ( A0,  A1,  A2) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2);
@@ -377,7 +377,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV, 3 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV ( A0,  A1,  A2) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2) const;
@@ -394,7 +394,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV, 4 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV ( A0,  A1,  A2,  A3) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3);
 };
@@ -406,7 +406,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV, 4 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV ( A0,  A1,  A2,  A3) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3);
@@ -418,7 +418,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV, 4 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV ( A0,  A1,  A2,  A3) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3) const;
@@ -435,7 +435,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV, 5 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4);
 };
@@ -447,7 +447,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV, 5 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4);
@@ -459,7 +459,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV, 5 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4) const;
@@ -476,7 +476,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV, 6 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5);
 };
@@ -488,7 +488,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV, 6 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5);
@@ -500,7 +500,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV, 6 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5) const;
@@ -517,7 +517,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5) const > 
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV, 7 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6);
 };
@@ -529,7 +529,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV, 7 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6);
@@ -541,7 +541,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV, 7 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6) const;
@@ -558,7 +558,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) con
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV, 8 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7);
 };
@@ -570,7 +570,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV, 8 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7);
@@ -582,7 +582,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > :
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV, 8 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const;
@@ -599,7 +599,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV, 9 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8);
 };
@@ -611,7 +611,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV, 9 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8);
@@ -623,7 +623,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV, 9 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const;
@@ -640,7 +640,7 @@ struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
 {};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV, 10 >
+struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
 {
     typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9);
 };
@@ -652,7 +652,7 @@ struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV, 10 >
+struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9);
@@ -664,7 +664,7 @@ struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8
 
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV, 10 >
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const;
