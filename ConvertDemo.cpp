@@ -441,21 +441,11 @@ namespace v8 { namespace convert {
                 typedef CtorFwdTest * (*FacT)( Arguments const &  argv );
                 FacT fac;
                 fac = CDispatch::Ctor;
-#if 1 // reminder to self: IsConst won't doesn't work on func signatures w/o specializations.
-    // and i don't think we can specialize it b/c we'd need one more tmpl arg than IsConst really wants.
                 typedef int (CFT::*M1)(int) ;
                 typedef int (CFT::*M2)(int,int) const;
-                //assert( !tmp::IsConst<M1>::Value );
-                //assert( tmp::IsConst<M2>::Value );
-                //assert( !(tmp::IsConst<int (int)>::Value) );
-                //assert( !(tmp::IsConst< cv::MethodSignature<CFT,int (int)>::FunctionType >::Value) );
-                //assert( (tmp::IsConst< cv::ConstMethodSignature<CFT,int (int,int) const>::FunctionType >::Value) );
-                //assert( !(tmp::IsConst<int (CFT::*)(int)>::Value) );
-                //assert( (tmp::IsConst<int (CFT::*)(int) const>::Value) );
-                //assert( (tmp::IsConst<int (int) const>::Value) );
                 assert( !(tmp::IsConst<CFT>::Value) );
                 assert( (tmp::IsConst<CFT const>::Value) );
-                //assert( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) );
+                assert( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) );
                 assert( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) );
                 typedef int (CFT::*X2)(int,int) const;
                 assert( 2 == (cv::SignatureTypeList<X2>::Arity) );
@@ -473,7 +463,6 @@ namespace v8 { namespace convert {
                 assert( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) );
                 assert( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) );
                 //assert( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) );
-#endif
                 typedef cv::FunctionSignature<FacT> FacSig;
                 assert( FacSig::Arity < 0 );
                 typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;

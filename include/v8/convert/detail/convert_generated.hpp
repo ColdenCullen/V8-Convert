@@ -2,7 +2,7 @@
 #if !defined(DOXYGEN)
 namespace Detail {
 template <>
-struct CtorForwarderProxy<1>
+struct CtorForwarderProxy<1> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 1 };
     template <typename Sig>
@@ -17,16 +17,19 @@ struct CtorForwarderProxy<1>
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
             typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		
              typedef ArgCaster<A0> AC0;
-             AC0 ac0;
-            return new Type(  ac0.ToNative(argv[0]) );
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		
+            return new Type(  arg0 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<2>
+struct CtorForwarderProxy<2> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 2 };
     template <typename Sig>
@@ -40,17 +43,23 @@ struct CtorForwarderProxy<2>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1;
-             AC0 ac0; AC1 ac1;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		
+            return new Type(  arg0,  arg1 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<3>
+struct CtorForwarderProxy<3> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 3 };
     template <typename Sig>
@@ -64,17 +73,26 @@ struct CtorForwarderProxy<3>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2;
-             AC0 ac0; AC1 ac1; AC2 ac2;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		
+            return new Type(  arg0,  arg1,  arg2 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<4>
+struct CtorForwarderProxy<4> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 4 };
     template <typename Sig>
@@ -88,17 +106,29 @@ struct CtorForwarderProxy<4>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<5>
+struct CtorForwarderProxy<5> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 5 };
     template <typename Sig>
@@ -112,17 +142,32 @@ struct CtorForwarderProxy<5>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		 typedef ArgCaster<A4> AC4;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<6>
+struct CtorForwarderProxy<6> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 6 };
     template <typename Sig>
@@ -136,17 +181,35 @@ struct CtorForwarderProxy<6>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		 typedef ArgCaster<A4> AC4;
+		 typedef ArgCaster<A5> AC5;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
+		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<7>
+struct CtorForwarderProxy<7> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 7 };
     template <typename Sig>
@@ -160,17 +223,38 @@ struct CtorForwarderProxy<7>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		 typedef ArgCaster<A4> AC4;
+		 typedef ArgCaster<A5> AC5;
+		 typedef ArgCaster<A6> AC6;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
+		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
+		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<8>
+struct CtorForwarderProxy<8> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 8 };
     template <typename Sig>
@@ -184,17 +268,41 @@ struct CtorForwarderProxy<8>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		 typedef ArgCaster<A4> AC4;
+		 typedef ArgCaster<A5> AC5;
+		 typedef ArgCaster<A6> AC6;
+		 typedef ArgCaster<A7> AC7;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
+		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
+		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
+		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<9>
+struct CtorForwarderProxy<9> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 9 };
     template <typename Sig>
@@ -208,17 +316,44 @@ struct CtorForwarderProxy<9>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		 typedef ArgCaster<A4> AC4;
+		 typedef ArgCaster<A5> AC5;
+		 typedef ArgCaster<A6> AC6;
+		 typedef ArgCaster<A7> AC7;
+		 typedef ArgCaster<A8> AC8;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
+		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
+		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
+		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
+		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
     }
 };
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<10>
+struct CtorForwarderProxy<10> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = 10 };
     template <typename Sig>
@@ -232,10 +367,40 @@ struct CtorForwarderProxy<10>
         {
             typedef typename SignatureTypeList<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
-             typedef ArgCaster<A0> AC0; typedef ArgCaster<A1> AC1; typedef ArgCaster<A2> AC2; typedef ArgCaster<A3> AC3; typedef ArgCaster<A4> AC4; typedef ArgCaster<A5> AC5; typedef ArgCaster<A6> AC6; typedef ArgCaster<A7> AC7; typedef ArgCaster<A8> AC8; typedef ArgCaster<A9> AC9;
-             AC0 ac0; AC1 ac1; AC2 ac2; AC3 ac3; AC4 ac4; AC5 ac5; AC6 ac6; AC7 ac7; AC8 ac8; AC9 ac9;
-            return new Type(  ac0.ToNative(argv[0]),  ac1.ToNative(argv[1]),  ac2.ToNative(argv[2]),  ac3.ToNative(argv[3]),  ac4.ToNative(argv[4]),  ac5.ToNative(argv[5]),  ac6.ToNative(argv[6]),  ac7.ToNative(argv[7]),  ac8.ToNative(argv[8]),  ac9.ToNative(argv[9]) );
+            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+		
+             typedef ArgCaster<A0> AC0;
+		 typedef ArgCaster<A1> AC1;
+		 typedef ArgCaster<A2> AC2;
+		 typedef ArgCaster<A3> AC3;
+		 typedef ArgCaster<A4> AC4;
+		 typedef ArgCaster<A5> AC5;
+		 typedef ArgCaster<A6> AC6;
+		 typedef ArgCaster<A7> AC7;
+		 typedef ArgCaster<A8> AC8;
+		 typedef ArgCaster<A9> AC9;
+		
+             AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
+		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
+		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
+		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
+		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
+		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
+		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
+		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
+		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
+		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
+		
+            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
     }
 };

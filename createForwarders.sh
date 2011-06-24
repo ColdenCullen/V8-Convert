@@ -46,11 +46,13 @@ function makeLists()
 	aTParam="${aTParam} ${AT}"
 	callArgs="${callArgs}${AT}"
         #sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
-        sigTypeDecls="${sigTypeDecls}typedef typename tmp::TypeAt< SignatureTypeList<Sig>, ${at}>::Type ${AT};"
+        sigTypeDecls="${sigTypeDecls}typedef typename tmp::TypeAt< SignatureTypeList<Sig>, ${at}>::Type ${AT};\n"
 	#castCalls="${castCalls} CastFromJS< ${AT} >(argv[${at}])"
-        castTypedefs="${castTypedefs} typedef ArgCaster<${AT}> AC${at};"
-        castInits="${castInits} AC${at} ac${at};"
-        castCalls="${castCalls} ac${at}.ToNative(argv[${at}])"
+        castTypedefs="${castTypedefs} typedef ArgCaster<${AT}> AC${at};\n"
+        #castInits="${castInits} AC${at} ac${at};"
+        #castCalls="${castCalls} ac${at}.ToNative(argv[${at}])"
+        castInits="${castInits} AC${at} ac${at}; A${at} arg${at}(ac${at}.ToNative(argv[${at}]));\n"
+        castCalls="${castCalls} arg${at}"
 	test $at -ne $((count-1)) && {
 	    aTDecl="${aTDecl}, "
 	    aTParam="${aTParam}, "
@@ -66,6 +68,11 @@ function makeLists()
     castOps="${castTypedefs} ${castInits}"
 }
 
+function mycat()
+{
+    perl -pe 's|\\n|\n\t\t|g'
+}
+
 #######################################################
 # Creates CtorForwarder specializations.
 function makeCtorForwarder()
@@ -74,10 +81,10 @@ function makeCtorForwarder()
     local err_too_few_args="CtorForwarder<T,${count}>::Ctor() expects at least ${count} JS arguments!"
     local err_exception="CtorForwarder<T,${count}>::Ctor() Native ctor threw an unknown native exception type!"
 
-    cat <<EOF
+    mycat <<EOF
 namespace Detail {
 template <>
-struct CtorForwarderProxy<${count}>
+struct CtorForwarderProxy<${count}> // todo: subclass SignatureTypeList<Sig>
 {
     enum { Arity = ${count} };
     template <typename Sig>
@@ -104,7 +111,7 @@ EOF
 : <<EOF
 /** Specialization for ${count} arguments. */
 template <typename Sig>
-struct CtorForwarderProxy<Sig>
+struct CtorForwarderProxy<Sig> // todo: subclass SignatureTypeList<Sig>
 {
     typedef SignatureTypeList<Sig> STL;
     typedef typename STL::ReturnType Type_;
@@ -138,7 +145,7 @@ function makeSignatureBase()
 {
     echo "Don't call makeSignatureBase()! It's not needed anymore :-D" 1>&2
     exit 1
-    cat <<EOF
+    mycat <<EOF
 template <typename RV, ${aTDecl} >
 struct SignatureBase< RV (${aTParam}) > : SignatureBase< RV, ${count} >
 {
@@ -150,7 +157,7 @@ EOF
         i=$((i + 1))
     done
     
-cat <<EOF
+mycat <<EOF
 };
 
 template <typename RV, ${aTDecl} >
@@ -166,7 +173,7 @@ EOF
 # Create FunctionSignature<> and friends...
 function makeFunctionSignature()
 {
-    cat <<EOF
+    mycat <<EOF
 template <typename RV, ${aTDecl} >
 struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
@@ -178,7 +185,7 @@ EOF
         i=$((i + 1))
     done
     
-cat <<EOF
+mycat <<EOF
 };
 
 template <typename RV, ${aTDecl} >
@@ -193,7 +200,7 @@ EOF
 # Create MethodSignature<> and friends...
 function makeMethodSignature()
 {
-    cat <<EOF
+    mycat <<EOF
 
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
@@ -207,7 +214,7 @@ EOF
         i=$((i + 1))
     done
     
-cat <<EOF
+mycat <<EOF
 };
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (T::*)(${aTParam}) > :
@@ -223,7 +230,7 @@ EOF
 # TODO: move this into makeMethodSignature.
 function makeConstMethodSignature()
 {
-    cat <<EOF
+    mycat <<EOF
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
@@ -236,7 +243,7 @@ EOF
         i=$((i + 1))
     done
     
-cat <<EOF
+mycat <<EOF
 };
 
 template <typename T, typename RV, ${aTDecl} >
@@ -266,17 +273,16 @@ EOF
 # Create FunctionToInCa<> and friends...
 function makeFunctionToInCa()
 {
-    cat <<EOF
+    mycat <<EOF
 namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func >
-struct FunctionToInCa< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
+struct FunctionToInCa< ${count}, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
 {
-    private:
-        typedef FunctionPtr<Sig, Func> ParentType;
     public:
-        typedef typename ParentType::SignatureType SignatureType;
+        //typedef typename ParentType::SignatureType SignatureType;
         static ${ValueHandle} Call( Arguments const & argv )
         {
+            typedef FunctionPtr<Sig, Func> ParentType;
             if( argv.Length() < ParentType::Arity )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
@@ -289,16 +295,15 @@ struct FunctionToInCa< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
 };
 EOF
 
-    cat <<EOF
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-struct FunctionToInCaVoid< ${count}, Sig, Func > : FunctionPtr< Sig, Func >
+    mycat <<EOF
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
+struct FunctionToInCaVoid< ${count}, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
 {
-    private:
-        typedef FunctionPtr<Sig, Func> ParentType;
     public:
-        typedef typename ParentType::SignatureType SignatureType;
+        //typedef typename ParentType::SignatureType SignatureType;
         static ${ValueHandle} Call( Arguments const & argv )
         {
+            typedef FunctionPtr<Sig, Func> ParentType;
             if( argv.Length() < ParentType::Arity )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
@@ -328,18 +333,18 @@ function makeMethodToInCa_impl()
         msig=ConstMethodSignature
         constness="const"
     fi
-    cat <<EOF
+    mycat <<EOF
 namespace Detail {
 template <typename T, typename Sig,
-typename ${msig}<T,Sig>::FunctionType Func>
-struct ${class}<T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
+typename ${msig}<T,Sig>::FunctionType Func, bool UnlockV8>
+struct ${class}<T, ${count}, Sig, Func, UnlockV8 > : ${parent}< T, Sig, Func >
 {
     private:
-        typedef ${parent}<T, Sig, Func> ParentType;
-        typedef typename ParentType::SignatureType SignatureType;
+        //typedef typename ParentType::SignatureType SignatureType;
     public:
         static ${ValueHandle} Call( T ${constness} & self, Arguments const & argv )
         {
+            typedef ${parent}<T, Sig, Func> ParentType;
             if( argv.Length() < ParentType::Arity )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
@@ -359,17 +364,17 @@ struct ${class}<T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
 };
 EOF
 
-    cat <<EOF
+    mycat <<EOF
 template <typename T, typename Sig,
-typename ${msig}<T,Sig>::FunctionType Func>
-struct ${class}Void< T, ${count}, Sig, Func > : ${parent}< T, Sig, Func >
+typename ${msig}<T,Sig>::FunctionType Func, bool UnlockV8>
+struct ${class}Void< T, ${count}, Sig, Func, UnlockV8 > : ${parent}< T, Sig, Func >
 {
     private:
-        typedef ${parent}<T, Sig, Func> ParentType;
-        typedef typename ParentType::SignatureType SignatureType;
+        //typedef typename ParentType::SignatureType SignatureType;
     public:
         static ${ValueHandle} Call( T ${constness} & self, Arguments const & argv )
         {
+            typedef ${parent}<T, Sig, Func> ParentType;
             if( argv.Length() < ParentType::Arity )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
@@ -402,15 +407,14 @@ function makeMethodToInCa()
 function makeArgsToFunctionForwarder()
 {
 
-cat <<EOF
+mycat <<EOF
 namespace Detail {
     template <typename Sig>
     struct ArgsToFunctionForwarder<${count},Sig> : FunctionSignature<Sig>
     {
-    public:
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
             ${sigTypeDecls}
             ${castTypedefs}
@@ -421,10 +425,9 @@ namespace Detail {
     template <typename Sig>
     struct ArgsToFunctionForwarderVoid<${count},Sig> : FunctionSignature<Sig>
     {
-    public:
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
             ${sigTypeDecls}
             ${castTypedefs}
@@ -449,12 +452,11 @@ function makeArgsToMethodForwarder_impl()
         class=ArgsToConstMethodForwarder
         constness="const"
     fi
-cat <<EOF
+mycat <<EOF
 namespace Detail {
     template <typename T, typename Sig>
     struct ${class}<T, ${count},Sig> : ${parent}<T,Sig>
     {
-    public:
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
@@ -476,7 +478,6 @@ namespace Detail {
     template <typename T, typename Sig>
     struct ${class}Void<T, ${count},Sig> : ${parent}<T,Sig>
     {
-    public:
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
