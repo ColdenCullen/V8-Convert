@@ -49,7 +49,7 @@ function echoClient()
             // a read block in the middle of a multi-byte character!
             var buf = new Socket.ByteArray();
             readAll(s, 20, true, function(x) { print("Read in: "+x); buf.append(x); x.destroy(); });
-            print("Read in "+buf.length+" bytes:\n"+buf.stringValue);
+            print("Read in "+buf.length+" bytes:\n"+buf.stringValue());
         }
         else if( Socket.SOCK_DGRAM == s.type )
         {
