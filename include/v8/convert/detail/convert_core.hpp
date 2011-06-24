@@ -1160,8 +1160,8 @@ namespace v8 { namespace convert {
            If jv->IsObject() then the returned object is populated from
            jv, otherwise the returned object is empty. Since it is
            legal for an object to be empty, it is not generically
-           possible to know if this routine got an empty Array object
-           or a non-Array object.
+           possible to know if this routine got an empty Object
+           or a non-Object handle.
         */
         ResultType operator()( v8::Handle<v8::Value> jv ) const
         {

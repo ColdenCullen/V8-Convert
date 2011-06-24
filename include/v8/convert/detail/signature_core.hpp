@@ -8,6 +8,60 @@ This file houses the core-most templates related to handling
 function/method signatures as full-fleged types.
 */
 
+
+
+/**
+    Base (unimplemented) template for figuring out function argument types
+    types at compile time. All implementations are generated code implementing
+    the tmp::TypeList interface. They can be used with tmp::LengthOf,
+    tmp::TypeAt, etc.
+    
+    Sig must be a function-signature-style parameter list.
+
+    It is intended to be used like this:
+    
+    @code
+    typedef SignatureTypeList< int (char const *, double) > ListType;
+    assert( ListType::Arity == 2 );
+    assert( tmp::LengthOf<ListType>::Value == 2  );
+    assert( (tmp::SameType< char const *, tmp::TypeAt<ListType,0>::Type >::Value) );
+    assert( (tmp::SameType< double, tmp::TypeAt<ListType,1>::Type >::Value) );
+    @endcode
+    
+    Note that the length of the typelist does not include the return
+    value type.
+    
+    Specializations have the following:
+    
+    - Arity enum value holding thier arity.
+    - ReturnType defines the return type of the function signature.
+*/
+template <typename Sig> struct SignatureTypeList;
+
+/**
+    Specialization to give "InvacationCallback-like" functions
+    an Arity value of less than 0.
+*/
+template <typename RV>
+struct SignatureTypeList<RV (v8::Arguments const &)>
+{
+    typedef RV ReturnType;
+    enum { Arity = -1 };
+};
+
+template <typename RV>
+struct SignatureTypeList<RV (*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
+{};
+
+template <typename T, typename RV>
+struct SignatureTypeList<RV (T::*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
+{};
+
+template <typename T, typename RV>
+struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureTypeList<RV (v8::Arguments const &)>
+{};
+
+
 /**
    Base type for FunctionSignature, MethodSignature,
    and ConstMethodSignature.
@@ -147,11 +201,24 @@ struct ConstMethodSignature< T, RV () > : SignatureBase< RV, 0 >
     typedef RV (T::*FunctionType)() const;
 };
 
+
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
 {
 };
 
+#if 0
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV () const > : SignatureBase< RV, 0 >
+{
+    typedef T Type;
+    typedef RV (T::*FunctionType)() const;
+};
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV (T::*)() > : ConstMethodSignature<T, RV ()>
+{
+};
+#endif
 /**
    A "type-rich" function pointer.
 
@@ -225,58 +292,6 @@ namespace Detail
         enum { N = Pos };
     };
 }
-
-
-/**
-    Base (unimplemented) template for figuring out function argument types
-    types at compile time. All implementations are generated code implementing
-    the tmp::TypeList interface. They can be used with tmp::LengthOf,
-    tmp::TypeAt, etc.
-    
-    Sig must be a function-signature-style parameter list.
-
-    It is intended to be used like this:
-    
-    @code
-    typedef SignatureTypeList< int (char const *, double) > ListType;
-    assert( ListType::Arity == 2 );
-    assert( tmp::LengthOf<ListType>::Value == 2  );
-    assert( (tmp::SameType< char const *, tmp::TypeAt<ListType,0>::Type >::Value) );
-    assert( (tmp::SameType< double, tmp::TypeAt<ListType,1>::Type >::Value) );
-    @endcode
-    
-    Note that the length of the typelist does not include the return
-    value type.
-    
-    Specializations have the following:
-    
-    - Arity enum value holding thier arity.
-    - ReturnType defines the return type of the function signature.
-*/
-template <typename Sig> struct SignatureTypeList;
-
-/**
-    Specialization to give "InvacationCallback-like" functions
-    an Arity value of less than 0.
-*/
-template <typename RV>
-struct SignatureTypeList<RV (v8::Arguments const &)>
-{
-    typedef RV ReturnType;
-    enum { Arity = -1 };
-};
-
-template <typename RV>
-struct SignatureTypeList<RV (*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
-{};
-
-template <typename T, typename RV>
-struct SignatureTypeList<RV (T::*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
-{};
-
-template <typename T, typename RV>
-struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureTypeList<RV (v8::Arguments const &)>
-{};
 
 
 #include "signature_generated.hpp"

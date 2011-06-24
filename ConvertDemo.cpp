@@ -244,6 +244,8 @@ namespace v8 { namespace convert {
         CtorFwdTest(int,int){}
         CtorFwdTest(v8::Arguments const &) {}
         virtual ~CtorFwdTest() {}
+        
+        int afunc(int);
     };
     
     struct CtorFwdTestSub : CtorFwdTest
@@ -436,6 +438,12 @@ namespace v8 { namespace convert {
                 typedef CtorFwdTest * (*FacT)( Arguments const &  argv );
                 FacT fac;
                 fac = CDispatch::Ctor;
+                
+                typedef int (CFT::*M1)(int) ;
+                typedef int (CFT::*M2)(int) const;
+                assert( tmp::IsConst<M2>::Value );
+                assert( !tmp::IsConst<M1>::Value );
+                
             }
         }
     };

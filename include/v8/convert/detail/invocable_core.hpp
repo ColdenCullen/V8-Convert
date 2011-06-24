@@ -1599,6 +1599,20 @@ struct InCaOverloadList
 
 #include "invocable_generated.hpp"
 
+template <typename T, typename Sig,
+        typename tmp::IfElse<
+                        tmp::IsConst<Sig>::Value,
+                        typename ConstMethodSignature<T,Sig>::FunctionType,
+                        typename MethodSignature<T,Sig>::FunctionType
+                    >::Type Func
+>
+struct MemberInCa : tmp::IfElse<
+                        tmp::IsConst<Sig>::Value,
+                        ConstMethodToInCa<T, Sig, Func>,
+                        MethodToInCa<T, Sig, Func>
+                        >::Type
+{};
+
 }} // namespaces
 
 #undef JS_THROW

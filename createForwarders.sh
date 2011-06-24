@@ -238,12 +238,27 @@ cat <<EOF
 };
 
 template <typename T, typename RV, ${aTDecl} >
+struct ConstMethodSignature< T, RV (${aTParam}) const > :
+    ConstMethodSignature< T, RV (${aTParam}) >
+{};
+
+
+template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (T::*)(${aTParam}) const > :
+    ConstMethodSignature< T, RV (${aTParam}) >
+{};
+EOF
+
+: <<EOF
+template <typename T, typename RV, ${aTDecl} >
+struct ConstMethodSignature< T, RV (T::*)(${aTParam}) > :
     ConstMethodSignature< T, RV (${aTParam}) >
 {};
 
 EOF
+
 }
+
 
 ########################################################################
 # Create FunctionToInCa<> and friends...

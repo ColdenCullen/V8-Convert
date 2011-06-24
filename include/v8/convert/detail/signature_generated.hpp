@@ -302,10 +302,15 @@ struct ConstMethodSignature< T, RV ( A0) > : SignatureBase< RV, 1 >
 };
 
 template <typename T, typename RV,  typename A0 >
-struct ConstMethodSignature< T, RV (T::*)( A0) const > :
+struct ConstMethodSignature< T, RV ( A0) const > :
     ConstMethodSignature< T, RV ( A0) >
 {};
 
+
+template <typename T, typename RV,  typename A0 >
+struct ConstMethodSignature< T, RV (T::*)( A0) const > :
+    ConstMethodSignature< T, RV ( A0) >
+{};
 template <typename RV,  typename A0,  typename A1 >
 struct FunctionSignature< RV ( A0,  A1) > : SignatureBase< RV, 2 >
 {
@@ -338,10 +343,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV, 2 >
 };
 
 template <typename T, typename RV,  typename A0,  typename A1 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1) const > :
     ConstMethodSignature< T, RV ( A0,  A1) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1) const > :
+    ConstMethodSignature< T, RV ( A0,  A1) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2 >
 struct FunctionSignature< RV ( A0,  A1,  A2) > : SignatureBase< RV, 3 >
 {
@@ -374,10 +384,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV, 3 >
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV, 4 >
 {
@@ -410,10 +425,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV, 4
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV, 5 >
 {
@@ -446,10 +466,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< 
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV, 6 >
 {
@@ -482,10 +507,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureB
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV, 7 >
 {
@@ -518,10 +548,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : Signa
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV, 8 >
 {
@@ -554,10 +589,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : 
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV, 9 >
 {
@@ -590,10 +630,15 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8)
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
+{};
 template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
 struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV, 10 >
 {
@@ -626,8 +671,13 @@ struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,
 };
 
 template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const > :
+struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const > :
     ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
 {};
 
+
+template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
+struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const > :
+    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
+{};
 #endif // if !defined(DOXYGEN)
