@@ -45,6 +45,7 @@ template <$tparam>
 struct SignatureTypeList< RV (${targs}) > : tmp::TypeList<${targs}>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(${targs});
     enum { Arity = ${i} };
 };
 
@@ -57,6 +58,7 @@ struct SignatureTypeList< RV (*)(${targs}) > : SignatureTypeList<RV (${targs})>
 template <typename T, $tparam>
 struct SignatureTypeList< RV (T::*)(${targs}) > : SignatureTypeList<RV (${targs})>
 {
+    //typedef RV (T::*Signature)(${targs});
     typedef T ClassType;
 };
 
@@ -64,6 +66,7 @@ struct SignatureTypeList< RV (T::*)(${targs}) > : SignatureTypeList<RV (${targs}
 template <typename T, $tparam>
 struct SignatureTypeList< RV (T::*)(${targs}) const > : SignatureTypeList<RV (${targs})>
 {
+    //typedef RV (T::*Signature)(${targs}) const;
     typedef T ClassType;
 };
 EOF

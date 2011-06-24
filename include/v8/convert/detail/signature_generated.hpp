@@ -15,6 +15,7 @@ template <typename RV, typename A1>
 struct SignatureTypeList< RV (A1) > : tmp::TypeList<A1>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1);
     enum { Arity = 1 };
 };
 
@@ -27,6 +28,7 @@ struct SignatureTypeList< RV (*)(A1) > : SignatureTypeList<RV (A1)>
 template <typename T, typename RV, typename A1>
 struct SignatureTypeList< RV (T::*)(A1) > : SignatureTypeList<RV (A1)>
 {
+    //typedef RV (T::*Signature)(A1);
     typedef T ClassType;
 };
 
@@ -34,6 +36,7 @@ struct SignatureTypeList< RV (T::*)(A1) > : SignatureTypeList<RV (A1)>
 template <typename T, typename RV, typename A1>
 struct SignatureTypeList< RV (T::*)(A1) const > : SignatureTypeList<RV (A1)>
 {
+    //typedef RV (T::*Signature)(A1) const;
     typedef T ClassType;
 };
 //! Specialization for 2 arg(s).
@@ -41,6 +44,7 @@ template <typename RV, typename A1, typename A2>
 struct SignatureTypeList< RV (A1, A2) > : tmp::TypeList<A1, A2>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2);
     enum { Arity = 2 };
 };
 
@@ -53,6 +57,7 @@ struct SignatureTypeList< RV (*)(A1, A2) > : SignatureTypeList<RV (A1, A2)>
 template <typename T, typename RV, typename A1, typename A2>
 struct SignatureTypeList< RV (T::*)(A1, A2) > : SignatureTypeList<RV (A1, A2)>
 {
+    //typedef RV (T::*Signature)(A1, A2);
     typedef T ClassType;
 };
 
@@ -60,6 +65,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2) > : SignatureTypeList<RV (A1, A2)>
 template <typename T, typename RV, typename A1, typename A2>
 struct SignatureTypeList< RV (T::*)(A1, A2) const > : SignatureTypeList<RV (A1, A2)>
 {
+    //typedef RV (T::*Signature)(A1, A2) const;
     typedef T ClassType;
 };
 //! Specialization for 3 arg(s).
@@ -67,6 +73,7 @@ template <typename RV, typename A1, typename A2, typename A3>
 struct SignatureTypeList< RV (A1, A2, A3) > : tmp::TypeList<A1, A2, A3>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3);
     enum { Arity = 3 };
 };
 
@@ -79,6 +86,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3) > : SignatureTypeList<RV (A1, A2, A
 template <typename T, typename RV, typename A1, typename A2, typename A3>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3) > : SignatureTypeList<RV (A1, A2, A3)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3);
     typedef T ClassType;
 };
 
@@ -86,6 +94,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3) > : SignatureTypeList<RV (A1, A2
 template <typename T, typename RV, typename A1, typename A2, typename A3>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3) const > : SignatureTypeList<RV (A1, A2, A3)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3) const;
     typedef T ClassType;
 };
 //! Specialization for 4 arg(s).
@@ -93,6 +102,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4>
 struct SignatureTypeList< RV (A1, A2, A3, A4) > : tmp::TypeList<A1, A2, A3, A4>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4);
     enum { Arity = 4 };
 };
 
@@ -105,6 +115,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4) > : SignatureTypeList<RV (A1, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4) > : SignatureTypeList<RV (A1, A2, A3, A4)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4);
     typedef T ClassType;
 };
 
@@ -112,6 +123,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4) > : SignatureTypeList<RV (A1
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4) const > : SignatureTypeList<RV (A1, A2, A3, A4)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4) const;
     typedef T ClassType;
 };
 //! Specialization for 5 arg(s).
@@ -119,6 +131,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct SignatureTypeList< RV (A1, A2, A3, A4, A5) > : tmp::TypeList<A1, A2, A3, A4, A5>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4, A5);
     enum { Arity = 5 };
 };
 
@@ -131,6 +144,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4, A5) > : SignatureTypeList<RV (A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5) > : SignatureTypeList<RV (A1, A2, A3, A4, A5)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5);
     typedef T ClassType;
 };
 
@@ -138,6 +152,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5) > : SignatureTypeList<RV
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5) const > : SignatureTypeList<RV (A1, A2, A3, A4, A5)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5) const;
     typedef T ClassType;
 };
 //! Specialization for 6 arg(s).
@@ -145,6 +160,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6) > : tmp::TypeList<A1, A2, A3, A4, A5, A6>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6);
     enum { Arity = 6 };
 };
 
@@ -157,6 +173,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4, A5, A6) > : SignatureTypeList<R
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6) > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6);
     typedef T ClassType;
 };
 
@@ -164,6 +181,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6) > : SignatureTypeLis
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6) const > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6) const;
     typedef T ClassType;
 };
 //! Specialization for 7 arg(s).
@@ -171,6 +189,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7);
     enum { Arity = 7 };
 };
 
@@ -183,6 +202,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4, A5, A6, A7) > : SignatureTypeLi
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7);
     typedef T ClassType;
 };
 
@@ -190,6 +210,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) > : SignatureTyp
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) const > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7) const;
     typedef T ClassType;
 };
 //! Specialization for 8 arg(s).
@@ -197,6 +218,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7, A8) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7, A8>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8);
     enum { Arity = 8 };
 };
 
@@ -209,6 +231,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8) > : SignatureTy
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7, A8)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8);
     typedef T ClassType;
 };
 
@@ -216,6 +239,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) > : Signatur
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) const > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7, A8)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8) const;
     typedef T ClassType;
 };
 //! Specialization for 9 arg(s).
@@ -223,6 +247,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7, A8, A9>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     enum { Arity = 9 };
 };
 
@@ -235,6 +260,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : Signatu
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     typedef T ClassType;
 };
 
@@ -242,6 +268,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : Sign
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const;
     typedef T ClassType;
 };
 //! Specialization for 10 arg(s).
@@ -249,6 +276,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     enum { Arity = 10 };
 };
 
@@ -261,6 +289,7 @@ struct SignatureTypeList< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : Si
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     typedef T ClassType;
 };
 
@@ -268,6 +297,7 @@ struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > :
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
 struct SignatureTypeList< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : SignatureTypeList<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>
 {
+    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const;
     typedef T ClassType;
 };
 template <typename RV,  typename A0 >

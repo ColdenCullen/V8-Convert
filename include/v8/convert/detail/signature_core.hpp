@@ -50,9 +50,10 @@ template <typename Sig> struct SignatureTypeList;
     an Arity value of less than 0.
 */
 template <typename RV>
-struct SignatureTypeList<RV (v8::Arguments const &)>
+struct SignatureTypeList<RV (v8::Arguments const &)> : tmp::TypeList<v8::Arguments const &>
 {
     typedef RV ReturnType;
+    //typedef RV (*Signature)(v8::Arguments const &);
     enum { Arity = -1 };
 };
 
@@ -81,13 +82,17 @@ struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureType
     
     double (int, double)
 
+    Since some refactoring on 20110624 we don't really
+    need this class - we could use SignatureTypeList directly.
+    However, i might later want to add another class-level detail
+    or two which don't belong in that interface. We'll see.
 */
 template <typename Sig>
 struct SignatureBase : SignatureTypeList<Sig>
 {
-    typedef typename SignatureTypeList<Sig>::ReturnType ReturnType;
-    enum { Arity = SignatureTypeList<Sig>::Arity };
-    typedef Sig SignatureType;
+    //typedef typename SignatureTypeList<Sig>::ReturnType ReturnType;
+    //enum { Arity = SignatureTypeList<Sig>::Arity };
+    //typedef Sig Signature;
     //typedef Sig FunctionType;
 };
 
@@ -290,20 +295,21 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType FuncPtr>
 typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
 
-namespace Detail
-{
-    /** Base type for SignatureArgAt specializations. */
-    template <typename Signature, int Pos>
-    struct SignatureArgAt_Base
-    {
-    private:
-        typedef char AssertPosition[tmp::Assertion<(Pos>=0) && (Pos< Signature::Arity)>::Value ? 1 : -1 ];
-    public:
-        typedef Signature SignatureType;
-        typedef typename Signature::FunctionType FunctionType;
-        enum { N = Pos };
-    };
-}
+/**
+    A (slightly) convenience wrappar around tmp::TypeAt.
+    
+    SigLisType must derive from SignatureTypeList (or be API-compatible).
+    I is the 0-based index for which we want the type. The type is
+    available via this class' Type typedef.
+    
+    e.g.
+    
+    @code
+    ArgTypeAt< FunctionSignature< void (int,double) >, 1>::Type; // is double
+    @endcode
+*/
+template <typename SigListType, unsigned short I>
+struct ArgTypeAt : tmp::TypeAt< SigListType, I > {};
 
 
 #include "signature_generated.hpp"

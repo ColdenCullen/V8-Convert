@@ -420,11 +420,11 @@ namespace v8 { namespace convert {
             if(0) // just experimenting...
             {
                 typedef CtorFwdTest CFT;
-                typedef cv::CtorForwarder<CFT *()> C0;
+                typedef cv::CtorForwarder<CFT * ()> C0;
                 //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
                 typedef cv::CtorForwarder<CFT * (int)> C1;
-                typedef cv::CtorForwarder<CFT *(int,int)> C2;
-                typedef cv::CtorForwarder<CFT *(v8::Arguments const &)> Cn;
+                typedef cv::CtorForwarder<CFT * (int,int)> C2;
+                typedef cv::CtorForwarder<CFT * (v8::Arguments const &)> Cn;
                 assert( Cn::Arity < 0 );
                 typedef CFT * (*CFTCtor)( v8::Arguments const & );
                 CFTCtor ctor;
@@ -443,6 +443,11 @@ namespace v8 { namespace convert {
                 typedef int (CFT::*M2)(int) const;
                 assert( tmp::IsConst<M2>::Value );
                 assert( !tmp::IsConst<M1>::Value );
+                typedef cv::FunctionSignature<FacT> FacSig;
+                assert( FacSig::Arity < 0 );
+                typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
+                assert( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) );
+                assert( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value));
                 
             }
         }
