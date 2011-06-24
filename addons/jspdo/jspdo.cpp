@@ -83,7 +83,7 @@ namespace v8 { namespace convert {
     {
     public:
         typedef cpdo::driver * ReturnType;
-        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
+        static ReturnType Create( v8::Persistent<v8::Object> jsSelf, v8::Arguments const & argv );
         static void Delete( cpdo::driver * obj );
     };
 
@@ -92,7 +92,7 @@ namespace v8 { namespace convert {
     {
     public:
         typedef cpdo::statement * ReturnType;
-        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
+        static ReturnType Create( v8::Persistent<v8::Object> jsSelf, v8::Arguments const & argv );
         static void Delete( cpdo::statement * obj );
     };
     
@@ -240,7 +240,7 @@ namespace v8 { namespace convert {
     };
 
     
-    cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Handle<v8::Object> & jsSelf,
+    cpdo::statement * ClassCreator_Factory<cpdo::statement>::Create( v8::Persistent<v8::Object> jsSelf,
                                                                      v8::Arguments const & argv )
     {
         if( argv.Length() < 2 )
@@ -287,7 +287,7 @@ namespace v8 { namespace convert {
         delete st;
     }
 
-    cpdo::driver * ClassCreator_Factory<cpdo::driver>::Create( v8::Handle<v8::Object> & jsSelf,
+    cpdo::driver * ClassCreator_Factory<cpdo::driver>::Create( v8::Persistent<v8::Object> jsSelf,
                                                                v8::Arguments const & argv )
     {
         if( argv.Length() < 1 )
@@ -396,7 +396,8 @@ v8::Handle<v8::Value> Statement_toString( v8::Arguments const & argv )
 v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
                                           uint16_t ndx )
 {
-    switch( st->col_type(ndx) )
+    const cpdo_data_type colType = st->col_type(ndx);
+    switch( colType )
     {
       case CPDO_TYPE_INT8:
           return v8::Integer::New( st->get_int8(ndx) );
@@ -413,8 +414,13 @@ v8::Handle<v8::Value> Statement_getNumber(cpdo::statement * st,
           return v8::Number::New( st->get_float(ndx) );
       case CPDO_TYPE_DOUBLE:
           return v8::Number::New( st->get_double(ndx) );
-      default:
-          return v8::Integer::New(0);
+      default: {
+          cv::StringBuffer msg;
+          msg << "Internal error ("<<__FILE__<<":"<<__LINE__
+              <<"): unhandled db field type (CPDO_TYPE code "
+              <<(int)colType<<") found for result column "<<ndx<<'.';
+          return v8::ThrowException(msg.toError());
+      }
     }
 }
 
@@ -451,7 +457,8 @@ static v8::Handle<v8::Value> Statement_getString(cpdo::statement * st,
           // reminder to self: why might need to treat CPDO_TYPE_CUSTOM as string for the
           // sake of MySQL DATE/TIME-related fields.
           cv::StringBuffer msg;
-          msg << "Internal error: unhandled db field type (CPDO_TYPE code "
+          msg << "Internal error("<<__FILE__<<":"<<__LINE__
+              <<"): unhandled db field type (CPDO_TYPE code "
               <<(int)colType<<") found for result column "<<ndx<<'.';
           return v8::ThrowException(msg.toError());
       }
@@ -490,7 +497,7 @@ static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
           return baObj;
       }
       default: {
-          // reminder to self: why might need to treat CPDO_TYPE_CUSTOM as string for the
+          // reminder to self: why might need to treat CPDO_TYPE_CUSTOM as string or blob for the
           // sake of MySQL DATE/TIME-related fields.
           cv::StringBuffer msg;
           msg << "Internal error: unhandled db field type (CPDO_TYPE code "
@@ -767,11 +774,15 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
         
 }
 
+#if 0
 /**
    Statement.columnTypes accessor which caches the column types in
    an internal JS array.
+   
+   This has unfortunate semantic differences from columnType(), so
+   it has been disabled.
 */
-/*static*/ v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > property,
+static v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > property,
                                                        const v8::AccessorInfo & info )
 {
     try
@@ -812,6 +823,7 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
     }
         
 }
+#endif
 
 
 /**
@@ -1096,7 +1108,7 @@ namespace v8 { namespace convert {
                 ("bind", CATCHER<Statement_bind>::Call)
                 ("reset", CATCHER< M2I<ST, void (void),&ST::reset> >::Call)
                 ("toString", CATCHER<Statement_toString>::Call )
-                ("paramIndex", CATCHER<M2I<ST, uint16_t (char const *),&ST::param_index> >::Call )
+                ("paramIndex", M2I<ST, uint16_t (char const *),&ST::param_index> /* doesn't throw */ )
                 ("paramName", CATCHER<M2I<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
@@ -1124,26 +1136,6 @@ namespace v8 { namespace convert {
             // types (this is how we know if a field is NULL).
             // stProto->SetAccessor(JSTR("columnTypes"), Statement_getColumnTypes, throwOnSet );
             stProto->SetAccessor(JSTR("paramNames"), Statement_getParamNames, throwOnSet );
-
-#if 0
-            // Just an experiment:
-            typedef InCaCatcher<
-                std::runtime_error,
-                char const * (),
-                &std::runtime_error::what,
-                JSPDO_prepare,
-                true> CatchPrepare_RTE;
-            typedef InCaCatcher_std<CatchPrepare_RTE::Call,false> CatchPrepare;
-
-            typedef InCa< M2I<DRV,uint64_t (char const *),&DRV::last_insert_id> > CbLastInsId;
-            typedef InCaCatcher_std<
-                cv::InCaOverloader<1, CbLastInsId::Call,
-                    cv::InCaOverloader<0, JSPDO_lastInsertId>::Call
-                    >::Call
-                > LastInsId;
-#endif       
-
-            
             ////////////////////////////////////////////////////////////////////////
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
@@ -1200,10 +1192,11 @@ namespace v8 { namespace convert {
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             dCtor->Set( JSTR("enableDebug"), v8::False() );
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
-            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInvocationCallback< void (bool), setEnableDestructorDebug>) );
+            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
-                 client, replacing them with a bool or an exception.
+                 client, changing the semantics of step()'s return value
+                 vis-a-vis the C API.
               */
                 v8::Handle<v8::Object> dstep( Object::New() );
                 dCtor->Set(JSTR("stepCodes"),dstep);
