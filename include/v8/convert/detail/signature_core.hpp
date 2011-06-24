@@ -33,7 +33,7 @@ struct SignatureBase
    All implementations must define:
 
    @code
-   static const int Arity = num_args_in_func_sig;
+   static const int Arity = num_args_in_func_sig; // or enum
    typedef FunctionSig FunctionType;
    @endcode
 
@@ -64,7 +64,7 @@ struct FunctionSignature;
 
    @code
    typedef T Type;
-   static const int Arity = num_args_in_func_sig;
+   static const int Arity = num_args_in_func_sig; // or enum
    typedef Sig FunctionType;
    @endcode
 
@@ -95,7 +95,7 @@ struct MethodSignature;
 
    @code
    typedef T Type;
-   static const int Arity = num_args_in_func_sig;
+   static const int Arity = num_args_in_func_sig; // or enum
    typedef Sig FunctionType;
    @endcode
 
@@ -134,11 +134,11 @@ struct MethodSignature< T, RV () > : SignatureBase< RV, 0 >
     typedef T Type;
     typedef RV (T::*FunctionType)();
 };
+
 template <typename T, typename RV >
 struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 {
 };
-
 
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : SignatureBase< RV, 0 >
@@ -146,6 +146,7 @@ struct ConstMethodSignature< T, RV () > : SignatureBase< RV, 0 >
     typedef T Type;
     typedef RV (T::*FunctionType)() const;
 };
+
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
 {
@@ -173,21 +174,12 @@ struct FunctionPtr : FunctionSignature<Sig>
      */
     typedef typename SignatureType::FunctionType FunctionType;
     
-    /** Returns the function specifies in the template arguments.
-
-        This really should be accessible via a const FunctionType
-        member, instead of a callable function, but for certain odd
-        (but necessary) template specializations i can't seem to get
-        an out-of-line definition of FuncPtr to compile.
-    */
-    static FunctionType GetFunction()
-    {
-        return FuncPtr;
-    }
+    /** The function specifies in the template arguments. */
     static const FunctionType Function;
 };
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType FuncPtr>
 typename FunctionPtr<Sig,FuncPtr>::FunctionType const FunctionPtr<Sig,FuncPtr>::Function = FuncPtr;
+
 /**
    Used like FunctionPtr, but in conjunction with non-const
    member functions ("methods") of the T class. See FunctionPtr
@@ -200,11 +192,6 @@ struct MethodPtr : MethodSignature<T,Sig>
     typedef typename SignatureType::ReturnType ReturnType;
     typedef typename SignatureType::FunctionType FunctionType;
     static const FunctionType Function;
-    static const FunctionType GetFunction()
-    {
-        return FuncPtr;
-    }
-
 };
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType FuncPtr>
 typename MethodPtr<T,Sig,FuncPtr>::FunctionType const MethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
@@ -220,10 +207,6 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
     typedef typename SignatureType::ReturnType ReturnType;
     typedef typename SignatureType::FunctionType FunctionType;
     static const FunctionType Function;
-    static const FunctionType GetFunction()
-    {
-        return FuncPtr;
-    }
 };
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType FuncPtr>
 typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
@@ -243,6 +226,36 @@ namespace Detail
     };
 }
 
+
+/**
+    Base (unimplemented) template for figuring out function argument types
+    types at compile time. All implementations are generated code implementing
+    the tmp::TypeList interface. They can be used with tmp::LengthOf,
+    tmp::TypeAt, etc.
+    
+    Sig must be a function-signature-style parameter list.
+
+    It is intended to be used like this:
+    
+    @code
+    typedef SignatureTypeList< int (char const *, double) > ListType;
+    assert( ListType::Arity == 2 );
+    assert( tmp::LengthOf<ListType>::Value == 2  );
+    assert( (tmp::SameType< char const *, tmp::TypeAt<ListType,0>::Type >::Value) );
+    assert( (tmp::SameType< double, tmp::TypeAt<ListType,1>::Type >::Value) );
+    @endcode
+    
+    Note that the length of the typelist does not include the return
+    value type.
+    
+    Specializations have the following:
+    
+    - Arity enum value holding thier arity.
+    - ReturnType defines the return type of the function signature.
+*/
+template <typename Sig> struct SignatureTypeList;
+
+#if 0
 /**
    Metatemplate to get the type of the function argument at the given
    (0-based) position. Signature must be one of FunctionSignature,
@@ -265,6 +278,7 @@ namespace Detail
 template <typename Signature, unsigned int Pos>
 struct SignatureArgAt;
 
+
 #define ARGAT(N) template <typename Signature> struct SignatureArgAt<Signature,N> : \
     Detail::SignatureArgAt_Base<Signature,N> { typedef typename Signature::ArgType##N Type; }
 ARGAT(0); ARGAT(1);
@@ -274,6 +288,7 @@ ARGAT(6); ARGAT(7);
 ARGAT(8); ARGAT(9);
 ARGAT(10); ARGAT(11);
 #undef ARGAT
+#endif
 
 #include "signature_generated.hpp"
 }} // namespaces

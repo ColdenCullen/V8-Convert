@@ -597,7 +597,7 @@ namespace v8 { namespace convert {
             else try
             {
 
-                typedef typename SignatureArgAt< MethodSignature<T,Sig> ,0>::Type ArgT;
+                typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0 >::Type ArgT;
                 (self->*Setter)( CastFromJS<ArgT>( value ) );
             }
             catch( std::exception const & ex )

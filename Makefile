@@ -23,8 +23,9 @@ MAKEFILE_DEPS_LIST = $(filter-out $(ShakeNMake.CISH_DEPS_FILE),$(MAKEFILE_LIST))
 $(sig_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
 	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
-	echo "#if !defined(DOXYGEN)" >> $@; \
-	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
+	echo "#if !defined(DOXYGEN)" >> $@;
+	@bash ./createSignatureTypeList.sh 0 $(TMPL_GENERATOR_COUNT) >> $@
+	@i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
 		bash $(TMPL_GENERATOR) $$i FunctionSignature MethodSignature ConstMethodSignature  || exit $$?; \
 		i=$$((i + 1)); \
 	done >> $@
