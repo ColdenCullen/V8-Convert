@@ -36,27 +36,37 @@ namespace v8 { namespace convert { namespace tmp {
     template <typename H, typename T>
     struct TypeChain
     {
-	/**
-	   Subtypes of this type should not override the ChainType
-	   typedef, as it is used by the core lib to trick some
-	   overloads into working, such that subclasses of
-	   TypeChain will be picked up by specializations for
-	   certain rules, as if they actually were a TypeChain.
+        /**
+           Subtypes of this type should not override the ChainType
+           typedef, as it is used by the core lib to trick some
+           overloads into working, such that subclasses of
+           TypeChain will be picked up by specializations for
+           certain rules, as if they actually were a TypeChain.
 
-	   There might be exceptions to the no-override rule, but none
-	   come to mind. If it is overridden, it _must_ be-a
-	   TypeChain<> type.
-	*/
-	typedef TypeChain<H,T> ChainType;
-	/* First Type in the list. */
-	typedef H Head;
-	/* Second type in the list. MUST be either NilType or a
-	   TypeChain<>.
-	*/
-	typedef T Tail;
+           There might be exceptions to the no-override rule, but none
+           come to mind. If it is overridden, it _must_ be-a
+           TypeChain<> type.
+        */
+        typedef TypeChain<H,T> ChainType;
+        /* First Type in the list. */
+        typedef H Head;
+        /* Second type in the list. MUST be either NilType or a
+           TypeChain<>.
+        */
+        typedef T Tail;
 
     };
 
+    /**
+       A template metafunction to compute the length of a TypeList.
+       ListT must conform to the TypeChain interface.
+       
+       Example:
+       
+       @code
+       assert((3 == LengthOf< TypeList<int, double, int> >::Value));
+       @endcode
+    */
     template <typename ListT>
     struct LengthOf;
 
@@ -85,10 +95,6 @@ namespace v8 { namespace convert { namespace tmp {
     }
 #endif
 
-    /**
-       A template metafunction to compute the length of a TypeList.
-       ListT must conform to the TypeChain interface.
-    */
     template <typename ListT>
     struct LengthOf
     {
