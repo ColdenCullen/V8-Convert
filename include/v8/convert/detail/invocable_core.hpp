@@ -15,12 +15,15 @@ conversion.
 #include "convert_core.hpp"
 #include "signature_core.hpp"
 #include "TypeList.hpp"
+
+//! Refactoring-related macro. Will go away.
+#define V8_CONVERT_CATCH_BOUND_FUNCS 0
 namespace v8 { namespace convert {
 
 
 /** Temporary internal macro - it is undef'd at the end of this file. It is used
     by internal generated code, so don't go renaming it without also changing the
-    code generator.
+    code generator (been there, done that!).
 */
 #define JS_THROW(MSG) v8::ThrowException(v8::Exception::Error(v8::String::New(MSG)))
 
@@ -457,6 +460,9 @@ private:
 public:
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( argv );
+#else
         try
         {
             return ProxyType::Call( argv );
@@ -469,6 +475,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
 };
 
@@ -510,6 +517,9 @@ public:
     */
     static v8::Handle<v8::Value> Call( T & self, v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( argv );
+#else
         try
         {
             return ProxyType::Call( self, argv );
@@ -522,6 +532,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
     /**
        Tries to extract a (T*) from argv.This(). On success it calls
@@ -530,6 +541,9 @@ public:
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( argv );
+#else
         try
         {
             return ProxyType::Call( argv );
@@ -542,6 +556,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
 };
 
@@ -566,6 +581,9 @@ private:
 public:
     static v8::Handle<v8::Value> Call( T const & self, v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( argv );
+#else
         try
         {
             return ProxyType::Call( self, argv );
@@ -578,9 +596,13 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( argv );
+#else
         try
         {
             return ProxyType::Call( argv );
@@ -593,6 +615,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
 };
 
@@ -831,6 +854,9 @@ public:
     */
     static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( func, argv );
+#else
         try
         {
             return ProxyType::Call( func, argv );
@@ -843,6 +869,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
 };
 
@@ -875,6 +902,9 @@ public:
     */
     static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( self, func, argv );
+#else
         try
         {
             return ProxyType::Call( self, func, argv );
@@ -887,6 +917,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
 
     /**
@@ -927,6 +958,9 @@ public:
     */
     static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
     {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( self, func, argv );
+#else
         try
         {
             return ProxyType::Call( self, func, argv );
@@ -939,6 +973,7 @@ public:
         {
             return JS_THROW("Native code through unknown exception type.");
         }
+#endif
     }
 
     /**
@@ -1567,5 +1602,6 @@ struct InCaOverloadList
 }} // namespaces
 
 #undef JS_THROW
+#undef V8_CONVERT_CATCH_BOUND_FUNCS
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */
