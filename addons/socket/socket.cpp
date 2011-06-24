@@ -1025,20 +1025,27 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
         ;
 
     typedef v8::Handle<v8::Value> ValH;
-    typedef cv::InCa< cv::MethodToInvocationCallback<N, ValH (unsigned int, bool), &N::read> > Read2;
-    typedef cv::InCa< cv::MethodToInvocationCallback<N, ValH (unsigned int), &N::read> > Read1;
+    typedef cv::MethodToInCa<N, ValH (unsigned int, bool), &N::read> Read2;
+    typedef cv::MethodToInCa<N, ValH (unsigned int), &N::read> Read1;
+#if 0
     typedef cv::InCaOverloader<2, Read2::Call, cv::InCaOverloader<1,Read1::Call>::Call > OloadRead;
-
+#else
+    typedef cv::InCaOverloadList< tmp::TypeList<Read2, Read1> > OloadRead;
+#endif
     cc.Set("read", OloadRead::Call);
 
-    typedef cv::InCa< cv::MethodToInvocationCallback<N, int (), &N::listen> > Listen0;
-    typedef cv::InCa< cv::MethodToInvocationCallback<N, int (int), &N::listen> > Listen1;
+    typedef cv::MethodToInCa<N, int (), &N::listen> Listen0;
+    typedef cv::MethodToInCa<N, int (int), &N::listen> Listen1;
+#if 0
     typedef cv::InCaOverloader<1, Listen1::Call, cv::InCaOverloader<0,Listen0::Call>::Call > OloadListen;
+#else
+    typedef cv::InCaOverloadList< tmp::TypeList<Listen0, Listen1> > OloadListen;
+#endif
 
     cc.Set("listen", OloadListen::Call);
 
-    typedef cv::InCa< cv::MethodToInvocationCallback<N, int (unsigned int, unsigned int), &N::setTimeout> > SetTimeout2;
-    typedef cv::InCa< cv::MethodToInvocationCallback<N, int (unsigned int), &N::setTimeoutSec> > SetTimeout1;
+    typedef cv::MethodToInCa<N, int (unsigned int, unsigned int), &N::setTimeout > SetTimeout2;
+    typedef cv::MethodToInCa<N, int (unsigned int), &N::setTimeoutSec > SetTimeout1;
     typedef cv::InCaOverloader<2, SetTimeout2::Call, cv::InCaOverloader<1,SetTimeout1::Call>::Call > OloadSetTimeout;
 #define F2I cv::FunctionToInvocationCallback
 #define M2I cv::MethodToInvocationCallback
