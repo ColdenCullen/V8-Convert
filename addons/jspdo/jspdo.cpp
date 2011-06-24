@@ -1070,6 +1070,17 @@ namespace v8 { namespace convert {
             WST & wst( WST::Instance() );
             assert( ! wst.IsSealed() );
 
+            if(0)// just an experiment
+            {
+                typedef cv::FunctionPtr< int(char const *), ::puts> FPPuts;
+                FPPuts::Function("Hi, world.");
+                typedef cv::InCaCatcher_std< Statement_stepArray, std::logic_error > LECatch;
+                typedef cv::InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
+                typedef cv::InCaCatcher_std< RECatch::Call > BaseCatch;
+                v8::InvocationCallback cb;
+                cb = BaseCatch::Call;
+            }
+
             ////////////////////////////////////////////////////////////////////////
             // cpdo::statement bindings...
 #define CATCHER cv::InCaCatcher_std
