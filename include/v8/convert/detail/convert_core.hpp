@@ -1393,6 +1393,69 @@ namespace v8 { namespace convert {
             return this->val.c_str();
         }
     };
+
+    /**
+       Must be specialized (or partially specialized) to be useful.
+
+       Requirements:
+
+       - (new T) must be legal, taking a number of arguments equal
+       to the Arity parameter.
+
+       - All arguments to the native ctor must be convertible
+       using CastFromJS().
+
+       - CastToJS<T*>() must be legal (i.e. it must return an object
+       or throw).
+
+       This type is intended to assist in the creation of ctor
+       functions for JS-bound C++ classes.
+
+       They are used something like:
+
+       @code
+       T * x = 0;
+       if( argv.Length() < 1 ) x = CtorForwarder<T,0>::Ctor(argv);
+       else if( argv.Length() < 3 ) x = CtorForwarder<T,2>::Ctor<int,int>(argv);
+       ...
+       @endcode
+    */
+    template <typename T, int Arity_>
+    struct CtorForwarder
+    {
+        enum { Arity = Arity_ };
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        /**
+           Must be specialized.
+
+           For all specializations, the caller owns the returned
+           object.
+
+           On error the function may trigger a v8 exception
+           or if it likes.
+        */
+        static NativeHandle Ctor( v8::Arguments const & );
+    };
+
+    /**
+       Partial specialization for default constructors.
+     */
+    template <typename T>
+    struct CtorForwarder<T,0>
+    {
+        enum { Arity = 0 };
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        /**
+           Returns (new Type). The caller owns the returned object.
+        */
+        static NativeHandle Ctor( v8::Arguments const & )
+        {
+            return new Type;
+        }
+    };
+#include "convert_generated.hpp"
     
 } } // namespaces
 

@@ -75,7 +75,7 @@ function makeCtorForwarder()
     local err_exception="CtorForwarder<T,${count}>::Ctor() Native ctor threw an unknown native exception type!"
 
     cat <<EOF
-/** Specialization ${count} arguments. */
+/** Specialization for ${count} arguments. */
 template <typename T>
 struct CtorForwarder<T,${count}>
 {
@@ -97,6 +97,8 @@ struct CtorForwarder<T,${count}>
     }
 
 };
+EOF
+: <<EOF
 /** A CtorForwarder<T,${count}> workalike which is 
 templatized on the ctor paramter types. */
 template <typename T, ${aTDecl} >
@@ -111,8 +113,8 @@ struct CtorForwarder${count}
         return CT::template Ctor< ${aTParam} >( argv );
     }
 };
-
 EOF
+
 } # makeCtorForwarder
 
 ########################################################################
@@ -499,7 +501,7 @@ case $command in
 #    'CtorForwarder')
 #	makeCtorForwarder
 #	;;
-    *Signature|SignatureBase|FunctionToInCa|MethodToInCa|ArgsTo*Forwarder)
+    *Signature|SignatureBase|FunctionToInCa|MethodToInCa|ArgsTo*Forwarder|CtorForwarder)
 	make${command}
 	;;
     *)

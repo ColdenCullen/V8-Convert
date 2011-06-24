@@ -493,6 +493,10 @@ namespace v8 { namespace convert {
        
        - See how much of the v8::juice::cw::ClassWrap 
        inheritance-related code we can salvage for re-use here.
+       
+       - There are known problems when trying to bind inherited methods
+       when the parent class has no bound them to JS. i'm not sure how
+       i can fix the templates to get this working.
     */
     template <typename T>
     class ClassCreator
@@ -927,8 +931,128 @@ namespace v8 { namespace convert {
     {
     };
 
+#if !defined(DOXYGEN)
+    namespace Detail
+    {
+        namespace cv = v8::convert;
+        namespace tmp = cv::tmp;
+        /**
+           A base class for the Factory_CtorForwarder#
+           family of classes.
+        */
+        template <typename T>
+        struct Factory_CtorForwarder_Base
+        {
+            typedef typename cv::TypeInfo<T>::Type Type;
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            static void Destroy( NativeHandle nself )
+            {
+                delete nself;
+            }
+        protected:
+            /**
+               If argv.Length() >= Arity then this function ignores errmsg and
+               returns true, otherwise it writes a descriptive error message
+               to errmsg and return false.
+            */
+            static bool argv_check( v8::Arguments const & argv, int Arity )
+            {
+                if( argv.Length() >= Arity ) return true;
+                else
+                {
+                    cv::StringBuffer msg;
+                    msg << "constructor requires " << Arity << " arguments!";
+                    throw std::range_error(msg.Content().c_str());
+                    return false;
+                }
+            }
+        };
 
-    
+        /**
+           Internal dispatch routine. CTOR _must_ be a convert::CtorForwardN implementation,
+           where N is 0..N.
+        */
+        template <typename T,typename CTOR>
+        struct CtorFwdDispatch
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            static NativeHandle Instantiate( v8::Arguments const &  argv )
+            {
+                return CTOR::Ctor( argv );
+            }
+        };
+        /**
+           Internal dispatch end-of-list routine.
+        */
+        template <typename T>
+        struct CtorFwdDispatch<T,tmp::NilType>
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            static NativeHandle Instantiate( Arguments const &  argv )
+            {
+                return 0;
+            }
+        };
+        /**
+           Internal type to dispatch a v8::Arguments list to one of
+           several a bound native constructors, depending on on the
+           argument count.
+        
+           List MUST be a tmp::TypeList< ... > containing ONLY
+           convert::CtorFowarderXXX implementations, where XXX is an
+           integer value.
+        */
+        template <typename T,typename List>
+        struct CtorFwdDispatchList
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            /**
+               Tries to dispatch Arguments to one of the constructors
+               in the List type, based on the argument count.
+             */
+            static NativeHandle Instantiate( Arguments const &  argv )
+            {
+                typedef typename List::Head CTOR;
+                typedef typename List::Tail Tail;
+                return ( (CTOR::Arity < 0) || (CTOR::Arity == argv.Length()) )
+                    ?  CtorFwdDispatch< T, CTOR >::Instantiate(argv )
+                    : CtorFwdDispatchList<T,Tail>::Instantiate(argv);
+            }
+        };
+        /**
+           End-of-list specialization.
+        */
+        template <typename T>
+        struct CtorFwdDispatchList<T,tmp::NilType>
+        {
+            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            /** Writes an error message to errmsg and returns 0. */
+            static NativeHandle Instantiate( Arguments const &  argv )
+            {
+                cv::StringBuffer msg;
+                msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
+                throw std::range_error(msg.Content().c_str());
+                return 0;
+            }
+        };
+    }
+#endif // !DOXYGEN
+
+    template <typename T,typename CtorForwarderList>
+    struct ClassCreator_Factory_CtorForwarder : Detail::Factory_CtorForwarder_Base<T>
+    {
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
+        {
+            return Detail::CtorFwdDispatchList<T,CtorForwarderList>::Instantiate( argv );
+        }
+        static void Delete( NativeHandle obj )
+        {
+            delete obj;
+        }
+    };
+
 }}// namespaces
 
 #endif /* CODE_GOOGLE_COM_P_V8_CONVERT_CLASS_CREATOR_HPP_INCLUDED */

@@ -237,14 +237,12 @@ v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
 namespace v8 { namespace convert {
 
 
-#if 0
-        template <typename Sig>
-        struct FuncSigTypeList;    
-        typedef FuncSigTypeList ThisType;
-        template <unsigned char Pos>
-        struct TypeAt : tmp::TypeAt<ThisType,Pos> {};
-#endif
-
+    struct CtorFwdTest
+    {
+        CtorFwdTest(int){}
+        CtorFwdTest(){}
+        CtorFwdTest(int,int){}
+    };
 
     template <>
     struct ClassCreator_Init<BoundNative>
@@ -408,6 +406,19 @@ namespace v8 { namespace convert {
             }
             bind_BoundSubNative(dest);
             CERR << "Finished binding BoundNative.\n";
+
+            if(0)
+            {
+                typedef CtorFwdTest CFT;
+                typedef cv::CtorForwarder<CFT,0> C0;
+                typedef cv::CtorForwarder<CFT,1> C1;
+                typedef cv::CtorForwarder<CFT,2> C2;
+                typedef CFT * (*CFTCtor)( v8::Arguments const & );
+                CFTCtor ctor;
+                ctor = C0::Ctor;
+                ctor = C1::Ctor<int>;
+                ctor = C2::Ctor<int,int>;
+            }
         }
     };
 } }

@@ -17,10 +17,12 @@ CPPFLAGS += -I$(V8_PREFIX)/include
 INCDIR_DETAIL := $(TOP_INCDIR)/v8/convert/detail
 sig_gen_h := $(INCDIR_DETAIL)/signature_generated.hpp
 invo_gen_h := $(INCDIR_DETAIL)/invocable_generated.hpp
+conv_gen_h := $(INCDIR_DETAIL)/convert_generated.hpp
 TMPL_GENERATOR := $(TOP_SRCDIR_REL)/createForwarders.sh
 TMPL_GENERATOR_COUNT := 10# max number of arguments generate template specializations can handle
 MAKEFILE_DEPS_LIST = $(filter-out $(ShakeNMake.CISH_DEPS_FILE),$(MAKEFILE_LIST))
-$(sig_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
+createSignatureTypeList.sh:
+$(sig_gen_h): $(TMPL_GENERATOR) createSignatureTypeList.sh $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
 	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
 	echo "#if !defined(DOXYGEN)" >> $@;
@@ -46,8 +48,20 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 		i=$$((i + 1)); \
 	done >> $@
 	@echo "#endif // if !defined(DOXYGEN)" >> $@;
-
 gen: $(invo_gen_h)
+
+$(conv_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
+	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
+	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
+	echo "#if !defined(DOXYGEN)" >> $@; \
+	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
+		bash $(TMPL_GENERATOR) $$i \
+			CtorForwarder \
+		  || exit $$?; \
+		i=$$((i + 1)); \
+	done >> $@
+	@echo "#endif // if !defined(DOXYGEN)" >> $@;
+gen: $(conv_gen_h)
 
 V8_LDFLAGS := -L$(V8_PREFIX)/lib -lv8_g
 
