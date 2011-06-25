@@ -72,10 +72,11 @@ function assertThrows( func ) {
 
 function test1()
 {
-    { // if these fail they're cause an assertion in v8...
+    { // if these fail they'll probably cause an assertion in v8...
         BoundNative.testLocker();
         BoundNative.testLockerNoUnlocking()
     }
+    
     var f = new BoundNative();
     print('f='+f);
     f.puts("hi, world");
@@ -86,6 +87,8 @@ function test1()
     f.doFooConst();
     f.nativeParam(f);
     f.runGC();
+
+    
 
     f.overloaded();
     f.overloaded(1);
@@ -154,6 +157,7 @@ function test2()
     assert(s instanceof BoundNative, "BoundSubNative is-a BoundNative");
     print('s='+s);
     assert( /BoundSubNative/.test(s.toString()), 'toString() seems to work: '+s);
+    asserteq( undefined, s.nonBoundNative(), 'Check native function returning (NonBoundType &).' );
     asserteq(true, s.destroy(), 's.destroy()');
 }
 

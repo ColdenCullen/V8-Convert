@@ -248,9 +248,10 @@ struct BoundSubNative : public BoundNative
         type, whereas ToInCa<> (and friends) would fail to bind
         this (probably with a link-time error).
     */
-    NonBoundType const * nonBoundType()
+    NonBoundType & nonBoundNative()
     {
-        return NULL;
+        static NonBoundType bob = NonBoundType();
+        return bob;
     }
 };
 
