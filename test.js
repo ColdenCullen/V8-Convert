@@ -189,6 +189,13 @@ function test4()
     }
 }
 
+function testUnlockedFunctions()
+{
+    print("sleep()ing for a moment...");
+    BoundNative.sleep(2);
+    print("Done sleeping.");
+}
+
 if(0) {
     /**
        Interesting: if we have a native handle in the global object
@@ -203,8 +210,9 @@ if(0) {
 test1();
 test2();
 test3();
+testUnlockedFunctions();
 //test4();
-if(1) {
+if(0) {
     try {
         asserteq(1,2,"Intentional error to check fetching of current line number.");
     }

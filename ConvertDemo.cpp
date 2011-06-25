@@ -2,6 +2,7 @@
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
+#include <unistd.h> // only for sleep() in some test code
 int BoundNative::publicStaticInt = 42;
 
 void doFoo()
@@ -309,7 +310,7 @@ namespace v8 { namespace convert {
             ////////////////////////////////////////////////////////////
             // Bind some member functions...
             cc("cputs",
-               cv::FunctionToInvocationCallback<int (char const *),::puts>)
+               cv::FunctionToInCa<int (char const *),::puts>::Call )
                 ("overloaded",
                   OverloadInCas::Call )
                 ("doFoo",
@@ -356,15 +357,14 @@ namespace v8 { namespace convert {
             // of via the cc object:
             Handle<ObjectTemplate> const & proto( cc.Prototype() );
             proto->Set(JSTR("bogo"),
-                       cv::CastToJS(cv::FunctionToInvocationCallback<ValueHandle (v8::Arguments const &), bogo_callback>)
+                       cv::CastToJS(cv::FunctionToInCa<ValueHandle (v8::Arguments const &), bogo_callback>::Call)
                        );
             proto->Set(JSTR("bogo2"),
-                       cv::CastToJS(cv::FunctionToInvocationCallback<int (v8::Arguments const &),bogo_callback2>)
+                       cv::CastToJS(cv::FunctionToInCa<int (v8::Arguments const &),bogo_callback2>::Call)
                        );
             proto->Set(JSTR("runGC"),
-                       cv::CastToJS(cv::FunctionToInvocationCallback<bool (),v8::V8::IdleNotification>)
+                       cv::CastToJS(cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call)
                        );
-
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
             typedef cv::MemberPropertyBinder<BoundNative> PB;
@@ -403,6 +403,13 @@ namespace v8 { namespace convert {
                 void (int), &BoundNative::setInt
                 >("theIntNC", proto);
 
+
+            v8::Handle<v8::Function> ctor( cc.CtorFunction() );
+            ctor->Set(JSTR("sleep"),
+                    cv::CastToJS(cv::FunctionToInCa< unsigned int (unsigned int), ::sleep, true>::Call)
+            );
+
+
             ////////////////////////////////////////////////////////////
             // Add class to the destination object...
             //dest->Set( JSTR("BoundNative"), cc.CtorFunction() );
@@ -422,6 +429,7 @@ namespace v8 { namespace convert {
             CERR << "Finished binding BoundNative.\n";
             if(1) // just experimenting...
             {
+                assert( (0 > ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Arity) );
                 typedef CtorFwdTest CFT;
                 typedef cv::CtorForwarder<CFT * ()> C0;
                 //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;

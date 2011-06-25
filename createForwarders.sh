@@ -409,9 +409,49 @@ function makeArgsToFunctionForwarder()
 
 mycat <<EOF
 namespace Detail {
-    template <typename Sig>
-    struct ArgsToFunctionForwarder<${count},Sig> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            ${sigTypeDecls}
+            ${castTypedefs}
+            ${castInits}
+            typedef typename SignatureType::ReturnType RV;
+            V8Unlocker<UnlockV8> unlocker;
+            RV rv( (*func)( ${castCalls} ) );
+            unlocker.Dispose();
+            return CastToJS( rv );
+        }
+    };
+
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+    {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            ${sigTypeDecls}
+            ${castTypedefs}
+            ${castInits}
+            {
+                V8Unlocker<UnlockV8> const unlocker();
+                (*func)( ${castCalls} );
+            }
+            return v8::Undefined();
+        }
+    };
+}
+EOF
+
+:<<EOF
+    template <typename Sig>
+    struct ArgsToFunctionForwarder<${count},Sig,false> : FunctionSignature<Sig>
+    {
+    public:
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
@@ -423,7 +463,7 @@ namespace Detail {
         }
     };
     template <typename Sig>
-    struct ArgsToFunctionForwarderVoid<${count},Sig> : FunctionSignature<Sig>
+    struct ArgsToFunctionForwarder<${count},Sig,true> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -432,12 +472,15 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            (*func)( ${castCalls} );
-            return v8::Undefined();
+            typedef typename SignatureType::ReturnType RV;
+            V8Unlocker<true> unlocker;
+            RV rv( (*func)( ${castCalls} ) );
+            unlocker.Dispose();
+            return CastToJS( rv );
         }
     };
-}
 EOF
+
 }
 
 ########################################################################
