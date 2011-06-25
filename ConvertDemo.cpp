@@ -2,7 +2,13 @@
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
+#define TRY_UNLOCKED_FUNCTIONS 0
+
+#if TRY_UNLOCKED_FUNCTIONS
 #include <unistd.h> // only for sleep() in some test code
+#endif
+
+
 int BoundNative::publicStaticInt = 42;
 
 void doFoo()
@@ -403,12 +409,12 @@ namespace v8 { namespace convert {
                 void (int), &BoundNative::setInt
                 >("theIntNC", proto);
 
-
+#if TRY_UNLOCKED_FUNCTIONS
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
             ctor->Set(JSTR("sleep"),
                     cv::CastToJS(cv::FunctionToInCa< unsigned int (unsigned int), ::sleep, true>::Call)
             );
-
+#endif
 
             ////////////////////////////////////////////////////////////
             // Add class to the destination object...
@@ -582,3 +588,7 @@ enum {
     experimentZ = 0
 };    
 #endif // experiment
+
+#undef TRY_UNLOCKED_FUNCTIONS
+#undef CERR
+#undef JSTR

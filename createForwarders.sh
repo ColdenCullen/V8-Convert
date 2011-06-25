@@ -273,6 +273,8 @@ EOF
 # Create FunctionToInCa<> and friends...
 function makeFunctionToInCa()
 {
+# FIXME: Re-implement FunctionToInca::Call in terms of ArgsToFunctionForwarder.
+# We're duplicating code right now.
     mycat <<EOF
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
@@ -283,14 +285,18 @@ struct FunctionToInCa< ${count}, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func 
         static ${ValueHandle} Call( Arguments const & argv )
         {
             typedef FunctionPtr<Sig, Func> ParentType;
-            if( argv.Length() < ParentType::Arity )
+            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
             }
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            return CastToJS( Func(${castCalls} ) );
+            typedef typename ParentType::ReturnType RV;
+            V8Unlocker<UnlockV8> unlocker;
+            RV rv( (*Func)( ${castCalls} ) );
+            unlocker.Dispose();
+            return CastToJS( rv );
         }
 };
 EOF
@@ -304,14 +310,17 @@ struct FunctionToInCaVoid< ${count}, Sig, Func, UnlockV8 > : FunctionPtr< Sig, F
         static ${ValueHandle} Call( Arguments const & argv )
         {
             typedef FunctionPtr<Sig, Func> ParentType;
-            if( argv.Length() < ParentType::Arity )
+            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
             }
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            Func(${castCalls});
+            {
+                V8Unlocker<UnlockV8> const unlocker();
+                Func(${castCalls});
+            }
             return Undefined();
         }
 };
