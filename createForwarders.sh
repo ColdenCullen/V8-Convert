@@ -498,8 +498,8 @@ function makeArgsToMethodForwarder_impl()
     fi
 mycat <<EOF
 namespace Detail {
-    template <typename T, typename Sig>
-    struct ${class}<T, ${count},Sig> : ${parent}<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ${class}<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -508,7 +508,11 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            return CastToJS( (self.*func)( ${castCalls} ) );
+            typedef typename SignatureType::ReturnType RV;
+            V8Unlocker<UnlockV8> unlocker;
+            RV rv((self.*func)( ${castCalls} ));
+            unlocker.Dispose();
+            return CastToJS( rv );
         }
         static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
         {
@@ -519,8 +523,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig>
-    struct ${class}Void<T, ${count},Sig> : ${parent}<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ${class}Void<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -529,7 +533,10 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            (self.*func)( ${castCalls} );
+            {
+                V8Unlocker<UnlockV8> unlocker;
+                (self.*func)( ${castCalls} );
+            }
             return v8::Undefined();
         }
         static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
