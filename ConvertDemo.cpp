@@ -597,18 +597,18 @@ void compile_time_assertions()
     ASS< 3 == cv::tmp::LengthOf< CannotUnlock >::Value >();
     ASS< 3 == cv::tmp::LengthOf< CannotUnlock2 >::Value >();
     ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
-    ASS< cv::IsSafeToUnlock<void>::Value >();
-    ASS< cv::IsSafeToUnlock<double>::Value>();
-    ASS< cv::IsSafeToUnlock<int>::Value>();
-    ASS< !cv::IsSafeToUnlock< v8::Handle<v8::Value> >::Value >();
+    ASS< cv::IsUnlockable<void>::Value >();
+    ASS< cv::IsUnlockable<double>::Value>();
+    ASS< cv::IsUnlockable<int>::Value>();
+    ASS< !cv::IsUnlockable< v8::Handle<v8::Value> >::Value >();
     //assert( (cv::tmp::Assertion<!cv::TypeListIsUnlockable<CannotUnlock>::Value>::Value) );
     ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
     ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
     ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
 
-    ASS< cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<int (int, double, char)> >::Value >();
-    ASS< !cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<int (int, double, v8::Arguments)> >::Value >();
-    ASS< !cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<v8::Handle<v8::Object> (int, double)> >::Value >();
+    ASS< cv::SignatureIsUnlockable< cv::SignatureTypeList<int (int, double, char)> >::Value >();
+    ASS< !cv::SignatureIsUnlockable< cv::SignatureTypeList<int (int, double, v8::Arguments)> >::Value >();
+    ASS< !cv::SignatureIsUnlockable< cv::SignatureTypeList<v8::Handle<v8::Object> (int, double)> >::Value >();
 #undef ASS
 }                
 

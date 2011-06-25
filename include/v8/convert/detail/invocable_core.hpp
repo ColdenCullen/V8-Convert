@@ -184,33 +184,64 @@ namespace Detail {
     v8::Handle<Anything> and v8::Arguments.
 */
 template <typename T>
-struct IsSafeToUnlock
+struct IsUnlockable
 {
     enum { Value = 1 };
 };
 template <typename T>
-struct IsSafeToUnlock<T const> : IsSafeToUnlock<T> {};
+struct IsUnlockable<T const> : IsUnlockable<T> {};
 template <typename T>
-struct IsSafeToUnlock<T const &> : IsSafeToUnlock<T> {};
+struct IsUnlockable<T const &> : IsUnlockable<T> {};
 template <typename T>
-struct IsSafeToUnlock<T *> : IsSafeToUnlock<T> {};
+struct IsUnlockable<T *> : IsUnlockable<T> {};
 template <typename T>
-struct IsSafeToUnlock<T const *> : IsSafeToUnlock<T> {};
+struct IsUnlockable<T const *> : IsUnlockable<T> {};
 
-template <typename T>
-struct IsSafeToUnlock< v8::Handle<T> >
+/**
+    Explicit instantiation to make damned sure that nobody
+    re-sets this one. We rely on these semantics for 
+    handling FunctionSignature like Const/MethodSignature
+    in some cases.
+*/
+template <>
+struct IsUnlockable<void>
+{
+    enum { Value = 1 };
+};
+
+// Todo: a mechanism to cause certain highly illegal types to trigger an assertion...
+template <>
+struct IsUnlockable<void *>
+{
+    enum { Value = 0 };
+};
+template <>
+struct IsUnlockable<void const *>
 {
     enum { Value = 0 };
 };
 
 template <typename T>
-struct IsSafeToUnlock< v8::Local<T> >
+struct IsUnlockable< v8::Handle<T> >
+{
+    enum { Value = 0 };
+};
+
+
+template <typename T>
+struct IsUnlockable< v8::Persistent<T> >
+{
+    enum { Value = 0 };
+};
+
+template <typename T>
+struct IsUnlockable< v8::Local<T> >
 {
     enum { Value = 0 };
 };
 
 template <>
-struct IsSafeToUnlock<v8::Arguments>
+struct IsUnlockable<v8::Arguments>
 {
     enum { Value = 0 };
 };
@@ -218,7 +249,7 @@ struct IsSafeToUnlock<v8::Arguments>
 
 /**
     Given a tmp::TypeList-compatible type list, this metafunction's
-    Value member evalues to true if IsSafeToUnlock<T>::Value is
+    Value member evalues to true if IsUnlockable<T>::Value is
     true for all types in TList, else Value evaluates to false.
     As a special case, an empty list evaluates to true because in this
     API an empty list will refer to a function taking no arguments.
@@ -229,7 +260,7 @@ struct TypeListIsUnlockable;
 namespace Detail
 {
     using namespace cv::tmp;
-    template <typename T> struct CanUnlockImpl : cv::IsSafeToUnlock<T>{};
+    template <typename T> struct CanUnlockImpl : cv::IsUnlockable<T>{};
 
     template <>
     struct CanUnlockImpl< tmp::NilType > : cv::tmp::BoolVal<true>
@@ -261,27 +292,37 @@ struct TypeListIsUnlockable<tmp::NilType>
     Given a SignatureTypeList, this metafunction's Value member
     evaluates to true if:
     
-    - IsSafeToUnlock<SigTList::ReturnType>::Value is true and...
+    - IsUnlockable<SigTList::ReturnType>::Value is true and...
     
-    - IsSafeToUnlock<SigTList::ClassType>::Value is true and...
+    - IsUnlockable<SigTList::ClassType>::Value is true (only relavent
+    for Const/MethodSignature, not FunctionSignature) and...
     
     - TypeListIsUnlockable< SigTList >::Value is true.
     
-    If the value is true, the function signature has passed the
-    most basic check for whether or not it is legal to use
-    v8::Unlocker to unlock v8 before calling a function with
-    this signature. Note that this is a best guess, but this code
-    cannot know app-specific conditions which might make this
-    guess invalid. e.g. if a bound function itself uses v8
-    and does not explicitly acquire a lock then the results are
-    undefined (and will very possibly trigger an assertion in v8,
-    killing the app).
+    If the value is true, the function signature has passed the most 
+    basic check for whether or not it is legal to use v8::Unlocker 
+    to unlock v8 before calling a function with this signature. Note 
+    that this is a best guess, but this code cannot know 
+    app-specific conditions which might make this guess invalid. 
+    e.g. if a bound function itself uses v8 and does not explicitly 
+    acquire a lock then the results are undefined (and will very 
+    possibly trigger an assertion in v8, killing the app). Such 
+    things can and do happen. If you're lucky, you're building 
+    against a debug version of libv8 and its assertion text will 
+    point you directly to the JS code which caused the assertion, 
+    then you can disable unlocking support for that binding.    
+
+    If you want to disable unlocking for all bound members of a given
+    class, create an IsUnlockable<T> specialization whos Value 
+    member evaluates to false. Then no functions/methods using that 
+    class will cause this metafunction to evaluate to true.
+    
 */
 template <typename SigTList>
-struct SignatureTypeListIsUnlockable
+struct SignatureIsUnlockable
     : tmp::And< tmp::TypeList<
-        IsSafeToUnlock< typename SigTList::ClassType >,
-        IsSafeToUnlock< typename SigTList::ReturnType >,
+        IsUnlockable< typename SigTList::ClassType >,
+        IsUnlockable< typename SigTList::ReturnType >,
         TypeListIsUnlockable< SigTList >
     > >
 {};
@@ -601,18 +642,68 @@ namespace Detail {
 }
 
 /**
-   A helper type for passing v8::Arguments lists to native non-member
-   functions.
+    A helper type for passing v8::Arguments lists to native non-member
+    functions.
 
-   Sig must be a function-signature-like argument. e.g. <double (int,double)>,
-   and the members of this class expect functions matching that signature.
+    Sig must be a function-signature-like argument. e.g. <double (int,double)>,
+    and the members of this class expect functions matching that signature.
 
-   TODO: Now that we have InCaCatcher, we could potentially
-   templatize this to customize exception handling. Or we could
-   remove the handling altogether and require clients to use
-   InCaCatcher and friends if they want to catch exceptions.
+    If UnlockV8 is true then v8::Unlocker will be used to unlock v8 
+    for the duration of the call to Func(). HOWEVER... (the rest of 
+    these docs are about the caveats)...
+
+    An UnlockV8 value of SignatureIsUnlockable<Sig>::Value of is a 
+    reasonably sound heuristic but it cannot predict certain 
+    app-dependent conditions which render its guess semantically 
+    invalid. See SignatureIsUnlockable for more information.
+
+    It is illegal for UnlockV8 to be true if ANY of the following 
+    applies:
+
+    - The callback itself will "use" v8. (This _might_ be okay if it 
+    uses a v8::Locker. We'll have to try and see.) We cannot 
+    determine this programmatically except by guessing based on the 
+    return and arguments types.
+
+    - Any of the return or argument types for the function are v8 
+    types, e.g. v8::Handle<Anything> or v8::Arguments. 
+    SignatureIsUnlockable<Sig>::Value will evaluate to false 
+    if any of the "known bad" types is contained in the function's 
+    signature. If this function is given a true value but
+    SignatureIsUnlockable<Sig>::Value is false then
+    a compile-time assertion will be triggered.
+
+    - Certain callback signatures cannot have unlocking support
+    enabled because if we unlock then we cannot legally access the data
+    we need to convert. These will cause a compile-time assertion
+    if UnlockV8 is true. All such bits are incidentally covered by
+    SignatureIsUnlockable's check, so this assertion can
+    only happen if the client explicitly sets UnlockV8 to true for
+    those few cases.
+
+    - There might be other, as yet unknown/undocumented, corner cases 
+    where unlocking v8 is semantically illegal at this level of the 
+    API.
+
+    Violating any of these leads to undefined behaviour. The library 
+    tries to fail at compile time for invalid combinations when it 
+    can, but there are plenty of things which require more 
+    metatemplate coding in order to catch at compile-time, e.g. if a 
+    bound function takes a v8::Handle<> as an argument (which makes it
+    illegal for unlocking purpose).
+
+    It might also be noteworthy that unlocking v8 requires, for
+    reasons of scoping, one additional (very small) memory allocation
+    vis-a-vis not unlocking. The memory is freed, of course, right
+    after the native call returns.
 */
-template <typename Sig, bool UnlockV8 = false>
+template <typename Sig, bool UnlockV8 =
+#if 0
+    false
+#else
+    SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+#endif
+    >
 struct ArgsToFunctionForwarder
 {
 private:
@@ -660,12 +751,12 @@ public:
 namespace Detail {
 /**
     Temporary internal macro to trigger a static assertion if:
-    UnlockV8 is true and SignatureTypeListIsUnlockable<...>::Value is
+    UnlockV8 is true and SignatureIsUnlockable<...>::Value is
     false. This is to prohibit that someone accidentally enables
     locking when using an argument/return type which we know cannot
     obey the locking rules.
 */
-#define ASSERT_UNLOCK_SANITY_CHECK typedef char  AssertCanEnableUnlock[tmp::Assertion< !UnlockV8 ? 1 : (cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<Sig> >::Value ? 1 : 0)>::Value ? 1 : -1]
+#define ASSERT_UNLOCK_SANITY_CHECK typedef char  AssertCanEnableUnlock[tmp::Assertion< !UnlockV8 ? 1 : (cv::SignatureIsUnlockable< cv::SignatureTypeList<Sig> >::Value ? 1 : 0)>::Value ? 1 : -1]
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = false>
@@ -795,50 +886,20 @@ namespace Detail {
    Sig must be a function signature. Func must be a pointer to a function
    with that signature.
 
-   If UnlockV8 is true then v8::Unlocker will be used to unlock v8
-   for the duration of the call to Func(). HOWEVER... (the rest of
-   these docs are about the caveats)...
-   
-   By default SignatureTypeListIsUnlockable<Sig>::Value is used to
-   determine whether or not it is feasible to use v8::Unlocker
-   or not. That heuristic is reasonably sound but it cannot
-   predict certain app-dependent conditions which render its
-   guess invalid. See SignatureTypeListIsUnlockable for more
-   information.
-   
-   It is illegal for UnlockV8 to be true if ANY of the following 
-   applies:
-   
-   - The callback itself will "use" v8. (This _might_ be okay if it 
-   uses a v8::Locker. We'll have to try and see.) We cannot 
-   determine this programmatically except by guessing based on the 
-   return and arguments types.
-   
-   - Any of the return or argument types for the function are v8 
-   types, e.g. v8::Handle<Anything> or v8::Arguments. 
-   SignatureTypeListIsUnlockable<Sig>::Value will evaluate to false 
-   if any of the "known bad" types is contained in the function's 
-   signature.
-   
-   - There might be other, as yet unknown/undocumented, corner cases 
-   where unlocking v8 is semantically illegal at this level of the 
-   API.
+   If UnlockV8 is true then v8::Unlocker will be used to unlock v8 
+   for the duration of the call to Func(). HOWEVER... see 
+   ArgsToFunctionForwarder for lots of details/caveats about that 
+   parameter.
 
-   Violating any of these leads to undefined behaviour. The library 
-   tries to fail at compile time for invalid combinations when it 
-   can, but there are plenty of things which require more 
-   metatemplate coding in order to catch at compile-time, e.g. if a 
-   bound function takes a v8::Handle<> as an argument (which makes it
-   illegal for unlocking purpose).
-   
-   It might also be noteworthy that unlocking v8 requires, for
-   reasons of scoping, one additional (very small) memory allocation
-   vis-a-vis not unlocking. The memory is freed, of course, right
-   after the native call returns.
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,
-          bool UnlockV8 = SignatureTypeListIsUnlockable< SignatureTypeList<Sig> >::Value
+          bool UnlockV8 =
+#if 0
+    false
+#else
+    SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+#endif
           >
 struct FunctionToInCa
     : tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
@@ -863,13 +924,18 @@ struct FunctionToInCa
    function signature for T. Func must be a pointer to a function with
    that signature.
    
-   See FunctionToInCa for details about the UnlockV8 parameter.
+   See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 = tmp::And< tmp::TypeList<
-            SignatureTypeListIsUnlockable< SignatureTypeList<Sig> >,
-            IsSafeToUnlock<T>
+          bool UnlockV8 =
+#if 0
+            false
+#else
+            tmp::And< tmp::TypeList<
+                SignatureIsUnlockable< SignatureTypeList<Sig> >,
+                IsUnlockable<T>
             > >::Value
+#endif
           >
 struct MethodToInCa
     : tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
@@ -882,13 +948,18 @@ struct MethodToInCa
 /**
    Functionally identical to MethodToInCa, but for const member functions.
    
-   See FunctionToInCa for details about the UnlockV8 parameter.
+   See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 = tmp::And< tmp::TypeList<
-            SignatureTypeListIsUnlockable< SignatureTypeList<Sig> >,
-            IsSafeToUnlock<T>
-            > >::Value
+          bool UnlockV8 =
+#if 0
+        false
+#else
+        tmp::And< tmp::TypeList<
+            SignatureIsUnlockable< SignatureTypeList<Sig> >,
+            IsUnlockable<T>
+        > >::Value
+#endif
           >
 struct ConstMethodToInCa
     : tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
@@ -961,14 +1032,14 @@ v8::Handle<v8::Value> ConstMethodToInvocationCallback( v8::Arguments const & arg
    (int,double)>, and the members of this class expect T member
    functions matching that signature.
 */
-template <typename T, typename Sig>
+template <typename T, typename Sig, bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value>
 struct ArgsToMethodForwarder
 {
 private:
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, MethodSignature<T,Sig>::Arity, Sig >,
-                 Detail::ArgsToMethodForwarder< T, MethodSignature<T,Sig>::Arity, Sig >
+                 Detail::ArgsToMethodForwarderVoid< T, MethodSignature<T,Sig>::Arity, Sig, UnlockV8 >,
+                 Detail::ArgsToMethodForwarder< T, MethodSignature<T,Sig>::Arity, Sig, UnlockV8 >
     >::Type
     ProxyType;
 public:
@@ -1017,14 +1088,16 @@ public:
 /**
    Identicial to ArgsToMethodForwarder, but works on const member methods.
 */
-template <typename T, typename Sig>
+template <typename T, typename Sig,
+        bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
+        >
 struct ArgsToConstMethodForwarder
 {
 private:
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, ConstMethodSignature<T,Sig>::Arity, Sig >,
-                 Detail::ArgsToConstMethodForwarder< T, ConstMethodSignature<T,Sig>::Arity, Sig >
+                 Detail::ArgsToConstMethodForwarderVoid< T, ConstMethodSignature<T,Sig>::Arity, Sig, UnlockV8 >,
+                 Detail::ArgsToConstMethodForwarder< T, ConstMethodSignature<T,Sig>::Arity, Sig, UnlockV8 >
     >::Type
     ProxyType;
 public:
@@ -1727,7 +1800,7 @@ namespace Detail {
 
     For non-member functions, T must be void.
 
-    See FunctionToInCa for the meaning of the UnlockV8 parameter.
+    See ArgsToFunctionForwarder for the meaning of the UnlockV8 parameter.
 
     Examples:
 
@@ -1753,18 +1826,24 @@ namespace Detail {
     is split into const- and non-const forms is to be able to 
     work around that shortcoming :/.
 
-    Maintenance reminder: we need the extra level of indirection
-    (the classes in the Detail namespace) to avoid instantiating
-    both ConstMethodToInCa and MethodToInCa with the given
-    singature/function combination (which won't compile).
-    
+    Maintenance reminder: we need the extra level of indirection 
+    (the classes in the Detail namespace) to avoid instantiating 
+    both ConstMethodToInCa and MethodToInCa with the given 
+    singature/function combination (which won't compile). That said, 
+    the indirection is purely compile-time - no extra Call() 
+    wrappers are injected because of this.
 */
 template <typename T, typename Sig,
         typename Detail::ConstOrNotSig<SignatureTypeList<Sig>::IsConst,T,Sig>::FunctionType Func,
-        bool UnlockV8 = tmp::And< tmp::TypeList<
-            SignatureTypeListIsUnlockable< SignatureTypeList<Sig> >,
-            IsSafeToUnlock<T>
+        bool UnlockV8 =
+#if 0
+    false
+#else
+        tmp::And< tmp::TypeList<
+            SignatureIsUnlockable< SignatureTypeList<Sig> >,
+            IsUnlockable<T>
             > >::Value
+#endif
         >
 struct ToInCa : Detail::ConstOrNotMethodToInCa<SignatureTypeList<Sig>::IsConst,T,Sig,Func,UnlockV8>
 {
