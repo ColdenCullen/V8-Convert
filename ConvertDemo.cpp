@@ -459,6 +459,9 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
          cv::ConstMethodToInCa<BoundSubNative,void (),&BoundSubNative::subFunc>::Call)
         ("toString",
          cv::ConstMethodToInCa<BoundSubNative,ValueHandle (),&BoundSubNative::toString>::Call)
+         ("nonBoundNative",
+         cv::ToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType const *(), &BoundSubNative::nonBoundType>::Call)
+         //cv::ToInCa<BoundSubNative, BoundSubNative::NonBoundType const *(), &BoundSubNative::nonBoundType>::Call) // must fail to compile OR link
         ;
 
     typedef cv::ClassCreator<BoundNative> CCFoo;

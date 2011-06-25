@@ -236,6 +236,22 @@ struct BoundSubNative : public BoundNative
     {
         return v8::convert::StringBuffer() << "[object BoundSubNative@"<<(void const *)this<<"]";
     }
+    
+    struct NonBoundType
+    {};
+    
+    /**
+        This function shows how we can use ToInCaVoid<> (and friends)
+        to bind a function which returns a type we cannot cast
+        back to JS. Those bindings do not instantiate (in the C++
+        templates sense of the word) the conversion of the return
+        type, whereas ToInCa<> (and friends) would fail to bind
+        this (probably with a link-time error).
+    */
+    NonBoundType const * nonBoundType()
+    {
+        return NULL;
+    }
 };
 
 /**

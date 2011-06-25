@@ -918,6 +918,24 @@ struct FunctionToInCa
 {};
 
 /**
+    A variant of FunctionToInCa which the property of not invoking
+    the conversion of the function's return type from native to JS
+    form. This is useful when such a conversion is not legal
+    because CastToJS() won't work on it or, more generally,
+    when you want the JS interface to always get the undefined
+    return value.
+    
+    Call() always returns v8::Undefined().
+*/
+template <typename Sig,
+          typename FunctionSignature<Sig>::FunctionType Func,
+          bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
+          >
+struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
+{};
+
+
+/**
    A template for converting non-const member function pointers to
    v8::InvocationCallback. For const member functions use
    ConstMethodToInCa instead.
@@ -937,7 +955,7 @@ struct FunctionToInCa
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 = tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< Signature<Sig> >,
+                SignatureIsUnlockable< MethodSignature<T,Sig> >,
                 IsUnlockable<T>
             > >::Value
           >
@@ -950,6 +968,21 @@ struct MethodToInCa
 };
 
 /**
+    See FunctionToInCaVoid - this is identical exception that it
+    works on member functions of T.
+*/
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
+          bool UnlockV8 = tmp::And< tmp::TypeList<
+                SignatureIsUnlockable< MethodSignature<T,Sig> >,
+                IsUnlockable<T>
+            > >::Value
+          >
+struct MethodToInCaVoid
+    : Detail::MethodToInCaVoid<T, Sig, Func, UnlockV8>
+{
+};
+
+/**
    Functionally identical to MethodToInCa, but for const member functions.
    
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
@@ -957,7 +990,7 @@ struct MethodToInCa
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 =
             tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< Signature<Sig> >,
+                SignatureIsUnlockable< ConstMethodSignature<T,Sig> >,
                 IsUnlockable<T>
             > >::Value
           >
@@ -967,6 +1000,21 @@ struct ConstMethodToInCa
                  Detail::ConstMethodToInCa<T, Sig, Func, UnlockV8>
         >::Type
 {};
+
+/**
+    See FunctionToInCaVoid - this is identical exception that it
+    works on const member functions of T.
+*/
+template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
+          bool UnlockV8 =
+            tmp::And< tmp::TypeList<
+                SignatureIsUnlockable< ConstMethodSignature<T,Sig> >,
+                IsUnlockable<T>
+            > >::Value
+          >
+struct ConstMethodToInCaVoid : Detail::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8>
+{};
+
 
 /**
    A v8::InvocationCallback implementation which forwards the arguments from argv
@@ -1177,6 +1225,7 @@ namespace Detail {
             Proxy::Call( func, argv );
         }
     };
+    
     /**
        Internal level of indirection to handle void return
        types from forwardMethod().
@@ -1196,6 +1245,7 @@ namespace Detail {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
+    
     template <typename T, typename Sig>
     struct ForwardMethodVoid
     {
@@ -1211,6 +1261,7 @@ namespace Detail {
             Proxy::Call( func, argv );
         }
     };
+    
     template <typename T, typename Sig>
     struct ForwardConstMethod
     {
@@ -1226,6 +1277,7 @@ namespace Detail {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
+    
     template <typename T, typename Sig>
     struct ForwardConstMethodVoid
     {
@@ -1379,7 +1431,8 @@ forwardConstMethod(Sig func, v8::Arguments const & argv )
         */
         ;
 }
-#if 0
+
+#if 0 // i'm reserving the struct name InCa for something really special. Just don't know what yet.
 /**
    A structified/functorified form of v8::InvocationCallback.  It is
    sometimes convenient to be able to use a typedef to create an alias
@@ -1758,42 +1811,87 @@ struct InCaOverloadList
 #include "invocable_generated.hpp"
 
 
-#if 1
 namespace Detail {
     namespace cv = v8::convert;
 
     template <bool IsConst, typename T, typename Sig>
-    struct ConstOrNotSig;
-    
-    template <typename T, typename Sig>
-    struct MethodOrFunctionSig : cv::MethodSignature<T,Sig> {};
-    template <typename Sig>
-    struct MethodOrFunctionSig<void,Sig> : cv::FunctionSignature<Sig> {};
-    
-    template <typename T, typename Sig>
-    struct ConstOrNotSig<true,T,Sig> : cv::ConstMethodSignature<T,Sig>
-    {};
-    
-    template <typename T, typename Sig>
-    struct ConstOrNotSig<false,T,Sig> : MethodOrFunctionSig<T,Sig>
+    struct ToInCaSigSelector : cv::ConstMethodSignature<T,Sig>
     {
+        template < typename cv::ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cv::ConstMethodToInCa<T, Sig, Func, UnlockV8 >
+        {
+        };
     };
     
+    template <typename T, typename Sig>
+    struct ToInCaSigSelector<false,T,Sig> : MethodSignature<T,Sig>
+    {
+        template < typename cv::MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cv::MethodToInCa<T, Sig, Func, UnlockV8 >
+        {
+        };
+    };
+    
+    template <typename Sig>
+    struct ToInCaSigSelector<false,void,Sig> : cv::FunctionSignature<Sig>
+    {
+        template < typename cv::FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cv::FunctionToInCa<Sig, Func, UnlockV8 >
+        {
+        };
+    };
+    
+    // We need both true and false specializations here to avoid an ambiguity
+    // with (true,T) resp. (false,T).
+    template <typename Sig>
+    struct ToInCaSigSelector<true,void,Sig> : ToInCaSigSelector<false,void,Sig> {};
+    
     template <bool IsConst, typename T, typename Sig,
-            typename ConstOrNotSig<IsConst,T,Sig>::FunctionType Func,
-            bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
-    struct ConstOrNotMethodToInCa;
-    
-    template <typename T, typename Sig,
-            typename cv::ConstMethodSignature<T,Sig>::FunctionType Func,
-            bool UnlockV8>
-    struct ConstOrNotMethodToInCa<true,T,Sig,Func,UnlockV8> : cv::ConstMethodToInCa<T,Sig,Func,UnlockV8>
+                typename ToInCaSigSelector<IsConst,T,Sig>::FunctionType Func,
+                bool UnlockV8 = SignatureIsUnlockable< ToInCaSigSelector<IsConst,T,Sig> >::Value
+            >
+    struct ToInCaImplKindOf :
+        ToInCaSigSelector<IsConst,T,Sig>::template Base<Func,UnlockV8>
     {};
+
+    template <bool IsConst, typename T, typename Sig>
+    struct ToInCaSigSelectorVoid : cv::ConstMethodSignature<T,Sig>
+    {
+        template < typename cv::ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cv::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8 >
+        {
+        };
+    };
     
-    template <typename T, typename Sig,
-            typename cv::MethodSignature<T,Sig>::FunctionType Func,
-            bool UnlockV8>
-    struct ConstOrNotMethodToInCa<false,T,Sig,Func,UnlockV8> : cv::MethodToInCa<T,Sig,Func,UnlockV8>
+    template <typename T, typename Sig>
+    struct ToInCaSigSelectorVoid<false,T,Sig> : MethodSignature<T,Sig>
+    {
+        template < typename cv::MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cv::MethodToInCaVoid<T, Sig, Func, UnlockV8 >
+        {
+        };
+    };
+    
+    template <typename Sig>
+    struct ToInCaSigSelectorVoid<false,void,Sig> : cv::FunctionSignature<Sig>
+    {
+        template < typename cv::FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cv::FunctionToInCaVoid<Sig, Func, UnlockV8 >
+        {
+        };
+    };
+    
+    // We need both true and false specializations here to avoid an ambiguity
+    // with (true,T) resp. (false,T).
+    template <typename Sig>
+    struct ToInCaSigSelectorVoid<true,void,Sig> : ToInCaSigSelectorVoid<false,void,Sig> {};
+    
+    template <bool IsConst, typename T, typename Sig,
+                typename ToInCaSigSelectorVoid<IsConst,T,Sig>::FunctionType Func,
+                bool UnlockV8 = SignatureIsUnlockable< ToInCaSigSelectorVoid<IsConst,T,Sig> >::Value
+            >
+    struct ToInCaImplKindOfVoid :
+        ToInCaSigSelectorVoid<IsConst,T,Sig>::template Base<Func,UnlockV8>
     {};
 }
 
@@ -1838,16 +1936,17 @@ namespace Detail {
     wrappers are injected because of this.
 */
 template <typename T, typename Sig,
-        typename Detail::ConstOrNotSig<Signature<Sig>::IsConst,T,Sig>::FunctionType Func,
+        typename Detail::ToInCaSigSelector<Signature<Sig>::IsConst,T,Sig>::FunctionType Func,
         bool UnlockV8 =
             tmp::And< tmp::TypeList<
                 SignatureIsUnlockable< Signature<Sig> >,
                 IsUnlockable<T>
                 > >::Value
         >
-struct ToInCa : Detail::ConstOrNotMethodToInCa<Signature<Sig>::IsConst,T,Sig,Func,UnlockV8>
+struct ToInCa : Detail::ToInCaImplKindOf<Signature<Sig>::IsConst,T,Sig,Func,UnlockV8>
 {
 };
+
 /**
     Specialization for FunctionToInCa behaviour.
 */
@@ -1858,7 +1957,34 @@ template <typename Sig,
 struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
 {
 };
-#endif
+
+/**
+    This works just like ToInCa but instead of behaving like
+    FunctionToInCa or Const/MethoToInCa it behaves like
+    FunctionToInCaVoid or Const/MethoToInCaVoid.
+*/
+template <typename T, typename Sig,
+        typename Detail::ToInCaSigSelectorVoid<Signature<Sig>::IsConst,T,Sig>::FunctionType Func,
+        bool UnlockV8 =
+            tmp::And< tmp::TypeList<
+                SignatureIsUnlockable< Signature<Sig> >,
+                IsUnlockable<T>
+                > >::Value
+        >
+struct ToInCaVoid : Detail::ToInCaImplKindOfVoid<Signature<Sig>::IsConst,T,Sig,Func,UnlockV8>
+{
+};
+
+/**
+    Specialization for FunctionToInCaVoid behaviour.
+*/
+template <typename Sig,
+    typename FunctionSignature<Sig>::FunctionType Func,
+    bool UnlockV8
+>
+struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8>
+{
+};
 
 }} // namespaces
 
