@@ -61,26 +61,6 @@ struct ConstMethodSignature< T, RV (Arguments const &) > : SignatureBase< RV (v8
     typedef RV (T::*FunctionType)(Arguments const &) const;
 };
 
-// /**
-//    Utility class to generate an InvocationCallback-like signature for
-//    a member method of class T.
-// */
-// template <typename T>
-// struct InvocationCallbackMethod
-// {
-//     typedef v8::Handle<v8::Value> (T::*FunctionType)( Arguments const & );
-// };
-
-// /**
-//    Utility class to generate an InvocationCallback-like signature for
-//    a const member method of class T.
-// */
-// template <typename T>
-// struct ConstInvocationCallbackMethod
-// {
-//     typedef v8::Handle<v8::Value> (T::*FunctionType)( Arguments const & ) const;
-// };
-
 /**
    Full specialization for InvocationCallback and
    InvocationCallback-like functions (differing only by their return
@@ -151,21 +131,27 @@ namespace Detail {
             v8::Unlocker * unlocker;
         public:
             V8Unlocker() :
-                //unlocker()
                 unlocker(new v8::Unlocker)
             {}
             ~V8Unlocker()
             {
                 this->Dispose();
             }
+            /**
+                Destroys the underlying Unlocker. This is
+                used internally so that we can properly
+                scope return values while still
+                being able to unlock.
+            */
             void Dispose()
             {
-                //unlocker->~Unlocker();
                 delete unlocker;
                 unlocker = NULL;
-                //unlocker.~Unlocker();
             }
     };
+    /**
+        A no-op instantiation.
+    */
     template <>
     struct V8Unlocker<false>
     {
@@ -182,6 +168,12 @@ namespace Detail {
     We optimistically assume that most types are safe and
     add specializations for types we know are not safe, e.g.
     v8::Handle<Anything> and v8::Arguments.
+    
+    Specializations of this type basically make up a collective 
+    "blacklist" of types which we know are not legal to use unless 
+    v8 is locked by our current thread. As new problematic types are 
+    discovered, they can be added to the blacklist by introducing a 
+    specialization of this class.
 */
 template <typename T>
 struct IsUnlockable
@@ -209,42 +201,29 @@ struct IsUnlockable<void>
     enum { Value = 1 };
 };
 
-// Todo: a mechanism to cause certain highly illegal types to trigger an assertion...
+/*
+    Todo?: find a mechanism to cause certain highly illegal types to 
+    always trigger an assertion... We could probably do it by 
+    declaring but not definiting JSToNative/NativeToJS 
+    specialializations.
+*/
 template <>
-struct IsUnlockable<void *>
-{
-    enum { Value = 0 };
-};
-template <>
-struct IsUnlockable<void const *>
-{
-    enum { Value = 0 };
-};
-
-template <typename T>
-struct IsUnlockable< v8::Handle<T> >
-{
-    enum { Value = 0 };
-};
-
-
-template <typename T>
-struct IsUnlockable< v8::Persistent<T> >
-{
-    enum { Value = 0 };
-};
-
-template <typename T>
-struct IsUnlockable< v8::Local<T> >
-{
-    enum { Value = 0 };
-};
+struct IsUnlockable<void *> : tmp::BoolVal<false> {};
 
 template <>
-struct IsUnlockable<v8::Arguments>
-{
-    enum { Value = 0 };
-};
+struct IsUnlockable<void const *> : tmp::BoolVal<false> {};
+
+template <typename T>
+struct IsUnlockable< v8::Handle<T> > : tmp::BoolVal<false> {};
+
+template <typename T>
+struct IsUnlockable< v8::Persistent<T> > : tmp::BoolVal<false> {};
+
+template <typename T>
+struct IsUnlockable< v8::Local<T> > : tmp::BoolVal<false> {};
+
+template <>
+struct IsUnlockable<v8::Arguments> : tmp::BoolVal<false> {};
 
 
 /**
@@ -317,6 +296,24 @@ struct TypeListIsUnlockable<tmp::NilType>
     member evaluates to false. Then no functions/methods using that 
     class will cause this metafunction to evaluate to true.
     
+    Note that FunctionToInCa, Const/MethodToInCa, etc., are all
+    SignatureTypeList subclasses, and can be used directly with
+    this template.
+    
+    Example:
+    
+    @code
+    // This one can be unlocked:
+    typedef FunctionToInCa< int (int), myfunc > F1;
+    // SignatureIsUnlockable<F1>::Value == true
+    
+    // This one cannot because it contains a v8 type in the arguments:
+    typedef FunctionToInCa< int (v8::Handle<v8::Value>), myfunc > F2;
+    // SignatureIsUnlockable<F2>::Value == false
+    @endcode
+    
+    For Const/MethodToInCa types, this check will also fail if
+    IsUnlockable< SigTList::ClassType >::Value is false.
 */
 template <typename SigTList>
 struct SignatureIsUnlockable
@@ -346,22 +343,6 @@ namespace Detail {
     ]
     template <int Arity_, typename Sig, bool UnlockV8 = false >
     struct ArgsToFunctionForwarder;
-#if 0
-    template <bool UnlockV8>
-    struct ArgsToFunctionForwarder<-1,v8::Handle<v8::Value> (v8::Arguments const &), UnlockV8>
-        : FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)>
-    {
-    public:
-        typedef FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)> SignatureType;
-        typedef v8::Handle<v8::Value> (*FunctionType)(v8::Arguments const &);
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
-        {
-            return func(argv);
-        }
-        ASSERT_UNLOCKV8_IS_FALSE;
-        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
-    };
-#endif
     template <int Arity, typename RV, bool UnlockV8>
     struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
@@ -486,10 +467,12 @@ namespace Detail {
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
+#if 0
     template <typename T, typename RV, bool UnlockV8, int _Arity>
     struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
             ArgsToMethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
     {};
+#endif
 
     template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
     struct ArgsToMethodForwarderVoid;
@@ -522,7 +505,6 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef MethodSignature<T,RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
@@ -538,13 +520,15 @@ namespace Detail {
                 ? Call(*self, func, argv)
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
     };
 
+#if 0
     template <typename T, int Arity, typename RV, bool UnlockV8>
     struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
         : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
     {};
-
+#endif
     
     template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
     struct ArgsToConstMethodForwarder;
@@ -593,7 +577,12 @@ namespace Detail {
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
-
+#if 0
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
+        : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    {};
+#endif
 
     template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
     struct ArgsToConstMethodForwarderVoid;
@@ -645,6 +634,14 @@ namespace Detail {
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
+
+#if 0
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
+    : ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    {};
+#endif
+
 }
 
 /**
@@ -704,13 +701,9 @@ namespace Detail {
     vis-a-vis not unlocking. The memory is freed, of course, right
     after the native call returns.
 */
-template <typename Sig, bool UnlockV8 =
-#if 0
-    false
-#else
-    SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
-#endif
-    >
+template <typename Sig,
+        bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+>
 struct ArgsToFunctionForwarder
 {
 private:
@@ -905,12 +898,7 @@ namespace Detail {
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,
-          bool UnlockV8 =
-#if 0
-    false
-#else
-    SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
-#endif
+          bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
           >
 struct FunctionToInCa
     : tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
@@ -938,15 +926,10 @@ struct FunctionToInCa
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 =
-#if 0
-            false
-#else
-            tmp::And< tmp::TypeList<
+          bool UnlockV8 = tmp::And< tmp::TypeList<
                 SignatureIsUnlockable< SignatureTypeList<Sig> >,
                 IsUnlockable<T>
             > >::Value
-#endif
           >
 struct MethodToInCa
     : tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
@@ -963,14 +946,10 @@ struct MethodToInCa
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 =
-#if 0
-        false
-#else
-        tmp::And< tmp::TypeList<
-            SignatureIsUnlockable< SignatureTypeList<Sig> >,
-            IsUnlockable<T>
-        > >::Value
-#endif
+            tmp::And< tmp::TypeList<
+                SignatureIsUnlockable< SignatureTypeList<Sig> >,
+                IsUnlockable<T>
+            > >::Value
           >
 struct ConstMethodToInCa
     : tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
@@ -990,11 +969,11 @@ struct ConstMethodToInCa
    v8::InvocationCallback cb = FunctionToInvocationCallback<int (char const *), ::puts>;
    @endcode
 */
-template <typename FSig,
-          typename FunctionSignature<FSig>::FunctionType Func>
+template <typename Sig,
+          typename FunctionSignature<Sig>::FunctionType Func>
 v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
 {
-    return FunctionToInCa<FSig,Func>::Call(argv);
+    return FunctionToInCa<Sig,Func>::Call(argv);
 }
 
 /**
@@ -1012,11 +991,11 @@ v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
    @endcode
 
 */
-template <typename T,typename FSig,
-          typename MethodSignature<T,FSig>::FunctionType Func>
+template <typename T,typename Sig,
+          typename MethodSignature<T,Sig>::FunctionType Func>
 v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
 {
-    return MethodToInCa<T,FSig,Func>::Call(argv);
+    return MethodToInCa<T,Sig,Func>::Call(argv);
 }
 
 
@@ -1028,11 +1007,11 @@ v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
    @endcode
 
 */
-template <typename T,typename FSig,
-          typename ConstMethodSignature<T,FSig>::FunctionType Func>
+template <typename T,typename Sig,
+          typename ConstMethodSignature<T,Sig>::FunctionType Func>
 v8::Handle<v8::Value> ConstMethodToInvocationCallback( v8::Arguments const & argv )
 {
-    return ConstMethodToInCa<T,FSig,Func>::Call(argv);
+    return ConstMethodToInCa<T,Sig,Func>::Call(argv);
 }
 
 /**
@@ -1162,28 +1141,28 @@ namespace Detail {
        Internal level of indirection to handle void return
        types from forwardFunction().
      */
-    template <typename FSig,
-            bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<FSig> >::Value
+    template <typename Sig,
+            bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
     >
     struct ForwardFunction
     {
-        typedef cv::FunctionSignature<FSig> SignatureType;
+        typedef cv::FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
-        typedef cv::ArgsToFunctionForwarder<FSig,UnlockV8> Proxy;
-        static ReturnType Call( FSig func, v8::Arguments const & argv )
+        typedef cv::ArgsToFunctionForwarder<Sig,UnlockV8> Proxy;
+        static ReturnType Call( Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
-    template <typename FSig,
-        bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<FSig> >::Value
+    template <typename Sig,
+        bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
     >
     struct ForwardFunctionVoid
     {
-        typedef cv::FunctionSignature<FSig> SignatureType;
+        typedef cv::FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
-        typedef cv::ArgsToFunctionForwarder<FSig, UnlockV8> Proxy;
-        static void Call( FSig func, v8::Arguments const & argv )
+        typedef cv::ArgsToFunctionForwarder<Sig, UnlockV8> Proxy;
+        static void Call( Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( func, argv );
         }
@@ -1192,62 +1171,62 @@ namespace Detail {
        Internal level of indirection to handle void return
        types from forwardMethod().
      */
-    template <typename T, typename FSig>
+    template <typename T, typename Sig>
     struct ForwardMethod
     {
-        typedef cv::MethodSignature<T,FSig> SignatureType;
+        typedef cv::MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
-        typedef cv::ArgsToMethodForwarder<T,FSig> Proxy;
-        static ReturnType Call( T & self, FSig func, v8::Arguments const & argv )
+        typedef cv::ArgsToMethodForwarder<T,Sig> Proxy;
+        static ReturnType Call( T & self, Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
         }
-        static ReturnType Call( FSig func, v8::Arguments const & argv )
+        static ReturnType Call( Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
-    template <typename T, typename FSig>
+    template <typename T, typename Sig>
     struct ForwardMethodVoid
     {
-        typedef cv::MethodSignature<T,FSig> SignatureType;
+        typedef cv::MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
-        typedef cv::ArgsToMethodForwarder<T,FSig> Proxy;
-        static void Call( T & self, FSig func, v8::Arguments const & argv )
+        typedef cv::ArgsToMethodForwarder<T,Sig> Proxy;
+        static void Call( T & self, Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( self, func, argv );
         }
-        static void Call( FSig func, v8::Arguments const & argv )
+        static void Call( Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( func, argv );
         }
     };
-    template <typename T, typename FSig>
+    template <typename T, typename Sig>
     struct ForwardConstMethod
     {
-        typedef cv::ConstMethodSignature<T,FSig> SignatureType;
+        typedef cv::ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
-        typedef cv::ArgsToConstMethodForwarder<T,FSig> Proxy;
-        static ReturnType Call( T const & self, FSig func, v8::Arguments const & argv )
+        typedef cv::ArgsToConstMethodForwarder<T,Sig> Proxy;
+        static ReturnType Call( T const & self, Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
         }
-        static ReturnType Call( FSig func, v8::Arguments const & argv )
+        static ReturnType Call( Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
-    template <typename T, typename FSig>
+    template <typename T, typename Sig>
     struct ForwardConstMethodVoid
     {
-        typedef cv::ConstMethodSignature<T,FSig> SignatureType;
+        typedef cv::ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
-        typedef cv::ArgsToConstMethodForwarder<T,FSig> Proxy;
-        static void Call( T const & self, FSig func, v8::Arguments const & argv )
+        typedef cv::ArgsToConstMethodForwarder<T,Sig> Proxy;
+        static void Call( T const & self, Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( self, func, argv );
         }
-        static void Call( FSig func, v8::Arguments const & argv )
+        static void Call( Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( func, argv );
         }
@@ -1257,19 +1236,19 @@ namespace Detail {
 /**
    Tries to forward the given arguments to the given native
    function. Will fail if argv.Lengt() is not at least
-   FunctionSignature<FSig>::Arity, throwing a JS exception
+   FunctionSignature<Sig>::Arity, throwing a JS exception
    in that case.
 */
-template <typename FSig>
-inline typename FunctionSignature<FSig>::ReturnType
-forwardFunction( FSig func, Arguments const & argv )
+template <typename Sig>
+inline typename FunctionSignature<Sig>::ReturnType
+forwardFunction( Sig func, Arguments const & argv )
 {
-    typedef FunctionSignature<FSig> MSIG;
+    typedef FunctionSignature<Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-        Detail::ForwardFunctionVoid< FSig >,
-        Detail::ForwardFunction< FSig >
+        Detail::ForwardFunctionVoid< Sig >,
+        Detail::ForwardFunction< Sig >
         >::Type ProxyType;
     return (RV)ProxyType::Call( func, argv )
         /* the explicit cast there is a workaround for the RV==void
@@ -1285,20 +1264,20 @@ forwardFunction( FSig func, Arguments const & argv )
    given non-const member function and treats the given object
    as the 'this' pointer.
 */
-template <typename T, typename FSig>
-inline typename MethodSignature<T,FSig>::ReturnType
+template <typename T, typename Sig>
+inline typename MethodSignature<T,Sig>::ReturnType
 forwardMethod( T & self,
-               FSig func,
-               /* if i do: typename MethodSignature<T,FSig>::FunctionType
+               Sig func,
+               /* if i do: typename MethodSignature<T,Sig>::FunctionType
                   then this template is never selected. */
                Arguments const & argv )
 {
-    typedef MethodSignature<T,FSig> MSIG;
+    typedef MethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardMethodVoid< T, FSig >,
-                 Detail::ForwardMethod< T, FSig >
+                 Detail::ForwardMethodVoid< T, Sig >,
+                 Detail::ForwardMethod< T, Sig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( self, func, argv )
         /* the explicit cast there is a workaround for the RV==void
@@ -1316,16 +1295,16 @@ forwardMethod( T & self,
    Note that this function requires that the caller specify
    the T template parameter - it cannot deduce it.
 */
-template <typename T, typename FSig>
-typename MethodSignature<T,FSig>::ReturnType
-forwardMethod(FSig func, v8::Arguments const & argv )
+template <typename T, typename Sig>
+typename MethodSignature<T,Sig>::ReturnType
+forwardMethod(Sig func, v8::Arguments const & argv )
 {
-    typedef MethodSignature<T,FSig> MSIG;
+    typedef MethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardMethodVoid< T, FSig >,
-                 Detail::ForwardMethod< T, FSig >
+                 Detail::ForwardMethodVoid< T, Sig >,
+                 Detail::ForwardMethod< T, Sig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( func, argv )
         /* the explicit cast there is a workaround for the RV==void
@@ -1342,19 +1321,19 @@ forwardMethod(FSig func, v8::Arguments const & argv )
    function and treats the given object as the 'this' pointer.
 
 */
-template <typename T, typename FSig>
-inline typename ConstMethodSignature<T,FSig>::ReturnType
+template <typename T, typename Sig>
+inline typename ConstMethodSignature<T,Sig>::ReturnType
 forwardConstMethod( T const & self,
-                    //typename ConstMethodSignature<T,FSig>::FunctionType func,
-                    FSig func,
+                    //typename ConstMethodSignature<T,Sig>::FunctionType func,
+                    Sig func,
                     v8::Arguments const & argv )
 {
-    typedef ConstMethodSignature<T,FSig> MSIG;
+    typedef ConstMethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardConstMethodVoid< T, FSig >,
-                 Detail::ForwardConstMethod< T, FSig >
+                 Detail::ForwardConstMethodVoid< T, Sig >,
+                 Detail::ForwardConstMethod< T, Sig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( self, func, argv )
         /* the explicit cast there is a workaround for the RV==void
@@ -1372,16 +1351,16 @@ forwardConstMethod( T const & self,
    Note that this function requires that the caller specify
    the T template parameter - it cannot deduce it.
 */
-template <typename T, typename FSig>
-typename ConstMethodSignature<T,FSig>::ReturnType
-forwardConstMethod(FSig func, v8::Arguments const & argv )
+template <typename T, typename Sig>
+typename ConstMethodSignature<T,Sig>::ReturnType
+forwardConstMethod(Sig func, v8::Arguments const & argv )
 {
-    typedef ConstMethodSignature<T,FSig> MSIG;
+    typedef ConstMethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardConstMethodVoid< T, FSig >,
-                 Detail::ForwardConstMethod< T, FSig >
+                 Detail::ForwardConstMethodVoid< T, Sig >,
+                 Detail::ForwardConstMethod< T, Sig >
     >::Type ProxyType;
     return (RV)ProxyType::Call( func, argv )
         /* the explicit cast there is a workaround for the
@@ -1851,14 +1830,10 @@ namespace Detail {
 template <typename T, typename Sig,
         typename Detail::ConstOrNotSig<SignatureTypeList<Sig>::IsConst,T,Sig>::FunctionType Func,
         bool UnlockV8 =
-#if 0
-    false
-#else
-        tmp::And< tmp::TypeList<
-            SignatureIsUnlockable< SignatureTypeList<Sig> >,
-            IsUnlockable<T>
-            > >::Value
-#endif
+            tmp::And< tmp::TypeList<
+                SignatureIsUnlockable< SignatureTypeList<Sig> >,
+                IsUnlockable<T>
+                > >::Value
         >
 struct ToInCa : Detail::ConstOrNotMethodToInCa<SignatureTypeList<Sig>::IsConst,T,Sig,Func,UnlockV8>
 {
