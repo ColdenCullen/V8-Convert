@@ -327,11 +327,11 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
     e.g.
     
     @code
-    ArgTypeAt< FunctionSignature< void (int,double) >, 1>::Type; // is double
+    SignatureParamAt< FunctionSignature< void (int,double) >, 1>::Type; // is double
     @endcode
 */
 template <typename SigListType, unsigned short I>
-struct ArgTypeAt : tmp::TypeAt< SigListType, I > {};
+struct SignatureParamAt : tmp::TypeAt< SigListType, I > {};
 
 
 

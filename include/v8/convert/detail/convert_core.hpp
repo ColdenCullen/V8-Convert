@@ -1296,8 +1296,24 @@ namespace v8 { namespace convert {
     /** Outputs sb.Content() to os and returns os. */
     inline std::ostream & operator<<( std::ostream & os, StringBuffer const & sb )
     {
-        os << sb.Content();
-        return os;
+        return os << sb.Content();
+    }
+
+
+    template <typename ValT>
+    static inline v8::Handle<v8::Value> Toss( ValT const & msg )
+    {
+        return v8::ThrowException((StringBuffer() << msg).toError());
+    }
+    
+    static inline v8::Handle<v8::Value> Toss( char const * msg )
+    {
+        return v8::ThrowException(v8::Exception::Error(v8::String::New( msg ? msg : "Unspecified error.")));
+    }
+
+    static inline v8::Handle<v8::Value> Toss( StringBuffer const & msg )
+    {
+        return v8::ThrowException(msg.toError());
     }
 
     /**

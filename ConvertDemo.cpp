@@ -2,6 +2,10 @@
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
+#if 1
+#include "v8/convert/arguments.hpp"
+#endif
+
 #define TRY_UNLOCKED_FUNCTIONS 1
 
 #if TRY_UNLOCKED_FUNCTIONS
@@ -547,12 +551,12 @@ namespace { // testing ground for some compile-time assertions...
         //ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
         typedef cv::FunctionSignature<FacT> FacSig;
         ASS<( FacSig::Arity < 0 )>();
-        typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
+        typedef cv::SignatureParamAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
         ASS<( (tmp::SameType< int, A0>::Value))>();
-        typedef cv::ArgTypeAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
+        typedef cv::SignatureParamAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
         ASS<( (tmp::SameType< char const *, A1>::Value))>();
-        ASS<( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) )>();
-        ASS<( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value))>();
+        ASS<( (tmp::IsConst<cv::SignatureParamAt< FacSig, 0 >::Type>::Value) )>();
+        ASS<( (tmp::SameType< v8::Arguments const &, cv::SignatureParamAt< FacSig, 0 >::Type>::Value))>();
 
         typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
         typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
