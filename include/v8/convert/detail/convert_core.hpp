@@ -27,7 +27,7 @@
 #  define V8_CONVERT_HAS_LONG_LONG 0
 #endif
 #include "TypeList.hpp"
-#include "signature_core.hpp" /* only need for the SignatureTypeList used by the generated code. */
+#include "signature_core.hpp" /* only need for the Signature used by the generated code. */
 
 namespace v8 { namespace convert {
 
@@ -1407,7 +1407,7 @@ namespace v8 { namespace convert {
         struct CtorForwarderProxy
         {
             template <typename Sig>
-            static typename SignatureTypeList<Sig>::ReturnType Ctor( v8::Arguments const & );
+            static typename Signature<Sig>::ReturnType Ctor( v8::Arguments const & );
         };
 
         //! Specialization for 0-arity ctors.
@@ -1415,9 +1415,9 @@ namespace v8 { namespace convert {
         struct CtorForwarderProxy<0>
         {
             template <typename Sig>
-            static typename SignatureTypeList<Sig>::ReturnType Ctor( v8::Arguments const & )
+            static typename Signature<Sig>::ReturnType Ctor( v8::Arguments const & )
             {
-                typedef typename SignatureTypeList<Sig>::ReturnType RC;
+                typedef typename Signature<Sig>::ReturnType RC;
                 typedef typename TypeInfo<RC>::Type RType;
                 return new RType;
             }
@@ -1456,7 +1456,7 @@ namespace v8 { namespace convert {
     template <typename Sig>
     struct CtorForwarder
     {
-        typedef SignatureTypeList<Sig> STL;
+        typedef Signature<Sig> STL;
         typedef typename STL::ReturnType Type_;
         enum { Arity = STL::Arity };
         typedef typename TypeInfo<Type_>::Type Type;

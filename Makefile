@@ -67,7 +67,6 @@ demo.BIN.LDFLAGS := $(V8_LDFLAGS)
 $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
 demo.o: $(sig_gen_h)
 
-$(demo.BIN): $(libcson.LIB) 
 all: $(demo.BIN)
 
 

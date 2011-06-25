@@ -285,7 +285,7 @@ namespace v8 { namespace convert {
 
             if(1) // just an experiment
             {
-                typedef SignatureTypeList<void (int,double)> AL2;
+                typedef Signature<void (int,double)> AL2;
                 assert( 2 == AL2::Arity );
                 assert( 2 == tmp::LengthOf<AL2>::Value );
                 assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
@@ -295,11 +295,11 @@ namespace v8 { namespace convert {
                 
                 typedef cv::FunctionPtr< int(char const *), ::puts> FPPuts;
                 FPPuts::Function("Hi, world.");
-                typedef SignatureTypeList< FPPuts::FunctionType > ALPuts;
+                typedef Signature< FPPuts::FunctionType > ALPuts;
                 assert( 1 == ALPuts::Arity );
                 
-                typedef SignatureTypeList< int (BoundNative::*)(char const *) const > BNPutsC;
-                typedef SignatureTypeList< int (BoundNative::*)(char const *) > BNPuts;
+                typedef Signature< int (BoundNative::*)(char const *) const > BNPutsC;
+                typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
                 assert( 1 == tmp::LengthOf<BNPutsC>::Value );
                 assert( 1 == tmp::LengthOf<BNPuts>::Value );
                 assert( 0 != (tmp::SameType< char const *, tmp::TypeAt<BNPuts,0>::Type >::Value) );
@@ -585,14 +585,14 @@ void compile_time_assertions()
     ASS<( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) )>();
     ASS<( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) )>();
     typedef int (CFT::*X2)(int,int) const;
-    ASS<( 2 == (cv::SignatureTypeList<X2>::Arity) )>();
+    ASS<( 2 == (cv::Signature<X2>::Arity) )>();
 
-    ASS<( !(cv::SignatureTypeList< M1 >::IsConst) )>();
-    ASS<( (cv::SignatureTypeList< M2 >::IsConst) )>();
-    ASS<( !(cv::SignatureTypeList< int (int) >::IsConst) )>();
-    ASS<( (cv::SignatureTypeList< int () const >::IsConst) )>();
-    ASS<( (cv::SignatureTypeList<X2>::IsConst) )>();
-    ASS<( !(cv::SignatureTypeList<int (int)>::IsConst) )>();
+    ASS<( !(cv::Signature< M1 >::IsConst) )>();
+    ASS<( (cv::Signature< M2 >::IsConst) )>();
+    ASS<( !(cv::Signature< int (int) >::IsConst) )>();
+    ASS<( (cv::Signature< int () const >::IsConst) )>();
+    ASS<( (cv::Signature<X2>::IsConst) )>();
+    ASS<( !(cv::Signature<int (int)>::IsConst) )>();
     ASS<( 1 == (cv::ToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
     ASS<( 1 == (cv::ToInCa<CFT,int (int),&CFT::afunc>::Arity) )>();
     ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
@@ -626,9 +626,9 @@ void compile_time_assertions()
     ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
 
 #define SIU cv::SignatureIsUnlockable
-    ASS< SIU< cv::SignatureTypeList<int (int, double, char)> >::Value >();
-    ASS< !SIU< cv::SignatureTypeList<int (int, double, v8::Arguments)> >::Value >();
-    ASS< !SIU< cv::SignatureTypeList<v8::Handle<v8::Object> (int, double)> >::Value >();
+    ASS< SIU< cv::Signature<int (int, double, char)> >::Value >();
+    ASS< !SIU< cv::Signature<int (int, double, v8::Arguments)> >::Value >();
+    ASS< !SIU< cv::Signature<v8::Handle<v8::Object> (int, double)> >::Value >();
     ASS< !SIU< 
             cv::MethodPtr<
                 BoundNative,

@@ -268,7 +268,7 @@ struct TypeListIsUnlockable<tmp::NilType>
 };
 
 /**
-    Given a SignatureTypeList, this metafunction's Value member
+    Given a Signature, this metafunction's Value member
     evaluates to true if:
     
     - IsUnlockable<SigTList::ReturnType>::Value is true and...
@@ -297,7 +297,7 @@ struct TypeListIsUnlockable<tmp::NilType>
     class will cause this metafunction to evaluate to true.
     
     Note that FunctionToInCa, Const/MethodToInCa, etc., are all
-    SignatureTypeList subclasses, and can be used directly with
+    Signature subclasses, and can be used directly with
     this template.
     
     Example:
@@ -341,7 +341,7 @@ namespace Detail {
 #define ASSERT_UNLOCK_SANITY_CHECK typedef char AssertCanEnableUnlock[ \
     !UnlockV8 ? 1 : (cv::SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
     ]
-    template <int Arity_, typename Sig, bool UnlockV8 = cv::SignatureIsUnlockable< cv::SignatureTypeList<Sig> >::Value  >
+    template <int Arity_, typename Sig, bool UnlockV8 = cv::SignatureIsUnlockable< cv::Signature<Sig> >::Value  >
     struct ArgsToFunctionForwarder;
     template <int Arity, typename RV, bool UnlockV8>
     struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
@@ -712,7 +712,7 @@ namespace Detail {
     after the native call returns.
 */
 template <typename Sig,
-        bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
 struct ArgsToFunctionForwarder
 {
@@ -908,7 +908,7 @@ namespace Detail {
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,
-          bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+          bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
           >
 struct FunctionToInCa
     : tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
@@ -937,7 +937,7 @@ struct FunctionToInCa
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 = tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< SignatureTypeList<Sig> >,
+                SignatureIsUnlockable< Signature<Sig> >,
                 IsUnlockable<T>
             > >::Value
           >
@@ -957,7 +957,7 @@ struct MethodToInCa
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 =
             tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< SignatureTypeList<Sig> >,
+                SignatureIsUnlockable< Signature<Sig> >,
                 IsUnlockable<T>
             > >::Value
           >
@@ -1152,7 +1152,7 @@ namespace Detail {
        types from forwardFunction().
      */
     template <typename Sig,
-            bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+            bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
     >
     struct ForwardFunction
     {
@@ -1165,7 +1165,7 @@ namespace Detail {
         }
     };
     template <typename Sig,
-        bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value
+        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
     >
     struct ForwardFunctionVoid
     {
@@ -1781,7 +1781,7 @@ namespace Detail {
     
     template <bool IsConst, typename T, typename Sig,
             typename ConstOrNotSig<IsConst,T,Sig>::FunctionType Func,
-            bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value>
+            bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
     struct ConstOrNotMethodToInCa;
     
     template <typename T, typename Sig,
@@ -1838,14 +1838,14 @@ namespace Detail {
     wrappers are injected because of this.
 */
 template <typename T, typename Sig,
-        typename Detail::ConstOrNotSig<SignatureTypeList<Sig>::IsConst,T,Sig>::FunctionType Func,
+        typename Detail::ConstOrNotSig<Signature<Sig>::IsConst,T,Sig>::FunctionType Func,
         bool UnlockV8 =
             tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< SignatureTypeList<Sig> >,
+                SignatureIsUnlockable< Signature<Sig> >,
                 IsUnlockable<T>
                 > >::Value
         >
-struct ToInCa : Detail::ConstOrNotMethodToInCa<SignatureTypeList<Sig>::IsConst,T,Sig,Func,UnlockV8>
+struct ToInCa : Detail::ConstOrNotMethodToInCa<Signature<Sig>::IsConst,T,Sig,Func,UnlockV8>
 {
 };
 /**

@@ -9,7 +9,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 1 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -31,7 +31,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 1 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -53,7 +53,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -81,7 +81,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -110,7 +110,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -138,7 +138,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -168,8 +168,8 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 2 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -193,8 +193,8 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 2 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -218,8 +218,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -249,8 +249,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -281,8 +281,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -312,8 +312,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -345,9 +345,9 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 3 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -373,9 +373,9 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 3 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -401,9 +401,9 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -435,9 +435,9 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -470,9 +470,9 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -504,9 +504,9 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -540,10 +540,10 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 4 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -571,10 +571,10 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 4 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -602,10 +602,10 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -639,10 +639,10 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -677,10 +677,10 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -714,10 +714,10 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -753,11 +753,11 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 5 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -787,11 +787,11 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 5 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -821,11 +821,11 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -861,11 +861,11 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -902,11 +902,11 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -942,11 +942,11 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -984,12 +984,12 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 6 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1021,12 +1021,12 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 6 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1058,12 +1058,12 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1101,12 +1101,12 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1145,12 +1145,12 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1188,12 +1188,12 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1233,13 +1233,13 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 7 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1273,13 +1273,13 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 7 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1313,13 +1313,13 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1359,13 +1359,13 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1406,13 +1406,13 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1452,13 +1452,13 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1500,14 +1500,14 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 8 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1543,14 +1543,14 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 8 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1586,14 +1586,14 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1635,14 +1635,14 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1685,14 +1685,14 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1734,14 +1734,14 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1785,15 +1785,15 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 9 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1831,15 +1831,15 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 9 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1877,15 +1877,15 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1929,15 +1929,15 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -1982,15 +1982,15 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2034,15 +2034,15 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2088,16 +2088,16 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 10 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2137,16 +2137,16 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 10 ? 1 : -1];
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2186,16 +2186,16 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2241,16 +2241,16 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2297,16 +2297,16 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -2352,16 +2352,16 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;

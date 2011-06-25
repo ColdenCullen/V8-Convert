@@ -1,6 +1,6 @@
 #!/bin/bash
 ########################################################################
-# A quick hack to generate SignatureTypeList templates.
+# A quick hack to generate Signature templates.
 
 from=${1-0}
 to=$2
@@ -14,22 +14,22 @@ tparam='typename RV'
 targs=''
 
 if [[ 0 = $from ]]; then
-#template <typename Sig> struct SignatureTypeList;
+#template <typename Sig> struct Signature;
 
 cat <<EOF
 
 template <typename RV>
-struct SignatureTypeList< RV () > : tmp::TypeList<>
+struct Signature< RV () > : tmp::TypeList<>
 {
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
     typedef void ClassType;
 };
 template <typename RV>
-struct SignatureTypeList< RV (*)() > : SignatureTypeList<RV ()>
+struct Signature< RV (*)() > : Signature<RV ()>
 {};
 template <typename RV>
-struct SignatureTypeList< RV () const > : SignatureTypeList<RV ()>
+struct Signature< RV () const > : Signature<RV ()>
 {
     enum { IsConst = 1 };
 };
@@ -48,7 +48,7 @@ while [[ $i -le $to ]]; do
     cat <<EOF
 //! Specialization for ${i} arg(s).
 template <$tparam>
-struct SignatureTypeList< RV (${targs}) > : tmp::TypeList<${targs}>
+struct Signature< RV (${targs}) > : tmp::TypeList<${targs}>
 {
     typedef RV ReturnType;
     //typedef RV (*Signature)(${targs});
@@ -58,19 +58,19 @@ struct SignatureTypeList< RV (${targs}) > : tmp::TypeList<${targs}>
 
 //! Specialization for ${i} arg(s).
 template <$tparam>
-struct SignatureTypeList< RV (${targs}) const > : SignatureTypeList<RV (${targs})>
+struct Signature< RV (${targs}) const > : Signature<RV (${targs})>
 {
     enum { IsConst = 1 };
 };
 
 //! Specialization for ${i} arg(s).
 template <$tparam>
-struct SignatureTypeList< RV (*)(${targs}) > : SignatureTypeList<RV (${targs})>
+struct Signature< RV (*)(${targs}) > : Signature<RV (${targs})>
 {};
 
 //! Specialization for T methods taking ${i} arg(s).
 template <typename T, $tparam>
-struct SignatureTypeList< RV (T::*)(${targs}) > : SignatureTypeList<RV (${targs})>
+struct Signature< RV (T::*)(${targs}) > : Signature<RV (${targs})>
 {
     //typedef RV (T::*Signature)(${targs});
     typedef T ClassType;
@@ -78,7 +78,7 @@ struct SignatureTypeList< RV (T::*)(${targs}) > : SignatureTypeList<RV (${targs}
 
 //! Specialization for T const methods taking ${i} arg(s).
 template <typename T, $tparam>
-struct SignatureTypeList< RV (T::*)(${targs}) const > : SignatureTypeList<RV (${targs})>
+struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs})>
 {
     //typedef RV (T::*Signature)(${targs}) const;
     typedef T ClassType;

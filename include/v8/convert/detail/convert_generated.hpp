@@ -2,11 +2,11 @@
 #if !defined(DOXYGEN)
 namespace Detail {
 template <>
-struct CtorForwarderProxy<1> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<1> // todo: subclass Signature<Sig>
 {
     enum { Arity = 1 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -14,9 +14,9 @@ struct CtorForwarderProxy<1> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -29,11 +29,11 @@ struct CtorForwarderProxy<1> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<2> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<2> // todo: subclass Signature<Sig>
 {
     enum { Arity = 2 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -41,10 +41,10 @@ struct CtorForwarderProxy<2> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -59,11 +59,11 @@ struct CtorForwarderProxy<2> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<3> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<3> // todo: subclass Signature<Sig>
 {
     enum { Arity = 3 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -71,11 +71,11 @@ struct CtorForwarderProxy<3> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -92,11 +92,11 @@ struct CtorForwarderProxy<3> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<4> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<4> // todo: subclass Signature<Sig>
 {
     enum { Arity = 4 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -104,12 +104,12 @@ struct CtorForwarderProxy<4> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -128,11 +128,11 @@ struct CtorForwarderProxy<4> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<5> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<5> // todo: subclass Signature<Sig>
 {
     enum { Arity = 5 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -140,13 +140,13 @@ struct CtorForwarderProxy<5> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -167,11 +167,11 @@ struct CtorForwarderProxy<5> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<6> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<6> // todo: subclass Signature<Sig>
 {
     enum { Arity = 6 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -179,14 +179,14 @@ struct CtorForwarderProxy<6> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -209,11 +209,11 @@ struct CtorForwarderProxy<6> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<7> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<7> // todo: subclass Signature<Sig>
 {
     enum { Arity = 7 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -221,15 +221,15 @@ struct CtorForwarderProxy<7> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -254,11 +254,11 @@ struct CtorForwarderProxy<7> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<8> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<8> // todo: subclass Signature<Sig>
 {
     enum { Arity = 8 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -266,16 +266,16 @@ struct CtorForwarderProxy<8> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -302,11 +302,11 @@ struct CtorForwarderProxy<8> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<9> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<9> // todo: subclass Signature<Sig>
 {
     enum { Arity = 9 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -314,17 +314,17 @@ struct CtorForwarderProxy<9> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -353,11 +353,11 @@ struct CtorForwarderProxy<9> // todo: subclass SignatureTypeList<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<10> // todo: subclass SignatureTypeList<Sig>
+struct CtorForwarderProxy<10> // todo: subclass Signature<Sig>
 {
     enum { Arity = 10 };
     template <typename Sig>
-    static typename SignatureTypeList<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -365,18 +365,18 @@ struct CtorForwarderProxy<10> // todo: subclass SignatureTypeList<Sig>
         }
         else
         {
-            typedef typename SignatureTypeList<Sig>::ReturnType Type_;
+            typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 9>::Type A9;
+            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;

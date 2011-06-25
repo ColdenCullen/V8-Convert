@@ -265,7 +265,7 @@ namespace v8 { namespace convert {
             try
             {
                 typedef FunctionSignature<Sig> FT;
-                typedef SignatureTypeList<Sig> STL;
+                typedef Signature<Sig> STL;
                 (*Func)( CastFromJS<typename tmp::TypeAt<STL,0>::Type>( value ) );
             }
             catch( std::exception const & ex )
@@ -598,7 +598,7 @@ namespace v8 { namespace convert {
             else try
             {
 
-                typedef typename tmp::TypeAt< SignatureTypeList<Sig>, 0 >::Type ArgT;
+                typedef typename tmp::TypeAt< Signature<Sig>, 0 >::Type ArgT;
                 (self->*Setter)( CastFromJS<ArgT>( value ) );
             }
             catch( std::exception const & ex )

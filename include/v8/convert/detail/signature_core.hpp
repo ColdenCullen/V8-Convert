@@ -31,7 +31,7 @@ function/method signatures as full-fleged types.
     It is intended to be used like this:
     
     @code
-    typedef SignatureTypeList< int (char const *, double) > ListType;
+    typedef Signature< int (char const *, double) > ListType;
     assert( ListType::Arity == 2 );
     assert( tmp::LengthOf<ListType>::Value == 2  );
     assert( (tmp::SameType< char const *, tmp::TypeAt<ListType,0>::Type >::Value) );
@@ -56,14 +56,14 @@ function/method signatures as full-fleged types.
    arguments.
 
 */
-template <typename Sig> struct SignatureTypeList;
+template <typename Sig> struct Signature;
 
 /**
     Specialization to give "InvacationCallback-like" functions
     an Arity value of less than 0.
 */
 template <typename RV>
-struct SignatureTypeList<RV (v8::Arguments const &)> : tmp::TypeList<v8::Arguments const &>
+struct Signature<RV (v8::Arguments const &)> : tmp::TypeList<v8::Arguments const &>
 {
     typedef RV ReturnType;
     //typedef RV (*Signature)(v8::Arguments const &);
@@ -72,15 +72,15 @@ struct SignatureTypeList<RV (v8::Arguments const &)> : tmp::TypeList<v8::Argumen
 };
 
 template <typename RV>
-struct SignatureTypeList<RV (*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
+struct Signature<RV (*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
 {};
 
 template <typename T, typename RV>
-struct SignatureTypeList<RV (T::*)(v8::Arguments const &)> : SignatureTypeList<RV (v8::Arguments const &)>
+struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
 {};
 
 template <typename T, typename RV>
-struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureTypeList<RV (v8::Arguments const &)>
+struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
 {
     enum { IsConst = 1 };
 };
@@ -99,15 +99,15 @@ struct SignatureTypeList<RV (T::*)(v8::Arguments const &) const> : SignatureType
     double (int, double)
 
     Since some refactoring on 20110624 we don't really
-    need this class - we could use SignatureTypeList directly.
+    need this class - we could use Signature directly.
     However, i might later want to add another class-level detail
     or two which don't belong in that interface. We'll see.
 */
 template <typename Sig>
-struct SignatureBase : SignatureTypeList<Sig>
+struct SignatureBase : Signature<Sig>
 {
-    //typedef typename SignatureTypeList<Sig>::ReturnType ReturnType;
-    //enum { Arity = SignatureTypeList<Sig>::Arity };
+    //typedef typename Signature<Sig>::ReturnType ReturnType;
+    //enum { Arity = Signature<Sig>::Arity };
     //typedef Sig Signature;
     //typedef Sig FunctionType;
 };
@@ -320,7 +320,7 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
 /**
     A (slightly) convenience wrappar around tmp::TypeAt.
     
-    SigLisType must derive from SignatureTypeList (or be API-compatible).
+    SigLisType must derive from Signature (or be API-compatible).
     I is the 0-based index for which we want the type. The type is
     available via this class' Type typedef.
     
