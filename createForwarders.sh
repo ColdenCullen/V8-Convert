@@ -534,7 +534,7 @@ namespace Detail {
             ${castTypedefs}
             ${castInits}
             {
-                V8Unlocker<UnlockV8> unlocker;
+                V8Unlocker<UnlockV8> unlocker();
                 (self.*func)( ${castCalls} );
             }
             return v8::Undefined();

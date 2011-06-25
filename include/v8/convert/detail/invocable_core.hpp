@@ -181,7 +181,7 @@ namespace Detail {
     public:
         typedef FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)> SignatureType;
         typedef v8::Handle<v8::Value> (*FunctionType)(v8::Arguments const &);
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertLocking[!UnlockV8 ? 1 : -1];
             typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
@@ -267,11 +267,15 @@ namespace Detail {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( (self.*func)() );
+            typedef typename SignatureType::ReturnType RV;
+            V8Unlocker<UnlockV8> unlocker;
+            RV rv((self.*func)());
+            unlocker.Dispose();
+            return CastToJS( rv );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
             return self
@@ -280,22 +284,42 @@ namespace Detail {
         }
     };
 
-
     template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarder<T,-1, RV (T::*)(v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
+    struct ArgsToMethodForwarder<T, -1, RV (v8::Arguments const &), UnlockV8>
+        : MethodSignature<T, RV (v8::Arguments const &)>
+    {
+    public:
+        typedef MethodSignature<T, RV (v8::Arguments const &)> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
+        {
+            typedef char AssertLocking[!UnlockV8 ? 1 : -1];
+            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+            return CastToJS( (self.*func)(argv) );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            T * self = CastFromJS<T>(argv.This());
+            return self
+                ? Call(*self, func, argv)
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        }
+    };
+    template <typename T, typename RV, bool UnlockV8, int _Arity>
+    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
         typedef MethodSignature<T,RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
         {
             V8Unlocker<UnlockV8> unlocker;
             RV rv((self.*func)(argv));
             unlocker.Dispose();
             return cv::CastToJS( rv );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
             return self
@@ -314,7 +338,7 @@ namespace Detail {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
         {
             {
                 V8Unlocker<UnlockV8> const unlocker();
@@ -322,7 +346,7 @@ namespace Detail {
             }
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
             return self
@@ -332,19 +356,19 @@ namespace Detail {
     };
 
     template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,-1, RV (T::*)(v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
+    struct ArgsToMethodForwarderVoid<T,-1, RV (v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
         typedef MethodSignature<T,RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertLocking[!UnlockV8 ? 1 : -1];
             (self.*func)(argv);
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
             return self
@@ -362,8 +386,7 @@ namespace Detail {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             V8Unlocker<UnlockV8> unlocker;
             typedef typename SignatureType::ReturnType ReturnType;
@@ -371,7 +394,7 @@ namespace Detail {
             unlocker.Dispose();
             return cv::CastToJS( rv );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
@@ -381,23 +404,19 @@ namespace Detail {
     };
 
     template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T,-1, RV (T::*)(v8::Arguments const &) const, UnlockV8>
-        : ConstMethodSignature<T,RV (v8::Arguments const &)>
+    struct ArgsToConstMethodForwarder<T, -1, RV (v8::Arguments const &), UnlockV8>
+        : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
-        typedef ConstMethodSignature<T,RV (v8::Arguments const &)> SignatureType;
+        typedef ConstMethodSignature<T, RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-            V8Unlocker<UnlockV8> unlocker;
-            typedef typename SignatureType::ReturnType ReturnType;
-            ReturnType rv((self.*func)(argv));
-            unlocker.Dispose();
-            return cv::CastToJS(rv);
+            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+            return CastToJS( (self.*func)(argv) );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
@@ -417,7 +436,7 @@ namespace Detail {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             {
                 V8Unlocker<UnlockV8> const unlocker();
@@ -435,21 +454,20 @@ namespace Detail {
     };
     
     template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T,-1, RV (T::*)(v8::Arguments const &) const, UnlockV8> : ConstMethodSignature<T,RV (v8::Arguments const &)>
+    struct ArgsToConstMethodForwarderVoid<T, -1, RV (v8::Arguments const &), UnlockV8>
+        : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
-        typedef ConstMethodSignature<T,RV (v8::Arguments const &)> SignatureType;
+        typedef ConstMethodSignature<T, RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
-            {
-                V8Unlocker<UnlockV8> unlocker;
-                (self.*func)(argv);
-            }
+            typedef char AssertLocking[!UnlockV8 ? 1 : -1];
+            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+            (self.*func)(argv);
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
@@ -543,272 +561,93 @@ namespace Detail {
             return Proxy::Call( Func, argv );
         }
     };
-}
 
-
-namespace Detail {
-    template <typename T, int Arity_, typename Sig,
+    template <typename T,
+              typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false
-              >
-    struct MethodToInCa;
-
-    template <typename T,
-              typename VT,
-              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct MethodToInCa<T, -1, VT (T::*)(Arguments const &), Func, UnlockV8>
-        : MethodPtr<T, VT (Arguments const &), Func>
+              bool UnlockV8 = false>
+    struct MethodToInCa : MethodPtr<T,Sig, Func>
     {
-    private:
-        typedef MethodPtr<T, VT (Arguments const &), Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
-        static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
-        {
-            return CastToJS( (t.*Func)(argv) );
-        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            T * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+            typedef MethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            return Proxy::Call( Func, argv );
+        }
+        static v8::Handle<v8::Value> Call( T & self, Arguments const & argv )
+        {
+            typedef MethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            return Proxy::Call( self, Func, argv );
         }
     };
+
     template <typename T,
-              typename VT,
-              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct MethodToInCa<T, -1, VT (Arguments const &), Func,UnlockV8>
-        : MethodToInCa<T, -1, VT (T::*)(Arguments const &), Func, UnlockV8>
-    {};
-    
-    template <typename T, typename Sig,
+              typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8>
-    struct MethodToInCa<T, 0, Sig, Func, UnlockV8> : MethodPtr<T, Sig, Func>
+              bool UnlockV8 = false>
+    struct MethodToInCaVoid : MethodPtr<T,Sig,Func>
     {
-    private:
-        typedef MethodPtr<T, Sig, Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
-        static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
-        {
-            if( UnlockV8 )
-            {
-                typedef typename MethodSignature<T,Sig>::ReturnType RV;
-                V8Unlocker<true> unlocker;
-                RV rv( (t.*Func)() );
-                unlocker.Dispose();
-                return cv::CastToJS( rv );
-            }
-            else return cv::CastToJS( (t.*Func)() );
-        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            T * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-
-    template <typename T, int Arity_, typename Sig,
-              typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 = false>
-    struct MethodToInCaVoid;
-
-    template <typename T,
-              typename VT,
-              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct MethodToInCaVoid<T, -1, VT (T::*)(Arguments const &), Func, UnlockV8>
-        : MethodPtr<T, VT (T::*)(Arguments const &), Func>
-    {
-    private:
-        typedef MethodPtr<T, VT (T::*)(Arguments const &), Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
-        static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
-        {
-            (t.*Func)(argv);
+            typedef MethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            Proxy::Call( Func, argv );
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, Arguments const & argv )
         {
-            T * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-    template <typename T,
-              typename VT,
-              typename MethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct MethodToInCaVoid<T, -1, VT (Arguments const &), Func, UnlockV8>
-        : MethodToInCaVoid<T, -1, VT (T::*)(Arguments const &), Func, UnlockV8>
-    {};
-    
-    template <typename T, typename Sig,
-              typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
-    struct MethodToInCaVoid<T, 0,Sig,Func, UnlockV8> : MethodPtr<T, Sig, Func>
-    {
-    private:
-        typedef MethodPtr<T, Sig, Func> ParentType;
-    public:
-        static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
-        {
-            {
-                V8Unlocker<UnlockV8> const unlock();
-                (t.*Func)();
-            }
+            typedef MethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            Proxy::Call( self, Func, argv );
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            T * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-}
-
-namespace Detail {
-    template <typename T, int Arity_, typename Sig,
-              typename ConstMethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false
-              >
-    struct ConstMethodToInCa;
-
-    template <typename T,
-              typename VT,
-              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct ConstMethodToInCa<T, -1, VT (T::*)(Arguments const &) const, Func, UnlockV8>
-        : ConstMethodPtr<T, VT (Arguments const &), Func>
-    {
-    private:
-        typedef ConstMethodPtr<T, VT (Arguments const &), Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
-        static v8::Handle<v8::Value> Call( T const & t, Arguments const & argv )
-        {
-            return (t.*Func)(argv);
-        }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            T const * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T const>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-    template <typename T,
-              typename VT,
-              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct ConstMethodToInCa<T, -1, VT (Arguments const &) const, Func, UnlockV8>
-        : ConstMethodToInCa<T, -1, VT (T::*)(Arguments const &) const, Func, UnlockV8>
-    {};
-
-    template <typename T, typename Sig,
-              typename ConstMethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8
-              >
-    struct ConstMethodToInCa<T, 0,Sig,Func, UnlockV8> : ConstMethodPtr<T, Sig, Func>
-    {
-    private:
-        typedef ConstMethodPtr<T, Sig, Func> ParentType;
-    public:
-        static v8::Handle<v8::Value> Call( T const & t, Arguments const & argv )
-        {
-            typedef typename ParentType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (t.*Func)() );
-            unlocker.Dispose();
-            return cv::CastToJS( rv );
-        }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            T const * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T const>() returned NULL! Cannot find 'this' pointer!");
-        }
     };
 
-    template <typename T, int Arity_, typename Sig,
-              typename ConstMethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false
-              >
-    struct ConstMethodToInCaVoid;
-
     template <typename T,
-              typename VT,
-              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct ConstMethodToInCaVoid<T, -1, VT (T::*)(Arguments const &) const, Func, UnlockV8>
-        : ConstMethodPtr<T, VT (Arguments const &), Func>
+              typename Sig,
+              typename ConstMethodSignature<T,Sig>::FunctionType Func,
+              bool UnlockV8 = false>
+    struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>
     {
-    private:
-        typedef ConstMethodPtr<T, VT (T::*)(Arguments const &), Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
-        static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            (t.*Func)(argv);
+            typedef ConstMethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToConstMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            return Proxy::Call( Func, argv );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
+        {
+            typedef ConstMethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToConstMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            Proxy::Call( self, Func, argv );
             return v8::Undefined();
         }
+    };
+
+    template <typename T,
+              typename Sig,
+              typename ConstMethodSignature<T,Sig>::FunctionType Func,
+              bool UnlockV8 = false>
+    struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>
+    {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            T * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-    template <typename T,
-              typename VT,
-              typename ConstMethodSignature<T, VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-    >
-    struct ConstMethodToInCaVoid<T, -1, VT (Arguments const &) const, Func, UnlockV8>
-        : ConstMethodToInCaVoid<T, -1, VT (T::*)(Arguments const &) const, Func, UnlockV8>
-    {};
-    
-    template <typename T, typename Sig,
-              typename ConstMethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8>
-    struct ConstMethodToInCaVoid<T, 0,Sig,Func, UnlockV8> : ConstMethodPtr<T, Sig, Func>
-    {
-    private:
-        typedef ConstMethodPtr<T, Sig, Func> ParentType;
-    public:
-        static v8::Handle<v8::Value> Call( T & t, Arguments const & argv )
-        {
-            {
-                V8Unlocker<UnlockV8> const unlock();
-                (t.*Func)();
-            }
+            typedef ConstMethodPtr<T,Sig, Func> ParentType;
+            typedef ArgsToConstMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            Proxy::Call( Func, argv );
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        
+        static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
         {
-            T * self = cv::CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+            typedef ConstMethodPtr<T, Sig, Func> ParentType;
+            typedef ArgsToConstMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
+            Proxy::Call( self, Func, argv );
+            return v8::Undefined();
         }
     };
+
 
 } // Detail namespace
 
@@ -869,131 +708,32 @@ struct FunctionToInCa
    at least bindable) to JS-side Objects. Sig must be a member
    function signature for T. Func must be a pointer to a function with
    that signature.
+   
+   See FunctionToInCa for details about the UnlockV8 parameter.
 */
-template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
-struct MethodToInCa : MethodPtr<T, Sig,Func>
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
+          bool UnlockV8 = false>
+struct MethodToInCa
+    : tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
+                 Detail::MethodToInCaVoid<T, Sig, Func, UnlockV8>,
+                 Detail::MethodToInCa<T, Sig, Func, UnlockV8>
+        >::Type
 {
-private:
-    /** Select the exact implementation dependent on whether
-        MethodSignature<T,Sig>::ReturnType is void or not.
-    */
-    typedef typename
-    tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T, Sig>::ReturnType>::Value,
-                 Detail::MethodToInCaVoid< T, MethodSignature<T, Sig>::Arity,
-                                                typename MethodSignature<T, Sig>::FunctionType, Func, false>,
-                 Detail::MethodToInCa< T, MethodSignature<T, Sig>::Arity,
-                                            typename MethodSignature<T, Sig>::FunctionType, Func, false>
-    >::Type
-    ProxyType;
-public:
-    /**
-       Calls self.Func(), passing it the arguments from argv. Throws a JS exception
-       if argv has too few arguments.
-    */
-    static v8::Handle<v8::Value> Call( T & self, v8::Arguments const & argv )
-    {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( argv );
-#else
-        try
-        {
-            return ProxyType::Call( self, argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return JS_THROW("Native code through unknown exception type.");
-        }
-#endif
-    }
-    /**
-       Tries to extract a (T*) from argv.This(). On success it calls
-       Call( thatObject, argv ). On error it throws a JS-side
-       exception.
-    */
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-    {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( argv );
-#else
-        try
-        {
-            return ProxyType::Call( argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return JS_THROW("Native code through unknown exception type.");
-        }
-#endif
-    }
 };
 
 /**
-   Identical to MethodToInCa, but for const member functions.
+   Functionally identical to MethodToInCa, but for const member functions.
+   
+   See FunctionToInCa for details about the UnlockV8 parameter.
 */
-template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func>
-struct ConstMethodToInCa : ConstMethodPtr<T, Sig, Func>
-{
-private:
-    /** Select the exact implementation dependent on whether
-        ConstMethodSignature<T,Sig>::ReturnType is void or not.
-    */
-    typedef typename
-    tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
-                 Detail::ConstMethodToInCaVoid< T, ConstMethodSignature<T, Sig>::Arity,
-                                                     typename ConstMethodSignature<T, Sig>::FunctionType, Func, false>,
-                 Detail::ConstMethodToInCa< T, ConstMethodSignature<T, Sig>::Arity,
-                                                 typename ConstMethodSignature<T, Sig>::FunctionType, Func, false>
-    >::Type
-    ProxyType;
-public:
-    static v8::Handle<v8::Value> Call( T const & self, v8::Arguments const & argv )
-    {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( argv );
-#else
-        try
-        {
-            return ProxyType::Call( self, argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return JS_THROW("Native code through unknown exception type.");
-        }
-#endif
-    }
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-    {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( argv );
-#else
-        try
-        {
-            return ProxyType::Call( argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return JS_THROW("Native code through unknown exception type.");
-        }
-#endif
-    }
-};
-
+template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
+          bool UnlockV8 = false>
+struct ConstMethodToInCa
+    : tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
+                 Detail::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8>,
+                 Detail::ConstMethodToInCa<T, Sig, Func, UnlockV8>
+        >::Type
+{};
 
 /**
    A v8::InvocationCallback implementation which forwards the arguments from argv
