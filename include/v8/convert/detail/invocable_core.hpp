@@ -143,13 +143,22 @@ namespace Detail {
     struct V8Unlocker<true>
     {
         private:
-            v8::Unlocker unlocker;
+            v8::Unlocker * unlocker;
         public:
-            V8Unlocker() : unlocker()
+            V8Unlocker() :
+                //unlocker()
+                unlocker(new v8::Unlocker)
             {}
+            ~V8Unlocker()
+            {
+                this->Dispose();
+            }
             void Dispose()
             {
-                unlocker.~Unlocker();
+                //unlocker->~Unlocker();
+                delete unlocker;
+                unlocker = NULL;
+                //unlocker.~Unlocker();
             }
     };
     template <>
@@ -538,6 +547,10 @@ namespace Detail {
    bound function takes a v8::Handle<> as an argument (which makes it
    illegal for unlocking purpose).
    
+   It might also be noteworthy that unlocking v8 requires, for
+   reasons of scoping, one additional (very small) memory allocation
+   vis-a-vis not unlocking. The memory is freed, of course, right
+   after the native call returns.
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,

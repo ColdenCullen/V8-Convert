@@ -2,7 +2,7 @@
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
-#define TRY_UNLOCKED_FUNCTIONS 0
+#define TRY_UNLOCKED_FUNCTIONS 1
 
 #if TRY_UNLOCKED_FUNCTIONS
 #include <unistd.h> // only for sleep() in some test code
