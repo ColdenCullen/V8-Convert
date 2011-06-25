@@ -374,7 +374,46 @@ namespace tmp {
     template <> struct And<NilType> : BoolVal<true>
     {
     };
-    
+
+    /**
+        A metatype whos Value member evaluates to the 0-based
+        index of the first occurrance of type T in the TypeList
+        ListT. It evaluates to less than 0 if the type is not found.
+    */
+    template <typename T, typename ListT>
+    struct IndexOf;
+#if !defined(DOXYGEN)
+    namespace Detail
+    {
+        /** Internal impl of TypeListIndexOf. */
+        template <typename T, typename ListT, int Pos = 0>
+        struct IndexOfImpl
+        {
+            typedef typename ListT::Head Head;
+            typedef typename ListT::Tail Tail;
+            enum {
+                Value = SameType<T,Head>::Value ? Pos : IndexOfImpl<T, Tail,Pos+1>::Value
+            };
+        };
+        template <typename T, int Pos>
+        struct IndexOfImpl< T, NilType, Pos>
+        {
+            enum { Value = -1 };
+        };
+    }
+#endif
+    template <typename T, typename ListT>
+    struct IndexOf
+    {
+        enum { Value =
+            Detail::IndexOfImpl<T, typename ListT::ChainType>::Value
+        };
+    };
+    template <typename T>
+    struct IndexOf<T, NilType>
+    {
+        enum { Value = -1 };
+    };
     
 }}}// namespaces
 #endif // CODE_GOOGLE_COM_P_V8_CONVERT_TYPELIST_HPP_INCLUDED
