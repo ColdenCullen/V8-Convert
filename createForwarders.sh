@@ -322,6 +322,8 @@ EOF
 # Create MethodToInCa<> and friends...
 function makeMethodToInCa_impl()
 {
+    echo "Don't call makeMethodToInCa_impl()! It's not needed anymore :-D" 1>&2
+    exit 1
     local class=MethodToInCa
     local parent=MethodPtr
     local msig=MethodSignature
@@ -397,6 +399,8 @@ EOF
 }
 function makeMethodToInCa()
 {
+    echo "Don't call makeMethodToInCa()! It's not needed anymore :-D" 1>&2
+    exit 1
     makeMethodToInCa_impl
     makeMethodToInCa_impl const
 }

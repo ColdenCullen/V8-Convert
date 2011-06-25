@@ -23,6 +23,7 @@ struct SignatureTypeList< RV () > : tmp::TypeList<>
 {
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
+    typedef void ClassType;
 };
 template <typename RV>
 struct SignatureTypeList< RV (*)() > : SignatureTypeList<RV ()>
@@ -52,6 +53,7 @@ struct SignatureTypeList< RV (${targs}) > : tmp::TypeList<${targs}>
     typedef RV ReturnType;
     //typedef RV (*Signature)(${targs});
     enum { Arity = ${i}, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for ${i} arg(s).

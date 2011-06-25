@@ -6,6 +6,7 @@ struct SignatureTypeList< RV () > : tmp::TypeList<>
 {
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
+    typedef void ClassType;
 };
 template <typename RV>
 struct SignatureTypeList< RV (*)() > : SignatureTypeList<RV ()>
@@ -22,6 +23,7 @@ struct SignatureTypeList< RV (A1) > : tmp::TypeList<A1>
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1);
     enum { Arity = 1, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 1 arg(s).
@@ -59,6 +61,7 @@ struct SignatureTypeList< RV (A1, A2) > : tmp::TypeList<A1, A2>
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2);
     enum { Arity = 2, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 2 arg(s).
@@ -96,6 +99,7 @@ struct SignatureTypeList< RV (A1, A2, A3) > : tmp::TypeList<A1, A2, A3>
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3);
     enum { Arity = 3, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 3 arg(s).
@@ -133,6 +137,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4) > : tmp::TypeList<A1, A2, A3, A4>
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4);
     enum { Arity = 4, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 4 arg(s).
@@ -170,6 +175,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4, A5) > : tmp::TypeList<A1, A2, A3, 
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4, A5);
     enum { Arity = 5, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 5 arg(s).
@@ -207,6 +213,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6) > : tmp::TypeList<A1, A2, 
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6);
     enum { Arity = 6, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 6 arg(s).
@@ -244,6 +251,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7) > : tmp::TypeList<A1, 
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7);
     enum { Arity = 7, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 7 arg(s).
@@ -281,6 +289,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7, A8) > : tmp::TypeList<
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8);
     enum { Arity = 8, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 8 arg(s).
@@ -318,6 +327,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) > : tmp::TypeL
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     enum { Arity = 9, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 9 arg(s).
@@ -355,6 +365,7 @@ struct SignatureTypeList< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : tmp::
     typedef RV ReturnType;
     //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     enum { Arity = 10, IsConst = 0 };
+    typedef void ClassType;
 };
 
 //! Specialization for 10 arg(s).

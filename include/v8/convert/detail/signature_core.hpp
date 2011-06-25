@@ -18,6 +18,16 @@ function/method signatures as full-fleged types.
     
     Sig must be a function-signature-style parameter list.
 
+    Require interface: it must implement the tmp::TypeList interface and
+    the entries in the TypeList must be the function argument types
+    (or an empty list for nullary functions). In addition it must have:
+    
+    @code
+    typedef functionReturnType ReturnType;
+    enum { Arity = FunctionArity, IsConst = True_Only_for_Const_Methods };
+    typedef T ClassType; // void for non-member functions.
+    @endcode
+
     It is intended to be used like this:
     
     @code
@@ -27,6 +37,9 @@ function/method signatures as full-fleged types.
     assert( (tmp::SameType< char const *, tmp::TypeAt<ListType,0>::Type >::Value) );
     assert( (tmp::SameType< double, tmp::TypeAt<ListType,1>::Type >::Value) );
     @endcode
+
+    The IsConst bit is mildly unsettling but i needed it to implement ToInCa
+    (i couldn't figure out how to figure that out with templates).
     
     Note that the length of the typelist does not include the return
     value type.
@@ -55,6 +68,7 @@ struct SignatureTypeList<RV (v8::Arguments const &)> : tmp::TypeList<v8::Argumen
     typedef RV ReturnType;
     //typedef RV (*Signature)(v8::Arguments const &);
     enum { Arity = -1, IsConst = 0 };
+    typedef void ClassType;
 };
 
 template <typename RV>
@@ -318,6 +332,7 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
 */
 template <typename SigListType, unsigned short I>
 struct ArgTypeAt : tmp::TypeAt< SigListType, I > {};
+
 
 
 #include "signature_generated.hpp"

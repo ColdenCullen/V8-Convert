@@ -244,24 +244,6 @@ v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
 namespace v8 { namespace convert {
 
 
-    struct CtorFwdTest
-    {
-        CtorFwdTest(int){}
-        CtorFwdTest(){}
-        CtorFwdTest(int,int){}
-        CtorFwdTest(v8::Arguments const &) {}
-        virtual ~CtorFwdTest() {}
-        
-        int afunc(int);
-        int bfunc(int,int) const;
-    };
-    
-    struct CtorFwdTestSub : CtorFwdTest
-    {
-        CtorFwdTestSub(){}
-        virtual ~CtorFwdTestSub() {}
-    };
-    
 
     template <>
     struct ClassCreator_Init<BoundNative>
@@ -348,13 +330,13 @@ namespace v8 { namespace convert {
                  test_anton_callback> )
 #if 1 // converting natives to JS requires more lower-level plumbing...
                  ("nativeReturn",
-                 cv::ToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn>::Call)
+                 cv::ToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)
                  ("nativeReturnConst",
-                 cv::ToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst>::Call)
+                 cv::ToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst, true>::Call)
                  ("nativeReturnRef",
-                 CATCHER< cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef>::Call >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>::Call >::Call)
                  ("nativeReturnConstRef",
-                 CATCHER< cv::ToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef>::Call >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef, true>::Call >::Call)
 #endif
                 ;
 #undef CATCHER
@@ -433,61 +415,6 @@ namespace v8 { namespace convert {
             }
             bind_BoundSubNative(dest);
             CERR << "Finished binding BoundNative.\n";
-            if(1) // just experimenting...
-            {
-                assert( (0 > ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Arity) );
-                typedef CtorFwdTest CFT;
-                typedef cv::CtorForwarder<CFT * ()> C0;
-                //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
-                typedef cv::CtorForwarder<CFT * (int)> C1;
-                typedef cv::CtorForwarder<CFT * (int,int)> C2;
-                typedef cv::CtorForwarder<CFT * (v8::Arguments const &)> Cn;
-                assert( Cn::Arity < 0 );
-                typedef CFT * (*CFTCtor)( v8::Arguments const & );
-                CFTCtor ctor;
-                ctor = C0::Ctor;
-                ctor = C1::Ctor;
-                ctor = C2::Ctor;
-                //ctor = C0Sub::Ctor;
-                typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
-                //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
-                typedef CtorForwarderDispatcher<CtorList> CDispatch;
-                typedef CtorFwdTest * (*FacT)( Arguments const &  argv );
-                FacT fac;
-                fac = CDispatch::Ctor;
-                typedef int (CFT::*M1)(int) ;
-                typedef int (CFT::*M2)(int,int) const;
-                assert( !(tmp::IsConst<CFT>::Value) );
-                assert( (tmp::IsConst<CFT const>::Value) );
-                assert( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) );
-                assert( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) );
-                typedef int (CFT::*X2)(int,int) const;
-                assert( 2 == (cv::SignatureTypeList<X2>::Arity) );
-                assert( !(cv::SignatureTypeList< M1 >::IsConst) );
-                assert( (cv::SignatureTypeList< M2 >::IsConst) );
-                assert( !(cv::SignatureTypeList< int (int) >::IsConst) );
-                assert( (cv::SignatureTypeList< int () const >::IsConst) );
-                assert( (cv::SignatureTypeList<X2>::IsConst) );
-                assert( !(cv::SignatureTypeList<int (int)>::IsConst) );
-                assert( 1 == (cv::ToInCa<CFT,M1,&CFT::afunc>::Arity) );
-                assert( 1 == (cv::ToInCa<CFT,int (int),&CFT::afunc>::Arity) );
-                assert( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) );
-                assert( 2 == (cv::ToInCa<CFT,int (int,int) const,&CFT::bfunc>::Arity) );
-                //assert( 2 == (cv::ToInCa<CFT,int (int,int),&CFT::bfunc>::Arity) );
-                assert( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) );
-                assert( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) );
-                //assert( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) );
-                typedef cv::FunctionSignature<FacT> FacSig;
-                assert( FacSig::Arity < 0 );
-                typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
-                assert( (tmp::SameType< int, A0>::Value));
-                typedef cv::ArgTypeAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
-                assert( (tmp::SameType< char const *, A1>::Value));
-                assert( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) );
-                assert( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value));
-
-                
-            }
         }
     };
 } }
@@ -588,6 +515,104 @@ enum {
     experimentZ = 0
 };    
 #endif // experiment
+
+struct CtorFwdTest
+{
+    CtorFwdTest(int){}
+    CtorFwdTest(){}
+    CtorFwdTest(int,int){}
+    CtorFwdTest(v8::Arguments const &) {}
+    virtual ~CtorFwdTest() {}
+    
+    int afunc(int);
+    int bfunc(int,int) const;
+};
+
+struct CtorFwdTestSub : CtorFwdTest
+{
+    CtorFwdTestSub(){}
+    virtual ~CtorFwdTestSub() {}
+};
+
+void compile_time_assertions()
+{
+    namespace tmp = cv::tmp;
+#define ASS ass = cv::tmp::Assertion
+    tmp::Assertion<true> ass;
+    ASS< (0 > cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Arity)>();
+    typedef CtorFwdTest CFT;
+    typedef cv::CtorForwarder<CFT * ()> C0;
+    //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
+    typedef cv::CtorForwarder<CFT * (int)> C1;
+    typedef cv::CtorForwarder<CFT * (int,int)> C2;
+    typedef cv::CtorForwarder<CFT * (v8::Arguments const &)> Cn;
+    ASS<( Cn::Arity < 0 )>();
+    typedef CFT * (*CFTCtor)( v8::Arguments const & );
+    CFTCtor ctor;
+    ctor = C0::Ctor;
+    ctor = C1::Ctor;
+    ctor = C2::Ctor;
+    //ctor = C0Sub::Ctor;
+    typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
+    //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
+    typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
+    typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
+    FacT fac;
+    fac = CDispatch::Ctor;
+    typedef int (CFT::*M1)(int) ;
+    typedef int (CFT::*M2)(int,int) const;
+    ASS<( !(tmp::IsConst<CFT>::Value) )>();
+    ASS<( (tmp::IsConst<CFT const>::Value) )>();
+    ASS<( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) )>();
+    ASS<( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) )>();
+    typedef int (CFT::*X2)(int,int) const;
+    ASS<( 2 == (cv::SignatureTypeList<X2>::Arity) )>();
+
+    ASS<( !(cv::SignatureTypeList< M1 >::IsConst) )>();
+    ASS<( (cv::SignatureTypeList< M2 >::IsConst) )>();
+    ASS<( !(cv::SignatureTypeList< int (int) >::IsConst) )>();
+    ASS<( (cv::SignatureTypeList< int () const >::IsConst) )>();
+    ASS<( (cv::SignatureTypeList<X2>::IsConst) )>();
+    ASS<( !(cv::SignatureTypeList<int (int)>::IsConst) )>();
+    ASS<( 1 == (cv::ToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
+    ASS<( 1 == (cv::ToInCa<CFT,int (int),&CFT::afunc>::Arity) )>();
+    ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+    ASS<( 2 == (cv::ToInCa<CFT,int (int,int) const,&CFT::bfunc>::Arity) )>();
+    //ASS<( 2 == (cv::ToInCa<CFT,int (int,int),&CFT::bfunc>::Arity) )>();
+    ASS<( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
+    ASS<( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+    //ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+    typedef cv::FunctionSignature<FacT> FacSig;
+    ASS<( FacSig::Arity < 0 )>();
+    typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
+    ASS<( (tmp::SameType< int, A0>::Value))>();
+    typedef cv::ArgTypeAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
+    ASS<( (tmp::SameType< char const *, A1>::Value))>();
+    ASS<( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) )>();
+    ASS<( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value))>();
+
+    typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
+    typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
+    typedef cv::tmp::TypeList< v8::Handle<v8::Value>, double, int > CannotUnlock2;
+    ASS< 3 == cv::tmp::LengthOf< CannotUnlock >::Value >();
+    ASS< 3 == cv::tmp::LengthOf< CannotUnlock2 >::Value >();
+    ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
+    ASS< cv::IsSafeToUnlock<void>::Value >();
+    ASS< cv::IsSafeToUnlock<double>::Value>();
+    ASS< cv::IsSafeToUnlock<int>::Value>();
+    ASS< !cv::IsSafeToUnlock< v8::Handle<v8::Value> >::Value >();
+    //assert( (cv::tmp::Assertion<!cv::TypeListIsUnlockable<CannotUnlock>::Value>::Value) );
+    ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
+    ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
+    ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
+
+    ASS< cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<int (int, double, char)> >::Value >();
+    ASS< !cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<int (int, double, v8::Arguments)> >::Value >();
+    ASS< !cv::SignatureTypeListIsUnlockable< cv::SignatureTypeList<v8::Handle<v8::Object> (int, double)> >::Value >();
+#undef ASS
+}                
+
+
 
 #undef TRY_UNLOCKED_FUNCTIONS
 #undef CERR
