@@ -285,18 +285,12 @@ struct FunctionToInCa< ${count}, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func 
         static ${ValueHandle} Call( Arguments const & argv )
         {
             typedef FunctionPtr<Sig, Func> ParentType;
+            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
             if( !argv.Length() || (argv.Length() < ParentType::Arity) )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
             }
-            ${sigTypeDecls}
-            ${castTypedefs}
-            ${castInits}
-            typedef typename ParentType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*Func)( ${castCalls} ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            return Proxy::Call( Func, argv );
         }
 };
 EOF
@@ -310,18 +304,13 @@ struct FunctionToInCaVoid< ${count}, Sig, Func, UnlockV8 > : FunctionPtr< Sig, F
         static ${ValueHandle} Call( Arguments const & argv )
         {
             typedef FunctionPtr<Sig, Func> ParentType;
+            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
             if( !argv.Length() || (argv.Length() < ParentType::Arity) )
             {
                 return JS_THROW("This function requires at least ${count} arguments!");
             }
-            ${sigTypeDecls}
-            ${castTypedefs}
-            ${castInits}
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                Func(${castCalls});
-            }
-            return Undefined();
+            Proxy::Call( Func, argv );
+            return v8::Undefined();
         }
 };
 } // namespace
@@ -425,6 +414,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
+            typedef char AssertArity[ SignatureType::Arity == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
@@ -443,6 +433,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
+            typedef char AssertArity[ SignatureType::Arity == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}

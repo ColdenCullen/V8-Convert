@@ -136,6 +136,7 @@ struct ConstMethodPtr<T, RV (T::*)(v8::Arguments const &) const,FuncPtr>
      }
 };
 
+
 namespace Detail {
     template <bool> struct V8Unlocker;
     
@@ -167,7 +168,212 @@ namespace Detail {
         inline void Dispose() const
         {}
     };
+}
 
+namespace Detail {
+    template <int Arity_, typename Sig, bool UnlockV8 = false >
+    struct ArgsToFunctionForwarder;
+
+    template <bool UnlockV8>
+    struct ArgsToFunctionForwarder<-1,v8::Handle<v8::Value> (v8::Arguments const &), UnlockV8>
+        : FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)>
+    {
+    public:
+        typedef FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)> SignatureType;
+        typedef v8::Handle<v8::Value> (*FunctionType)(v8::Arguments const &);
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            typedef char AssertLocking[!UnlockV8 ? 1 : -1];
+            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+            return func(argv);
+        }
+    };
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
+    {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
+            typedef typename FunctionType::ReturnType RV;
+            V8Unlocker<true> unlocker;
+            RV rv( func() );
+            unlocker.Dispose();
+            return cv::CastToJS( rv );
+        }
+    };
+
+    template <int Arity_, typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid;
+
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
+    {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef Sig FunctionType;
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
+            {
+                V8Unlocker<UnlockV8> const unlocker();
+                func();
+            }
+            return v8::Undefined();
+        }
+    };
+
+}
+
+namespace Detail {
+    template <typename T, int Arity_, typename Sig>
+    struct ArgsToMethodForwarder;
+
+    template <typename T, typename Sig>
+    struct ArgsToMethodForwarder<T,0,Sig> : MethodSignature<T,Sig>
+    {
+    public:
+        typedef MethodSignature<T,Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        typedef T Type;
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( (self.*func)() );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            T * self = CastFromJS<T>(argv.This());
+            return self
+                ? Call(*self, func, argv)
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        }
+    };
+
+    template <typename T, int Arity_, typename Sig>
+    struct ArgsToMethodForwarderVoid;
+
+    template <typename T, typename Sig>
+    struct ArgsToMethodForwarderVoid<T,0,Sig> : MethodSignature<T,Sig>
+    {
+    public:
+        typedef MethodSignature<T,Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        typedef T Type;
+        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
+        {
+            (self.*func)();
+            return v8::Undefined();
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            T * self = CastFromJS<T>(argv.This());
+            return self
+                ? Call(*self, func, argv)
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        }
+    };
+
+    
+    template <typename T, int Arity_, typename Sig>
+    struct ArgsToConstMethodForwarder;
+
+    template <typename T, typename Sig>
+    struct ArgsToConstMethodForwarder<T,0,Sig> : ConstMethodSignature<T,Sig>
+    {
+    public:
+        typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        typedef T Type;
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( (self.*func)() );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            T const * self = CastFromJS<T>(argv.This());
+            return self
+                ? Call(*self, func, argv)
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        }
+    };
+
+    template <typename T, int Arity_, typename Sig>
+    struct ArgsToConstMethodForwarderVoid;
+
+    template <typename T, typename Sig>
+    struct ArgsToConstMethodForwarderVoid<T,0,Sig> : ConstMethodSignature<T,Sig>
+    {
+    public:
+        typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        typedef T Type;
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            (self.*func)();
+            return v8::Undefined();
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            T const * self = CastFromJS<T>(argv.This());
+            return self
+                ? Call(*self, func, argv)
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        }
+    };
+}
+
+/**
+   A helper type for passing v8::Arguments lists to native non-member
+   functions.
+
+   Sig must be a function-signature-like argument. e.g. <double (int,double)>,
+   and the members of this class expect functions matching that signature.
+
+   TODO: Now that we have InCaCatcher, we could potentially
+   templatize this to customize exception handling. Or we could
+   remove the handling altogether and require clients to use
+   InCaCatcher and friends if they want to catch exceptions.
+*/
+template <typename Sig, bool UnlockV8 = false>
+struct ArgsToFunctionForwarder
+{
+private:
+    typedef typename
+    tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
+                 Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >,
+                 Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >
+    >::Type
+    ProxyType;
+public:
+    typedef typename ProxyType::SignatureType SignatureType;
+    typedef typename ProxyType::FunctionType FunctionType;
+    /**
+       Passes the given arguments to func(), converting them to the appropriate
+       types. If argv.Length() is less than SignatureType::Arity then
+       a JS exception is thrown.
+    */
+    static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+    {
+#if !V8_CONVERT_CATCH_BOUND_FUNCS
+        return ProxyType::Call( func, argv );
+#else
+        try
+        {
+            return ProxyType::Call( func, argv );
+        }
+        catch(std::exception const &ex)
+        {
+            return CastToJS(ex);
+        }
+        catch(...)
+        {
+            return JS_THROW("Native code through unknown exception type.");
+        }
+#endif
+    }
+};
+
+namespace Detail {
     
     template <int Arity_, typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
@@ -563,16 +769,22 @@ private:
     */
     typedef 
     typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
-                 Detail::FunctionToInCaVoid< FunctionSignature<Sig>::Arity,
-                                                  Sig, Func, UnlockV8>,
-                 Detail::FunctionToInCa< FunctionSignature<Sig>::Arity,
-                                              Sig, Func, UnlockV8>
+#if 0
+                 Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity,
+                                                  Sig, UnlockV8>,
+                 Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity,
+                                              Sig, UnlockV8>
+#else
+                 Detail::FunctionToInCaVoid< FunctionSignature<Sig>::Arity, Sig, Func, UnlockV8>,
+                 Detail::FunctionToInCa< FunctionSignature<Sig>::Arity, Sig, Func, UnlockV8>
+#endif
     >::Type
     ProxyType;
 public:
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
 #if !V8_CONVERT_CATCH_BOUND_FUNCS
+        //return ProxyType::Call( Func, argv );
         return ProxyType::Call( argv );
 #else
         try
@@ -787,219 +999,6 @@ v8::Handle<v8::Value> ConstMethodToInvocationCallback( v8::Arguments const & arg
 {
     return ConstMethodToInCa<T,FSig,Func>::Call(argv);
 }
-
-
-
-namespace Detail {
-    template <int Arity_, typename Sig, bool UnlockV8 = false >
-    struct ArgsToFunctionForwarder;
-
-    template <bool UnlockV8>
-    struct ArgsToFunctionForwarder<-1,v8::InvocationCallback, UnlockV8> : FunctionSignature<v8::InvocationCallback>
-    {
-    private:
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
-        typedef FunctionSignature<v8::InvocationCallback> SignatureType;
-        typedef v8::InvocationCallback FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            return func(argv);
-        }
-    };
-    template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
-    {
-        typedef FunctionSignature<Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            typedef typename FunctionType::ReturnType RV;
-            V8Unlocker<true> unlocker;
-            RV rv( func() );
-            unlocker.Dispose();
-            return cv::CastToJS( rv );
-        }
-    };
-#if 0
-    template <typename Sig>
-    struct ArgsToFunctionForwarder<0,Sig,false> : FunctionSignature<Sig>
-    {
-        typedef FunctionSignature<Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            return cv::CastToJS( func() );
-        }
-    };
-#endif
-    template <int Arity_, typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid;
-
-    template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
-    {
-        typedef FunctionSignature<Sig> SignatureType;
-        typedef Sig FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                func();
-            }
-            return v8::Undefined();
-        }
-    };
-
-}
-
-namespace Detail {
-    template <typename T, int Arity_, typename Sig>
-    struct ArgsToMethodForwarder;
-
-    template <typename T, typename Sig>
-    struct ArgsToMethodForwarder<T,0,Sig> : MethodSignature<T,Sig>
-    {
-    public:
-        typedef MethodSignature<T,Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
-        {
-            return CastToJS( (self.*func)() );
-        }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-
-    template <typename T, int Arity_, typename Sig>
-    struct ArgsToMethodForwarderVoid;
-
-    template <typename T, typename Sig>
-    struct ArgsToMethodForwarderVoid<T,0,Sig> : MethodSignature<T,Sig>
-    {
-    public:
-        typedef MethodSignature<T,Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, Arguments const & argv )
-        {
-            (self.*func)();
-            return v8::Undefined();
-        }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-
-    
-    template <typename T, int Arity_, typename Sig>
-    struct ArgsToConstMethodForwarder;
-
-    template <typename T, typename Sig>
-    struct ArgsToConstMethodForwarder<T,0,Sig> : ConstMethodSignature<T,Sig>
-    {
-    public:
-        typedef ConstMethodSignature<T,Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
-        {
-            return CastToJS( (self.*func)() );
-        }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            T const * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-
-    template <typename T, int Arity_, typename Sig>
-    struct ArgsToConstMethodForwarderVoid;
-
-    template <typename T, typename Sig>
-    struct ArgsToConstMethodForwarderVoid<T,0,Sig> : ConstMethodSignature<T,Sig>
-    {
-    public:
-        typedef ConstMethodSignature<T,Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
-        {
-            (self.*func)();
-            return v8::Undefined();
-        }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
-        {
-            T const * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
-}
-
-/**
-   A helper type for passing v8::Arguments lists to native non-member
-   functions.
-
-   Sig must be a function-signature-like argument. e.g. <double (int,double)>,
-   and the members of this class expect functions matching that signature.
-
-   TODO: Now that we have InCaCatcher, we could potentially
-   templatize this to customize exception handling. Or we could
-   remove the handling altogether and require clients to use
-   InCaCatcher and friends if they want to catch exceptions.
-*/
-template <typename Sig, bool UnlockV8 = false>
-struct ArgsToFunctionForwarder
-{
-private:
-    typedef typename
-    tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
-                 Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >,
-                 Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >
-    >::Type
-    ProxyType;
-public:
-    typedef typename ProxyType::SignatureType SignatureType;
-    typedef typename ProxyType::FunctionType FunctionType;
-    /**
-       Passes the given arguments to func(), converting them to the appropriate
-       types. If argv.Length() is less than SignatureType::Arity then
-       a JS exception is thrown.
-    */
-    static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
-    {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( func, argv );
-#else
-        try
-        {
-            return ProxyType::Call( func, argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return JS_THROW("Native code through unknown exception type.");
-        }
-#endif
-    }
-};
 
 /**
    Identicial to ArgsToFunctionForwarder, but works on non-const

@@ -192,8 +192,10 @@ function test4()
 function testUnlockedFunctions()
 {
     print("sleep()ing for a couple seconds... This 'might' unlock v8 while sleeping...");
+    var b = (new Date()).getTime();
     BoundNative.sleep(2);
-    print("Done sleeping.");
+    var e = (new Date()).getTime();
+    print("Done sleeping. Time elapsed: "+(e-b)+"ms");
 }
 
 if(0) {
