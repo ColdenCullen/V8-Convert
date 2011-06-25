@@ -341,7 +341,7 @@ namespace Detail {
 #define ASSERT_UNLOCK_SANITY_CHECK typedef char AssertCanEnableUnlock[ \
     !UnlockV8 ? 1 : (cv::SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
     ]
-    template <int Arity_, typename Sig, bool UnlockV8 = false >
+    template <int Arity_, typename Sig, bool UnlockV8 = cv::SignatureIsUnlockable< cv::SignatureTypeList<Sig> >::Value  >
     struct ArgsToFunctionForwarder;
     template <int Arity, typename RV, bool UnlockV8>
     struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
@@ -357,10 +357,12 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
         typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
     };
+#if 0
     template <int Arity, typename RV, bool UnlockV8>
     struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
         : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
     {};
+#endif
 
     template <typename Sig, bool UnlockV8>
     struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
@@ -399,8 +401,8 @@ namespace Detail {
         typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
     
-    template <typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<-1,RV (v8::Arguments const &), UnlockV8>
+    template <int Arity, typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -418,7 +420,9 @@ namespace Detail {
 }
 
 namespace Detail {
-    template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
+    template <typename T, int Arity_, typename Sig,
+             bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
+     >
     struct ArgsToMethodForwarder;
 
     template <typename T, typename Sig, bool UnlockV8>
@@ -474,7 +478,9 @@ namespace Detail {
     {};
 #endif
 
-    template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
+    template <typename T, int Arity_, typename Sig,
+        bool UnlockV8 = cv::SignatureIsUnlockable< cv::MethodSignature<T, Sig> >::Value
+    >
     struct ArgsToMethodForwarderVoid;
 
     template <typename T, typename Sig, bool UnlockV8>
@@ -530,7 +536,9 @@ namespace Detail {
     {};
 #endif
     
-    template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
+    template <typename T, int Arity_, typename Sig,
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
+    >
     struct ArgsToConstMethodForwarder;
 
     template <typename T, typename Sig, bool UnlockV8>
@@ -584,7 +592,9 @@ namespace Detail {
     {};
 #endif
 
-    template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
+    template <typename T, int Arity_, typename Sig,
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
+    >
     struct ArgsToConstMethodForwarderVoid;
 
     template <typename T, typename Sig, bool UnlockV8>
