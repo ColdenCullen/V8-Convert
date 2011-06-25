@@ -699,16 +699,20 @@ namespace v8 { namespace convert {
 
     JSSocket * ClassCreator_Factory<JSSocket>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
-        JSSocket * s = NULL;
-        int const argc = argv.Length();
-        int fam = (argc>0) ? cv::JSToInt32(argv[0]) : AF_INET;
-        int type = (argc>1) ? cv::JSToInt32(argv[1]) : SOCK_STREAM;
-        int proto = (argc>2) ? cv::JSToInt32(argv[2]) : 0;
-        int sockFD = (argc>3) ? cv::JSToInt32(argv[3]) : -1;
-        s = new JSSocket(fam, type, proto, sockFD);
-        s->jsSelf = jsSelf;
+        typedef cv::CtorForwarder< JSSocket * ()> Ctor0;
+        typedef cv::CtorForwarder< JSSocket * (int)> Ctor1;
+        typedef cv::CtorForwarder< JSSocket * (int,int)> Ctor2;
+        typedef cv::CtorForwarder< JSSocket * (int,int,int)> Ctor3;
+        typedef cv::CtorForwarder< JSSocket * (int,int,int,int)> Ctor4; // this one is only for internal use
+        typedef cv::CtorForwarderDispatcher< cv::tmp::TypeList<
+            Ctor0, Ctor1, Ctor2, Ctor3, Ctor4 >
+        > Dispatch;
+        JSSocket * s = Dispatch::Ctor( argv );
+        if( s )
+        {
+            s->jsSelf = jsSelf;
+        }
         return s;
-                                
     }
 
     void ClassCreator_Factory<JSSocket>::Delete( JSSocket * obj )
