@@ -1,6 +1,6 @@
 #!/usr/bin/make -f
 ########################################################################
-# Main makefile for jspdo.
+# Main makefile for v8::convert ByteArray code.
 #
 # Requires GNU Make 3.81+
 #
