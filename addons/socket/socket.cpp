@@ -1034,8 +1034,8 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
 #endif
     cc.Set("read", OloadRead::Call);
 
-    typedef cv::MethodToInCa<N, int (), &N::listen> Listen0;
-    typedef cv::MethodToInCa<N, int (int), &N::listen> Listen1;
+    typedef cv::MethodToInCa<N, int (), &N::listen, false> Listen0;
+    typedef cv::MethodToInCa<N, int (int), &N::listen, false> Listen1;
 #if 0
     typedef cv::InCaOverloader<1, Listen1::Call, cv::InCaOverloader<0,Listen0::Call>::Call > OloadListen;
 #else
@@ -1048,21 +1048,21 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
     typedef cv::MethodToInCa<N, int (unsigned int), &N::setTimeoutSec > SetTimeout1;
     typedef cv::InCaOverloader<2, SetTimeout2::Call, cv::InCaOverloader<1,SetTimeout1::Call>::Call > OloadSetTimeout;
 #define F2I cv::FunctionToInvocationCallback
-#define M2I cv::MethodToInvocationCallback
-#define CM2I cv::ConstMethodToInvocationCallback
+#define M2I cv::MethodToInCa
+#define C2I cv::ConstMethodToInCa
     
-    cc.Set("setTimeout", OloadSetTimeout::Call )
-        .Set("setTimeoutMs", M2I<N, int (unsigned int),&N::setTimeoutMs> )
-        .Set( "close", CC::DestroyObjectCallback )
-        .Set( "accept", M2I<N, JSSocket* (),&N::accept> )
-        .Set( "toString", CM2I<N, std::string (),&N::toString> )
-        .Set( "bind", M2I<N,int (char const *,int),&N::bind> )
-        .Set( "connect", M2I<N,int (char const *, int), &N::connect> )
-        .Set( "nameToAddress", F2I< ValH (const char *), N::nameToAddress> )
-        .Set( "addressToName", F2I< ValH (const char *), N::addressToName> )
-        .Set( "write", cv::JSSocket::writeN )
+    cc("setTimeout", OloadSetTimeout::Call )
+        ("setTimeoutMs", M2I<N, int (unsigned int),&N::setTimeoutMs, false>::Call )
+        ( "close", CC::DestroyObjectCallback )
+        ( "accept", M2I<N, JSSocket* (),&N::accept, false>::Call )
+        ( "toString", C2I<N, std::string (),&N::toString>::Call )
+        ( "bind", M2I<N,int (char const *,int),&N::bind,false>::Call )
+        ( "connect", M2I<N,int (char const *, int), &N::connect, false>::Call )
+        ( "nameToAddress", F2I< ValH (const char *), N::nameToAddress> )
+        ( "addressToName", F2I< ValH (const char *), N::addressToName> )
+        ( "write", cv::JSSocket::writeN )
         // is this useful? .Set( "sendTo", cv::JSSocket::sendTo )
-        .Set( socket_strings.fieldPeer, false )
+        ( socket_strings.fieldPeer, false )
         ;
     typedef cv::MemberPropertyBinder<N> SPB;
     v8::AccessorSetter const throwOnSet = SPB::AccessorSetterThrow;
@@ -1111,7 +1111,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
     DBGOUT <<"Binding done.\n";
 #undef F2I
 #undef M2I
-#undef CM2I
+#undef C2I
     return;
 }
 

@@ -384,6 +384,7 @@ public:
     int setTimeoutMs( unsigned int ms );
 
 }/*JSSocket*/;
+
 } }
 
 #endif
