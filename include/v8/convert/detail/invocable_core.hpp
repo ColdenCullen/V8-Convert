@@ -333,38 +333,53 @@ namespace Detail {
     support is requested but cannot be implemented for the given
     wrapper due to constraints on our use of v8 when it is unlocked.
 */
-#define ASSERT_UNLOCKV8_IS_FALSE typedef char ThisSpecializationCannotUsedUnlocker[!UnlockV8 ? 1 : -1]
+#define ASSERT_UNLOCKV8_IS_FALSE typedef char ThisSpecializationCannotUseV8Unlocker[!UnlockV8 ? 1 : -1]
+/**
+    Temporary internal macro to trigger a static assertion if: 
+    UnlockV8 is true and SignatureIsUnlockable<Sig>::Value is false. 
+    This is to prohibit that someone accidentally enables locking 
+    when using a function type which we know (based on its 
+    signature's types) cannot obey the locking rules.
+*/
+#define ASSERT_UNLOCK_SANITY_CHECK typedef char AssertCanEnableUnlock[ \
+    !UnlockV8 ? 1 : (cv::SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
+    ]
     template <int Arity_, typename Sig, bool UnlockV8 = false >
     struct ArgsToFunctionForwarder;
-
+#if 0
     template <bool UnlockV8>
     struct ArgsToFunctionForwarder<-1,v8::Handle<v8::Value> (v8::Arguments const &), UnlockV8>
         : FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef FunctionSignature<v8::Handle<v8::Value> (v8::Arguments const &)> SignatureType;
         typedef v8::Handle<v8::Value> (*FunctionType)(v8::Arguments const &);
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
             return func(argv);
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
+        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
     };
-    template <typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarder<-1,RV (v8::Arguments const &), UnlockV8>
+#endif
+    template <int Arity, typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
             return cv::CastToJS( func(argv) );
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
+        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
     };
+    template <int Arity, typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
+        : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
+    {};
 
     template <typename Sig, bool UnlockV8>
     struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
@@ -373,13 +388,14 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
             typedef typename SignatureType::ReturnType RV;
             V8Unlocker<true> unlocker;
             RV rv( func() );
             unlocker.Dispose();
             return cv::CastToJS( rv );
         }
+        ASSERT_UNLOCK_SANITY_CHECK;
+        typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
 
     template <int Arity_, typename Sig, bool UnlockV8>
@@ -392,13 +408,14 @@ namespace Detail {
         typedef Sig FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
             {
                 V8Unlocker<UnlockV8> const unlocker();
                 func();
             }
             return v8::Undefined();
         }
+        ASSERT_UNLOCK_SANITY_CHECK;
+        typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
     
     template <typename RV, bool UnlockV8>
@@ -406,15 +423,15 @@ namespace Detail {
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
             func(argv);
             return v8::Undefined();
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
+        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
     };
 
 }
@@ -445,14 +462,14 @@ namespace Detail {
                 ? Call(*self, func, argv)
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
-    template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, -1, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : MethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef MethodSignature<T, RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
@@ -467,29 +484,12 @@ namespace Detail {
                 ? Call(*self, func, argv)
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
     };
     template <typename T, typename RV, bool UnlockV8, int _Arity>
-    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
-    {
-    public:
-        typedef MethodSignature<T,RV (v8::Arguments const &)> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        typedef T Type;
-        static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
-        {
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(argv));
-            unlocker.Dispose();
-            return cv::CastToJS( rv );
-        }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
-        {
-            T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
-        }
-    };
+    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
+            ArgsToMethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
+    {};
 
     template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
     struct ArgsToMethodForwarderVoid;
@@ -518,8 +518,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,-1, RV (v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
         ASSERT_UNLOCKV8_IS_FALSE;
@@ -539,6 +539,12 @@ namespace Detail {
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
+
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
+        : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
+    {};
+
     
     template <typename T, int Arity_, typename Sig, bool UnlockV8 = false>
     struct ArgsToConstMethodForwarder;
@@ -566,12 +572,11 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, -1, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef ConstMethodSignature<T, RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -586,6 +591,7 @@ namespace Detail {
                 ? Call(*self, func, argv)
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
     };
 
 
@@ -614,14 +620,14 @@ namespace Detail {
                 ? Call(*self, func, argv)
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
     
-    template <typename T, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, -1, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
-        ASSERT_UNLOCKV8_IS_FALSE;
         typedef ConstMethodSignature<T, RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -637,8 +643,8 @@ namespace Detail {
                 ? Call(*self, func, argv)
                 : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
+        ASSERT_UNLOCKV8_IS_FALSE;
     };
-#undef ASSERT_UNLOCKV8_IS_FALSE
 }
 
 /**
@@ -660,9 +666,10 @@ namespace Detail {
     It is illegal for UnlockV8 to be true if ANY of the following 
     applies:
 
-    - The callback itself will "use" v8. (This _might_ be okay if it 
-    uses a v8::Locker. We'll have to try and see.) We cannot 
-    determine this programmatically except by guessing based on the 
+    - The callback itself will "use" v8 but does not explicitly use 
+    v8::Locker. If it uses v8::Locker then it may safely enable 
+    unlocking support. We cannot determine via templates  whether 
+    or not a function "uses" v8 except by guessing based on the 
     return and arguments types.
 
     - Any of the return or argument types for the function are v8 
@@ -749,26 +756,20 @@ public:
 };
 
 namespace Detail {
-/**
-    Temporary internal macro to trigger a static assertion if:
-    UnlockV8 is true and SignatureIsUnlockable<...>::Value is
-    false. This is to prohibit that someone accidentally enables
-    locking when using an argument/return type which we know cannot
-    obey the locking rules.
-*/
-#define ASSERT_UNLOCK_SANITY_CHECK typedef char  AssertCanEnableUnlock[tmp::Assertion< !UnlockV8 ? 1 : (cv::SignatureIsUnlockable< cv::SignatureTypeList<Sig> >::Value ? 1 : 0)>::Value ? 1 : -1]
+
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
-              bool UnlockV8 = false>
+              bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
     struct FunctionToInCa : FunctionPtr<Sig, Func>
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            ASSERT_UNLOCK_SANITY_CHECK;
             typedef FunctionPtr<Sig, Func> ParentType;
             typedef ArgsToFunctionForwarder< ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
+        typedef FunctionSignature<Sig> SignatureType;
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
     template <typename Sig,
@@ -778,20 +779,21 @@ namespace Detail {
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            ASSERT_UNLOCK_SANITY_CHECK;
             typedef FunctionPtr<Sig, Func> ParentType;
             typedef ArgsToFunctionForwarderVoid< ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
+        typedef FunctionSignature<Sig> SignatureType;
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
     template <typename T,
               typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false>
+              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
+              >
     struct MethodToInCa : MethodPtr<T,Sig, Func>
     {
-        ASSERT_UNLOCK_SANITY_CHECK;
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
             
@@ -805,15 +807,17 @@ namespace Detail {
             typedef ArgsToMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( self, Func, argv );
         }
+        typedef MethodSignature<T,Sig> SignatureType;
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
     template <typename T,
               typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false>
+              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
+              >
     struct MethodToInCaVoid : MethodPtr<T,Sig,Func>
     {
-        ASSERT_UNLOCK_SANITY_CHECK;
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
             typedef MethodPtr<T, Sig, Func> ParentType;
@@ -828,15 +832,17 @@ namespace Detail {
             Proxy::Call( self, Func, argv );
             return v8::Undefined();
         }
+        typedef MethodSignature<T,Sig> SignatureType;
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
     template <typename T,
               typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false>
+              bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
+              >
     struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>
     {
-        ASSERT_UNLOCK_SANITY_CHECK;
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
             typedef ConstMethodPtr<T, Sig, Func> ParentType;
@@ -850,15 +856,17 @@ namespace Detail {
             Proxy::Call( self, Func, argv );
             return v8::Undefined();
         }
+        typedef ConstMethodSignature<T,Sig> SignatureType;
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
     template <typename T,
               typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
-              bool UnlockV8 = false>
+              bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
+              >
     struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>
     {
-        ASSERT_UNLOCK_SANITY_CHECK;
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
             typedef ConstMethodPtr<T,Sig, Func> ParentType;
@@ -874,9 +882,12 @@ namespace Detail {
             Proxy::Call( self, Func, argv );
             return v8::Undefined();
         }
+        typedef ConstMethodSignature<T,Sig> SignatureType;
+        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
 #undef ASSERT_UNLOCK_SANITY_CHECK
+#undef ASSERT_UNLOCKV8_IS_FALSE
 } // Detail namespace
 
 /**
@@ -1151,7 +1162,9 @@ namespace Detail {
        Internal level of indirection to handle void return
        types from forwardFunction().
      */
-    template <typename FSig, bool UnlockV8 = false>
+    template <typename FSig,
+            bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<FSig> >::Value
+    >
     struct ForwardFunction
     {
         typedef cv::FunctionSignature<FSig> SignatureType;
@@ -1162,7 +1175,9 @@ namespace Detail {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
     };
-    template <typename FSig, bool UnlockV8 = false>
+    template <typename FSig,
+        bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<FSig> >::Value
+    >
     struct ForwardFunctionVoid
     {
         typedef cv::FunctionSignature<FSig> SignatureType;
@@ -1777,19 +1792,19 @@ namespace Detail {
     
     template <bool IsConst, typename T, typename Sig,
             typename ConstOrNotSig<IsConst,T,Sig>::FunctionType Func,
-            bool UnlockV8 = false>
+            bool UnlockV8 = SignatureIsUnlockable< SignatureTypeList<Sig> >::Value>
     struct ConstOrNotMethodToInCa;
     
     template <typename T, typename Sig,
             typename cv::ConstMethodSignature<T,Sig>::FunctionType Func,
             bool UnlockV8>
-    struct ConstOrNotMethodToInCa<true,T,Sig,Func,UnlockV8> : cv::ConstMethodToInCa<T,Sig,Func>
+    struct ConstOrNotMethodToInCa<true,T,Sig,Func,UnlockV8> : cv::ConstMethodToInCa<T,Sig,Func,UnlockV8>
     {};
     
     template <typename T, typename Sig,
             typename cv::MethodSignature<T,Sig>::FunctionType Func,
             bool UnlockV8>
-    struct ConstOrNotMethodToInCa<false,T,Sig,Func,UnlockV8> : cv::MethodToInCa<T,Sig,Func>
+    struct ConstOrNotMethodToInCa<false,T,Sig,Func,UnlockV8> : cv::MethodToInCa<T,Sig,Func,UnlockV8>
     {};
 }
 
@@ -1864,5 +1879,4 @@ struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
 
 #undef JS_THROW
 #undef V8_CONVERT_CATCH_BOUND_FUNCS
-
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */

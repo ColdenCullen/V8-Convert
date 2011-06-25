@@ -241,6 +241,17 @@ v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
     return v8::Undefined();
 }
 
+template <bool IsUsingUnlock>
+void test_using_locker()
+{
+    CERR << "Callback "<<(IsUsingUnlock?"with":"without") << " Unlocker support. Briefly locking v8...\n";
+    // If something is broken in our locking setup then the following will likely assert in v8:
+    v8::Locker lock();
+    cv::StringBuffer msg;
+    msg << "We're back...\n";
+    CERR << msg;
+}
+
 namespace v8 { namespace convert {
 
 
@@ -313,6 +324,7 @@ namespace v8 { namespace convert {
                  cv::ToInCa<BoundNative,void () const,&BoundNative::doFooConst>::Call)
                 ("invoInt",
                  cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Call)
+                 //cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt,true>::Call) // this must fail to compile
                 ("nativeParam",
                  cv::ToInCa<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>::Call)
                 ("nativeParamRef",
@@ -375,6 +387,7 @@ namespace v8 { namespace convert {
             proto->SetAccessor( JSTR("selfConstRef"),
                                 PB::ConstMethodToAccessorGetter< BoundNative const & (), &BoundNative::selfRefConst>,
                                 PB::AccessorSetterThrow );
+                                
             
 #if 0
             PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
@@ -397,6 +410,12 @@ namespace v8 { namespace convert {
                     cv::CastToJS(cv::FunctionToInCa< unsigned int (unsigned int), ::sleep, true>::Call)
             );
 #endif
+            ctor->Set(JSTR("testLocker"),
+                cv::CastToJS(cv::ToInCa<void, void (), test_using_locker<true>, true >::Call)
+            );
+            ctor->Set(JSTR("testLockerNoUnlocking"),
+                cv::CastToJS(cv::ToInCa<void, void (), test_using_locker<false>, false>::Call)
+            );
 
             ////////////////////////////////////////////////////////////
             // Add class to the destination object...
@@ -606,9 +625,18 @@ void compile_time_assertions()
     ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
     ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
 
-    ASS< cv::SignatureIsUnlockable< cv::SignatureTypeList<int (int, double, char)> >::Value >();
-    ASS< !cv::SignatureIsUnlockable< cv::SignatureTypeList<int (int, double, v8::Arguments)> >::Value >();
-    ASS< !cv::SignatureIsUnlockable< cv::SignatureTypeList<v8::Handle<v8::Object> (int, double)> >::Value >();
+#define SIU cv::SignatureIsUnlockable
+    ASS< SIU< cv::SignatureTypeList<int (int, double, char)> >::Value >();
+    ASS< !SIU< cv::SignatureTypeList<int (int, double, v8::Arguments)> >::Value >();
+    ASS< !SIU< cv::SignatureTypeList<v8::Handle<v8::Object> (int, double)> >::Value >();
+    ASS< !SIU< 
+            cv::MethodPtr<
+                BoundNative,
+                int (v8::Arguments const &),
+                &BoundNative::invoInt
+            > >::Value >();
+    ASS< !SIU< cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt > >::Value>();
+#undef SIU
 #undef ASS
 }                
 

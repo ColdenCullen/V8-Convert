@@ -72,6 +72,10 @@ function assertThrows( func ) {
 
 function test1()
 {
+    { // if these fail they're cause an assertion in v8...
+        BoundNative.testLocker();
+        BoundNative.testLockerNoUnlocking()
+    }
     var f = new BoundNative();
     print('f='+f);
     f.puts("hi, world");
