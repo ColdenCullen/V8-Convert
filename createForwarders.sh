@@ -119,14 +119,6 @@ template <typename RV, ${aTDecl} >
 struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
     typedef RV (*FunctionType)(${aTParam});
-EOF
-    local i=0
-    while [ $i -lt $count ]; do
-        #echo -e "\ttypedef A${i} ArgType${i};"
-        i=$((i + 1))
-    done
-    
-mycat <<EOF
 };
 
 template <typename RV, ${aTDecl} >
@@ -148,14 +140,6 @@ struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
     typedef T ClassType;
     typedef RV (T::*FunctionType)(${aTParam});
-EOF
-    local i=0
-    while [ $i -lt $count ]; do
-        #echo -e "\ttypedef A${i} ArgType${i};"
-        i=$((i + 1))
-    done
-    
-mycat <<EOF
 };
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (T::*)(${aTParam}) > :
@@ -177,14 +161,6 @@ struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam
 {
     typedef T ClassType;
     typedef RV (T::*FunctionType)(${aTParam}) const;
-EOF
-    local i=0
-    while [ $i -lt $count ]; do
-        #echo -e "\ttypedef A${i} ArgType${i};"
-        i=$((i + 1))
-    done
-    
-mycat <<EOF
 };
 
 template <typename T, typename RV, ${aTDecl} >
