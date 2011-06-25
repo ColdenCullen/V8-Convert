@@ -273,8 +273,9 @@ EOF
 # Create FunctionToInCa<> and friends...
 function makeFunctionToInCa()
 {
-# FIXME: Re-implement FunctionToInca::Call in terms of ArgsToFunctionForwarder.
-# We're duplicating code right now.
+    echo "Don't call makeFunctionToInCa()! It's not needed anymore :-D" 1>&2
+    exit 1
+
     mycat <<EOF
 namespace Detail {
 template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >

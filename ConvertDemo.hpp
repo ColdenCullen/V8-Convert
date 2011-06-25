@@ -22,7 +22,8 @@
 #endif
 #define JSTR(X) v8::String::New(X)
 namespace cv = v8::convert;
-typedef v8::Handle<v8::Value> ValueHandle;
+//typedef v8::Handle<v8::Value> ValueHandle;
+#define ValueHandle v8::Handle<v8::Value>
 
 void doFoo();
 void doNothing();

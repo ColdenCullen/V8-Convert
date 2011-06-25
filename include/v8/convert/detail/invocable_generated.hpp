@@ -46,41 +46,6 @@ namespace Detail {
     };
 }
 namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 1, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 1 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 1, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 1 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
-namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 1,Sig> : MethodSignature<T,Sig>
     {
@@ -357,41 +322,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 2, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 2 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 2, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 2 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 2,Sig> : MethodSignature<T,Sig>
@@ -699,41 +629,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 3, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 3 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 3, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 3 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 3,Sig> : MethodSignature<T,Sig>
@@ -1071,41 +966,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 4, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 4 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 4, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 4 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 4,Sig> : MethodSignature<T,Sig>
@@ -1473,41 +1333,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 5, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 5 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 5, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 5 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 5,Sig> : MethodSignature<T,Sig>
@@ -1905,41 +1730,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 6, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 6 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 6, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 6 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 6,Sig> : MethodSignature<T,Sig>
@@ -2367,41 +2157,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 7, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 7 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 7, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 7 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 7,Sig> : MethodSignature<T,Sig>
@@ -2859,41 +2614,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 8, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 8 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 8, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 8 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 8,Sig> : MethodSignature<T,Sig>
@@ -3381,41 +3101,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 9, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 9 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 9, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 9 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 9,Sig> : MethodSignature<T,Sig>
@@ -3933,41 +3618,6 @@ namespace Detail {
         }
     };
 }
-namespace Detail {
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-struct FunctionToInCa< 10, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 10 arguments!");
-            }
-            return Proxy::Call( Func, argv );
-        }
-};
-template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
-struct FunctionToInCaVoid< 10, Sig, Func, UnlockV8 > : FunctionPtr< Sig, Func >
-{
-    public:
-        //typedef typename ParentType::SignatureType SignatureType;
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
-        {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid<ParentType::Arity, Sig, UnlockV8> Proxy;
-            if( !argv.Length() || (argv.Length() < ParentType::Arity) )
-            {
-                return JS_THROW("This function requires at least 10 arguments!");
-            }
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
-        }
-};
-} // namespace
 namespace Detail {
     template <typename T, typename Sig>
     struct ArgsToMethodForwarder<T, 10,Sig> : MethodSignature<T,Sig>

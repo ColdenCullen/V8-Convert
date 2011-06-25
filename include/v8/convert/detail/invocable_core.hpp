@@ -188,6 +188,21 @@ namespace Detail {
             return func(argv);
         }
     };
+    template <typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarder<-1,RV (v8::Arguments const &), UnlockV8>
+        : FunctionSignature<RV (v8::Arguments const &)>
+    {
+    public:
+        typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            typedef char AssertLocking[!UnlockV8 ? 1 : -1];
+            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+            return cv::CastToJS( func(argv) );
+        }
+    };
+
     template <typename Sig, bool UnlockV8>
     struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
     {
@@ -196,7 +211,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
-            typedef typename FunctionType::ReturnType RV;
+            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<true> unlocker;
             RV rv( func() );
             unlocker.Dispose();
@@ -219,6 +234,22 @@ namespace Detail {
                 V8Unlocker<UnlockV8> const unlocker();
                 func();
             }
+            return v8::Undefined();
+        }
+    };
+    
+    template <typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<-1,RV (v8::Arguments const &), UnlockV8>
+        : FunctionSignature<RV (v8::Arguments const &)>
+    {
+    public:
+        typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        {
+            typedef char AssertLocking[!UnlockV8 ? 1 : -1];
+            typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+            func(argv);
             return v8::Undefined();
         }
     };
@@ -371,90 +402,39 @@ public:
         }
 #endif
     }
+    /** Returns Call( Func, argv ). */
+    template < typename FunctionSignature<Sig>::FunctionType Func >
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        return Call( Func, argv );
+    }    
 };
 
 namespace Detail {
     
-    template <int Arity_, typename Sig,
+    template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = false>
-    struct FunctionToInCa;
-    using v8::Arguments;
-
-    template <typename VT,
-              typename FunctionSignature<VT (v8::Arguments const &)>::FunctionType Func,
-              bool UnlockV8
-              >
-    struct FunctionToInCa<-1,
-                               VT (Arguments const &),
-                               Func, UnlockV8
-                               >
-        : FunctionPtr<VT (Arguments const &), Func>
+    struct FunctionToInCa : FunctionPtr<Sig, Func>
     {
-    private:
-        typedef FunctionPtr<VT (Arguments const &), Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-
-            return CastToJS( (*Func)(argv) );
+            typedef FunctionPtr<Sig, Func> ParentType;
+            typedef ArgsToFunctionForwarder< ParentType::Arity, Sig, UnlockV8 > Proxy;
+            return Proxy::Call( Func, argv );
         }
     };
-    
+
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8>
-    struct FunctionToInCa<0,Sig,Func, UnlockV8> : FunctionPtr<Sig, Func>
+    struct FunctionToInCaVoid : FunctionPtr<Sig,Func>
     {
-    private:
-        typedef FunctionPtr<Sig, Func> ParentType;
-    public:
-        static v8::Handle<v8::Value> Call( Arguments const & )
-        {
-            {
-                V8Unlocker<UnlockV8> const unlock();
-                Func();
-            }
-            return Undefined();
-        }
-    };
-
-    template <int Arity_, typename Sig,
-              typename FunctionSignature<Sig>::FunctionType Func,
-              bool UnlockV8>
-    struct FunctionToInCaVoid;
-
-    template <typename VT, VT (*Func)(Arguments const &), bool UnlockV8 >
-    struct FunctionToInCaVoid<-1, VT (Arguments const &), Func, UnlockV8>
-        : FunctionPtr<VT (Arguments const &), Func>
-    {
-    private:
-        typedef FunctionPtr<VT (Arguments const &), Func> ParentType;
-        typedef char AssertLocking[!UnlockV8 ? 1 : -1];
-    public:
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            (*Func)(argv);
-            return v8::Undefined();
-        }
-    };
-    
-    template <typename Sig,
-              typename FunctionSignature<Sig>::FunctionType Func,
-              bool UnlockV8>
-    struct FunctionToInCaVoid<0,Sig,Func, UnlockV8> : FunctionPtr<Sig, Func>
-    {
-    private:
-        typedef FunctionPtr<Sig, Func> ParentType;
-    public:
-        static v8::Handle<v8::Value> Call( Arguments const & )
-        {
-            {
-                V8Unlocker<UnlockV8> const unlock();
-                Func();
-            }
-            return Undefined();
+            typedef FunctionPtr<Sig, Func> ParentType;
+            typedef ArgsToFunctionForwarderVoid< ParentType::Arity, Sig, UnlockV8 > Proxy;
+            return Proxy::Call( Func, argv );
         }
     };
 }
@@ -761,47 +741,12 @@ namespace Detail {
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,
           bool UnlockV8 = false>
-struct FunctionToInCa : FunctionPtr<Sig,Func>
-{
-private:
-    /** Select the exact implementation dependent on whether
-        FunctionSignature<Sig>::ReturnType is void or not.
-    */
-    typedef 
-    typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
-#if 0
-                 Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity,
-                                                  Sig, UnlockV8>,
-                 Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity,
-                                              Sig, UnlockV8>
-#else
-                 Detail::FunctionToInCaVoid< FunctionSignature<Sig>::Arity, Sig, Func, UnlockV8>,
-                 Detail::FunctionToInCa< FunctionSignature<Sig>::Arity, Sig, Func, UnlockV8>
-#endif
-    >::Type
-    ProxyType;
-public:
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-    {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        //return ProxyType::Call( Func, argv );
-        return ProxyType::Call( argv );
-#else
-        try
-        {
-            return ProxyType::Call( argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return JS_THROW("Native code through unknown exception type.");
-        }
-#endif
-    }
-};
+struct FunctionToInCa
+    : tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
+                 Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>,
+                 Detail::FunctionToInCa< Sig, Func, UnlockV8>
+        >::Type
+{};
 
 /**
    A template for converting non-const member function pointers to
