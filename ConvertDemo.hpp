@@ -253,6 +253,11 @@ struct BoundSubNative : public BoundNative
         static NonBoundType bob = NonBoundType();
         return bob;
     }
+    NonBoundType const & nonBoundNative() const
+    {
+        static const NonBoundType bob = NonBoundType();
+        return bob;
+    }
 };
 
 /**

@@ -1814,6 +1814,7 @@ struct InCaOverloadList
 namespace Detail {
     namespace cv = v8::convert;
 
+    //! Internal helper for ToInCa impl.
     template <typename T, typename Sig, bool IsConst = cv::Signature<Sig>::IsConst >
     struct ToInCaSigSelector : cv::ConstMethodSignature<T,Sig>
     {
@@ -1823,6 +1824,7 @@ namespace Detail {
         };
     };
     
+    //! Internal helper for ToInCa impl.
     template <typename T, typename Sig>
     struct ToInCaSigSelector<T,Sig,false> : MethodSignature<T,Sig>
     {
@@ -1832,6 +1834,7 @@ namespace Detail {
         };
     };
     
+    //! Internal helper for ToInCa impl.
     template <typename Sig>
     struct ToInCaSigSelector<void,Sig,false> : cv::FunctionSignature<Sig>
     {
@@ -1840,20 +1843,15 @@ namespace Detail {
         {
         };
     };
-    
-    // We need both true and false specializations here to avoid an ambiguity
-    // with (true,T) resp. (false,T).
+
+    /** Internal helper for ToInCa impl.
+        We need both true and false specializations here to avoid an ambiguity
+        with (T,Sig,true) resp. (T,Sig,false).
+    */
     template <typename Sig>
     struct ToInCaSigSelector<void,Sig,true> : ToInCaSigSelector<void,Sig,false> {};
-    
-    template <typename T, typename Sig,
-                typename ToInCaSigSelector<T,Sig>::FunctionType Func,
-                bool UnlockV8 = SignatureIsUnlockable< ToInCaSigSelector<T,Sig> >::Value
-            >
-    struct ToInCaImplKindOf :
-        ToInCaSigSelector<T,Sig>::template Base<Func,UnlockV8>
-    {};
 
+    //! Internal helper for ToInCaVoid impl.
     template <typename T, typename Sig, bool IsConst = cv::Signature<Sig>::IsConst >
     struct ToInCaSigSelectorVoid : cv::ConstMethodSignature<T,Sig>
     {
@@ -1862,7 +1860,8 @@ namespace Detail {
         {
         };
     };
-    
+
+    //! Internal helper for ToInCaVoid impl.
     template <typename T, typename Sig>
     struct ToInCaSigSelectorVoid<T,Sig,false> : MethodSignature<T,Sig>
     {
@@ -1871,7 +1870,8 @@ namespace Detail {
         {
         };
     };
-    
+
+    //! Internal helper for ToInCaVoid impl.
     template <typename Sig>
     struct ToInCaSigSelectorVoid<void,Sig,false> : cv::FunctionSignature<Sig>
     {
@@ -1880,19 +1880,14 @@ namespace Detail {
         {
         };
     };
-    
-    // We need both true and false specializations here to avoid an ambiguity
-    // with (true,T) resp. (false,T).
+
+    /** Internal helper for ToInCaVoid impl.
+        We need both true and false specializations here to avoid an ambiguity
+        with (T,Sig,true) resp. (T,Sig,false).
+    */
     template <typename Sig>
     struct ToInCaSigSelectorVoid<void,Sig,true> : ToInCaSigSelectorVoid<void,Sig,false> {};
-    
-    template <typename T, typename Sig,
-                typename ToInCaSigSelectorVoid<T,Sig>::FunctionType Func,
-                bool UnlockV8 = SignatureIsUnlockable< ToInCaSigSelectorVoid<T,Sig> >::Value
-            >
-    struct ToInCaImplKindOfVoid :
-        ToInCaSigSelectorVoid<T,Sig>::template Base<Func,UnlockV8>
-    {};
+
 }
 
 /**
@@ -1937,13 +1932,10 @@ namespace Detail {
 */
 template <typename T, typename Sig,
         typename Detail::ToInCaSigSelector<T,Sig>::FunctionType Func,
-        bool UnlockV8 =
-            tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< Signature<Sig> >,
-                IsUnlockable<T>
-                > >::Value
+        bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
         >
-struct ToInCa : Detail::ToInCaImplKindOf<T,Sig,Func,UnlockV8>
+struct ToInCa : Detail::ToInCaSigSelector<T,Sig>::template Base<Func,UnlockV8>
+//Detail::ToInCaImplKindOf<T,Sig,Func,UnlockV8>
 {
 };
 
@@ -1965,13 +1957,10 @@ struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
 */
 template <typename T, typename Sig,
         typename Detail::ToInCaSigSelectorVoid<T,Sig>::FunctionType Func,
-        bool UnlockV8 =
-            tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< Signature<Sig> >,
-                IsUnlockable<T>
-                > >::Value
+        bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
         >
-struct ToInCaVoid : Detail::ToInCaImplKindOfVoid<T,Sig,Func,UnlockV8>
+struct ToInCaVoid : Detail::ToInCaSigSelectorVoid<T,Sig>::template Base<Func,UnlockV8>
+//Detail::ToInCaImplKindOfVoid<T,Sig,Func,UnlockV8>
 {
 };
 

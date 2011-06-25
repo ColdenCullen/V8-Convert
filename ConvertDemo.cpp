@@ -456,12 +456,16 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 
     cc
         ("subFunc",
-         cv::ConstMethodToInCa<BoundSubNative,void (),&BoundSubNative::subFunc>::Call)
+         cv::ToInCa<BoundSubNative,void () const,&BoundSubNative::subFunc>::Call)
         ("toString",
-         cv::ConstMethodToInCa<BoundSubNative,ValueHandle (),&BoundSubNative::toString>::Call)
+         cv::ToInCa<BoundSubNative,ValueHandle () const,&BoundSubNative::toString>::Call)
          ("nonBoundNative",
          cv::ToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType & (), &BoundSubNative::nonBoundNative>::Call)
+         ("nonBoundNativeConst",
+         cv::ToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType const& () const, &BoundSubNative::nonBoundNative>::Call)
          //cv::ToInCa<BoundSubNative, BoundSubNative::NonBoundType &(), &BoundSubNative::nonBoundNative>::Call) // must fail to compile OR link
+         ("puts",
+         cv::ToInCaVoid<void, int (char const *),::puts>::Call)
         ;
 
     typedef cv::ClassCreator<BoundNative> CCFoo;
