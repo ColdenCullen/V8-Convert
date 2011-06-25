@@ -471,175 +471,112 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 #undef JSTR
 
 
-#if 0 // just an experiment.
-template <typename Sig>
-struct Arity;
+namespace { // testing ground for some compile-time assertions...
+    struct CtorFwdTest
+    {
+        CtorFwdTest(int){}
+        CtorFwdTest(){}
+        CtorFwdTest(int,int){}
+        CtorFwdTest(v8::Arguments const &) {}
+        virtual ~CtorFwdTest() {}
+        
+        int afunc(int);
+        int bfunc(int,int) const;
+    };
 
-template <typename R>
-struct Arity<R ()>
-{
-    enum { Value = 0 };
-};
+    struct CtorFwdTestSub : CtorFwdTest
+    {
+        CtorFwdTestSub(){}
+        virtual ~CtorFwdTestSub() {}
+    };
 
-template <typename R, typename A0>
-struct Arity<R (A0)>
-{
-    enum { Value = 1 };
-};
-template <typename R>
-struct Arity<R (v8::Arguments const &)>
-{
-    enum { Value = -1 };
-};
-template <typename Sig>
-struct Arity< cv::FunctionSignature<Sig> >
-{
-    enum { Value = cv::FunctionSignature<Sig>::Arity };
-};
-template <typename T, typename Sig>
-struct Arity< cv::MethodSignature<T, Sig> >
-{
-    enum { Value = cv::MethodSignature<T,Sig>::Arity };
-};
-template <typename T, typename Sig>
-struct Arity< cv::ConstMethodSignature<T, Sig> >
-{
-    enum { Value = cv::ConstMethodSignature<T,Sig>::Arity };
-};
-
-static void arity_test()
-{
-    typedef Arity< int (int) > ArityCheck1;
-    typedef Arity< cv::FunctionSignature<int (int)> > ArityCheck1b;
-    //typedef Arity< int (int,int,int,int) > ArityCheck4;
-    typedef Arity< cv::FunctionSignature<int (int,int,int,int)> > ArityCheck4b;
-    //typedef Arity< int (BoundNative::*)(int) > ArityCheckT1;
-    typedef Arity< cv::MethodSignature<BoundNative, int (int)> > ArityCheckT1;
-    //typedef Arity< int (BoundNative::*)(int,int) > ArityCheckTC1;
-
-#define OUT(X) CERR << #X << "::Value == " << X::Value << '\n'
-    OUT(ArityCheck1);
-    OUT(ArityCheck1b);
-    //OUT(ArityCheck4);
-    OUT(ArityCheck4b);
-    OUT(ArityCheckT1);
-#undef OUT
-}
-static const bool arity_test_bogo = (arity_test(),true);
-enum {
-    experimentA = Arity<char ()>::Value,
-    experimentB = Arity<char (int)>::Value,
-    experimentC = Arity<int (v8::Arguments const &)>::Value,
-    //experimentD = Arity<int (int, int)>::Value,
-    experimentZ = 0
-};    
-#endif // experiment
-
-struct CtorFwdTest
-{
-    CtorFwdTest(int){}
-    CtorFwdTest(){}
-    CtorFwdTest(int,int){}
-    CtorFwdTest(v8::Arguments const &) {}
-    virtual ~CtorFwdTest() {}
-    
-    int afunc(int);
-    int bfunc(int,int) const;
-};
-
-struct CtorFwdTestSub : CtorFwdTest
-{
-    CtorFwdTestSub(){}
-    virtual ~CtorFwdTestSub() {}
-};
-
-void compile_time_assertions()
-{
-    namespace tmp = cv::tmp;
+    void compile_time_assertions()
+    {
+        namespace tmp = cv::tmp;
 #define ASS ass = cv::tmp::Assertion
-    tmp::Assertion<true> ass;
-    ASS< (0 > cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Arity)>();
-    typedef CtorFwdTest CFT;
-    typedef cv::CtorForwarder<CFT * ()> C0;
-    //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
-    typedef cv::CtorForwarder<CFT * (int)> C1;
-    typedef cv::CtorForwarder<CFT * (int,int)> C2;
-    typedef cv::CtorForwarder<CFT * (v8::Arguments const &)> Cn;
-    ASS<( Cn::Arity < 0 )>();
-    typedef CFT * (*CFTCtor)( v8::Arguments const & );
-    CFTCtor ctor;
-    ctor = C0::Ctor;
-    ctor = C1::Ctor;
-    ctor = C2::Ctor;
-    //ctor = C0Sub::Ctor;
-    typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
-    //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
-    typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
-    typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
-    FacT fac;
-    fac = CDispatch::Ctor;
-    typedef int (CFT::*M1)(int) ;
-    typedef int (CFT::*M2)(int,int) const;
-    ASS<( !(tmp::IsConst<CFT>::Value) )>();
-    ASS<( (tmp::IsConst<CFT const>::Value) )>();
-    ASS<( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) )>();
-    ASS<( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) )>();
-    typedef int (CFT::*X2)(int,int) const;
-    ASS<( 2 == (cv::Signature<X2>::Arity) )>();
+        tmp::Assertion<true> ass;
+        ASS< (0 > cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Arity)>();
+        typedef CtorFwdTest CFT;
+        typedef cv::CtorForwarder<CFT * ()> C0;
+        //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
+        typedef cv::CtorForwarder<CFT * (int)> C1;
+        typedef cv::CtorForwarder<CFT * (int,int)> C2;
+        typedef cv::CtorForwarder<CFT * (v8::Arguments const &)> Cn;
+        ASS<( Cn::Arity < 0 )>();
+        typedef CFT * (*CFTCtor)( v8::Arguments const & );
+        CFTCtor ctor;
+        ctor = C0::Ctor;
+        ctor = C1::Ctor;
+        ctor = C2::Ctor;
+        //ctor = C0Sub::Ctor;
+        typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
+        //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
+        typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
+        typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
+        FacT fac;
+        fac = CDispatch::Ctor;
+        typedef int (CFT::*M1)(int) ;
+        typedef int (CFT::*M2)(int,int) const;
+        ASS<( !(tmp::IsConst<CFT>::Value) )>();
+        ASS<( (tmp::IsConst<CFT const>::Value) )>();
+        ASS<( 1 == (cv::ToInCa<CFT, int (int), &CFT::afunc>::Arity) )>();
+        ASS<( 2 == (cv::ConstMethodToInCa<CFT, int (int,int), &CFT::bfunc>::Arity) )>();
+        typedef int (CFT::*X2)(int,int) const;
+        ASS<( 2 == (cv::Signature<X2>::Arity) )>();
 
-    ASS<( !(cv::Signature< M1 >::IsConst) )>();
-    ASS<( (cv::Signature< M2 >::IsConst) )>();
-    ASS<( !(cv::Signature< int (int) >::IsConst) )>();
-    ASS<( (cv::Signature< int () const >::IsConst) )>();
-    ASS<( (cv::Signature<X2>::IsConst) )>();
-    ASS<( !(cv::Signature<int (int)>::IsConst) )>();
-    ASS<( 1 == (cv::ToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
-    ASS<( 1 == (cv::ToInCa<CFT,int (int),&CFT::afunc>::Arity) )>();
-    ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
-    ASS<( 2 == (cv::ToInCa<CFT,int (int,int) const,&CFT::bfunc>::Arity) )>();
-    //ASS<( 2 == (cv::ToInCa<CFT,int (int,int),&CFT::bfunc>::Arity) )>();
-    ASS<( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
-    ASS<( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
-    //ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
-    typedef cv::FunctionSignature<FacT> FacSig;
-    ASS<( FacSig::Arity < 0 )>();
-    typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
-    ASS<( (tmp::SameType< int, A0>::Value))>();
-    typedef cv::ArgTypeAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
-    ASS<( (tmp::SameType< char const *, A1>::Value))>();
-    ASS<( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) )>();
-    ASS<( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value))>();
+        ASS<( !(cv::Signature< M1 >::IsConst) )>();
+        ASS<( (cv::Signature< M2 >::IsConst) )>();
+        ASS<( !(cv::Signature< int (int) >::IsConst) )>();
+        ASS<( (cv::Signature< int () const >::IsConst) )>();
+        ASS<( (cv::Signature<X2>::IsConst) )>();
+        ASS<( !(cv::Signature<int (int)>::IsConst) )>();
+        ASS<( 1 == (cv::ToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
+        ASS<( 1 == (cv::ToInCa<CFT,int (int),&CFT::afunc>::Arity) )>();
+        ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+        ASS<( 2 == (cv::ToInCa<CFT,int (int,int) const,&CFT::bfunc>::Arity) )>();
+        //ASS<( 2 == (cv::ToInCa<CFT,int (int,int),&CFT::bfunc>::Arity) )>();
+        ASS<( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
+        ASS<( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+        //ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+        typedef cv::FunctionSignature<FacT> FacSig;
+        ASS<( FacSig::Arity < 0 )>();
+        typedef cv::ArgTypeAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
+        ASS<( (tmp::SameType< int, A0>::Value))>();
+        typedef cv::ArgTypeAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
+        ASS<( (tmp::SameType< char const *, A1>::Value))>();
+        ASS<( (tmp::IsConst<cv::ArgTypeAt< FacSig, 0 >::Type>::Value) )>();
+        ASS<( (tmp::SameType< v8::Arguments const &, cv::ArgTypeAt< FacSig, 0 >::Type>::Value))>();
 
-    typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
-    typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
-    typedef cv::tmp::TypeList< v8::Handle<v8::Value>, double, int > CannotUnlock2;
-    ASS< 3 == cv::tmp::LengthOf< CannotUnlock >::Value >();
-    ASS< 3 == cv::tmp::LengthOf< CannotUnlock2 >::Value >();
-    ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
-    ASS< cv::IsUnlockable<void>::Value >();
-    ASS< cv::IsUnlockable<double>::Value>();
-    ASS< cv::IsUnlockable<int>::Value>();
-    ASS< !cv::IsUnlockable< v8::Handle<v8::Value> >::Value >();
-    //assert( (cv::tmp::Assertion<!cv::TypeListIsUnlockable<CannotUnlock>::Value>::Value) );
-    ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
-    ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
-    ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
+        typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
+        typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
+        typedef cv::tmp::TypeList< v8::Handle<v8::Value>, double, int > CannotUnlock2;
+        ASS< 3 == cv::tmp::LengthOf< CannotUnlock >::Value >();
+        ASS< 3 == cv::tmp::LengthOf< CannotUnlock2 >::Value >();
+        ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
+        ASS< cv::IsUnlockable<void>::Value >();
+        ASS< cv::IsUnlockable<double>::Value>();
+        ASS< cv::IsUnlockable<int>::Value>();
+        ASS< !cv::IsUnlockable< v8::Handle<v8::Value> >::Value >();
+        //assert( (cv::tmp::Assertion<!cv::TypeListIsUnlockable<CannotUnlock>::Value>::Value) );
+        ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
+        ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
+        ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
 
 #define SIU cv::SignatureIsUnlockable
-    ASS< SIU< cv::Signature<int (int, double, char)> >::Value >();
-    ASS< !SIU< cv::Signature<int (int, double, v8::Arguments)> >::Value >();
-    ASS< !SIU< cv::Signature<v8::Handle<v8::Object> (int, double)> >::Value >();
-    ASS< !SIU< 
-            cv::MethodPtr<
-                BoundNative,
-                int (v8::Arguments const &),
-                &BoundNative::invoInt
-            > >::Value >();
-    ASS< !SIU< cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt > >::Value>();
+        ASS< SIU< cv::Signature<int (int, double, char)> >::Value >();
+        ASS< !SIU< cv::Signature<int (int, double, v8::Arguments)> >::Value >();
+        ASS< !SIU< cv::Signature<v8::Handle<v8::Object> (int, double)> >::Value >();
+        ASS< !SIU< 
+                cv::MethodPtr<
+                    BoundNative,
+                    int (v8::Arguments const &),
+                    &BoundNative::invoInt
+                > >::Value >();
+        ASS< !SIU< cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt > >::Value>();
 #undef SIU
 #undef ASS
-}                
-
+    }                
+} // namespace
 
 
 #undef TRY_UNLOCKED_FUNCTIONS
