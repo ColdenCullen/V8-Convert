@@ -206,6 +206,21 @@ function testUnlockedFunctions()
     print("Done sleeping. Time elapsed: "+(e-b)+"ms");
 }
 
+function testPredicateOverloads()
+{
+    print("Testing out the experimental predicate-based overloading...");
+    var b = new BoundSubNative();
+    try {
+        b.bogo(1);
+        b.bogo(1,2);
+        b.bogo(1,2,3);
+        b.bogo(1,2,3,4);
+    }
+    finally { b.destroy(); }
+}
+
+
+
 if(0) {
     /**
        Interesting: if we have a native handle in the global object
@@ -216,11 +231,11 @@ if(0) {
     print("Created object which we hope to see cleaned up at app exit: "+originalBoundObject);
 }
 
-
-test1();
-test2();
-test3();
-testUnlockedFunctions();
+//test1();
+//test2();
+//test3();
+//testUnlockedFunctions();
+testPredicateOverloads()
 //test4();
 if(0) {
     try {

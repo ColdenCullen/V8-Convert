@@ -2,7 +2,7 @@
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
-#if 1
+#if 0
 #include "v8/convert/arguments.hpp"
 #endif
 
@@ -115,15 +115,47 @@ namespace v8 { namespace convert {
 
 } }
 
-
-ValueHandle bogo_callback( v8::Arguments const & )
+template <int Min_, int Max_ = Min_>
+struct ArgPred_Length
 {
-    return v8::Undefined();
+    enum { Min = Min_, Max = Max_ };
+    bool operator()( v8::Arguments const & av ) const
+    {
+        int const argc = av.Length();
+        if( Max < 0 ) return argc >= Min;
+        else return (argc>=Min) && (argc<=Max);
+    }
+};
+
+ValueHandle bogo_callback_internal( v8::Arguments const & argv )
+{
+    CERR << "Arg count="<<argv.Length()<<'\n';
+    return v8::Integer::New(42);
 }
+int bogo_callback2( v8::Arguments const & argv );
+ValueHandle bogo_callback( v8::Arguments const & argv )
+{
+    CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
+    
+    v8::InvocationCallback cb;
+    typedef cv::FunctionToInCa<v8::InvocationCallback,bogo_callback_internal> Bogo1;
+    typedef cv::FunctionToInCa<int (v8::Arguments const &),bogo_callback2> Bogo2;
+    typedef cv::PredicatedInCa< ArgPred_Length<1>, Bogo1 > Pred1;
+    typedef cv::PredicatedInCa< ArgPred_Length<2>, Bogo2 > Pred2;
+    typedef cv::PredicatedInCa< ArgPred_Length<3>, cv::InCa<bogo_callback_internal> > Pred3;
+    typedef cv::PredicatedInCaOverloader< cv::tmp::TypeList< Pred1, Pred2, Pred3 > > PredOLoad;
+    CERR << "Possibly passing on to another function based on predicate rules...\n";
+    cb = Pred1::Call;
+    cb = Pred2::Call;
+    cb = Pred3::Call;
+    return PredOLoad::Call(argv);
+}
+
 
 int bogo_callback2( v8::Arguments const & argv )
 {
     CERR << "native this=@"<< (void const *) cv::CastFromJS<BoundNative>(argv.This())
+         << ", arg count="<<argv.Length()
          << '\n';
     return 1;
 }
@@ -584,6 +616,8 @@ namespace { // testing ground for some compile-time assertions...
                     &BoundNative::invoInt
                 > >::Value >();
         ASS< !SIU< cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt > >::Value>();
+        
+        
 #undef SIU
 #undef ASS
     }                

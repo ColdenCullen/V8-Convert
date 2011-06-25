@@ -357,7 +357,8 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
         typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
     };
-#if 0
+#if 1
+    //! Reminder to self: we really do need this specialization for some cases.
     template <int Arity, typename RV, bool UnlockV8>
     struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
         : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
@@ -767,8 +768,8 @@ namespace Detail {
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarder< ParentType::Arity, Sig, UnlockV8 > Proxy;
+            typedef FunctionSignature<Sig> SignatureType;
+            typedef ArgsToFunctionForwarder< SignatureType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
         typedef FunctionSignature<Sig> SignatureType;
@@ -1432,7 +1433,6 @@ forwardConstMethod(Sig func, v8::Arguments const & argv )
         ;
 }
 
-#if 0 // i'm reserving the struct name InCa for something really special. Just don't know what yet.
 /**
    A structified/functorified form of v8::InvocationCallback.  It is
    sometimes convenient to be able to use a typedef to create an alias
@@ -1459,7 +1459,6 @@ struct NativeToJS< InCa<ICB> >
         return v8::FunctionTemplate::New(InCa<ICB>::Call)->GetFunction();
     }
 };
-#endif
 
 /**
    InvocationCallback wrapper which calls another InvocationCallback
@@ -1974,6 +1973,69 @@ template <typename Sig,
 struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8>
 {
 };
+
+/**
+    Don't use this yet - it's an experiment.
+*/
+template <typename ArgPred, typename InCaT>
+struct PredicatedInCa : InCaT
+{
+    bool operator()( v8::Arguments const & argv ) const
+    {
+        return ArgPred()( argv );
+    }
+};
+
+/**
+    Don't use this yet - it's an experiment.
+*/
+template <typename TList>
+struct PredicatedInCaOverloader;
+
+namespace Detail
+{
+    using namespace cv::tmp;
+    template <typename T> struct PredicatedInCaOverloader
+    {
+        bool operator()( v8::Arguments const & argv ) const
+        {
+            return false;
+        }
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            return cv::Toss(cv::StringBuffer()<<"No predicates in the "
+                            << "argument dispatcher matched the given "
+                            << "arguments (arg count="<<argv.Length()
+                            << ").");
+        }
+    };
+    template <>
+    struct PredicatedInCaOverloader< TypeChain<NilType,NilType> > : PredicatedInCaOverloader< NilType > {};
+
+    template <typename H, typename T>
+    struct PredicatedInCaOverloader< TypeChain<H,T> >
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            if( H()( argv ) )
+            {
+                return H::Call( argv );
+            }
+            else
+            {
+                return cv::PredicatedInCaOverloader<T>::Call(argv);
+            }
+        }
+    };
+}
+
+template <typename TList>
+struct PredicatedInCaOverloader : Detail::PredicatedInCaOverloader<typename TList::ChainType>
+{};
+template <>
+struct PredicatedInCaOverloader<tmp::NilType> : Detail::PredicatedInCaOverloader<tmp::NilType>
+{};
+
 
 }} // namespaces
 
