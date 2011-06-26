@@ -233,11 +233,11 @@ namespace v8 { namespace convert {
         */
         static const int NativeIndex = Index;
     private:
-        typedef tmp::Assertion<
+        typedef char AssertFields[
             (Count>0)
             && (NativeIndex>=0)
             && (NativeIndex<Count)
-            ? 1 : -1> AssertFields;
+            ? 1 : -1];
     };
 
     /**
