@@ -176,10 +176,7 @@ namespace Detail {
     specialization of this class.
 */
 template <typename T>
-struct IsUnlockable
-{
-    enum { Value = 1 };
-};
+struct IsUnlockable : tmp::BoolVal<true> {};
 template <typename T>
 struct IsUnlockable<T const> : IsUnlockable<T> {};
 template <typename T>
@@ -196,10 +193,7 @@ struct IsUnlockable<T const *> : IsUnlockable<T> {};
     in some cases.
 */
 template <>
-struct IsUnlockable<void>
-{
-    enum { Value = 1 };
-};
+struct IsUnlockable<void> : tmp::BoolVal<true> {};
 
 /*
     Todo?: find a mechanism to cause certain highly illegal types to 
@@ -225,7 +219,6 @@ struct IsUnlockable< v8::Local<T> > : tmp::BoolVal<false> {};
 template <>
 struct IsUnlockable<v8::Arguments> : tmp::BoolVal<false> {};
 
-
 /**
     Given a tmp::TypeList-compatible type list, this metafunction's
     Value member evalues to true if IsUnlockable<T>::Value is
@@ -239,23 +232,16 @@ struct TypeListIsUnlockable;
 namespace Detail
 {
     template <typename ListType>
-    struct TypeListIsUnlockableImpl
+    struct TypeListIsUnlockableImpl : tmp::BoolVal<
+        IsUnlockable<typename ListType::Head>::Value && TypeListIsUnlockableImpl<typename ListType::Tail>::Value
+        >
     {
-        typedef typename ListType::Head Head;
-        typedef typename ListType::Tail Tail;
-        enum {
-            Value =
-               IsUnlockable<Head>::Value && TypeListIsUnlockableImpl<Tail>::Value
-        };
     };
 
     template <>
     struct TypeListIsUnlockableImpl< tmp::NilType > : tmp::BoolVal<true>
     {};
-    
-    template <>
-    struct TypeListIsUnlockableImpl< tmp::TypeChain<tmp::NilType,tmp::NilType> > : tmp::BoolVal<true>
-    {};
+   
 }
 
 /**
@@ -274,7 +260,7 @@ struct TypeListIsUnlockable : Detail::TypeListIsUnlockableImpl<TList>
     
     - IsUnlockable<SigTList::ReturnType>::Value is true and...
     
-    - IsUnlockable<SigTList::ClassType>::Value is true (only relavent
+    - IsUnlockable<SigTList::Context>::Value is true (only relavent
     for Const/MethodSignature, not FunctionSignature) and...
     
     - TypeListIsUnlockable< SigTList >::Value is true.
@@ -314,16 +300,17 @@ struct TypeListIsUnlockable : Detail::TypeListIsUnlockableImpl<TList>
     @endcode
     
     For Const/MethodToInCa types, this check will also fail if
-    IsUnlockable< SigTList::ClassType >::Value is false.
+    IsUnlockable< SigTList::Context >::Value is false.
 */
 template <typename SigTList>
-struct SignatureIsUnlockable
-    : tmp::And< tmp::TypeList<
-        IsUnlockable< typename SigTList::ClassType >,
-        IsUnlockable< typename SigTList::ReturnType >,
-        TypeListIsUnlockable< SigTList >
-    > >
-{};
+struct SignatureIsUnlockable : tmp::BoolVal<
+        IsUnlockable<typename SigTList::Context>::Value &&
+        IsUnlockable<typename SigTList::ReturnType>::Value &&
+        IsUnlockable<typename SigTList::Head>::Value &&
+        SignatureIsUnlockable<typename SigTList::Tail>::Value
+        > {};
+template <>
+struct SignatureIsUnlockable<tmp::NilType> : tmp::BoolVal<true> {};
 
 namespace Detail {
 /**
@@ -779,7 +766,7 @@ namespace Detail {
 
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
-              bool UnlockV8>
+              bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
     struct FunctionToInCaVoid : FunctionPtr<Sig,Func>
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
@@ -955,10 +942,7 @@ struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 = tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< MethodSignature<T,Sig> >,
-                IsUnlockable<T>
-            > >::Value
+          bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
           >
 struct MethodToInCa
     : tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
@@ -973,10 +957,7 @@ struct MethodToInCa
     works on member functions of T.
 */
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 = tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< MethodSignature<T,Sig> >,
-                IsUnlockable<T>
-            > >::Value
+          bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
           >
 struct MethodToInCaVoid
     : Detail::MethodToInCaVoid<T, Sig, Func, UnlockV8>
@@ -989,11 +970,7 @@ struct MethodToInCaVoid
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 =
-            tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< ConstMethodSignature<T,Sig> >,
-                IsUnlockable<T>
-            > >::Value
+          bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
           >
 struct ConstMethodToInCa
     : tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
@@ -1007,11 +984,7 @@ struct ConstMethodToInCa
     works on const member functions of T.
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
-          bool UnlockV8 =
-            tmp::And< tmp::TypeList<
-                SignatureIsUnlockable< ConstMethodSignature<T,Sig> >,
-                IsUnlockable<T>
-            > >::Value
+          bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
           >
 struct ConstMethodToInCaVoid : Detail::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8>
 {};
@@ -1761,9 +1734,8 @@ namespace Detail
    overloaded native functions from JS, depending on the argument
    count.
 
-   FwdList must be-a v8::convert::tmp::TypeList (or 
-   interface-compatible type list) containing types which have the 
-   following function:
+   FwdList must be-a TypeList (or interface-compatible type list) 
+   containing types which have the following function:
 
    static v8::Handle<v8::Value> Call( v8::Arguments const & argv );
 

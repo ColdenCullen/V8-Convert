@@ -45,7 +45,7 @@ function makeLists()
 	aTParam="${aTParam} ${AT}"
 	callArgs="${callArgs}${AT}"
         #sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
-        sigTypeDecls="${sigTypeDecls}typedef typename tmp::TypeAt< Signature<Sig>, ${at}>::Type ${AT};\n"
+        sigTypeDecls="${sigTypeDecls}typedef typename sl::At< ${at}, Signature<Sig> >::Type ${AT};\n"
 	#castCalls="${castCalls} CastFromJS< ${AT} >(argv[${at}])"
         castTypedefs="${castTypedefs} typedef ArgCaster<${AT}> AC${at};\n"
         #castInits="${castInits} AC${at} ac${at};"

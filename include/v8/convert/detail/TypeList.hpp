@@ -15,6 +15,9 @@ namespace v8 { namespace convert { namespace tmp {
     };
     typedef NilType nil;
 
+    template <typename T>
+    struct IsNil : SameType<T,nil> {};
+
     /** @struct TypeChain
 
        A base type for implementing a list of types, implemented as a
@@ -262,10 +265,8 @@ namespace tmp {
     template <bool Cond, typename IF, typename ELSE>
     struct IfElse : TypeAt< TypeChain<IF, TypeChain<ELSE,NilType> >, Cond ? 0 : 1 >
     {
-        enum { Value = Cond ? 1 : 0 };
+        static const bool Value = Cond;
     };
-
-
     
     template < typename ListT >
     struct Or;
@@ -330,23 +331,15 @@ namespace tmp {
 #if !defined(DOXYGEN)
     namespace Detail
     {
-        /** Internal impl of TypeListIndexOf. */
-        template <typename T> struct AndImpl
-        {
-            enum { Value = T::Value };
-        };
+        /** Internal impl of And. */
+        template <typename T> struct AndImpl;
         template <>
-        struct AndImpl< NilType >
+        struct AndImpl< NilType > : BoolVal<true> {};
+        template <typename ListType>
+        struct AndImpl
         {
-            enum { Value = 1 };
-        };
-        //! Special case for empty list.
-        template <>
-        struct AndImpl< TypeChain<NilType,NilType> > : BoolVal<false>
-        {};
-        template <typename H, typename T>
-        struct AndImpl< TypeChain<H,T> >
-        {
+            typedef typename ListType::Head H;
+            typedef typename ListType::Tail T;
             enum { Value =
                    ((AndImpl<H>::Value && And<T>::Value) ? 1 : 0)
             };
@@ -368,7 +361,7 @@ namespace tmp {
     {
         enum { Value =
                //Detail::AndImpl< TypeChain< typename ListT::Head, typename ListT::Tail > >::Value
-               Detail::AndImpl< typename ListT::ChainType >::Value
+               Detail::AndImpl<ListT>::Value
         };
     };
     /** Specialization for end of list. */
@@ -417,8 +410,7 @@ namespace tmp {
     };
 
 
-#if 1 // this is all higly experimental...
-
+#if 0 // this is all higly experimental...
     template <typename Args>
     struct SigList;
 
@@ -462,50 +454,6 @@ namespace tmp {
         typedef SigList ListType;
         typedef Cx (Signature)(A1,A2,A3);
     };
-
-    template <typename T>
-    struct IsNil : SameType<T,nil> {};
-
-    namespace sl {
-        template < typename ListT >
-        struct Length : IntVal<
-                IsNil<typename ListT::Head>::Value ? 0 : (1 + Length<typename ListT::Tail>::Value)
-                > {};
-
-        template <>
-        struct Length<nil> : IntVal<0> {};
-
-
-
-        template < unsigned short I, typename ListT >
-        struct At : At<I-1, typename ListT::Tail>
-        {
-            typedef char AssertIndex[ (I >= Length<ListT>::Value) ? -1 : 1 ];
-        };
-        template < typename ListT >
-        struct At<0, ListT>
-        {
-            typedef typename ListT::Head Type;
-        };
-
-        template <unsigned short I>
-        struct At<I, nil>
-        {
-            typedef nil Type;
-        };
-    
-        template < typename T, typename ListT, unsigned short Internal = 0 >
-        struct Index
-        {
-            static const int Value = SameType<T, typename ListT::Head>::Value
-                            ? Internal
-                            : Index<T, typename ListT::Tail, Internal+1>::Value;
-        };
-        
-        template < typename T, unsigned short Internal >
-        struct Index<T,nil,Internal> : IntVal<-1> {};
-    }
-
 #endif
 
 }}}// namespaces

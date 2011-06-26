@@ -3,10 +3,13 @@
 
 namespace v8 { namespace convert {
 /**
-   The tmp namespace contains code related to template metaprogramming,
-   a-la Alexandrescu's Loki library or Boost MPL.
+   The tmp namespace contains code related to template 
+   metaprogramming, a-la Alexandrescu's Loki library or Boost MPL.
 
    All of it is independent of the core library.
+   
+   This is not a complete/full-featured TMP library - it only 
+   contains the functions needed by our library-level code.
 */
 namespace tmp {
 
@@ -30,7 +33,6 @@ namespace tmp {
     template <typename ValType,ValType Val>
     struct ConstVal
     {
-        //enum { Value = Val };
         static const ValType Value = Val;
     };
     /** A metafunction holding an integer constant. */
@@ -45,28 +47,21 @@ namespace tmp {
 
     /** A metatype whos Value member is true if X and Y are the same type. */
     template <typename X,typename Y>
-    struct SameType
-    {
-        enum { Value = 0 };
-    };
+    struct SameType : BoolVal<false> {};
     /** Specialization for X==Y. */
     template <typename X>
-    struct SameType<X,X>
-    {
-        enum { Value = 1 };
-    };
-
+    struct SameType<X,X> : BoolVal<true> {};
 
     template <typename T>
-    struct IsConst
+    struct Identity
     {
-        enum { Value = 0 };
+        typedef T Type;
     };
+    
     template <typename T>
-    struct IsConst<T const>
-    {
-        enum { Value = 1 };
-    };
+    struct IsConst : BoolVal<false> {};
+    template <typename T>
+    struct IsConst<T const> : BoolVal<true> {};
     template <typename T>
     struct IsConst<T const &> : IsConst<T const> {};
     template <typename T>

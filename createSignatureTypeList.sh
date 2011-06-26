@@ -19,12 +19,14 @@ if [[ 0 = $from ]]; then
 cat <<EOF
 
 template <typename RV>
-struct Signature< RV () > : tmp::TypeList<>
+struct Signature< RV () >
 {
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
-    typedef void ClassType;
-    //typedef RV (Fingerprint)();
+    typedef void Context;
+    //typedef RV (Fingerprint)()
+    typedef tmp::NilType Head;
+    typedef Head Tail;
 };
 template <typename RV>
 struct Signature< RV (*)() > : Signature<RV ()>
@@ -46,15 +48,29 @@ while [[ $i -le $to ]]; do
         targs="A1"
     fi
 
+    head="${targs%%,*}"
+    tail="${targs#*,}"
+    if [[ "$tail" = "$head" ]]; then # happens on 1-arity form
+        if [[ $i -eq 0 ]]; then
+            tail="tmp::NilType"
+        else
+            tail="Signature< RV () >"
+        fi
+    else
+        tail="Signature<RV (${tail})>"
+    fi
+    
     cat <<EOF
 //! Specialization for ${i} arg(s).
 template <$tparam>
-struct Signature< RV (${targs}) > : tmp::TypeList<${targs}>
+struct Signature< RV (${targs}) >
 {
     typedef RV ReturnType;
     enum { Arity = ${i}, IsConst = 0 };
-    typedef void ClassType;
+    typedef void Context;
     //typedef RV (Fingerprint)(${targs});
+    typedef ${head} Head;
+    typedef ${tail} Tail;
 };
 
 //! Specialization for ${i} arg(s).
@@ -73,14 +89,14 @@ struct Signature< RV (*)(${targs}) > : Signature<RV (${targs})>
 template <typename T, $tparam>
 struct Signature< RV (T::*)(${targs}) > : Signature<RV (${targs})>
 {
-    typedef T ClassType;
+    typedef T Context;
 };
 
 //! Specialization for T const methods taking ${i} arg(s).
 template <typename T, $tparam>
-struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs})>
+struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs}) const>
 {
-    typedef T ClassType;
+    typedef T Context;
     enum { IsConst = 1 };
 };
 EOF

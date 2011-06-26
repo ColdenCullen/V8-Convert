@@ -158,36 +158,19 @@ v8::Handle<v8::Value> bogo_callback_function( v8::Handle<v8::Function> const & f
     return f->Call( f, 0, NULL );
 }
 
+int bogo_callback2( v8::Arguments const & argv )
+{
+    CERR << "native this=@"<< (void const *) cv::CastFromJS<BoundNative>(argv.This())
+         << ", arg count="<<argv.Length()
+         << '\n';
+    return 1;
+}
+
 
 ValueHandle bogo_callback( v8::Arguments const & argv )
 {
     //CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
     using namespace v8::convert;
-    using namespace v8::convert::tmp;
-
-#if 1 // just some experimentation...
-    typedef SigList< void (int, double, char) > BL3;
-    typedef SigList< BL3::Signature > BL3b;
-    typedef Signature< BL3b::Signature > BLSig;
-    typedef SigList< void (char, int) > BL2;
-    typedef SigList< void () > BL0;
-    
-    tmp::Assertion<true> ass;
-#define ASS ass = tmp::Assertion
-    ASS< 3 == BLSig::Arity >();
-    ASS< tmp::SameType< double, SignatureParamAt<1,BLSig>::Type >::Value >();
-    ASS< BLSig::Arity == sl::Length<BL3>::Value >();
-    ASS< 2 == sl::Length<BL2>::Value >();
-    ASS< tmp::SameType< int, SignatureParamAt<1,Signature<BL2::Signature> >::Type >::Value >();
-    ASS< !tmp::SameType< int, SignatureParamAt<0,Signature<BL2::Signature> >::Type >::Value >();
-    ASS< tmp::SameType< sl::At<2,BL3>::Type, char >::Value >();
-    ASS< 0 == sl::Length<BL0>::Value >();
-    ASS< 2 == sl::Index<char, BL3>::Value >();
-    ASS< sl::Index<std::string, BL3>::Value < 0 >();
-    //ASS< tmp::SameType< SigList_At<SigList_Length<BL3>::Value,BL3>::Type, char >::Value >(); // must fail to compile
-#undef ASS
-#endif
-
 
     /**
         Create some logic (via a Predicate template) to use in 
@@ -237,14 +220,6 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     return cb(argv);
 }
 
-
-int bogo_callback2( v8::Arguments const & argv )
-{
-    CERR << "native this=@"<< (void const *) cv::CastFromJS<BoundNative>(argv.This())
-         << ", arg count="<<argv.Length()
-         << '\n';
-    return 1;
-}
 
 
 ValueHandle BoundNative_toString( v8::Arguments const & argv )
@@ -411,8 +386,8 @@ namespace v8 { namespace convert {
                 assert( 2 == AL2::Arity );
                 assert( 2 == tmp::LengthOf<AL2>::Value );
                 assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
-                assert( (tmp::SameType< int, tmp::TypeAt<AL2,0>::Type >::Value) );
-                assert( (tmp::SameType< double, tmp::TypeAt<AL2,1>::Type >::Value) );
+                assert( (tmp::SameType< int, sl::At<0,AL2>::Type >::Value) );
+                assert( (tmp::SameType< double, sl::At<1,AL2>::Type >::Value) );
                 //assert( (tmp::SameType< double, AL2::TypeAt<1>::Type >::Value) );
                 
                 typedef cv::FunctionPtr< int(char const *), ::puts> FPPuts;
@@ -424,7 +399,7 @@ namespace v8 { namespace convert {
                 typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
                 assert( 1 == tmp::LengthOf<BNPutsC>::Value );
                 assert( 1 == tmp::LengthOf<BNPuts>::Value );
-                assert( 0 != (tmp::SameType< char const *, tmp::TypeAt<BNPuts,0>::Type >::Value) );
+                assert( 0 != (tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value) );
             }
 #define CATCHER cv::InCaCatcher_std
 #define F2I cv::FunctionToInvocationCallback
@@ -655,6 +630,7 @@ namespace { // testing ground for some compile-time assertions...
 
         ASS<( !(cv::Signature< M1 >::IsConst) )>();
         ASS<( (cv::Signature< M2 >::IsConst) )>();
+        ASS<( 2 == (cv::Signature< M2 >::Arity) )>();
         ASS<( !(cv::Signature< int (int) >::IsConst) )>();
         ASS<( (cv::Signature< int () const >::IsConst) )>();
         ASS<( (cv::Signature<X2>::IsConst) )>();
@@ -666,34 +642,39 @@ namespace { // testing ground for some compile-time assertions...
         //ASS<( 2 == (cv::ToInCa<CFT,int (int,int),&CFT::bfunc>::Arity) )>();
         ASS<( 1 == (cv::MethodToInCa<CFT,M1,&CFT::afunc>::Arity) )>();
         ASS<( 2 == (cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
+        ASS<( 2 == (cv::ConstMethodToInCa<CFT,int (int,int) const,&CFT::bfunc>::Arity) )>();
         //ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
-        typedef cv::FunctionSignature<FacT> FacSig;
+        //typedef cv::FunctionSignature<FacT> FacSig;
+        typedef cv::FunctionSignature< CtorFwdTest * ( v8::Arguments const &  argv )> FacSig;
         ASS<( FacSig::Arity < 0 )>();
-        typedef cv::SignatureParamAt< 0, cv::FunctionSignature<int (int)> >::Type A0;
+        //ASS<( (tmp::SameType< v8::Arguments const &, cv::sl::At< 0, cv::Signature<CtorFwdTest * ( v8::Arguments const &  argv )> >::Type>::Value))>();
+        //ASS<( (tmp::SameType< v8::Arguments const &, cv::sl::At< 0, FacSig >::Type>::Value))>();
+        typedef cv::sl::At< 0, cv::FunctionSignature<int (int)> >::Type A0;
         ASS<( (tmp::SameType< int, A0>::Value))>();
-        typedef cv::SignatureParamAt< 0, cv::ToInCa<void, int (char const *),::puts> >::Type A1;
+        typedef cv::sl::At< 0, cv::ToInCa<void, int (char const *),::puts> >::Type A1;
         ASS<( (tmp::SameType< char const *, A1>::Value))>();
-        ASS<( (tmp::IsConst<cv::SignatureParamAt< 0, FacSig >::Type>::Value) )>();
-        ASS<( (tmp::SameType< v8::Arguments const &, cv::SignatureParamAt< 0, FacSig >::Type>::Value))>();
+        //ASS<( (tmp::SameType< char const *, cv::sl::At<0,FacSig>::Type >) );
+        //ASS<( (tmp::IsConst<cv::sl::At< 0, FacSig >::Type>::Value) )>();
 
         typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
         typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
         typedef cv::tmp::TypeList< v8::Handle<v8::Value>, double, int > CannotUnlock2;
         ASS< 3 == cv::tmp::LengthOf< CannotUnlock >::Value >();
         ASS< 3 == cv::tmp::LengthOf< CannotUnlock2 >::Value >();
-        ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
         ASS< cv::IsUnlockable<void>::Value >();
         ASS< cv::IsUnlockable<double>::Value>();
         ASS< cv::IsUnlockable<int>::Value>();
         ASS< !cv::IsUnlockable< v8::Handle<v8::Value> >::Value >();
+        ASS< !cv::IsUnlockable< v8::Arguments >::Value >();
         //assert( (cv::tmp::Assertion<!cv::TypeListIsUnlockable<CannotUnlock>::Value>::Value) );
         ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
         ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
         ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
-
 #define SIU cv::SignatureIsUnlockable
         ASS< SIU< cv::Signature<int (int, double, char)> >::Value >();
-        ASS< !SIU< cv::Signature<int (int, double, v8::Arguments)> >::Value >();
+        ASS< !SIU< cv::Signature<int (v8::Arguments)> >::Value >();
+        ASS< !SIU< cv::Signature<int (int, v8::Arguments)> >::Value >();
+        ASS< !cv::IsUnlockable< v8::Handle<v8::Object> >::Value >();
         ASS< !SIU< cv::Signature<v8::Handle<v8::Object> (int, double)> >::Value >();
         ASS< !SIU< 
                 cv::MethodPtr<
@@ -720,6 +701,58 @@ namespace { // testing ground for some compile-time assertions...
         ASS< (0 > cv::tmp::IndexOf<uint32_t, cv::tmp::TypeList<> >::Value) >();
 #undef SIU
 #undef ASS
+    }
+
+    void test_new_typelist()
+    {
+        using namespace v8::convert;
+        using namespace v8::convert::tmp;
+
+#if 1 // just some experimentation...
+        typedef void (RawSignature)(int, double, char);
+        typedef Signature< RawSignature > BLSig;
+        typedef Signature< void (char, int) > BL2;
+        typedef Signature< void () > BL0;
+        typedef FunctionSignature< void (int, double, v8::Arguments const &, char) > BL4a;
+        typedef FunctionSignature< void (int, double, char, v8::Arguments const &) > BL4b;
+        typedef FunctionSignature< void (int, double, int, char) > BL4c;
+        tmp::Assertion<true> ass;
+#define ASS ass = tmp::Assertion
+        ASS< tmp::SameType< sl::At<2,BLSig>::Type, char >::Value >();
+        ASS< 0 == sl::Length<BL0>::Value >();
+        ASS< 3 == BLSig::Arity >();
+        ASS< tmp::SameType< double, sl::At<1,BLSig>::Type >::Value >();
+        ASS< BLSig::Arity == sl::Length<BLSig>::Value >();
+        ASS< 2 == sl::Length<BL2>::Value >();
+        ASS< tmp::SameType< int, sl::At<1,BL2>::Type >::Value >();
+        ASS< !tmp::SameType< int, sl::At<0,BL2>::Type >::Value >();
+        
+        ASS< tmp::SameType< int, sl::At<0,BL4a>::Type >::Value >();
+        ASS< tmp::SameType< double, sl::At<1,BL4a>::Type >::Value >();
+        ASS< tmp::SameType< char, sl::At<3,BL4a>::Type >::Value >();
+        ASS< tmp::SameType< v8::Arguments const &, sl::At<2,BL4a>::Type >::Value >();
+        
+        ASS< tmp::SameType< int, sl::At<0,BL4c>::Type >::Value >();
+        ASS< tmp::SameType< double, sl::At<1,BL4c>::Type >::Value >();
+        ASS< tmp::SameType< int, sl::At<2,BL4c>::Type >::Value >();
+        ASS< tmp::SameType< char, sl::At<3,BL4c>::Type >::Value >();
+        
+        typedef FunctionSignature< void (v8::Arguments const &) > BLA1;
+        typedef FunctionSignature< void (v8::Arguments const &, char) > BLA2a;
+        typedef FunctionSignature< void (char, v8::Arguments const &) > BLA2b;
+        ASS< tmp::SameType< char, sl::At<0,BLA2b>::Type >::Value >();
+        ASS< tmp::SameType< v8::Arguments const &, sl::At<0,BLA2a>::Type >::Value >();
+        ASS< tmp::SameType< v8::Arguments const &, sl::At<1,BLA2b>::Type >::Value >();
+        
+        ASS< tmp::SameType< int, sl::At<0,BL4b>::Type >::Value >();
+        ASS< tmp::SameType< double, sl::At<1,BL4b>::Type >::Value >();
+        ASS< tmp::SameType< char, sl::At<2,BL4b>::Type >::Value >();
+        ASS< tmp::SameType< v8::Arguments const &, v8::Arguments const & >::Value >();
+        ASS< tmp::SameType< v8::Arguments const &, sl::At<3,BL4b>::Type >::Value >();
+        
+        //ASS< tmp::SameType< SigList_At<SigList_Length<BL3>::Value,BL3>::Type, char >::Value >(); // must fail to compile
+#undef ASS
+#endif
     }
 
 #if TRY_ARGS_CODE

@@ -16,7 +16,7 @@ struct CtorForwarderProxy<1> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
@@ -43,8 +43,8 @@ struct CtorForwarderProxy<2> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -73,9 +73,9 @@ struct CtorForwarderProxy<3> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -106,10 +106,10 @@ struct CtorForwarderProxy<4> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -142,11 +142,11 @@ struct CtorForwarderProxy<5> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
+		typedef typename sl::At< 4, Signature<Sig> >::Type A4;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -181,12 +181,12 @@ struct CtorForwarderProxy<6> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
+		typedef typename sl::At< 4, Signature<Sig> >::Type A4;
+		typedef typename sl::At< 5, Signature<Sig> >::Type A5;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -223,13 +223,13 @@ struct CtorForwarderProxy<7> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
+		typedef typename sl::At< 4, Signature<Sig> >::Type A4;
+		typedef typename sl::At< 5, Signature<Sig> >::Type A5;
+		typedef typename sl::At< 6, Signature<Sig> >::Type A6;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -268,14 +268,14 @@ struct CtorForwarderProxy<8> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
+		typedef typename sl::At< 4, Signature<Sig> >::Type A4;
+		typedef typename sl::At< 5, Signature<Sig> >::Type A5;
+		typedef typename sl::At< 6, Signature<Sig> >::Type A6;
+		typedef typename sl::At< 7, Signature<Sig> >::Type A7;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -316,15 +316,15 @@ struct CtorForwarderProxy<9> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
+		typedef typename sl::At< 4, Signature<Sig> >::Type A4;
+		typedef typename sl::At< 5, Signature<Sig> >::Type A5;
+		typedef typename sl::At< 6, Signature<Sig> >::Type A6;
+		typedef typename sl::At< 7, Signature<Sig> >::Type A7;
+		typedef typename sl::At< 8, Signature<Sig> >::Type A8;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
@@ -367,16 +367,16 @@ struct CtorForwarderProxy<10> // todo: subclass Signature<Sig>
         {
             typedef typename Signature<Sig>::ReturnType Type_;
             typedef typename TypeInfo<Type_>::Type Type;
-            typedef typename tmp::TypeAt< Signature<Sig>, 0>::Type A0;
-		typedef typename tmp::TypeAt< Signature<Sig>, 1>::Type A1;
-		typedef typename tmp::TypeAt< Signature<Sig>, 2>::Type A2;
-		typedef typename tmp::TypeAt< Signature<Sig>, 3>::Type A3;
-		typedef typename tmp::TypeAt< Signature<Sig>, 4>::Type A4;
-		typedef typename tmp::TypeAt< Signature<Sig>, 5>::Type A5;
-		typedef typename tmp::TypeAt< Signature<Sig>, 6>::Type A6;
-		typedef typename tmp::TypeAt< Signature<Sig>, 7>::Type A7;
-		typedef typename tmp::TypeAt< Signature<Sig>, 8>::Type A8;
-		typedef typename tmp::TypeAt< Signature<Sig>, 9>::Type A9;
+            typedef typename sl::At< 0, Signature<Sig> >::Type A0;
+		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
+		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
+		typedef typename sl::At< 3, Signature<Sig> >::Type A3;
+		typedef typename sl::At< 4, Signature<Sig> >::Type A4;
+		typedef typename sl::At< 5, Signature<Sig> >::Type A5;
+		typedef typename sl::At< 6, Signature<Sig> >::Type A6;
+		typedef typename sl::At< 7, Signature<Sig> >::Type A7;
+		typedef typename sl::At< 8, Signature<Sig> >::Type A8;
+		typedef typename sl::At< 9, Signature<Sig> >::Type A9;
 		
              typedef ArgCaster<A0> AC0;
 		 typedef ArgCaster<A1> AC1;
