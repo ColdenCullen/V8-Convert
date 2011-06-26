@@ -232,7 +232,7 @@ function testMyType() {
         (new MyType()).destroy();
         (new MyType("hi")).destroy();
         (new MyType(1,2.3)).destroy();
-        // N-ary not yet working: (new MyType(1,2,3,4,5)).destroy();
+        (new MyType(1,2,3,4,5)).destroy();
        
     }
     catch(e) {

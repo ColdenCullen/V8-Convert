@@ -1730,7 +1730,9 @@ namespace v8 { namespace convert {
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
-                enum { Arity = sl::Length<CTOR>::Value };
+                enum { Arity = (0==sl::Index<v8::Arguments const &,CTOR>::Value)
+                                ? -1 : sl::Length<CTOR>::Value
+                };
                 return ( (Arity < 0) || (Arity == argv.Length()) )
                     ?  CtorFwdDispatch< T, CTOR >::Ctor(argv )
                     : CtorFwdDispatchList<T,Tail>::Ctor(argv);
