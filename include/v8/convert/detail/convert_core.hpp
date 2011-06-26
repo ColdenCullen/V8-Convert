@@ -558,14 +558,14 @@ namespace v8 { namespace convert {
     struct JSToNative<v8::Handle<v8::Array> >
     {
         /**
-            If h is not empty and is-a Object then
-            its Object handle is returned, else
+            If h is not empty and is-a Array then
+            its Array handle is returned, else
             an empty handle is returned.
         */
         typedef v8::Handle<v8::Array> ResultType;
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
-            return (h.IsEmpty() || !h->IsObject())
+            return (h.IsEmpty() || !h->IsArray())
             ? v8::Handle<v8::Array>()
             : v8::Handle<v8::Array>(v8::Array::Cast(*h));
         }
