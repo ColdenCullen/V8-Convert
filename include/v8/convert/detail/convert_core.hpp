@@ -739,7 +739,7 @@ namespace v8 { namespace convert {
         by its string contents (which may legally be NULL).
     */
     template <typename T,
-              char const * & TypeID,
+              void const * & TypeID,
               int InternalFieldCount = 2,
               int TypeIdFieldIndex = 0,
               int ObjectFieldIndex = 1,
@@ -832,7 +832,6 @@ namespace v8 { namespace convert {
         typedef int32_t ResultType;
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
-            // FIXME: try to lexically cast, if we can
             return h->IsNumber()
                 ? h->Int32Value()
                 : 0;
@@ -843,13 +842,13 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative<uint32_t>
     {
-	typedef uint32_t ResultType;
-	ResultType operator()( v8::Handle<v8::Value> const & h ) const
-	{
-	    return h->IsNumber()
-		? static_cast<ResultType>(h->Uint32Value())
-		: 0;
-	}
+        typedef uint32_t ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+            ? static_cast<ResultType>(h->Uint32Value())
+            : 0;
+        }
     };
 
 
@@ -937,12 +936,8 @@ namespace v8 { namespace convert {
 #if 0 // leave this unused code here for the sake of the next guy who tries to re-add it
     /**
        Nonono! This will Cause Grief when used together with CastFromJS()
-       because the returned pointer will refer to a now-dead std::string
-       after the return.
-
-       This specialization requires that a single copy per
-       conversion be used. Do not use a shared/static instance for
-       conversions!
+       because the returned pointer's lifetime cannot be guaranteed.
+       See ArgCaster for more details on the problem.
     */
     template <>
     struct JSToNative<char const *>
@@ -963,14 +958,14 @@ namespace v8 { namespace convert {
         /** A kludge placeholder type for a ulong-is-not-uint64
             condition on some platforms.
 
-            T is ignored, but is provided in case we need to re-use
-            this kludge for other (non-ulong) types.
+            T is ignored, but is required to avoid class-redefinition
+            errors for the templates using this class.
         */
         template <typename T>
         struct UselessConversionType
         {
         };
-    } // namespace
+    }
 
     /**
        This specialization is a kludge/workaround for use in cases

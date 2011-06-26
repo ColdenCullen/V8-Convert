@@ -207,19 +207,22 @@ namespace v8 { namespace convert {
         template <typename T>
         struct ClassCreator_TypeID_Unnamed
         {
-            static char const * Value;
+            static void const * Value;
         };
         template <typename T>
-        char const * ClassCreator_TypeID_Unnamed<T>::Value = "Specialize ClassCreator_TypeID<T> to set the type's name/id.";
+        void const * ClassCreator_TypeID_Unnamed<T>::Value = "Specialize ClassCreator_TypeID<T> to set the type's name/id.";
     }
-    template <typename T, char const * & Name>
+    /**
+        A convenience base type for concrete ClassCreator_TypeID implementations.
+    */
+    template <typename T, void const * & Name>
     struct ClassCreator_TypeID_Base
     {
         typedef T Type;
-        static char const *Value;
+        static void const *Value;
     };
-    template <typename T, char const * & Name>
-    char const * ClassCreator_TypeID_Base<T,Name>::Value = Name;
+    template <typename T, void const * & Name>
+    void const * ClassCreator_TypeID_Base<T,Name>::Value = Name;
     
     /**
         ClassCreator policy type which defines
