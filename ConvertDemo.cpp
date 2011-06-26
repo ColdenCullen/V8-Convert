@@ -146,26 +146,50 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 {
     //CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
     using namespace v8::convert;
-    v8::InvocationCallback cb;
-    typedef InCa<bogo_callback_internal> Bogo1;
-    typedef InCaLikeFunc<int,bogo_callback2> Bogo2;
-    typedef PredicatedInCa< ArgPred_Length<1>, Bogo1 > Pred1;
-    typedef PredicatedInCa< ArgPred_Length<2>, Bogo2 > Pred2;
-    typedef PredicatedInCa< ArgPred_Length<3,5>, InCa<bogo_callback_internal> > Pred3;
+
+    /**
+        Create some logic (via a Predicate template) to use in 
+        associating an InCa with each set of rules....
+    */
+
     typedef PredicatedInCa< ArgAt_IsA<0,int16_t>, InCaLikeFunc<void, bogo_callback_int16> > PredIsaInt16;
     typedef PredicatedInCa< ArgAt_IsA<0,int32_t>, InCaLikeFunc<void, bogo_callback_int32> > PredIsaInt32;
     typedef PredicatedInCa< ArgAt_IsA<0,double>, InCaLikeFunc<void, bogo_callback_double> > PredIsaDouble;
     typedef PredicatedInCa< ArgAt_IsArray<0>, InCaLikeFunc<void, bogo_callback_array> > PredIsaArray;
     typedef PredicatedInCa< ArgAt_IsObject<0>, InCaLikeFunc<void, bogo_callback_object> > PredIsaObject;
+    
+    // Group the rules into a PredicatedInCaOverloader "container".
     typedef PredicatedInCaOverloader< tmp::TypeList<
-        //Pred1, Pred2, Pred3
         PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
-    > > PredOLoad;
-    //CERR << "Possibly passing on to another function based on predicate rules...\n";
-    cb = Pred1::Call;
-    cb = Pred2::Call;
-    cb = Pred3::Call;
-    return PredOLoad::Call(argv);
+    > > ByTypeOverloads;
+    
+    // Create a parent rule which only checks ByTypeOverloads if called
+    // with 1 argument:
+    typedef PredicatedInCa< ArgPred_Length<1>, ByTypeOverloads > Group1;
+    
+    // Set up some other logic paths...
+    
+    // For 2 arguments:
+    typedef PredicatedInCa< ArgPred_Length<2>, InCaLikeFunc<int,bogo_callback2> > Group2;
+    
+    // For 3+
+    typedef PredicatedInCa< ArgPred_Length<3,-1>, InCa<bogo_callback_internal> > GroupN;
+
+
+    // Now create the "top-most" callback, which performs the above-defined
+    // dispatching at runtime:
+    typedef PredicatedInCaOverloader< tmp::TypeList<
+        Group1, Group2, GroupN
+    > > AllOverloads;
+
+    // This is the part we've been working towards: getting an InvocationCallback
+    // function:
+    v8::InvocationCallback const cb = AllOverloads::Call;
+    
+    // How easy was that?
+    
+    // Now dispatch it, executing the logic defined above:
+    return cb(argv);
 }
 
 

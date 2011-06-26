@@ -216,7 +216,8 @@ function testPredicateOverloads()
         b.bogo((1<<31) * (1 << 10));
         b.bogo([1,2,3]);
         b.bogo({});
-        b.bogo("hi");
+        b.bogo(1,"hi");
+        b.bogo({},1,"hi");
     }
     finally { b.destroy(); }
 }
@@ -233,9 +234,9 @@ if(0) {
     print("Created object which we hope to see cleaned up at app exit: "+originalBoundObject);
 }
 
-//test1();
-//test2();
-//test3();
+test1();
+test2();
+test3();
 if( ('sleep' in this) && ('function' === typeof sleep) ) {
     test4();
     testUnlockedFunctions();

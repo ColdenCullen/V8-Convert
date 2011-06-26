@@ -206,12 +206,13 @@ namespace v8 { namespace convert { //namespace arg {
     struct ArgPred_Length
     {
         enum { Min = Min_, Max = Max_ };
-        typedef char AssertRange[ (Min<=Max) ? 1 : -1];
         bool operator()( v8::Arguments const & av ) const
         {
+            
             int const argc = av.Length();
-            if( Max < 0 ) return argc >= Min;
-            else return (argc>=Min) && (argc<=Max);
+            return (Max < Min)
+                ? argc >= Min
+                : (argc>=Min) && (argc<=Max);
         }
     };
     
