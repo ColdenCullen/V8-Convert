@@ -1612,6 +1612,19 @@ namespace v8 { namespace convert {
                 return new RType;
             }
         };
+        //! Specialization for ctors taking (v8::Arguments const &).
+        template <>
+        struct CtorForwarderProxy<-1>
+        {
+            template <typename Sig>
+            static typename Signature<Sig>::ReturnType Ctor( v8::Arguments const & argv )
+            {
+                typedef Signature<Sig> SigT;
+                typedef typename SigT::ReturnType RV;
+                typedef typename TypeInfo<RV>::Type T;
+                return new T(argv);
+            }
+        };
     }
     /**
        A utility type to help forward v8::Arguments to native 
@@ -1641,6 +1654,7 @@ namespace v8 { namespace convert {
        typedef CtorForwarder<MyType *()> CF0;
        typedef CtorForwarder<MyType *(int)> CF1;
        typedef CtorForwarder<MyType *(double,int)> CF2;
+       typedef CtorForwarder<MyType *(v8::Arguments const &)> CFAny;
        @endcode
     */
     template <typename Sig>
@@ -1719,7 +1733,8 @@ namespace v8 { namespace convert {
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
-                return ( (CTOR::Arity < 0) || (CTOR::Arity == argv.Length()) )
+                enum { Arity = sl::Length<List>::Value };
+                return ( (Arity < 0) || (Arity == argv.Length()) )
                     ?  CtorFwdDispatch< T, CTOR >::Ctor(argv )
                     : CtorFwdDispatchList<T,Tail>::Ctor(argv);
             }
@@ -1756,7 +1771,7 @@ namespace v8 { namespace convert {
     template <typename CtorList>
     struct CtorForwarderDispatcher
     {
-        typedef typename tmp::TypeAt<CtorList,0>::Type FirstCtor;
+        typedef typename sl::At<0,CtorList>::Type FirstCtor;
         typedef typename FirstCtor::Type Type;
         typedef typename TypeInfo<Type>::NativeHandle NativeHandle;
         static NativeHandle Ctor( v8::Arguments const & argv )

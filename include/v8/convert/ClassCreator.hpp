@@ -559,7 +559,8 @@ namespace v8 { namespace convert {
             using namespace v8;
             //std::cerr << "Entering weak_dtor<>(native="<<(void const *)nobj<<")\n";
             Local<Object> jobj( Object::Cast(*pv) );
-            T * native = CastFromJS<T>( pv );
+            typedef typename JSToNative<T>::ResultType NT;
+            NT native = CastFromJS<T>( pv );
             if( !native )
             {
                 /* see: http://code.google.com/p/v8-juice/issues/detail?id=27
@@ -1039,9 +1040,8 @@ namespace v8 { namespace convert {
         
         @code
         typedef CtorFwdTest CFT;
-        typedef cv::CtorForwarder<CFT, CFT *()> C0;
-        typedef cv::CtorForwarder<CFT, CFT *(int)> C1;
-        typedef cv::CtorForwarder<CFT, SomeCFTSubType *(int,int)> C2;
+        typedef cv::CtorForwarder<CFT *()> C0;
+        typedef cv::CtorForwarder<CFT *(int)> C1;
         typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
         
         // Then create Factory specialization based on those:
@@ -1049,10 +1049,17 @@ namespace v8 { namespace convert {
         struct ClassCreator_Factory<CFT> : 
             ClassCreator_Factory_CtorForwarder<CFT, CtorList> {};
         @endcode
+        
+        TODO: see if this work:
+        
+        @code
+        typedef cv::CtorForwarder<SomeSubType *(int,int)> C2;
+        @endcode
     */
     template <typename T,typename CtorForwarderList>
     struct ClassCreator_Factory_CtorForwarder : Detail::Factory_CtorForwarder_Base<T>
     {
+    public:
         typedef typename TypeInfo<T>::Type Type;
         typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )

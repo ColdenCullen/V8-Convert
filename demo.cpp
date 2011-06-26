@@ -176,7 +176,69 @@ ValueHandle test1_callback( v8::Arguments const & argv )
          ;
      return v8::Undefined();
 }
-//#include "demo_shellfuncs.cpp"
+
+struct MyType
+{
+    MyType() {}
+    MyType( int, double ) {}
+    MyType( char const * ) {}
+    MyType( v8::Arguments const & ) {}
+    ~MyType() {}
+    
+    typedef cv::tmp::TypeList<
+            //cv::Signature<void (
+                cv::CtorForwarder<MyType *()>,
+                cv::CtorForwarder<MyType *(char const *)>,
+                cv::CtorForwarder<MyType *( int, double )>,
+                cv::CtorForwarder<MyType *( v8::Arguments const &)>
+            > Ctors;
+        
+};
+
+namespace v8 { namespace convert {
+    template <>
+    class ClassCreator_Factory<MyType>
+#if 1
+     : public ClassCreator_Factory_CtorForwarder< MyType, MyType::Ctors >
+    {};
+#else
+    {
+    public:
+        typedef MyType * ReturnType;
+        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
+        {
+            typedef MyType T;
+            typedef CtorForwarderDispatcher< MyType::Ctors > Ctors;
+            return Ctors::Ctor(argv);
+        }
+        static void Delete( ReturnType obj )
+        {
+            delete obj;
+        }
+    };
+#endif
+    template <>
+    struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >
+    {};
+}}
+
+void bind_MyType( v8::Handle<v8::Object> dest )
+{
+    typedef MyType T;
+    typedef cv::ClassCreator<T> CC;
+    CC & cc(CC::Instance());
+    //typedef cv::CtorForwarder<T, T *()> C0;
+    //typedef cv::CtorForwarder<T, T *(char const *)> C1;
+    //typedef cv::CtorForwarder<T, T *( T const &)> C1;
+    //typedef cv::CtorForwarder<T, T *( char const *, int32_t )> C2;
+    //typedef cv::CtorForwarder<T, T *( std::string, size_t pos, int32_t )> C3;
+    //string ( const char * s, size_t n );
+    //string ( const char * s );
+    //string ( size_t n, char c );
+    
+    //typedef cv::tmp::TypeList< C0, C1, C2, C3 > CtorList;    
+    cc.AddClassTo( "StdString", dest );
+}
 
 void test1(cv::Shell & shell)
 {
@@ -190,14 +252,14 @@ void test1(cv::Shell & shell)
     Undefined()
     };
     CERR << "Calling binding function...\n";
-    hf->Call( v8::Context::GetCurrent()->Global(), 3, args );
+    hf->Call( shell.Context()->Global(), 3, args );
     CERR << "Returned from binding function.\n";
 
     char const * extScr = "./test.js";
     CERR << "Calling external script ["<<extScr<<"]...\n";
     if(1)
     {
-        Local<Object> global( v8::Context::GetCurrent()->Global() );
+        Local<Object> global( shell.Context()->Global() );
         assert( ! global.IsEmpty() );
         Local<Function> jf( Function::Cast( *(global->Get(JSTR("load"))) ) );
         assert( ! jf.IsEmpty() );

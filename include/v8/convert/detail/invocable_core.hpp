@@ -2082,12 +2082,48 @@ namespace Detail
 template <typename TList>
 struct PredicatedInCaOverloader : Detail::PredicatedInCaOverloader<TList>
 {};
-#if 0
-template <>
-struct PredicatedInCaOverloader<tmp::NilType> : Detail::PredicatedInCaOverloader<tmp::NilType>
-{};
-#endif
 
+/**
+    This class acts as a proxy for another InCa-compatible class,
+    running client-defined intialization code the _first_ time
+    its callback is called from JS. This could be used to run
+    library-dependent intialization routines such as lt_dlinit().
+    
+    InCaT must conform to the InCa interface (i.e., have a static Call()
+    function which implements the v8::InvocationCallback interface).
+    
+    InitFunctor must be default-constructable and have an operator()
+    taking no args and returning any type which can be ignored (i.e.
+    not dynamically-allocated resources).
+*/
+template <typename InCaT, typename InitFunctor>
+struct OneTimeInitInCa
+{
+    /**
+        The first time this function is called it runs 
+        InitFunctor()() to execute any client-dependent setup. If 
+        that throws a native exception it is propagated back to the 
+        caller and initialization is considered NOT to have 
+        occurred, meaning the next call to this function will also 
+        run InitFunctor()().
+        
+        If initialization, InCaT::Call(argv) is called and its value 
+        is returned.
+    */
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        static bool bob = false;
+        if( ! bob )
+        {
+            InitFunctor()();
+            /* Reminder: if it throws we do not set bob=true.
+               This is part of the interface, not an accident.
+            */
+            bob = true;
+        }
+        return InCaT::Call( argv );
+    }
+};
 
 }} // namespaces
 
