@@ -598,13 +598,44 @@ namespace v8 { namespace convert {
     struct JSToNative<void *>
     {
         typedef void * ResultType;
+        /**
+            If h is-a External then this return its value, else it
+            return 0.
+            
+            We could arguably check if it is an object and has internal fields,
+            and return the first one, but i think that would be going to
+            far considering how arguably the v8-to-(void *) conversion
+            is in the first place.
+        */
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
             if( h.IsEmpty() || ! h->IsExternal() ) return 0;
             return External::Cast(*h)->Value();
         }
     };
-
+    /**
+       A very arguable specialization which tries to convert a JS
+       value to native (void*) via v8::External.
+    */
+    template <>
+    struct JSToNative<void const *>
+    {
+        typedef void const * ResultType;
+        /**
+            If h is-a External then this return its value, else it
+            return 0.
+            
+            We could arguably check if it is an object and has internal fields,
+            and return the first one, but i think that would be going to
+            far considering how arguably the v8-to-(void *) conversion
+            is in the first place.
+        */
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            if( h.IsEmpty() || ! h->IsExternal() ) return 0;
+            return External::Cast(*h)->Value();
+        }
+    };
 
     /**
        A concrete JSToNative implementation intended to be used as the
@@ -627,6 +658,15 @@ namespace v8 { namespace convert {
        than InternalFieldIndex, or for either value to be
        negative. Violating these invariants results in a compile-time
        assertion.
+       
+       If an object to convert matches the field specification but
+       is not a T (or publically derived from T) then results are
+       undefined (this could lead to a crash at runtime).
+       
+       TODO: a variation of this class which requires at least 2 internal
+       fields. The first one would be a type identifier and the second
+       is the actual object. The type ID would be a (void const *)
+       template arguments.
     */
     template <typename T,
               int InternalFieldCount = 1,
@@ -664,26 +704,97 @@ namespace v8 { namespace convert {
             if( h.IsEmpty() || ! h->IsObject() ) return NULL;
             else
             {
-                v8::Local<v8::Object> obj( v8::Object::Cast(*h) );
-                void * ext = (obj->InternalFieldCount() != InternalFieldCount)
-                    ? NULL
-                    : obj->GetPointerFromInternalField( InternalFieldIndex );
-                if( SearchPrototypeChain && !ext )
+                void * ext = NULL;
+                v8::Handle<v8::Value> proto(h);
+                while( !ext && !proto.IsEmpty() && proto->IsObject() )
                 {
-                    v8::Local<v8::Value> proto = obj->GetPrototype();
-                    while( !ext && !proto.IsEmpty() && proto->IsObject() )
+                    v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
+                    ext = (obj->InternalFieldCount() != InternalFieldCount)
+                        ? NULL
+                        : obj->GetPointerFromInternalField( InternalFieldIndex );
+                    if( ! ext )
                     {
-                        v8::Local<v8::Object> lo( v8::Object::Cast( *proto ) );
-                        ext = (lo->InternalFieldCount() != InternalFieldCount)
-                            ? NULL
-                            : lo->GetPointerFromInternalField( InternalFieldIndex );
-                        if( ! ext ) proto = lo->GetPrototype();
+                        if( !SearchPrototypeChain ) break;
+                        else proto = obj->GetPrototype();
                     }
                 }
                 return ext ? static_cast<ResultType>(ext) : NULL;
             }
         }
+    };
 
+    /**
+        A concrete JSToNative implementation (to be used as a base class)
+        which does a type-safe conversion from JS to (T*).
+        
+        T is the bound native type. A pointer of this type is expected
+        in the object-internal field specified by ObjectFieldIndex.
+        
+        Each value to be converted is checked for an internal field 
+        at the index specified by TypeIdFieldIndex. If (and only if) 
+        that field contains the value TypeID, is the conversion 
+        considered legal. If they match but the native value stored
+        in field ObjectFieldIndex is NOT-a-T then results are undefined.
+    */
+    template <typename T,
+              void const * TypeID,
+              int InternalFieldCount = 2,
+              int TypeIdFieldIndex = 0,
+              int ObjectFieldIndex = 1,
+              bool SearchPrototypeChain = false>
+    struct JSToNative_ObjectWithInternalFieldsTypeSafe
+    {
+    private:
+        typedef char AssertIndexRanges
+        [(InternalFieldCount>=2)
+         && (TypeIdFieldIndex != ObjectFieldIndex)
+         && (ObjectFieldIndex>=0)
+         && (ObjectFieldIndex>0)
+         && (ObjectFieldIndex < InternalFieldCount)
+         ? 1 : -1];
+    public:
+        typedef typename TypeInfo<T>::NativeHandle ResultType;
+        /**
+           If h is-a Object and it meets the requirements described
+           in this class' documentation, then this function returns
+           the result of static_cast<ResultType>(void*), using the (void*)
+           extracted from the Object. If the requirements are not met
+           then NULL is returned.
+           
+           See the class docs for more details on the requirements
+           of the passed-in handle.
+
+           If SearchPrototypeChain is true and this object does not
+           contain a native then the prototype chain is searched.
+           This is generally only required when bound types are
+           subclassed.
+        */
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            if( h.IsEmpty() || ! h->IsObject() ) return NULL;
+            else
+            {
+                void const * tid = NULL;
+                void * ext = NULL;
+                v8::Local<v8::Value> proto(h);
+                while( !ext && !proto.IsEmpty() && proto->IsObject() )
+                {
+                    v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
+                    tid = (obj->InternalFieldCount() != InternalFieldCount)
+                        ? NULL
+                        : obj->GetPointerFromInternalField( TypeIdFieldIndex );
+                    ext = (tid == TypeID)
+                        ? obj->GetPointerFromInternalField( ObjectFieldIndex )
+                        : NULL;
+                    if( ! ext )
+                    {
+                        if( ! SearchPrototypeChain ) break;
+                        else proto = obj->GetPrototype();
+                    }
+                }
+                return ext ? static_cast<ResultType>(ext) : NULL;
+            }
+        }
     };
 
     /** Specialization to convert JS values to int16_t. */
