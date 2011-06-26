@@ -525,6 +525,57 @@ namespace v8 { namespace convert {
         }
     };
 
+    template <>
+    struct JSToNative<v8::Handle<v8::Object> >
+    {
+        /**
+            If h is not empty and is-a Object then
+            its Object handle is returned, else
+            an empty handle is returned.
+        */
+        typedef v8::Handle<v8::Object> ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return (h.IsEmpty() || !h->IsObject())
+            ? v8::Handle<v8::Object>()
+            : v8::Handle<v8::Object>(v8::Object::Cast(*h));
+        }
+    };
+    template <>
+    struct JSToNative< v8::Handle<v8::Object> &> : JSToNative< v8::Handle<v8::Object> > {};
+    template <>
+    struct JSToNative< v8::Handle<v8::Object> const &> : JSToNative< v8::Handle<v8::Object> > {};
+#if 0 // this will only theoretically do what i want. Never actually tried to use a non-pointer NativeHandle type...
+    template <>
+    struct TypeInfo< v8::Handle<v8::Object> >
+    {
+        typedef v8::Handle<v8::Object> Type;
+        typedef v8::Handle<v8::Object> NativeHandle;
+    };
+#endif
+
+    template <>
+    struct JSToNative<v8::Handle<v8::Array> >
+    {
+        /**
+            If h is not empty and is-a Object then
+            its Object handle is returned, else
+            an empty handle is returned.
+        */
+        typedef v8::Handle<v8::Array> ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return (h.IsEmpty() || !h->IsObject())
+            ? v8::Handle<v8::Array>()
+            : v8::Handle<v8::Array>(v8::Array::Cast(*h));
+        }
+    };
+    template <>
+    struct JSToNative< v8::Handle<v8::Array> &> : JSToNative< v8::Handle<v8::Array> > {};
+    template <>
+    struct JSToNative< v8::Handle<v8::Array> const &> : JSToNative< v8::Handle<v8::Array> > {};
+
+
     /**
        An X-to-void specialization which we cannot use in the generic
        case due to the syntactic limitations of void.

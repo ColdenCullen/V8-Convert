@@ -115,32 +115,39 @@ namespace v8 { namespace convert {
 
 } }
 
-ValueHandle bogo_callback_internal( v8::Arguments const & argv )
+ValueHandle bogo_callback_arityN( v8::Arguments const & argv )
 {
     CERR << "Arg count="<<argv.Length()<<'\n';
     return v8::Integer::New(42);
 }
 int bogo_callback2( v8::Arguments const & argv );
 
-void bogo_callback_int16( v8::Arguments const & argv )
+int16_t bogo_callback_int16( int16_t v )
 {
-    CERR << "int_16 overload.\n";
+    CERR << "int_16 overload: " << v<<".\n";
+    return v;
 }
-void bogo_callback_int32( v8::Arguments const & argv )
+int32_t bogo_callback_int32( int32_t v )
 {
-    CERR << "int_32 overload.\n";
+    CERR << "int_32 overload: " << v<<".\n";
+    return v;
 }
-void bogo_callback_double( v8::Arguments const & argv )
+double bogo_callback_double( double v )
 {
-    CERR << "double overload.\n";
+    CERR << "double overload: " << v<<".\n";
+    return v;
 }
-void bogo_callback_array( v8::Arguments const & argv )
+int bogo_callback_array( v8::Handle<v8::Array> const & ar )
 {
-    CERR << "array overload.\n";
+    int len = ar->Length();
+    CERR << "array overload. length="<<len<<"\n";
+    return len;
 }
-void bogo_callback_object( v8::Arguments const & argv )
+bool bogo_callback_object( v8::Handle<v8::Object> const & obj )
 {
     CERR << "object overload.\n";
+    assert( ! obj.IsEmpty() );
+    return true;
 }
 ValueHandle bogo_callback( v8::Arguments const & argv )
 {
@@ -152,11 +159,11 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
         associating an InCa with each set of rules....
     */
 
-    typedef PredicatedInCa< ArgAt_IsA<0,int16_t>, InCaLikeFunc<void, bogo_callback_int16> > PredIsaInt16;
-    typedef PredicatedInCa< ArgAt_IsA<0,int32_t>, InCaLikeFunc<void, bogo_callback_int32> > PredIsaInt32;
-    typedef PredicatedInCa< ArgAt_IsA<0,double>, InCaLikeFunc<void, bogo_callback_double> > PredIsaDouble;
-    typedef PredicatedInCa< ArgAt_IsArray<0>, InCaLikeFunc<void, bogo_callback_array> > PredIsaArray;
-    typedef PredicatedInCa< ArgAt_IsObject<0>, InCaLikeFunc<void, bogo_callback_object> > PredIsaObject;
+    typedef PredicatedInCa< ArgAt_IsA<0,int16_t>, FunctionToInCa<int16_t (int16_t), bogo_callback_int16> > PredIsaInt16;
+    typedef PredicatedInCa< ArgAt_IsA<0,int32_t>, FunctionToInCa<int32_t (int32_t), bogo_callback_int32> > PredIsaInt32;
+    typedef PredicatedInCa< ArgAt_IsA<0,double>, FunctionToInCa<double (double), bogo_callback_double> > PredIsaDouble;
+    typedef PredicatedInCa< ArgAt_IsArray<0>, FunctionToInCa<int (v8::Handle<v8::Array> const &), bogo_callback_array> > PredIsaArray;
+    typedef PredicatedInCa< ArgAt_IsObject<0>, FunctionToInCa<bool (v8::Handle<v8::Object> const &), bogo_callback_object> > PredIsaObject;
     
     // Group the rules into a PredicatedInCaOverloader "container".
     typedef PredicatedInCaOverloader< tmp::TypeList<
@@ -173,7 +180,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     typedef PredicatedInCa< ArgPred_Length<2>, InCaLikeFunc<int,bogo_callback2> > Group2;
     
     // For 3+
-    typedef PredicatedInCa< ArgPred_Length<3,-1>, InCa<bogo_callback_internal> > GroupN;
+    typedef PredicatedInCa< ArgPred_Length<3,-1>, InCa<bogo_callback_arityN> > GroupN;
 
 
     // Now create the "top-most" callback, which performs the above-defined

@@ -160,7 +160,6 @@ namespace v8 { namespace convert { //namespace arg {
     template <typename NumT>
     struct ValCanBe_NumberStrictRange : ValIs_NumberStrictRange<NumT> {};
 
-
     template <>
     struct ValCanBe<bool> : ValCanBe_AnyNonEmpty<bool> {};
     template <>
@@ -240,8 +239,48 @@ namespace v8 { namespace convert { //namespace arg {
     };
     template <unsigned short Index>
     struct ArgAt_IsArray : ArgAt_IsX<Index, &v8::Value::IsArray> {};
+
     template <unsigned short Index>
     struct ArgAt_IsObject : ArgAt_IsX<Index, &v8::Value::IsObject> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsBoolean : ArgAt_IsX<Index, &v8::Value::IsBoolean> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsDate : ArgAt_IsX<Index, &v8::Value::IsDate> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsExternal : ArgAt_IsX<Index, &v8::Value::IsExternal> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsFalse : ArgAt_IsX<Index, &v8::Value::IsFalse> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsFunction : ArgAt_IsX<Index, &v8::Value::IsFunction> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsInt32 : ArgAt_IsX<Index, &v8::Value::IsInt32> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsUInt32 : ArgAt_IsX<Index, &v8::Value::IsUint32> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsNull : ArgAt_IsX<Index, &v8::Value::IsNull> {};
+    
+    template <unsigned short Index>
+    struct ArgAt_IsUndefined : ArgAt_IsX<Index, &v8::Value::IsUndefined> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsNumber : ArgAt_IsX<Index, &v8::Value::IsNumber> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsRegExp : ArgAt_IsX<Index, &v8::Value::IsRegExp> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsString : ArgAt_IsX<Index, &v8::Value::IsString> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsTrue : ArgAt_IsX<Index, &v8::Value::IsTrue> {};
 
     template <typename ClientState>
     class ArgParser
