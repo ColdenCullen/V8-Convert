@@ -66,7 +66,9 @@ more than what's listed above.
 */
 #include "convert.hpp"
 #include "invocable.hpp"
+#include "arguments.hpp"
 #include "ClassCreator.hpp"
+#include "properties.hpp"
 /** LICENSE
 
     This software's source code, including accompanying documentation and

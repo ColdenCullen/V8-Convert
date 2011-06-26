@@ -5,7 +5,7 @@
 #include "convert.hpp"
 #include <limits>
 
-namespace v8 { namespace convert { //namespace arg {
+namespace v8 { namespace convert {
 
     template <int I>
     struct ArgAt
@@ -15,9 +15,18 @@ namespace v8 { namespace convert { //namespace arg {
         {
             return (argv.Length() > I) ? argv[I] : v8::Undefined();
         }
-        v8::Handle<v8::Value> operator()( v8::Arguments const & argv, int i ) const
+    };
+
+    template <int I, typename T>
+    struct ArgAtCast
+    {
+        typedef JSToNative<T> J2N;
+        typedef typename J2N::ReturnType ReturnType;
+        typedef char AssertIndex[ (I>=0) ? 1 : -1];
+        ReturnType operator()( v8::Arguments const & argv ) const
         {
-            return (i<0) ? Toss("Index may not be negative.") : argv[i];
+            typedef ArgAt<I> Proxy;
+            return CastFromJS<T>( Proxy()(argv) );
         }
     };
 
@@ -36,14 +45,10 @@ namespace v8 { namespace convert { //namespace arg {
         }
     };
     
-    template <typename T>
-    struct ValIs<T const> : ValIs<T> {};
-    
-    template <typename T>
-    struct ValIs<T *> : ValIs<T> {};
-    
-    template <typename T>
-    struct ValIs<T const *> : ValIs<T> {};
+    template <typename T> struct ValIs<T const> : ValIs<T> {};
+    template <typename T> struct ValIs<T const &> : ValIs<T> {};
+    template <typename T> struct ValIs<T *> : ValIs<T> {};
+    template <typename T> struct ValIs<T const *> : ValIs<T> {};
 
     template <>
     struct ValIs<void>
@@ -127,13 +132,22 @@ namespace v8 { namespace convert { //namespace arg {
     struct ValIs<uint64_t> : Detail::ValIs_NumberStrictRange<uint64_t> {};
     template <>
     struct ValIs<double> : ValIs_Number {};
-
+    template <> struct ValIs<char const *> : ValIs_String {};
+   
+    template <> struct ValIs<std::string> : ValIs_String {};
     
-    template <>
-    struct ValIs<char const *> : ValIs_String {};
-    
-    template <>
-    struct ValIs<std::string> : ValIs_String {};
+    template <> struct ValIs<v8::Array> : ValIs_Array {};
+    template <> struct ValIs<v8::Object> : ValIs_Object {};
+    template <> struct ValIs<v8::Boolean> : ValIs_Boolean {};
+    template <> struct ValIs<v8::Date> : ValIs_Date {};
+    template <> struct ValIs<v8::External> : ValIs_External {};
+    template <> struct ValIs<v8::Function> : ValIs_Function {};
+    template <> struct ValIs<v8::Int32> : ValIs_Int32 {};
+    template <> struct ValIs<v8::Uint32> : ValIs_UInt32 {};
+    template <> struct ValIs<v8::Number> : ValIs_Number {};
+    template <> struct ValIs<v8::RegExp> : ValIs_RegExp {};
+    template <> struct ValIs<v8::String> : ValIs_String {};
+    template <typename T> struct ValIs< v8::Handle<T> > : ValIs< T > {};
 
     struct ArgumentsPredicateConcept
     {
@@ -165,73 +179,65 @@ namespace v8 { namespace convert { //namespace arg {
         }
     };
 
-    
     template <unsigned short Index, typename T>
-    struct ArgAt_IsA : ArgumentsPredicateConcept
-    {
-        bool operator()( v8::Arguments const & av ) const
+    struct ArgAt_IsA : ArgAt_Is< Index, ValIs<T> > {};
+
+    namespace Detail {
+        template <unsigned short Index, bool (v8::Value::*Getter)() const>
+        struct ArgAt_IsX : ArgumentsPredicateConcept
         {
-            typedef ValIs<T> ISA;
-            return (Index >= av.Length())
-                ? false
-                : ISA()( av[Index] );
-        }
-    };
-
-    template <unsigned short Index, bool (v8::Value::*Getter)() const>
-    struct ArgAt_IsX : ArgumentsPredicateConcept
-    {
-        bool operator()( v8::Arguments const & av ) const
-        {
-            return ( av.Length() <= Index )
-                ? false
-                : ((*av[Index])->*Getter)();
-        }  
-    };
+            bool operator()( v8::Arguments const & av ) const
+            {
+                return ( av.Length() <= Index )
+                    ? false
+                    : ((*av[Index])->*Getter)();
+            }  
+        };
+    }
     template <unsigned short Index>
-    struct ArgAt_IsArray : ArgAt_IsX<Index, &v8::Value::IsArray> {};
+    struct ArgAt_IsArray : Detail::ArgAt_IsX<Index, &v8::Value::IsArray> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsObject : ArgAt_IsX<Index, &v8::Value::IsObject> {};
+    struct ArgAt_IsObject : Detail::ArgAt_IsX<Index, &v8::Value::IsObject> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsBoolean : ArgAt_IsX<Index, &v8::Value::IsBoolean> {};
+    struct ArgAt_IsBoolean : Detail::ArgAt_IsX<Index, &v8::Value::IsBoolean> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsDate : ArgAt_IsX<Index, &v8::Value::IsDate> {};
+    struct ArgAt_IsDate : Detail::ArgAt_IsX<Index, &v8::Value::IsDate> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsExternal : ArgAt_IsX<Index, &v8::Value::IsExternal> {};
+    struct ArgAt_IsExternal : Detail::ArgAt_IsX<Index, &v8::Value::IsExternal> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsFalse : ArgAt_IsX<Index, &v8::Value::IsFalse> {};
+    struct ArgAt_IsFalse : Detail::ArgAt_IsX<Index, &v8::Value::IsFalse> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsFunction : ArgAt_IsX<Index, &v8::Value::IsFunction> {};
+    struct ArgAt_IsFunction : Detail::ArgAt_IsX<Index, &v8::Value::IsFunction> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsInt32 : ArgAt_IsX<Index, &v8::Value::IsInt32> {};
+    struct ArgAt_IsInt32 : Detail::ArgAt_IsX<Index, &v8::Value::IsInt32> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsUInt32 : ArgAt_IsX<Index, &v8::Value::IsUint32> {};
+    struct ArgAt_IsUInt32 : Detail::ArgAt_IsX<Index, &v8::Value::IsUint32> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsNull : ArgAt_IsX<Index, &v8::Value::IsNull> {};
+    struct ArgAt_IsNull : Detail::ArgAt_IsX<Index, &v8::Value::IsNull> {};
     
     template <unsigned short Index>
-    struct ArgAt_IsUndefined : ArgAt_IsX<Index, &v8::Value::IsUndefined> {};
+    struct ArgAt_IsUndefined : Detail::ArgAt_IsX<Index, &v8::Value::IsUndefined> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsNumber : ArgAt_IsX<Index, &v8::Value::IsNumber> {};
+    struct ArgAt_IsNumber : Detail::ArgAt_IsX<Index, &v8::Value::IsNumber> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsRegExp : ArgAt_IsX<Index, &v8::Value::IsRegExp> {};
+    struct ArgAt_IsRegExp : Detail::ArgAt_IsX<Index, &v8::Value::IsRegExp> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsString : ArgAt_IsX<Index, &v8::Value::IsString> {};
+    struct ArgAt_IsString : Detail::ArgAt_IsX<Index, &v8::Value::IsString> {};
 
     template <unsigned short Index>
-    struct ArgAt_IsTrue : ArgAt_IsX<Index, &v8::Value::IsTrue> {};
+    struct ArgAt_IsTrue : Detail::ArgAt_IsX<Index, &v8::Value::IsTrue> {};
 
 
 
@@ -304,6 +310,6 @@ namespace v8 { namespace convert { //namespace arg {
     struct ValCanBe<std::string> : ValCanBe_AnyNonEmpty<std::string> {};
 
 #endif
-} } // namespaces
+} }
 
 #endif
