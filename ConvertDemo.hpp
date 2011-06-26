@@ -148,7 +148,12 @@ public:
         CERR << "@"<<(void const *)this<<"->invoInt()  (non-static, non-const)\n";
         return 3;
     }
-
+    int invoIntConst( v8::Arguments const & argv ) const
+    {
+        assert( 0 != this );
+        CERR << "@"<<(void const *)this<<"->invoIntConst()  (non-static, const)\n";
+        return 7;
+    }
     ValueHandle invo( v8::Arguments const & argv ) const
     {
         assert( 0 != this );

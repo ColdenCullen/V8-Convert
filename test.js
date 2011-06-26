@@ -211,10 +211,12 @@ function testPredicateOverloads()
     print("Testing out the experimental predicate-based overloading...");
     var b = new BoundSubNative();
     try {
-        b.bogo(1);
-        b.bogo(1,2);
-        b.bogo(1,2,3);
-        b.bogo(1,2,3,4);
+        b.bogo(1 << 8);
+        b.bogo(1 << 17);
+        b.bogo((1<<31) * (1 << 10));
+        b.bogo([1,2,3]);
+        b.bogo({});
+        b.bogo("hi");
     }
     finally { b.destroy(); }
 }
@@ -234,9 +236,11 @@ if(0) {
 //test1();
 //test2();
 //test3();
-//testUnlockedFunctions();
+if( ('sleep' in this) && ('function' === typeof sleep) ) {
+    test4();
+    testUnlockedFunctions();
+}
 testPredicateOverloads()
-//test4();
 if(0) {
     try {
         asserteq(1,2,"Intentional error to check fetching of current line number.");

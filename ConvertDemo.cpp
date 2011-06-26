@@ -2,12 +2,12 @@
 #include "v8/convert/ClassCreator.hpp"
 #include "v8/convert/properties.hpp"
 
-#if 0
+#define TRY_ARGS_CODE 1
+#if TRY_ARGS_CODE
 #include "v8/convert/arguments.hpp"
 #endif
 
 #define TRY_UNLOCKED_FUNCTIONS 1
-
 #if TRY_UNLOCKED_FUNCTIONS
 #include <unistd.h> // only for sleep() in some test code
 #endif
@@ -115,36 +115,53 @@ namespace v8 { namespace convert {
 
 } }
 
-template <int Min_, int Max_ = Min_>
-struct ArgPred_Length
-{
-    enum { Min = Min_, Max = Max_ };
-    bool operator()( v8::Arguments const & av ) const
-    {
-        int const argc = av.Length();
-        if( Max < 0 ) return argc >= Min;
-        else return (argc>=Min) && (argc<=Max);
-    }
-};
-
 ValueHandle bogo_callback_internal( v8::Arguments const & argv )
 {
     CERR << "Arg count="<<argv.Length()<<'\n';
     return v8::Integer::New(42);
 }
 int bogo_callback2( v8::Arguments const & argv );
+
+void bogo_callback_int16( v8::Arguments const & argv )
+{
+    CERR << "int_16 overload.\n";
+}
+void bogo_callback_int32( v8::Arguments const & argv )
+{
+    CERR << "int_32 overload.\n";
+}
+void bogo_callback_double( v8::Arguments const & argv )
+{
+    CERR << "double overload.\n";
+}
+void bogo_callback_array( v8::Arguments const & argv )
+{
+    CERR << "array overload.\n";
+}
+void bogo_callback_object( v8::Arguments const & argv )
+{
+    CERR << "object overload.\n";
+}
 ValueHandle bogo_callback( v8::Arguments const & argv )
 {
-    CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
-    
+    //CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
+    using namespace v8::convert;
     v8::InvocationCallback cb;
-    typedef cv::FunctionToInCa<v8::InvocationCallback,bogo_callback_internal> Bogo1;
-    typedef cv::FunctionToInCa<int (v8::Arguments const &),bogo_callback2> Bogo2;
-    typedef cv::PredicatedInCa< ArgPred_Length<1>, Bogo1 > Pred1;
-    typedef cv::PredicatedInCa< ArgPred_Length<2>, Bogo2 > Pred2;
-    typedef cv::PredicatedInCa< ArgPred_Length<3>, cv::InCa<bogo_callback_internal> > Pred3;
-    typedef cv::PredicatedInCaOverloader< cv::tmp::TypeList< Pred1, Pred2, Pred3 > > PredOLoad;
-    CERR << "Possibly passing on to another function based on predicate rules...\n";
+    typedef InCa<bogo_callback_internal> Bogo1;
+    typedef InCaLikeFunc<int,bogo_callback2> Bogo2;
+    typedef PredicatedInCa< ArgPred_Length<1>, Bogo1 > Pred1;
+    typedef PredicatedInCa< ArgPred_Length<2>, Bogo2 > Pred2;
+    typedef PredicatedInCa< ArgPred_Length<3,5>, InCa<bogo_callback_internal> > Pred3;
+    typedef PredicatedInCa< ArgAt_IsA<0,int16_t>, InCaLikeFunc<void, bogo_callback_int16> > PredIsaInt16;
+    typedef PredicatedInCa< ArgAt_IsA<0,int32_t>, InCaLikeFunc<void, bogo_callback_int32> > PredIsaInt32;
+    typedef PredicatedInCa< ArgAt_IsA<0,double>, InCaLikeFunc<void, bogo_callback_double> > PredIsaDouble;
+    typedef PredicatedInCa< ArgAt_IsArray<0>, InCaLikeFunc<void, bogo_callback_array> > PredIsaArray;
+    typedef PredicatedInCa< ArgAt_IsObject<0>, InCaLikeFunc<void, bogo_callback_object> > PredIsaObject;
+    typedef PredicatedInCaOverloader< tmp::TypeList<
+        //Pred1, Pred2, Pred3
+        PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
+    > > PredOLoad;
+    //CERR << "Possibly passing on to another function based on predicate rules...\n";
     cb = Pred1::Call;
     cb = Pred2::Call;
     cb = Pred3::Call;
@@ -313,7 +330,7 @@ namespace v8 { namespace convert {
             typedef cv::tmp::TypeList<
                 cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
                 cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
-                //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2>, 2 >
+                //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
                 cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>,
                 cv::MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
             > OverloadList;
@@ -617,13 +634,53 @@ namespace { // testing ground for some compile-time assertions...
                 > >::Value >();
         ASS< !SIU< cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt > >::Value>();
         
+
+        v8::InvocationCallback cb;
+        cb = cv::InCaLikeMethod<BoundNative, int, &BoundNative::invoInt>::Call;
+        cb = cv::InCaLikeConstMethod<BoundNative, int, &BoundNative::invoIntConst>::Call;
+        //cb = cv::InCaLike<BoundNative, int, &BoundNative::invoInt>::Call;
+        //cb = cv::InCaLike<BoundNative, int, &BoundNative::invoIntConst>::Call;
+        ASS< cv::InCaLikeMethod<BoundNative, int, &BoundNative::invoInt>::Arity < 0 >();
+        ASS< cv::InCaLikeConstMethod<BoundNative, int, &BoundNative::invoIntConst>::Arity < 0 >();
         
+        typedef cv::tmp::TypeList<char, double, int> TList1;
+        ASS< (0 == cv::tmp::IndexOf<char, TList1>::Value) >();
+        ASS< (1 == cv::tmp::IndexOf<double, TList1>::Value) >();
+        ASS< (2 == cv::tmp::IndexOf<int, TList1>::Value) >();
+        ASS< (0 > cv::tmp::IndexOf<uint32_t, TList1>::Value) >();
+        ASS< (0 > cv::tmp::IndexOf<uint32_t, cv::tmp::TypeList<> >::Value) >();
 #undef SIU
 #undef ASS
-    }                
+    }
+
+#if TRY_ARGS_CODE
+    class MyArgRule
+    {
+        template <typename ClientState>
+        static bool Test( cv::ArgParser<ClientState> & p )
+        {
+            v8::Arguments const & av( p.Arguments() );
+            typedef cv::ArgPred_Length<0,3> Len03;
+            if( ! Len03()( av ) )
+            {
+                return Toss( cv::StringBuffer()<<"Arg count must be between "
+                            <<Len03::Min<<" and "<<Len03::Max<<", inclusive.");
+            }
+            cv::Toss("NYI!");
+            return false;
+        }
+    };
+
+    void test_args_code()
+    {
+        using namespace v8::convert;
+        typedef ArgAt<0> AA0;
+    }
+#endif
 } // namespace
 
 
 #undef TRY_UNLOCKED_FUNCTIONS
 #undef CERR
 #undef JSTR
+#undef TRY_ARGS_CODE

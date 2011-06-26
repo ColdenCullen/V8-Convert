@@ -232,7 +232,7 @@ static int v8_main(int argc, char const * const * argv)
         CERR << "UNKNOWN EXCEPTION!\n";
         return 1;
     }
-    if(1)
+    if(0)
     {
         CERR << "Trying to force GC... This will likely take 5-10 seconds... "
              << "wait for it to see the weak pointer callbacks in action...\n"

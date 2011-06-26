@@ -238,33 +238,34 @@ struct TypeListIsUnlockable;
 
 namespace Detail
 {
-    using namespace cv::tmp;
-    template <typename T> struct CanUnlockImpl : cv::IsUnlockable<T>{};
-
-    template <>
-    struct CanUnlockImpl< tmp::NilType > : cv::tmp::BoolVal<true>
-    {};
-    
-    template <typename H, typename T>
-    struct CanUnlockImpl< TypeChain<H,T> >
+    template <typename ListType>
+    struct TypeListIsUnlockableImpl
     {
+        typedef typename ListType::Head Head;
+        typedef typename ListType::Tail Tail;
         enum {
             Value =
-               ((CanUnlockImpl<H>::Value && cv::TypeListIsUnlockable<T>::Value) ? 1 : 0)
+               IsUnlockable<Head>::Value && TypeListIsUnlockableImpl<Tail>::Value
         };
     };
+
+    template <>
+    struct TypeListIsUnlockableImpl< tmp::NilType > : tmp::BoolVal<true>
+    {};
+    
+    template <>
+    struct TypeListIsUnlockableImpl< tmp::TypeChain<tmp::NilType,tmp::NilType> > : tmp::BoolVal<true>
+    {};
 }
 
+/**
+    Given a TypeList, this metatypeplate's Value member evaluates
+    to true if IsUnlockable<T>::Value is true for every type
+    in the typelist.
+*/
 template <typename TList>
-struct TypeListIsUnlockable : Detail::CanUnlockImpl<typename TList::ChainType>
+struct TypeListIsUnlockable : Detail::TypeListIsUnlockableImpl<TList>
 {
-};
-
-//! End-of-list specialization.
-template <>
-struct TypeListIsUnlockable<tmp::NilType>
-{
-    enum { Value = 1 };
 };
 
 /**
@@ -304,11 +305,11 @@ struct TypeListIsUnlockable<tmp::NilType>
     
     @code
     // This one can be unlocked:
-    typedef FunctionToInCa< int (int), myfunc > F1;
+    typedef FunctionSignature< int (int) > F1;
     // SignatureIsUnlockable<F1>::Value == true
     
     // This one cannot because it contains a v8 type in the arguments:
-    typedef FunctionToInCa< int (v8::Handle<v8::Value>), myfunc > F2;
+    typedef FunctionSignature< int (v8::Handle<v8::Value>) > F2;
     // SignatureIsUnlockable<F2>::Value == false
     @endcode
     
@@ -472,7 +473,7 @@ namespace Detail {
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
-#if 0
+#if 1
     template <typename T, typename RV, bool UnlockV8, int _Arity>
     struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
             ArgsToMethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
@@ -530,7 +531,7 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-#if 0
+#if 1
     template <typename T, int Arity, typename RV, bool UnlockV8>
     struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
         : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
@@ -586,7 +587,7 @@ namespace Detail {
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
-#if 0
+#if 1
     template <typename T, int Arity, typename RV, bool UnlockV8>
     struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
         : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
@@ -849,19 +850,18 @@ namespace Detail {
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef ConstMethodPtr<T, Sig, Func> ParentType;
+            typedef ConstMethodSignature<T, Sig> ParentType;
             typedef ArgsToConstMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
         static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
         {
-            typedef ConstMethodPtr<T, Sig, Func> ParentType;
+            typedef ConstMethodSignature<T, Sig> ParentType;
             typedef ArgsToConstMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             Proxy::Call( self, Func, argv );
             return v8::Undefined();
         }
         typedef ConstMethodSignature<T,Sig> SignatureType;
-        ASSERT_UNLOCK_SANITY_CHECK;
     };
 
     template <typename T,
@@ -1444,6 +1444,8 @@ struct InCa : FunctionToInCa< v8::Handle<v8::Value> (v8::Arguments const &), ICB
 {
 };
 
+
+#if 1
 /**
    "Converts" an InCa<ICB> instance to JS by treating it as an
    InvocationCallback function.
@@ -1459,6 +1461,7 @@ struct NativeToJS< InCa<ICB> >
         return v8::FunctionTemplate::New(InCa<ICB>::Call)->GetFunction();
     }
 };
+#endif
 
 /**
    InvocationCallback wrapper which calls another InvocationCallback
@@ -1950,6 +1953,48 @@ struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
 };
 
 /**
+    A slightly simplified form of FunctionToInCa which is only
+    useful for "InvocationCallback-like" functions and requires
+    only two arguments:
+    
+    @code
+    // int my_func( v8::Arguments const & );
+    typedef InCaLikeFunc< int, my_func > F;
+    @endcode
+*/ 
+template <typename RV, RV (*Func)(v8::Arguments const &)>
+struct InCaLikeFunc : FunctionToInCa< RV (v8::Arguments const &), Func>
+{
+};
+
+/**
+    A slightly simplified form of MethodToInCa which is only
+    useful for non-const "InvocationCallback-like" methods:
+    
+    @code
+    // Method: int MyType::func( v8::Arguments const & )
+    typedef InCaLikeMethod<MyType, int, &MyType::func > F;
+    @endcode
+*/
+template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &)>
+struct InCaLikeMethod : ToInCa< T, RV (v8::Arguments const &), Func>
+{};
+
+/**
+    A slightly simplified form of ConstMethodToInCa which is only 
+    useful for const "InvocationCallback-like" methods:
+    
+    @code
+    // Method: int MyType::func( v8::Arguments const & ) const
+    typedef InCaLikeConstMethod<MyType, int, &MyType::func > F;
+    @endcode
+*/
+template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &) const>
+struct InCaLikeConstMethod : ConstMethodToInCa< T, RV (v8::Arguments const &), Func>
+{};
+
+
+/**
     This works just like ToInCa but instead of behaving like
     FunctionToInCa or Const/MethoToInCa it behaves like
     FunctionToInCaVoid or Const/MethoToInCaVoid.
@@ -1959,7 +2004,6 @@ template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
         >
 struct ToInCaVoid : Detail::ToInCaSigSelectorVoid<T,Sig>::template Base<Func,UnlockV8>
-//Detail::ToInCaImplKindOfVoid<T,Sig,Func,UnlockV8>
 {
 };
 
@@ -1994,6 +2038,7 @@ struct PredicatedInCaOverloader;
 
 namespace Detail
 {
+#if 0
     using namespace cv::tmp;
     template <typename T> struct PredicatedInCaOverloader
     {
@@ -2027,14 +2072,49 @@ namespace Detail
             }
         }
     };
+#else
+    template <typename ListType>
+    struct PredicatedInCaOverloader
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            typedef typename ListType::Head Head;
+            typedef typename ListType::Tail Tail;
+            if( Head()( argv ) )
+            {
+                return Head::Call( argv );
+            }
+            else
+            {
+                return PredicatedInCaOverloader<Tail>::Call(argv);
+            }
+        }
+    };
+    template <>
+    struct PredicatedInCaOverloader< tmp::NilType >
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            return cv::Toss(cv::StringBuffer()<<"No predicates in the "
+                            << "argument dispatcher matched the given "
+                            << "arguments (arg count="<<argv.Length()
+                            << ").");
+        }
+    };
+#endif
 }
 
+/**
+    Don't use this yet - it's an experiment.
+*/
 template <typename TList>
-struct PredicatedInCaOverloader : Detail::PredicatedInCaOverloader<typename TList::ChainType>
+struct PredicatedInCaOverloader : Detail::PredicatedInCaOverloader<TList>
 {};
+#if 0
 template <>
 struct PredicatedInCaOverloader<tmp::NilType> : Detail::PredicatedInCaOverloader<tmp::NilType>
 {};
+#endif
 
 
 }} // namespaces
