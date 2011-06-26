@@ -202,7 +202,33 @@ namespace v8 { namespace convert {
         static void InitBindings( v8::Handle<v8::Object> target );
     };
 
+    namespace Detail {
     
+        template <typename T>
+        struct ClassCreator_TypeID_Unnamed
+        {
+            static char const * Value;
+        };
+        template <typename T>
+        char const * ClassCreator_TypeID_Unnamed<T>::Value = "Specialize ClassCreator_TypeID<T> to set the type's name/id.";
+    }
+    template <typename T, char const * & Name>
+    struct ClassCreator_TypeID_Base
+    {
+        typedef T Type;
+        static char const *Value;
+    };
+    template <typename T, char const * & Name>
+    char const * ClassCreator_TypeID_Base<T,Name>::Value = Name;
+    
+    /**
+        ClassCreator policy type which defines
+    */
+    template <typename T>
+    struct ClassCreator_TypeID : ClassCreator_TypeID_Base<T, Detail::ClassCreator_TypeID_Unnamed<T>::Value>
+    {
+    };
+
     /**
        Convenience base type for ClassCreator_InternalFields
        implementations.
@@ -213,11 +239,14 @@ namespace v8 { namespace convert {
        If any of the following conditions are met then
        a compile-time assertion is triggered:
 
-       - (HowMany<0)
-       - (Index<0)
-       - (Index>=HowMany)
+       - (HowMany<2)
+       
+       - TypeIndex or ObjectIndex are less than 0 or equal-greater HowMany.
+       
+       - (TypeIndex == ObjectIndex)
+
     */
-    template <typename T,int HowMany = 1, int Index = 0>
+    template <typename T, int HowMany = 2, int TypeIndex = 0, int ObjectIndex = 1>
     struct ClassCreator_InternalFields_Base
     {
         /**
@@ -231,12 +260,24 @@ namespace v8 { namespace convert {
            expect the native object to be found in any given JS object.
            It must be 0 or greater, and must be less than Value.
         */
-        static const int NativeIndex = Index;
+        static const int NativeIndex = ObjectIndex;
+        
+        /**
+            The internal field index at which ClassCreator policies
+            should expect a type identifier tag to be stored.
+            This can be used in conjunction with 
+            JSToNative_ObjectWithInternalFieldsTypeSafe (or similar)
+            to provide an extra level of type safety at JS runtime.
+        */
+        static const int TypeIDIndex = TypeIndex;
     private:
         typedef char AssertFields[
-            (Count>0)
-            && (NativeIndex>=0)
-            && (NativeIndex<Count)
+            (HowMany>1)
+            && (TypeIndex != ObjectIndex)
+            && (HowMany >= ObjectIndex)
+            && (HowMany >= TypeIndex)
+            && (ObjectIndex >= 0)
+            && (TypeIndex >= 0)
             ? 1 : -1];
     };
 
@@ -281,7 +322,7 @@ namespace v8 { namespace convert {
        before trying to extract data from internal fields.
     */
     template <typename T>
-    struct ClassCreator_InternalFields : ClassCreator_InternalFields_Base<T,1,0>
+    struct ClassCreator_InternalFields : ClassCreator_InternalFields_Base<T>
     {
     };
 
@@ -385,59 +426,6 @@ namespace v8 { namespace convert {
         }
     };
 
-    /**
-       A utility function primarily intended to support various
-       ClassCreator policy implementations.
-
-       This function tries to extract a native handle from jo by
-       looking in the internal field defined by
-       ClassCreator_InternalFields<T>::NativeIndex.  If a native is
-       found in that field and it is the same as nh, then jo is
-       returned. If none is found, jo's prototype object is searched,
-       recursively, until either nh is found in the prototype chain or
-       the end of the chain is reached. If a match is found, the JS
-       object in which the native was found is returned.
-
-       If nh is not found anywhere in the chain, an empty handle is
-       returned.
-
-       Note that T must be non-cv qualified, so it is generally
-       undesirable to allow the compiler to deduce its type from the
-       parameter. Thus the T template parameter should not be omitted
-       from calls to this function.
-    */
-    template <typename T>
-    v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> jo,
-                                       T const * nh )
-    {
-        if( !nh || jo.IsEmpty() ) return v8::Handle<v8::Object>();
-        typedef TypeInfo<T> TI;
-        typedef T * NH;
-        typedef ClassCreator_InternalFields<T> IFields;
-        void const * ext = (jo->InternalFieldCount() == IFields::Count)
-            ? jo->GetPointerFromInternalField(IFields::NativeIndex)
-            : NULL;
-        if( ext == nh ) return jo;
-        else if( ! ext )
-        {
-            v8::Local<v8::Value> proto = jo->GetPrototype();
-            return ( !proto.IsEmpty() && proto->IsObject() )
-                ? FindHolder<T>( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
-                : v8::Handle<v8::Object>();
-        }
-        else if( ext != nh )
-        { // Bound native, but the wrong one. Keep looking...
-            v8::Local<v8::Value> proto = jo->GetPrototype();
-            return ( !proto.IsEmpty() && proto->IsObject() )
-                ? FindHolder<T>( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
-                : v8::Handle<v8::Object>();
-        }
-        else
-        { // can this happen?
-            v8::ThrowException(v8::String::New("UNHANDLED CONDITION IN native FindHolder<>()!\n"));
-            return jo;
-        }
-    }
 
 #if 0
     namespace Detail
@@ -504,10 +492,65 @@ namespace v8 { namespace convert {
     private:
         typedef ClassCreator_InternalFields<T> InternalFields;
         typedef ClassCreator_WeakWrap<T> WeakWrap;
+        typedef ClassCreator_TypeID<T> TypeID;
         v8::Persistent<v8::FunctionTemplate> ctorTmpl;
         v8::Handle<v8::ObjectTemplate> protoTmpl;
         bool isSealed;
         typedef ClassCreator_Factory<T> Factory;
+        
+        
+        /**
+           A utility function primarily intended to support various
+           ClassCreator policy implementations.
+
+           This function tries to extract a native handle from jo by
+           looking in the internal field defined by
+           ClassCreator_InternalFields<T>::NativeIndex.  If a native is
+           found in that field and it is the same as nh, then jo is
+           returned. If none is found, jo's prototype object is searched,
+           recursively, until either nh is found in the prototype chain or
+           the end of the chain is reached. If a match is found, the JS
+           object in which the native was found is returned.
+
+           If nh is not found anywhere in the chain, an empty handle is
+           returned.
+
+           Note that T must be non-cv qualified, so it is generally
+           undesirable to allow the compiler to deduce its type from the
+           parameter. Thus the T template parameter should not be omitted
+           from calls to this function.
+        */
+        static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> jo,
+                                                  T const * nh )
+        {
+            if( !nh || jo.IsEmpty() ) return v8::Handle<v8::Object>();
+            typedef TypeInfo<T> TI;
+            typedef T * NH;
+            void const * ext = (jo->InternalFieldCount() == InternalFields::Count)
+                ? jo->GetPointerFromInternalField(InternalFields::NativeIndex)
+                : NULL;
+            if( ext == nh ) return jo;
+            else if( ! ext )
+            {
+                v8::Local<v8::Value> proto = jo->GetPrototype();
+                return ( !proto.IsEmpty() && proto->IsObject() )
+                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
+                    : v8::Handle<v8::Object>();
+            }
+            else if( ext != nh )
+            { // Bound native, but the wrong one. Keep looking...
+                v8::Local<v8::Value> proto = jo->GetPrototype();
+                return ( !proto.IsEmpty() && proto->IsObject() )
+                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
+                    : v8::Handle<v8::Object>();
+            }
+            else
+            { // can this happen?
+                Toss(v8::String::New("UNHANDLED CONDITION IN native FindHolder<>()!\n"));
+                return jo;
+            }
+        }
+        
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
         {
             using namespace v8;
@@ -551,7 +594,7 @@ namespace v8 { namespace convert {
                    _exactly_ which JS object in the prototype chain nh is
                    bound to.
                 */
-                v8::Handle<v8::Object> nholder = FindHolder<Type>( jobj, native );
+                v8::Handle<v8::Object> nholder = FindHolder( jobj, native );
 #if 1
                 assert( ! nholder.IsEmpty() );
                 WeakWrap::Unwrap( nholder /*jobj? subtle difference*/, native );
@@ -578,11 +621,13 @@ namespace v8 { namespace convert {
                 else
                 {
                     nholder->SetInternalField( InternalFields::NativeIndex, Null() );
+                    nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
                     Factory::Delete(native);
                 }
 #else
                 WeakWrap::Unwrap( nholder, native );
                 nholder->SetInternalField( InternalFields::NativeIndex, Null() );
+                nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
                 Factory::Delete(native);
 #endif
             }
@@ -653,6 +698,7 @@ namespace v8 { namespace convert {
                 }
                 WeakWrap::Wrap( self, nobj );
                 self.MakeWeak( nobj, weak_dtor );
+                self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
                 self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
                     /* We do this after the call to Wrap() just in case the Wrap() impl
                        accidentally writes to this field. In that case we end up
@@ -684,10 +730,7 @@ namespace v8 { namespace convert {
               protoTmpl(v8::Persistent<v8::ObjectTemplate>::New( ctorTmpl->PrototypeTemplate() )),
               isSealed(false)
         {
-            if( InternalFields::Count > 0 )
-            {
-                ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
-            }
+            ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
         }
     public:
         /**
@@ -923,11 +966,21 @@ namespace v8 { namespace convert {
     */
     template <typename T>
     struct JSToNative_ClassCreator :
+#if 0
         JSToNative_ObjectWithInternalFields<T,
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::NativeIndex,
                                             ClassCreator_SearchPrototypeForThis<T>::Value
                                             >
+#else
+        JSToNative_ObjectWithInternalFieldsTypeSafe<T,
+                                            ClassCreator_TypeID<T>::Value,
+                                            ClassCreator_InternalFields<T>::Count,
+                                            ClassCreator_InternalFields<T>::TypeIDIndex,
+                                            ClassCreator_InternalFields<T>::NativeIndex,
+                                            ClassCreator_SearchPrototypeForThis<T>::Value
+                                            >
+#endif
     {
     };
 

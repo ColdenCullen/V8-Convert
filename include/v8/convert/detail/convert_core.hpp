@@ -732,12 +732,14 @@ namespace v8 { namespace convert {
         
         Each value to be converted is checked for an internal field 
         at the index specified by TypeIdFieldIndex. If (and only if) 
-        that field contains the value TypeID, is the conversion 
+        that field contains the value TypeID is the conversion 
         considered legal. If they match but the native value stored
         in field ObjectFieldIndex is NOT-a-T then results are undefined.
+        Note that the TypeID value is compared by pointer address, not
+        by its string contents (which may legally be NULL).
     */
     template <typename T,
-              void const * TypeID,
+              char const * & TypeID,
               int InternalFieldCount = 2,
               int TypeIdFieldIndex = 0,
               int ObjectFieldIndex = 1,
@@ -764,10 +766,10 @@ namespace v8 { namespace convert {
            See the class docs for more details on the requirements
            of the passed-in handle.
 
-           If SearchPrototypeChain is true and this object does not
-           contain a native then the prototype chain is searched.
-           This is generally only required when bound types are
-           subclassed.
+           If SearchPrototypeChain is true and the object does not 
+           contain a native then the prototype chain is searched 
+           recursively. This is generally only required when bound 
+           types are subclassed from JS code.           
         */
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
@@ -776,7 +778,7 @@ namespace v8 { namespace convert {
             {
                 void const * tid = NULL;
                 void * ext = NULL;
-                v8::Local<v8::Value> proto(h);
+                v8::Handle<v8::Value> proto(h);
                 while( !ext && !proto.IsEmpty() && proto->IsObject() )
                 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
