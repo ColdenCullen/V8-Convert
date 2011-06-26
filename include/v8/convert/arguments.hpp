@@ -1,4 +1,5 @@
 // EXPERIMENTAL CODE. Don't use!
+// Don't rely on any interfaces in this file until this notice goes away!
 #if !defined(V8_CONVERT_ARGUMENTS_HPP_INCLUDED)
 #define V8_CONVERT_ARGUMENTS_HPP_INCLUDED
 #include "convert.hpp"
@@ -22,7 +23,7 @@ namespace v8 { namespace convert { //namespace arg {
 
     struct ValuePredicateConcept
     {
-        //bool operator()( v8::Handle<v8::Value> const & ) const;
+        bool operator()( v8::Handle<v8::Value> const & ) const;
     };
 
     template <typename T>
@@ -54,70 +55,187 @@ namespace v8 { namespace convert { //namespace arg {
         }
     };
     
-    template <typename NumT>
-    struct ValIs_NumberStrictRange
-    {
-        typedef NumT Type;
-        inline bool operator()( v8::Handle<v8::Value> const & h ) const
+    namespace Detail {
+        template <bool (v8::Value::*Getter)() const>
+        struct ValIs_X
         {
-            if( h.IsEmpty() || ! h->IsNumber() ) return false;
-            else
+            bool operator()( v8::Handle<v8::Value> const & v ) const
             {
-                double const dv( h->NumberValue() );
-                return (dv >= std::numeric_limits<NumT>::min())
-                    && (dv <= std::numeric_limits<NumT>::max());
+                return v.IsEmpty() ? false : ((*v)->*Getter)();
+            }  
+        };
+    }
+    struct ValIs_Array : Detail::ValIs_X<&v8::Value::IsArray> {};
+    struct ValIs_Object : Detail::ValIs_X<&v8::Value::IsObject> {};
+    struct ValIs_Boolean : Detail::ValIs_X<&v8::Value::IsBoolean> {};
+    struct ValIs_Date : Detail::ValIs_X<&v8::Value::IsDate> {};
+    struct ValIs_External : Detail::ValIs_X<&v8::Value::IsExternal> {};
+    struct ValIs_False : Detail::ValIs_X<&v8::Value::IsFalse> {};
+    struct ValIs_Function : Detail::ValIs_X<&v8::Value::IsFunction> {};
+    struct ValIs_Int32 : Detail::ValIs_X<&v8::Value::IsInt32> {};
+    struct ValIs_UInt32 : Detail::ValIs_X<&v8::Value::IsUint32> {};
+    struct ValIs_Null : Detail::ValIs_X<&v8::Value::IsNull> {};
+    struct ValIs_Undefined : Detail::ValIs_X<&v8::Value::IsUndefined> {};
+    struct ValIs_Number : Detail::ValIs_X<&v8::Value::IsNumber> {};
+    struct ValIs_RegExp : Detail::ValIs_X<&v8::Value::IsRegExp> {};
+    struct ValIs_String : Detail::ValIs_X<&v8::Value::IsString> {};
+    struct ValIs_True : Detail::ValIs_X<&v8::Value::IsTrue> {};
+
+
+    namespace Detail {
+        template <typename NumT>
+        struct ValIs_NumberStrictRange
+        {
+            typedef NumT Type;
+            inline bool operator()( v8::Handle<v8::Value> const & h ) const
+            {
+                if( h.IsEmpty() || ! h->IsNumber() ) return false;
+                else
+                {
+                    double const dv( h->NumberValue() );
+                    return (dv >= std::numeric_limits<NumT>::min())
+                        && (dv <= std::numeric_limits<NumT>::max());
+                }
             }
-        }
-    };
-    template <>
-    struct ValIs_NumberStrictRange<double>
-    {
-        typedef double Type;
-        inline bool operator()( v8::Handle<v8::Value> const & h ) const
+        };
+        template <>
+        struct ValIs_NumberStrictRange<double>
         {
-            return !h.IsEmpty() && h->IsNumber();
-        }
-    };
+            typedef double Type;
+            inline bool operator()( v8::Handle<v8::Value> const & h ) const
+            {
+                return !h.IsEmpty() && h->IsNumber();
+            }
+        };
+    }
 
-
     template <>
-    struct ValIs<int8_t> : ValIs_NumberStrictRange<int8_t> {};
+    struct ValIs<int8_t> : Detail::ValIs_NumberStrictRange<int8_t> {};
     template <>
-    struct ValIs<uint8_t> : ValIs_NumberStrictRange<uint8_t> {};
+    struct ValIs<uint8_t> : Detail::ValIs_NumberStrictRange<uint8_t> {};
     template <>
-    struct ValIs<int16_t> : ValIs_NumberStrictRange<int16_t> {};
+    struct ValIs<int16_t> : Detail::ValIs_NumberStrictRange<int16_t> {};
     template <>
-    struct ValIs<uint16_t> : ValIs_NumberStrictRange<uint16_t> {};
+    struct ValIs<uint16_t> : Detail::ValIs_NumberStrictRange<uint16_t> {};
     template <>
-    struct ValIs<int32_t> : ValIs_NumberStrictRange<int32_t> {};
+    struct ValIs<int32_t> : Detail::ValIs_NumberStrictRange<int32_t> {};
     template <>
-    struct ValIs<uint32_t> : ValIs_NumberStrictRange<uint32_t> {};
+    struct ValIs<uint32_t> : Detail::ValIs_NumberStrictRange<uint32_t> {};
     template <>
-    struct ValIs<int64_t> : ValIs_NumberStrictRange<int64_t> {};
+    struct ValIs<int64_t> : Detail::ValIs_NumberStrictRange<int64_t> {};
     template <>
-    struct ValIs<uint64_t> : ValIs_NumberStrictRange<uint64_t> {};
+    struct ValIs<uint64_t> : Detail::ValIs_NumberStrictRange<uint64_t> {};
     template <>
-    struct ValIs<double> : ValIs_NumberStrictRange<double> {};
-    
+    struct ValIs<double> : ValIs_Number {};
 
     
-    template <typename StringT>
-    struct ValIs_StringType
+    template <>
+    struct ValIs<char const *> : ValIs_String {};
+    
+    template <>
+    struct ValIs<std::string> : ValIs_String {};
+
+    struct ArgumentsPredicateConcept
     {
-        typedef StringT Type;
-        inline bool operator()( v8::Handle<v8::Value> const & h ) const
+        bool operator()( v8::Arguments const & ) const;
+    };
+
+    template <int Min_, int Max_ = Min_>
+    struct ArgPred_Length : ArgumentsPredicateConcept
+    {
+        enum { Min = Min_, Max = Max_ };
+        bool operator()( v8::Arguments const & av ) const
         {
-            return h.IsEmpty()
+            
+            int const argc = av.Length();
+            return (Max < Min)
+                ? argc >= Min
+                : (argc>=Min) && (argc<=Max);
+        }
+    };
+
+    template <unsigned short Index, typename ValIsType >
+    struct ArgAt_Is : ArgumentsPredicateConcept
+    {
+        bool operator()( v8::Arguments const & av ) const
+        {
+            return (Index >= av.Length())
                 ? false
-                : h->IsString();
+                : ValIsType()( av[Index] );
         }
     };
-    
-    template <>
-    struct ValIs<char const *> : ValIs_StringType<char const *> {};
-    template <>
-    struct ValIs<std::string> : ValIs_StringType<std::string> {};
 
+    
+    template <unsigned short Index, typename T>
+    struct ArgAt_IsA : ArgumentsPredicateConcept
+    {
+        bool operator()( v8::Arguments const & av ) const
+        {
+            typedef ValIs<T> ISA;
+            return (Index >= av.Length())
+                ? false
+                : ISA()( av[Index] );
+        }
+    };
+
+    template <unsigned short Index, bool (v8::Value::*Getter)() const>
+    struct ArgAt_IsX : ArgumentsPredicateConcept
+    {
+        bool operator()( v8::Arguments const & av ) const
+        {
+            return ( av.Length() <= Index )
+                ? false
+                : ((*av[Index])->*Getter)();
+        }  
+    };
+    template <unsigned short Index>
+    struct ArgAt_IsArray : ArgAt_IsX<Index, &v8::Value::IsArray> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsObject : ArgAt_IsX<Index, &v8::Value::IsObject> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsBoolean : ArgAt_IsX<Index, &v8::Value::IsBoolean> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsDate : ArgAt_IsX<Index, &v8::Value::IsDate> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsExternal : ArgAt_IsX<Index, &v8::Value::IsExternal> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsFalse : ArgAt_IsX<Index, &v8::Value::IsFalse> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsFunction : ArgAt_IsX<Index, &v8::Value::IsFunction> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsInt32 : ArgAt_IsX<Index, &v8::Value::IsInt32> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsUInt32 : ArgAt_IsX<Index, &v8::Value::IsUint32> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsNull : ArgAt_IsX<Index, &v8::Value::IsNull> {};
+    
+    template <unsigned short Index>
+    struct ArgAt_IsUndefined : ArgAt_IsX<Index, &v8::Value::IsUndefined> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsNumber : ArgAt_IsX<Index, &v8::Value::IsNumber> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsRegExp : ArgAt_IsX<Index, &v8::Value::IsRegExp> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsString : ArgAt_IsX<Index, &v8::Value::IsString> {};
+
+    template <unsigned short Index>
+    struct ArgAt_IsTrue : ArgAt_IsX<Index, &v8::Value::IsTrue> {};
+
+
+
+#if 0 // i don't think i like this stuff...
     template <typename T>
     struct ValCanBe : ValuePredicateConcept
     {
@@ -185,168 +303,7 @@ namespace v8 { namespace convert { //namespace arg {
     template <>
     struct ValCanBe<std::string> : ValCanBe_AnyNonEmpty<std::string> {};
 
-
-    template <typename ClientState = void *>
-    class ArgParser;
-    
-    struct RuleConcept
-    {
-        template <typename ClientState>
-        static bool Test( ArgParser<ClientState> & p );
-    };
-
-
-    struct ArgumentsPredicateConcept
-    {
-        bool operator()( v8::Arguments const & ) const;
-    };
-
-    template <int Min_, int Max_ = Min_>
-    struct ArgPred_Length
-    {
-        enum { Min = Min_, Max = Max_ };
-        bool operator()( v8::Arguments const & av ) const
-        {
-            
-            int const argc = av.Length();
-            return (Max < Min)
-                ? argc >= Min
-                : (argc>=Min) && (argc<=Max);
-        }
-    };
-    
-    template <unsigned short Index, typename T>
-    struct ArgAt_IsA
-    {
-        bool operator()( v8::Arguments const & av ) const
-        {
-            typedef ValIs<T> ISA;
-            return (Index >= av.Length())
-                ? false
-                : ISA()( av[Index] );
-        }
-    };
-
-    template <unsigned short Index, bool (v8::Value::*Getter)() const>
-    struct ArgAt_IsX
-    {
-        bool operator()( v8::Arguments const & av ) const
-        {
-            return ( av.Length() <= Index )
-                ? false
-                : ((*av[Index])->*Getter)();
-        }  
-    };
-    template <unsigned short Index>
-    struct ArgAt_IsArray : ArgAt_IsX<Index, &v8::Value::IsArray> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsObject : ArgAt_IsX<Index, &v8::Value::IsObject> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsBoolean : ArgAt_IsX<Index, &v8::Value::IsBoolean> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsDate : ArgAt_IsX<Index, &v8::Value::IsDate> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsExternal : ArgAt_IsX<Index, &v8::Value::IsExternal> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsFalse : ArgAt_IsX<Index, &v8::Value::IsFalse> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsFunction : ArgAt_IsX<Index, &v8::Value::IsFunction> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsInt32 : ArgAt_IsX<Index, &v8::Value::IsInt32> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsUInt32 : ArgAt_IsX<Index, &v8::Value::IsUint32> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsNull : ArgAt_IsX<Index, &v8::Value::IsNull> {};
-    
-    template <unsigned short Index>
-    struct ArgAt_IsUndefined : ArgAt_IsX<Index, &v8::Value::IsUndefined> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsNumber : ArgAt_IsX<Index, &v8::Value::IsNumber> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsRegExp : ArgAt_IsX<Index, &v8::Value::IsRegExp> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsString : ArgAt_IsX<Index, &v8::Value::IsString> {};
-
-    template <unsigned short Index>
-    struct ArgAt_IsTrue : ArgAt_IsX<Index, &v8::Value::IsTrue> {};
-
-    template <typename ClientState>
-    class ArgParser
-    {
-    private:
-        v8::Arguments const & av;
-        int const argc;
-        int pos;
-        mutable ClientState cli;
-        v8::Handle<v8::Value> result;
-    public:
-        ArgParser(v8::Arguments const & av, ClientState cli )
-            : av(av),
-              argc(av.Length()),
-              pos(-1),
-              cli(cli),
-              result()
-        {
-        }
-        
-        ~ArgParser()
-        {
-            this->result = v8::Handle<v8::Value>();
-        }
-        ClientState State() const { return this->cli; }
-
-        void Result( v8::Handle<v8::Value> v ) { this->result = v; }
-        v8::Handle<v8::Value> Result() const { return this->result; }
-
-        int Pos() const { return this->pos; }
-        bool AtEnd() const { return this->pos >= this->argc; }
-        v8::Arguments const & Arguments() const { return this->av; }
-        int Bump(int offset=1)
-        {
-            this->pos += offset;
-            if( this->pos < 0 ) this->pos = 0;
-            return this->pos;
-        }
-
-        template <typename StartRule>
-        v8::Handle<v8::Value> Parse( StartRule const & rule )
-        {
-            v8::Handle<v8::Value> v = rule.Test( *this );
-            return v;
-        }
-    };
-    
-
-#if 0    
-    class MyFirstRule
-    {
-        template <typename ClientState>
-        static bool Test( ArgParser<ClientState> & p )
-        {
-            v8::Arguments const & av( p.Arguments() );
-            typedef ArgPred_Length<0,3> Len03;
-            if( ! Len03()( av ) )
-            {
-                return Toss( StringBuffer()<<"Arg count must be between "
-                            <<Len03::Min<<" and "<<Len03::Max<<", inclusive.");
-            }
-            Toss("NYI!");
-            return false;
-        }
-    };
 #endif
-
 } } // namespaces
+
 #endif

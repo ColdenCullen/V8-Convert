@@ -218,6 +218,11 @@ function testPredicateOverloads()
         b.bogo({});
         b.bogo(1,"hi");
         b.bogo({},1,"hi");
+        b.bogo(function(){
+            // reminder: if we call b.bogo(arguments.callee)
+            // from here we will crash with endless recursion.
+            print("JS-side callback function.");
+        });
     }
     finally { b.destroy(); }
 }

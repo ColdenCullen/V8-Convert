@@ -66,7 +66,7 @@ template <typename RV>
 struct Signature<RV (v8::Arguments const &)> : tmp::TypeList<v8::Arguments const &>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(v8::Arguments const &);
+    //typedef RV (Fingerprint)(v8::Arguments const &);
     enum { Arity = -1, IsConst = 0 };
     typedef void ClassType;
 };
@@ -330,7 +330,7 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
     SignatureParamAt< FunctionSignature< void (int,double) >, 1>::Type; // is double
     @endcode
 */
-template <typename SigListType, unsigned short I>
+template <unsigned short I, typename SigListType>
 struct SignatureParamAt : tmp::TypeAt< SigListType, I > {};
 
 

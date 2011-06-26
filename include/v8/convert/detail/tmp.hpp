@@ -30,11 +30,15 @@ namespace tmp {
     template <typename ValType,ValType Val>
     struct ConstVal
     {
-        enum { Value = Val };
+        //enum { Value = Val };
+        static const ValType Value = Val;
     };
     /** A metafunction holding an integer constant. */
     template <int Val>
     struct IntVal : ConstVal<int,Val> {};
+    /** A metafunction holding an unsigned short constant. */
+    template <unsigned short Val>
+    struct UShortVal : ConstVal<unsigned short,Val> {};
     /** A metafunction holding a bool constant. */
     template <bool Val>
     struct BoolVal : ConstVal<bool,Val> {};
@@ -67,6 +71,6 @@ namespace tmp {
     struct IsConst<T const &> : IsConst<T const> {};
     template <typename T>
     struct IsConst<T const *> : IsConst<T const> {};
-    
+
 }}} // namespaces
 #endif // CODE_GOOGLE_COM_P_V8_CONVERT_TMP_HPP_INCLUDED

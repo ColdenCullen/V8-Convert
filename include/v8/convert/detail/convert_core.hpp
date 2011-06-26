@@ -88,11 +88,17 @@ namespace v8 { namespace convert {
     template <typename T>
     struct TypeInfo<T &> : TypeInfo<T> {};
 
-    /** Convenience typedef. */
-    typedef v8::Handle<v8::Value> ValueHandle;
+#if 1 // this will only theoretically do what i want. Never actually tried to use a non-pointer NativeHandle type...
+    template <typename T>
+    struct TypeInfo< v8::Handle<T> >
+    {
+        typedef v8::Handle<T> Type;
+        typedef v8::Handle<T> NativeHandle;
+    };
+#endif
 
     /**
-       Base instantiation for T-to-ValueHandle conversion functor.
+       Base instantiation for T-to-v8::Handle<v8::Value> conversion functor.
        Must be specialized or it will not compile.
     */
     template <typename NT>
@@ -525,56 +531,50 @@ namespace v8 { namespace convert {
         }
     };
 
-    template <>
-    struct JSToNative<v8::Handle<v8::Object> >
+    namespace Detail
     {
-        /**
-            If h is not empty and is-a Object then
-            its Object handle is returned, else
-            an empty handle is returned.
-        */
-        typedef v8::Handle<v8::Object> ResultType;
-        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        template <typename V8Type,bool (v8::Value::*IsA)() const>
+        struct JSToNative_V8Type
         {
-            return (h.IsEmpty() || !h->IsObject())
-            ? v8::Handle<v8::Object>()
-            : v8::Handle<v8::Object>(v8::Object::Cast(*h));
-        }
-    };
+            /**
+                If h is not empty and is of the correct type
+                then its converted handle is returned, else
+                an empty handle is returned.
+            */
+            typedef v8::Handle<V8Type> ResultType;
+            ResultType operator()( v8::Handle<v8::Value> const & h ) const
+            {
+                return (h.IsEmpty() || !((*h)->*IsA)()/*man, what a construct!*/)
+                ? v8::Handle<V8Type>()
+                : v8::Handle<V8Type>(V8Type::Cast(*h));
+            }
+        };  
+    }
+
+    template <>
+    struct JSToNative<v8::Handle<v8::Object> > : Detail::JSToNative_V8Type< v8::Object, &v8::Value::IsObject>
+    {};
     template <>
     struct JSToNative< v8::Handle<v8::Object> &> : JSToNative< v8::Handle<v8::Object> > {};
     template <>
     struct JSToNative< v8::Handle<v8::Object> const &> : JSToNative< v8::Handle<v8::Object> > {};
-#if 0 // this will only theoretically do what i want. Never actually tried to use a non-pointer NativeHandle type...
-    template <>
-    struct TypeInfo< v8::Handle<v8::Object> >
-    {
-        typedef v8::Handle<v8::Object> Type;
-        typedef v8::Handle<v8::Object> NativeHandle;
-    };
-#endif
+
 
     template <>
-    struct JSToNative<v8::Handle<v8::Array> >
-    {
-        /**
-            If h is not empty and is-a Array then
-            its Array handle is returned, else
-            an empty handle is returned.
-        */
-        typedef v8::Handle<v8::Array> ResultType;
-        ResultType operator()( v8::Handle<v8::Value> const & h ) const
-        {
-            return (h.IsEmpty() || !h->IsArray())
-            ? v8::Handle<v8::Array>()
-            : v8::Handle<v8::Array>(v8::Array::Cast(*h));
-        }
-    };
+    struct JSToNative<v8::Handle<v8::Array> > : Detail::JSToNative_V8Type< v8::Array, &v8::Value::IsArray>
+    {};
     template <>
     struct JSToNative< v8::Handle<v8::Array> &> : JSToNative< v8::Handle<v8::Array> > {};
     template <>
     struct JSToNative< v8::Handle<v8::Array> const &> : JSToNative< v8::Handle<v8::Array> > {};
 
+    template <>
+    struct JSToNative<v8::Handle<v8::Function> > : Detail::JSToNative_V8Type< v8::Function, &v8::Value::IsFunction>
+    {};
+    template <>
+    struct JSToNative< v8::Handle<v8::Function> &> : JSToNative< v8::Handle<v8::Function> > {};
+    template <>
+    struct JSToNative< v8::Handle<v8::Function> const &> : JSToNative< v8::Handle<v8::Function> > {};
 
     /**
        An X-to-void specialization which we cannot use in the generic

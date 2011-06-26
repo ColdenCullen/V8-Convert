@@ -7,6 +7,7 @@ struct Signature< RV () > : tmp::TypeList<>
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)();
 };
 template <typename RV>
 struct Signature< RV (*)() > : Signature<RV ()>
@@ -21,9 +22,9 @@ template <typename RV, typename A1>
 struct Signature< RV (A1) > : tmp::TypeList<A1>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1);
     enum { Arity = 1, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1);
 };
 
 //! Specialization for 1 arg(s).
@@ -42,7 +43,6 @@ struct Signature< RV (*)(A1) > : Signature<RV (A1)>
 template <typename T, typename RV, typename A1>
 struct Signature< RV (T::*)(A1) > : Signature<RV (A1)>
 {
-    //typedef RV (T::*Signature)(A1);
     typedef T ClassType;
 };
 
@@ -50,7 +50,6 @@ struct Signature< RV (T::*)(A1) > : Signature<RV (A1)>
 template <typename T, typename RV, typename A1>
 struct Signature< RV (T::*)(A1) const > : Signature<RV (A1)>
 {
-    //typedef RV (T::*Signature)(A1) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -59,9 +58,9 @@ template <typename RV, typename A1, typename A2>
 struct Signature< RV (A1, A2) > : tmp::TypeList<A1, A2>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2);
     enum { Arity = 2, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2);
 };
 
 //! Specialization for 2 arg(s).
@@ -80,7 +79,6 @@ struct Signature< RV (*)(A1, A2) > : Signature<RV (A1, A2)>
 template <typename T, typename RV, typename A1, typename A2>
 struct Signature< RV (T::*)(A1, A2) > : Signature<RV (A1, A2)>
 {
-    //typedef RV (T::*Signature)(A1, A2);
     typedef T ClassType;
 };
 
@@ -88,7 +86,6 @@ struct Signature< RV (T::*)(A1, A2) > : Signature<RV (A1, A2)>
 template <typename T, typename RV, typename A1, typename A2>
 struct Signature< RV (T::*)(A1, A2) const > : Signature<RV (A1, A2)>
 {
-    //typedef RV (T::*Signature)(A1, A2) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -97,9 +94,9 @@ template <typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (A1, A2, A3) > : tmp::TypeList<A1, A2, A3>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3);
     enum { Arity = 3, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3);
 };
 
 //! Specialization for 3 arg(s).
@@ -118,7 +115,6 @@ struct Signature< RV (*)(A1, A2, A3) > : Signature<RV (A1, A2, A3)>
 template <typename T, typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (T::*)(A1, A2, A3) > : Signature<RV (A1, A2, A3)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3);
     typedef T ClassType;
 };
 
@@ -126,7 +122,6 @@ struct Signature< RV (T::*)(A1, A2, A3) > : Signature<RV (A1, A2, A3)>
 template <typename T, typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (T::*)(A1, A2, A3) const > : Signature<RV (A1, A2, A3)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -135,9 +130,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (A1, A2, A3, A4) > : tmp::TypeList<A1, A2, A3, A4>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4);
     enum { Arity = 4, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4);
 };
 
 //! Specialization for 4 arg(s).
@@ -156,7 +151,6 @@ struct Signature< RV (*)(A1, A2, A3, A4) > : Signature<RV (A1, A2, A3, A4)>
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (T::*)(A1, A2, A3, A4) > : Signature<RV (A1, A2, A3, A4)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4);
     typedef T ClassType;
 };
 
@@ -164,7 +158,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4) > : Signature<RV (A1, A2, A3, A4)>
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (T::*)(A1, A2, A3, A4) const > : Signature<RV (A1, A2, A3, A4)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -173,9 +166,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5) > : tmp::TypeList<A1, A2, A3, A4, A5>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4, A5);
     enum { Arity = 5, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5);
 };
 
 //! Specialization for 5 arg(s).
@@ -194,7 +187,6 @@ struct Signature< RV (*)(A1, A2, A3, A4, A5) > : Signature<RV (A1, A2, A3, A4, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5) > : Signature<RV (A1, A2, A3, A4, A5)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5);
     typedef T ClassType;
 };
 
@@ -202,7 +194,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5) > : Signature<RV (A1, A2, A3, A4
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5) const > : Signature<RV (A1, A2, A3, A4, A5)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -211,9 +202,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6) > : tmp::TypeList<A1, A2, A3, A4, A5, A6>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6);
     enum { Arity = 6, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6);
 };
 
 //! Specialization for 6 arg(s).
@@ -232,7 +223,6 @@ struct Signature< RV (*)(A1, A2, A3, A4, A5, A6) > : Signature<RV (A1, A2, A3, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) > : Signature<RV (A1, A2, A3, A4, A5, A6)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6);
     typedef T ClassType;
 };
 
@@ -240,7 +230,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) > : Signature<RV (A1, A2, A3
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) const > : Signature<RV (A1, A2, A3, A4, A5, A6)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -249,9 +238,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7);
     enum { Arity = 7, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7);
 };
 
 //! Specialization for 7 arg(s).
@@ -270,7 +259,6 @@ struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7) > : Signature<RV (A1, A2, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7);
     typedef T ClassType;
 };
 
@@ -278,7 +266,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) > : Signature<RV (A1, A2
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -287,9 +274,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7, A8>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8);
     enum { Arity = 8, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7, A8);
 };
 
 //! Specialization for 8 arg(s).
@@ -308,7 +295,6 @@ struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8) > : Signature<RV (A1, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8);
     typedef T ClassType;
 };
 
@@ -316,7 +302,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) > : Signature<RV (A1
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -325,9 +310,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7, A8, A9>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     enum { Arity = 9, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
 };
 
 //! Specialization for 9 arg(s).
@@ -346,7 +331,6 @@ struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : Signature<RV (A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     typedef T ClassType;
 };
 
@@ -354,7 +338,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : Signature<RV
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };
@@ -363,9 +346,9 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : tmp::TypeList<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10>
 {
     typedef RV ReturnType;
-    //typedef RV (*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     enum { Arity = 10, IsConst = 0 };
     typedef void ClassType;
+    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
 };
 
 //! Specialization for 10 arg(s).
@@ -384,7 +367,6 @@ struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : Signature<
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     typedef T ClassType;
 };
 
@@ -392,7 +374,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : Signatu
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>
 {
-    //typedef RV (T::*Signature)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const;
     typedef T ClassType;
     enum { IsConst = 1 };
 };

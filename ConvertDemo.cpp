@@ -139,6 +139,7 @@ double bogo_callback_double( double v )
 }
 int bogo_callback_array( v8::Handle<v8::Array> const & ar )
 {
+    assert( ! ar.IsEmpty() );
     int len = ar->Length();
     CERR << "array overload. length="<<len<<"\n";
     return len;
@@ -149,10 +150,44 @@ bool bogo_callback_object( v8::Handle<v8::Object> const & obj )
     assert( ! obj.IsEmpty() );
     return true;
 }
+
+v8::Handle<v8::Value> bogo_callback_function( v8::Handle<v8::Function> const & f )
+{
+    CERR << "function overload.\n";
+    assert( ! f.IsEmpty() );
+    return f->Call( f, 0, NULL );
+}
+
+
 ValueHandle bogo_callback( v8::Arguments const & argv )
 {
     //CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
     using namespace v8::convert;
+    using namespace v8::convert::tmp;
+
+#if 1 // just some experimentation...
+    typedef SigList< void (int, double, char) > BL3;
+    typedef SigList< BL3::Signature > BL3b;
+    typedef Signature< BL3b::Signature > BLSig;
+    typedef SigList< void (char, int) > BL2;
+    typedef SigList< void () > BL0;
+    
+    tmp::Assertion<true> ass;
+#define ASS ass = tmp::Assertion
+    ASS< 3 == BLSig::Arity >();
+    ASS< tmp::SameType< double, SignatureParamAt<1,BLSig>::Type >::Value >();
+    ASS< BLSig::Arity == sl::Length<BL3>::Value >();
+    ASS< 2 == sl::Length<BL2>::Value >();
+    ASS< tmp::SameType< int, SignatureParamAt<1,Signature<BL2::Signature> >::Type >::Value >();
+    ASS< !tmp::SameType< int, SignatureParamAt<0,Signature<BL2::Signature> >::Type >::Value >();
+    ASS< tmp::SameType< sl::At<2,BL3>::Type, char >::Value >();
+    ASS< 0 == sl::Length<BL0>::Value >();
+    ASS< 2 == sl::Index<char, BL3>::Value >();
+    ASS< sl::Index<std::string, BL3>::Value < 0 >();
+    //ASS< tmp::SameType< SigList_At<SigList_Length<BL3>::Value,BL3>::Type, char >::Value >(); // must fail to compile
+#undef ASS
+#endif
+
 
     /**
         Create some logic (via a Predicate template) to use in 
@@ -164,10 +199,13 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     typedef PredicatedInCa< ArgAt_IsA<0,double>, FunctionToInCa<double (double), bogo_callback_double> > PredIsaDouble;
     typedef PredicatedInCa< ArgAt_IsArray<0>, FunctionToInCa<int (v8::Handle<v8::Array> const &), bogo_callback_array> > PredIsaArray;
     typedef PredicatedInCa< ArgAt_IsObject<0>, FunctionToInCa<bool (v8::Handle<v8::Object> const &), bogo_callback_object> > PredIsaObject;
+    typedef PredicatedInCa< ArgAt_IsFunction<0>,
+            FunctionToInCa<v8::Handle<v8::Value>  (v8::Handle<v8::Function> const &), bogo_callback_function>
+    > PredIsaFunction;
     
     // Group the rules into a PredicatedInCaOverloader "container".
     typedef PredicatedInCaOverloader< tmp::TypeList<
-        PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
+        PredIsaFunction, PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
     > > ByTypeOverloads;
     
     // Create a parent rule which only checks ByTypeOverloads if called
@@ -631,12 +669,12 @@ namespace { // testing ground for some compile-time assertions...
         //ASS<( 2 == (cv::ToInCa<CFT,M2,&CFT::bfunc>::Arity) )>();
         typedef cv::FunctionSignature<FacT> FacSig;
         ASS<( FacSig::Arity < 0 )>();
-        typedef cv::SignatureParamAt< cv::FunctionSignature<int (int)>, 0 >::Type A0;
+        typedef cv::SignatureParamAt< 0, cv::FunctionSignature<int (int)> >::Type A0;
         ASS<( (tmp::SameType< int, A0>::Value))>();
-        typedef cv::SignatureParamAt< cv::ToInCa<void, int (char const *),::puts>,0 >::Type A1;
+        typedef cv::SignatureParamAt< 0, cv::ToInCa<void, int (char const *),::puts> >::Type A1;
         ASS<( (tmp::SameType< char const *, A1>::Value))>();
-        ASS<( (tmp::IsConst<cv::SignatureParamAt< FacSig, 0 >::Type>::Value) )>();
-        ASS<( (tmp::SameType< v8::Arguments const &, cv::SignatureParamAt< FacSig, 0 >::Type>::Value))>();
+        ASS<( (tmp::IsConst<cv::SignatureParamAt< 0, FacSig >::Type>::Value) )>();
+        ASS<( (tmp::SameType< v8::Arguments const &, cv::SignatureParamAt< 0, FacSig >::Type>::Value))>();
 
         typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
         typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
@@ -685,23 +723,6 @@ namespace { // testing ground for some compile-time assertions...
     }
 
 #if TRY_ARGS_CODE
-    class MyArgRule
-    {
-        template <typename ClientState>
-        static bool Test( cv::ArgParser<ClientState> & p )
-        {
-            v8::Arguments const & av( p.Arguments() );
-            typedef cv::ArgPred_Length<0,3> Len03;
-            if( ! Len03()( av ) )
-            {
-                return Toss( cv::StringBuffer()<<"Arg count must be between "
-                            <<Len03::Min<<" and "<<Len03::Max<<", inclusive.");
-            }
-            cv::Toss("NYI!");
-            return false;
-        }
-    };
-
     void test_args_code()
     {
         using namespace v8::convert;

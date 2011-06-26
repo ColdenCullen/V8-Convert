@@ -13,6 +13,7 @@ namespace v8 { namespace convert { namespace tmp {
     struct NilType
     {
     };
+    typedef NilType nil;
 
     /** @struct TypeChain
 
@@ -414,6 +415,98 @@ namespace tmp {
     {
         enum { Value = -1 };
     };
+
+
+#if 1 // this is all higly experimental...
+
+    template <typename Args>
+    struct SigList;
+
+    template <typename Cx>
+    struct SigListBase
+    {
+        typedef Cx Context;
+    };
+
+    template <typename Cx>
+    struct SigList< Cx () > : SigListBase<Cx>
+    {
+        typedef nil Head;
+        typedef nil Tail;
+        typedef SigList ListType;
+        typedef Cx (Signature)();
+    };
+
+    template <typename Cx, typename A1>
+    struct SigList< Cx (A1) > : SigListBase<Cx>
+    {
+        typedef A1 Head;
+        typedef nil Tail;
+        typedef SigList ListType;
+        typedef Cx (Signature)(A1);
+    };
+    template <typename Cx, typename A1, typename A2>
+    struct SigList< Cx (A1, A2) > : SigListBase<Cx>
+    {
+        typedef A1 Head;
+        typedef SigList< Cx (A2) > Tail;
+        typedef SigList ListType;
+        typedef Cx (Signature)(A1,A2);
+    };
+
+    template <typename Cx, typename A1, typename A2, typename A3>
+    struct SigList< Cx (A1, A2, A3) > : SigListBase<Cx>
+    {
+        typedef A1 Head;
+        typedef SigList< Cx (A2, A3) > Tail;
+        typedef SigList ListType;
+        typedef Cx (Signature)(A1,A2,A3);
+    };
+
+    template <typename T>
+    struct IsNil : SameType<T,nil> {};
+
+    namespace sl {
+        template < typename ListT >
+        struct Length : IntVal<
+                IsNil<typename ListT::Head>::Value ? 0 : (1 + Length<typename ListT::Tail>::Value)
+                > {};
+
+        template <>
+        struct Length<nil> : IntVal<0> {};
+
+
+
+        template < unsigned short I, typename ListT >
+        struct At : At<I-1, typename ListT::Tail>
+        {
+            typedef char AssertIndex[ (I >= Length<ListT>::Value) ? -1 : 1 ];
+        };
+        template < typename ListT >
+        struct At<0, ListT>
+        {
+            typedef typename ListT::Head Type;
+        };
+
+        template <unsigned short I>
+        struct At<I, nil>
+        {
+            typedef nil Type;
+        };
     
+        template < typename T, typename ListT, unsigned short Internal = 0 >
+        struct Index
+        {
+            static const int Value = SameType<T, typename ListT::Head>::Value
+                            ? Internal
+                            : Index<T, typename ListT::Tail, Internal+1>::Value;
+        };
+        
+        template < typename T, unsigned short Internal >
+        struct Index<T,nil,Internal> : IntVal<-1> {};
+    }
+
+#endif
+
 }}}// namespaces
 #endif // CODE_GOOGLE_COM_P_V8_CONVERT_TYPELIST_HPP_INCLUDED
