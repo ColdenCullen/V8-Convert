@@ -227,7 +227,19 @@ function testPredicateOverloads()
     finally { b.destroy(); }
 }
 
-
+function testMyType() {
+    try {
+        (new MyType()).destroy();
+        (new MyType("hi")).destroy();
+        (new MyType(1,2.3)).destroy();
+        // N-ary not yet working: (new MyType(1,2,3,4,5)).destroy();
+       
+    }
+    catch(e) {
+        print("MyType error: "+e);
+        throw e;
+    }
+}
 
 if(0) {
     /**
@@ -247,6 +259,7 @@ if( ('sleep' in this) && ('function' === typeof sleep) ) {
     testUnlockedFunctions();
 }
 testPredicateOverloads()
+testMyType();
 if(0) {
     try {
         asserteq(1,2,"Intentional error to check fetching of current line number.");

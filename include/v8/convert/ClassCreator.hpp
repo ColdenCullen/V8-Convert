@@ -1002,7 +1002,7 @@ namespace v8 { namespace convert {
         {
             typedef typename cv::TypeInfo<T>::Type Type;
             typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            static void Destroy( NativeHandle nself )
+            static void Delete( NativeHandle nself )
             {
                 delete nself;
             }
@@ -1066,10 +1066,6 @@ namespace v8 { namespace convert {
         {
             typedef CtorForwarderDispatcher<CtorForwarderList> Proxy;
             return Proxy::Ctor( argv );
-        }
-        static void Delete( NativeHandle obj )
-        {
-            delete obj;
         }
     };
 

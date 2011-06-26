@@ -1658,14 +1658,11 @@ namespace v8 { namespace convert {
        @endcode
     */
     template <typename Sig>
-    struct CtorForwarder
+    struct CtorForwarder : Signature<Sig>
     {
+        typedef typename Signature<Sig>::ReturnType ClassType;
         typedef Signature<Sig> STL;
-        typedef typename STL::ReturnType Type_;
-        enum { Arity = STL::Arity };
-        typedef typename TypeInfo<Type_>::Type Type;
-        typedef typename TypeInfo<Type_>::NativeHandle NativeHandle;
-        
+        typedef typename STL::ReturnType ReturnType;
         /**
             If argv.Length() is at least Arity or Arity is less than 0,
             then the constructor is called with Arity arguments
@@ -1675,9 +1672,9 @@ namespace v8 { namespace convert {
             
             May propagate native exceptions.
         */
-        static NativeHandle Ctor( v8::Arguments const & argv )
+        static ReturnType Ctor( v8::Arguments const & argv )
         {
-            typedef Detail::CtorForwarderProxy<Arity> Proxy;
+            typedef Detail::CtorForwarderProxy<STL::Arity> Proxy;
             return Proxy::template Ctor<Sig>( argv );
         }
     };
@@ -1733,7 +1730,7 @@ namespace v8 { namespace convert {
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
-                enum { Arity = sl::Length<List>::Value };
+                enum { Arity = sl::Length<CTOR>::Value };
                 return ( (Arity < 0) || (Arity == argv.Length()) )
                     ?  CtorFwdDispatch< T, CTOR >::Ctor(argv )
                     : CtorFwdDispatchList<T,Tail>::Ctor(argv);
@@ -1772,7 +1769,7 @@ namespace v8 { namespace convert {
     struct CtorForwarderDispatcher
     {
         typedef typename sl::At<0,CtorList>::Type FirstCtor;
-        typedef typename FirstCtor::Type Type;
+        typedef typename FirstCtor::ClassType Type;
         typedef typename TypeInfo<Type>::NativeHandle NativeHandle;
         static NativeHandle Ctor( v8::Arguments const & argv )
         {

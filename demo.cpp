@@ -179,72 +179,67 @@ ValueHandle test1_callback( v8::Arguments const & argv )
 
 struct MyType
 {
-    MyType() {}
-    MyType( int, double ) {}
-    MyType( char const * ) {}
-    MyType( v8::Arguments const & ) {}
-    ~MyType() {}
+    MyType()
+    {
+        CERR << "MyType::MyType() @ "<<this<<'\n';
+    }
+    MyType( int i, double d )
+    {
+        CERR << "MyType::MyType("<<i<<", "<<d<<") @ "<<this<<'\n';
+    }
+    MyType( char const * str )
+    {
+        CERR << "MyType::MyType("<<str<<") @ "<<this<<'\n';
+    }
+    MyType( v8::Arguments const & argv )
+    {
+        CERR << "MyType::MyType("<<argv.Length()<<" arg(s)) @ "<<this<<'\n';
+    }
+    ~MyType()
+    {
+        CERR << "MyType::~MyType() @ "<<this<<'\n';
+    }
     
-    typedef cv::tmp::TypeList<
-            //cv::Signature<void (
+    typedef //cv::tmp::TypeList<
+            cv::Signature<void ( // this also works.
                 cv::CtorForwarder<MyType *()>,
                 cv::CtorForwarder<MyType *(char const *)>,
                 cv::CtorForwarder<MyType *( int, double )>,
+                // This one compiles but is not yet picked up properly at runtime:
                 cv::CtorForwarder<MyType *( v8::Arguments const &)>
+            )
             > Ctors;
         
 };
 
+//-----------------------------------
+// Policies used by cv::ClassCreator
 namespace v8 { namespace convert {
+
     template <>
     class ClassCreator_Factory<MyType>
-#if 1
      : public ClassCreator_Factory_CtorForwarder< MyType, MyType::Ctors >
     {};
-#else
-    {
-    public:
-        typedef MyType * ReturnType;
-        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
-        {
-            typedef MyType T;
-            typedef CtorForwarderDispatcher< MyType::Ctors > Ctors;
-            return Ctors::Ctor(argv);
-        }
-        static void Delete( ReturnType obj )
-        {
-            delete obj;
-        }
-    };
-#endif
     template <>
     struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >
     {};
 }}
-
+//-----------------------------------
+// Ultra-brief ClassCreator demo. See ConvertDemo.?pp for MUCH more.
 void bind_MyType( v8::Handle<v8::Object> dest )
 {
-    typedef MyType T;
-    typedef cv::ClassCreator<T> CC;
+    typedef cv::ClassCreator<MyType> CC;
     CC & cc(CC::Instance());
-    //typedef cv::CtorForwarder<T, T *()> C0;
-    //typedef cv::CtorForwarder<T, T *(char const *)> C1;
-    //typedef cv::CtorForwarder<T, T *( T const &)> C1;
-    //typedef cv::CtorForwarder<T, T *( char const *, int32_t )> C2;
-    //typedef cv::CtorForwarder<T, T *( std::string, size_t pos, int32_t )> C3;
-    //string ( const char * s, size_t n );
-    //string ( const char * s );
-    //string ( size_t n, char c );
-    
-    //typedef cv::tmp::TypeList< C0, C1, C2, C3 > CtorList;    
-    cc.AddClassTo( "StdString", dest );
+    cc
+        ("destroy", CC::DestroyObjectCallback)
+        .AddClassTo( "MyType", dest );
 }
 
 void test1(cv::Shell & shell)
 {
-
     using namespace v8;
     HandleScope scope;
+    bind_MyType( shell.Global() );
     Handle<Function> hf = FunctionTemplate::New(test1_callback)->GetFunction();
     Handle<Value> args[] = {
     Integer::New(3),
