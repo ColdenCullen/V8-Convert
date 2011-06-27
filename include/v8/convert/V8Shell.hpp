@@ -36,7 +36,11 @@ namespace v8 { namespace convert {
         a ClassCreator-wrapped native type and use an instance of it
         for the global object. We might need to split this into a
         common base type if we do that and specialize the void
-        specialization to not do the init stuff.
+        specialization to not do the init stuff. However, timing/ordering
+        appears to be problematic at this level, because we would need
+        the class binding to create the global object template, which
+        goes against the current internals somewhat.
+        
 
         Maintenance reminder: try to keep this class free of
         dependencies on other library-level code so that we

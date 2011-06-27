@@ -1485,7 +1485,8 @@ namespace v8 { namespace convert {
     }
     
     /**
-        Overload to avoid an ambiguity.
+        Overload to avoid an ambiguity (and it's more efficient than
+        the default impl).
     */
     static inline v8::Handle<v8::Value> Toss( char const * msg )
     {

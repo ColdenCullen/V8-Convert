@@ -619,7 +619,7 @@ namespace v8 { namespace convert {
                         ;
                     Factory::Delete(native);
                     pv.Dispose(); pv.Clear(); /* see comments below!*/
-                    v8::ThrowException(msg);
+                    v8::ThrowException(msg.toError());
                     return;
                 }
                 else
@@ -677,7 +677,7 @@ namespace v8 { namespace convert {
                 */
                 if (!argv.IsConstructCall()) 
                 {
-                    return ThrowException(String::New("This constructor cannot be called as function!"));
+                    return Toss("This constructor cannot be called as function!");
                 }
             }
             Local<Object> const & jobj( argv.This()
@@ -724,7 +724,7 @@ namespace v8 { namespace convert {
                 WeakWrap::Unwrap( self, nobj );
                 if( nobj ) Factory::Delete( nobj );
                 self.Clear();
-                return v8::ThrowException(v8::String::New("Native constructor threw an unknown exception!"));
+                return Toss("Native constructor threw an unknown exception!");
             }
             return self;
         }
@@ -899,7 +899,7 @@ namespace v8 { namespace convert {
            Stream.close() and Database.close().
 
            This function is not called DestroyObject to avoid name
-           collisions during binding using Set(...,DestroyCallback).
+           collisions during binding using Set(...,DestroyObjectCallback).
         */
         static v8::Handle<v8::Value> DestroyObjectCallback( v8::Arguments const & argv )
         {
@@ -930,7 +930,7 @@ namespace v8 { namespace convert {
             }
             catch(...)
             {
-                return v8::ThrowException(v8::Exception::Error(v8::String::New("Native class bindings threw an unspecified exception during setup.")));
+                return Toss("Native class bindings threw an unspecified exception during setup.");
             }
         }
 
