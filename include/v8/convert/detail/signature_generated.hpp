@@ -7,7 +7,8 @@ struct Signature< RV () >
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)()
+    //typedef RV (FunctionType)();
+    typedef RV (*FunctionType)();
     typedef tmp::NilType Head;
     typedef Head Tail;
 };
@@ -26,7 +27,7 @@ struct Signature< RV (A1) >
     typedef RV ReturnType;
     enum { Arity = 1, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1);
+    typedef RV (*FunctionType)(A1);
     typedef A1 Head;
     typedef Signature< RV () > Tail;
 };
@@ -64,7 +65,7 @@ struct Signature< RV (A1, A2) >
     typedef RV ReturnType;
     enum { Arity = 2, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2);
+    typedef RV (*FunctionType)(A1, A2);
     typedef A1 Head;
     typedef Signature<RV ( A2)> Tail;
 };
@@ -102,7 +103,7 @@ struct Signature< RV (A1, A2, A3) >
     typedef RV ReturnType;
     enum { Arity = 3, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3);
+    typedef RV (*FunctionType)(A1, A2, A3);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3)> Tail;
 };
@@ -140,7 +141,7 @@ struct Signature< RV (A1, A2, A3, A4) >
     typedef RV ReturnType;
     enum { Arity = 4, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4);
+    typedef RV (*FunctionType)(A1, A2, A3, A4);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4)> Tail;
 };
@@ -178,7 +179,7 @@ struct Signature< RV (A1, A2, A3, A4, A5) >
     typedef RV ReturnType;
     enum { Arity = 5, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5);
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4, A5)> Tail;
 };
@@ -216,7 +217,7 @@ struct Signature< RV (A1, A2, A3, A4, A5, A6) >
     typedef RV ReturnType;
     enum { Arity = 6, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6);
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4, A5, A6)> Tail;
 };
@@ -254,7 +255,7 @@ struct Signature< RV (A1, A2, A3, A4, A5, A6, A7) >
     typedef RV ReturnType;
     enum { Arity = 7, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7);
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4, A5, A6, A7)> Tail;
 };
@@ -292,7 +293,7 @@ struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8) >
     typedef RV ReturnType;
     enum { Arity = 8, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7, A8);
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8)> Tail;
 };
@@ -330,7 +331,7 @@ struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) >
     typedef RV ReturnType;
     enum { Arity = 9, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9)> Tail;
 };
@@ -368,7 +369,7 @@ struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
     typedef RV ReturnType;
     enum { Arity = 10, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     typedef A1 Head;
     typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9, A10)> Tail;
 };
@@ -399,414 +400,1236 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : S
     typedef T Context;
     enum { IsConst = 1 };
 };
-template <typename RV,  typename A0 >
-struct FunctionSignature< RV ( A0) > : SignatureBase< RV ( A0) >
+//! Specialization for 11 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
 {
-    typedef RV (*FunctionType)( A0);
+    typedef RV ReturnType;
+    enum { Arity = 11, IsConst = 0 };
+    typedef void Context;
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
+    typedef A1 Head;
+    typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)> Tail;
 };
 
-template <typename RV,  typename A0 >
-struct FunctionSignature< RV (*)( A0) >
-  : FunctionSignature< RV ( A0) >
-{};
-
-
-template <typename T, typename RV,  typename A0 >
-struct MethodSignature< T, RV ( A0) > : SignatureBase< RV ( A0) >
+//! Specialization for 11 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0);
-};
-template <typename T, typename RV,  typename A0 >
-struct MethodSignature< T, RV (T::*)( A0) > :
-    MethodSignature< T, RV ( A0) >
-{};
-
-
-template <typename T, typename RV,  typename A0 >
-struct ConstMethodSignature< T, RV ( A0) > : SignatureBase< RV ( A0) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0) const;
+    enum { IsConst = 1 };
 };
 
-template <typename T, typename RV,  typename A0 >
-struct ConstMethodSignature< T, RV ( A0) const > :
-    ConstMethodSignature< T, RV ( A0) >
+//! Specialization for 11 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11>
+struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>
 {};
 
-
-template <typename T, typename RV,  typename A0 >
-struct ConstMethodSignature< T, RV (T::*)( A0) const > :
-    ConstMethodSignature< T, RV ( A0) >
-{};
-template <typename RV,  typename A0,  typename A1 >
-struct FunctionSignature< RV ( A0,  A1) > : SignatureBase< RV ( A0,  A1) >
+//! Specialization for T methods taking 11 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>
 {
-    typedef RV (*FunctionType)( A0,  A1);
+    typedef T Context;
 };
 
-template <typename RV,  typename A0,  typename A1 >
-struct FunctionSignature< RV (*)( A0,  A1) >
-  : FunctionSignature< RV ( A0,  A1) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1 >
-struct MethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV ( A0,  A1) >
+//! Specialization for T const methods taking 11 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1);
+    typedef T Context;
+    enum { IsConst = 1 };
 };
-template <typename T, typename RV,  typename A0,  typename A1 >
-struct MethodSignature< T, RV (T::*)( A0,  A1) > :
-    MethodSignature< T, RV ( A0,  A1) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1 >
-struct ConstMethodSignature< T, RV ( A0,  A1) > : SignatureBase< RV ( A0,  A1) >
+//! Specialization for 12 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1) const;
+    typedef RV ReturnType;
+    enum { Arity = 12, IsConst = 0 };
+    typedef void Context;
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
+    typedef A1 Head;
+    typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)> Tail;
 };
 
-template <typename T, typename RV,  typename A0,  typename A1 >
-struct ConstMethodSignature< T, RV ( A0,  A1) const > :
-    ConstMethodSignature< T, RV ( A0,  A1) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1) const > :
-    ConstMethodSignature< T, RV ( A0,  A1) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2 >
-struct FunctionSignature< RV ( A0,  A1,  A2) > : SignatureBase< RV ( A0,  A1,  A2) >
+//! Specialization for 12 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2);
+    enum { IsConst = 1 };
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2) >
-  : FunctionSignature< RV ( A0,  A1,  A2) >
+//! Specialization for 12 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12>
+struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>
 {};
 
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct MethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV ( A0,  A1,  A2) >
+//! Specialization for T methods taking 12 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2);
-};
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2) > :
-    MethodSignature< T, RV ( A0,  A1,  A2) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2) > : SignatureBase< RV ( A0,  A1,  A2) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2) const;
+    typedef T Context;
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV ( A0,  A1,  A2,  A3) >
+//! Specialization for T const methods taking 12 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const>
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3);
+    typedef T Context;
+    enum { IsConst = 1 };
+};
+//! Specialization for 13 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+    typedef RV ReturnType;
+    enum { Arity = 13, IsConst = 0 };
+    typedef void Context;
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13);
+    typedef A1 Head;
+    typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)> Tail;
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV ( A0,  A1,  A2,  A3) >
+//! Specialization for 13 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3);
-};
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) > : SignatureBase< RV ( A0,  A1,  A2,  A3) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3) const;
+    enum { IsConst = 1 };
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) >
+//! Specialization for 13 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13>
+struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)>
 {};
 
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4) >
+//! Specialization for T methods taking 13 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)>
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4);
+    typedef T Context;
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4) >
+//! Specialization for T const methods taking 13 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4);
+    typedef T Context;
+    enum { IsConst = 1 };
 };
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4) >
+//! Specialization for 14 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4) const;
+    typedef RV ReturnType;
+    enum { Arity = 14, IsConst = 0 };
+    typedef void Context;
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14);
+    typedef A1 Head;
+    typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)> Tail;
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
+//! Specialization for 14 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)>
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5);
+    enum { IsConst = 1 };
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
+//! Specialization for 14 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14>
+struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)>
 {};
 
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
+//! Specialization for T methods taking 14 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5);
-};
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5) const;
+    typedef T Context;
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
+//! Specialization for T const methods taking 14 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const>
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6);
+    typedef T Context;
+    enum { IsConst = 1 };
+};
+//! Specialization for 15 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14, typename A15>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) >
+{
+    typedef RV ReturnType;
+    enum { Arity = 15, IsConst = 0 };
+    typedef void Context;
+    typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15);
+    typedef A1 Head;
+    typedef Signature<RV ( A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)> Tail;
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
+//! Specialization for 15 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14, typename A15>
+struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6);
-};
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6) const;
+    enum { IsConst = 1 };
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
+//! Specialization for 15 arg(s).
+template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14, typename A15>
+struct Signature< RV (*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)>
 {};
 
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
+//! Specialization for T methods taking 15 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14, typename A15>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)>
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7);
+    typedef T Context;
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
+//! Specialization for T const methods taking 15 arg(s).
+template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14, typename A15>
+struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const>
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7);
+    typedef T Context;
+    enum { IsConst = 1 };
 };
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
+template < typename RV, typename A0 > struct FunctionSignature <
+RV (A0) >:
+  SignatureBase <
+RV (A0) >
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const;
+  typedef RV (*FunctionType) (A0);
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
+template < typename RV, typename A0 >
+  struct FunctionSignature <RV (*) (A0) >:FunctionSignature <
+RV (A0) >
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8);
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
+template < typename T, typename RV, typename A0 > struct MethodSignature <T,
+RV (A0) >:
+  SignatureBase <
+RV (A0) >
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8);
-};
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const;
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0);
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8) >
-{};
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
+template < typename T, typename RV, typename A0 >
+  struct MethodSignature <T, RV (T::*) (A0) >:MethodSignature < T,
+RV (A0) >
 {
-    typedef RV (*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9);
+};
+template < typename T, typename RV, typename A0 >
+  struct ConstMethodSignature <T,
+RV (A0) >:
+  SignatureBase <
+RV (A0) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0) const;
 };
 
-template <typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct FunctionSignature< RV (*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
-  : FunctionSignature< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
+template < typename T, typename RV, typename A0 >
+  struct ConstMethodSignature <T,
+RV (A0)
+     const >:ConstMethodSignature < T, RV (A0) >
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9);
-};
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct MethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > :
-    MethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
-{};
-
-
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) > : SignatureBase< RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
-{
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const;
 };
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
-{};
+
+template < typename T, typename RV, typename A0 >
+  struct ConstMethodSignature <T, RV (T::*) (A0)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0) >
+{
+};
+template < typename RV, typename A0, typename A1 > struct FunctionSignature <
+RV (A0, A1) >:
+  SignatureBase <
+RV (A0, A1) >
+{
+  typedef RV (*FunctionType) (A0, A1);
+};
+
+template < typename RV, typename A0, typename A1 >
+  struct FunctionSignature <RV (*) (A0, A1) >:FunctionSignature <
+RV (A0, A1) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1 >
+  struct MethodSignature <T,
+RV (A0, A1) >:
+  SignatureBase <
+RV (A0, A1) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1);
+};
+
+template < typename T, typename RV, typename A0, typename A1 >
+  struct MethodSignature <T, RV (T::*) (A0, A1) >:MethodSignature < T,
+RV (A0, A1) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1 >
+  struct ConstMethodSignature <T,
+RV (A0, A1) >:
+  SignatureBase <
+RV (A0, A1) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1 >
+  struct ConstMethodSignature <T,
+RV (A0, A1)
+     const >:ConstMethodSignature < T, RV (A0, A1) >
+{
+};
 
 
-template <typename T, typename RV,  typename A0,  typename A1,  typename A2,  typename A3,  typename A4,  typename A5,  typename A6,  typename A7,  typename A8,  typename A9 >
-struct ConstMethodSignature< T, RV (T::*)( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) const > :
-    ConstMethodSignature< T, RV ( A0,  A1,  A2,  A3,  A4,  A5,  A6,  A7,  A8,  A9) >
-{};
+template < typename T, typename RV, typename A0, typename A1 >
+  struct ConstMethodSignature <T, RV (T::*) (A0, A1)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2 > struct FunctionSignature <
+RV (A0, A1, A2) >:
+  SignatureBase <
+RV (A0, A1, A2) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2);
+};
+
+template < typename RV, typename A0, typename A1, typename A2 >
+  struct FunctionSignature <RV (*) (A0, A1, A2) >:FunctionSignature <
+RV (A0, A1, A2) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2 >
+  struct MethodSignature <T,
+RV (A0, A1, A2) >:
+  SignatureBase <
+RV (A0, A1, A2) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2 >
+  struct MethodSignature <T, RV (T::*) (A0, A1, A2) >:MethodSignature < T,
+RV (A0, A1, A2) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2 >
+  struct ConstMethodSignature <T,
+RV (A0, A1, A2) >:
+  SignatureBase <
+RV (A0, A1, A2) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2 >
+  struct ConstMethodSignature <T,
+RV (A0, A1, A2)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2 >
+  struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3 > struct FunctionSignature <
+RV (A0, A1, A2, A3) >:
+  SignatureBase <
+RV (A0, A1, A2, A3) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3 >
+  struct FunctionSignature <RV (*) (A0, A1, A2, A3) >:FunctionSignature <
+RV (A0, A1, A2, A3) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3 > struct MethodSignature <T,
+RV (A0, A1, A2, A3) >:
+  SignatureBase <
+RV (A0, A1, A2, A3) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3 > struct MethodSignature <T, RV (T::*) (A0, A1, A2,
+						      A3) >:MethodSignature <
+  T,
+RV (A0, A1, A2, A3) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3) >:
+  SignatureBase <
+RV (A0, A1, A2, A3) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4 > struct FunctionSignature <RV (*) (A0, A1, A2, A3,
+						  A4) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4 > struct MethodSignature <T, RV (T::*) (A0, A1, A2,
+								   A3,
+								   A4)
+  >:MethodSignature < T,
+RV (A0, A1, A2, A3, A4) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4 > struct ConstMethodSignature <T, RV (T::*) (A0,
+									A1,
+									A2,
+									A3,
+									A4)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5 > struct FunctionSignature <RV (*) (A0, A1, A2, A3,
+							       A4,
+							       A5)
+  >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5 > struct MethodSignature <T,
+RV (T::*) (A0, A1, A2, A3, A4, A5) >:MethodSignature < T,
+RV (A0, A1, A2, A3, A4, A5) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5 > struct ConstMethodSignature <T,
+RV (T::*) (A0, A1, A2, A3, A4, A5)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5,
+  typename A6 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5,
+						  A6) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5,
+  typename A6 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5,
+  typename A6 > struct MethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4, A5,
+						      A6) >:MethodSignature <
+  T,
+RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5,
+  typename A6 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5,
+  typename A6 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5,
+  typename A6 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4,
+							   A5, A6)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6,
+  typename A7 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6,
+  typename A7 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						  A7) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6,
+  typename A7 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6,
+  typename A7 > struct MethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4, A5,
+						      A6,
+						      A7) >:MethodSignature <
+  T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6,
+  typename A7 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6,
+  typename A7 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6,
+  typename A7 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4,
+							   A5, A6, A7)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						  A7,
+						  A8) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct MethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4, A5,
+						      A6, A7,
+						      A8) >:MethodSignature <
+  T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7,
+					   A8) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4,
+							   A5, A6, A7, A8)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7, A8) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						  A7, A8,
+						  A9) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9 > struct MethodSignature <T, RV (T::*) (A0, A1, A2,
+								   A3, A4, A5,
+								   A6, A7, A8,
+								   A9)
+  >:MethodSignature < T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+				 A9) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9 > struct ConstMethodSignature <T, RV (T::*) (A0,
+									A1,
+									A2,
+									A3,
+									A4,
+									A5,
+									A6,
+									A7,
+									A8,
+									A9)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10 > struct FunctionSignature <RV (*) (A0, A1, A2,
+								A3, A4, A5,
+								A6, A7, A8,
+								A9,
+								A10)
+  >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10 > struct MethodSignature <T,
+RV (T::*) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >:MethodSignature < T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9,
+				 A10) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9, A10) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10 > struct ConstMethodSignature <T,
+RV (T::*) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9, A10) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+			      A11);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10,
+  typename A11 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						   A7, A8, A9, A10,
+						   A11) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10,
+  typename A11 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10,
+  typename A11 > struct MethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4, A5,
+						       A6, A7, A8, A9, A10,
+						       A11) >:MethodSignature
+  < T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10,
+  typename A11 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10,
+  typename A11 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9, A10, A11) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10,
+  typename A11 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3,
+							    A4, A5, A6, A7,
+							    A8, A9, A10, A11)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11,
+  typename A12 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+			      A11, A12);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11,
+  typename A12 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						   A7, A8, A9, A10, A11,
+						   A12) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11,
+  typename A12 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11, A12);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11,
+  typename A12 > struct MethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4, A5,
+						       A6, A7, A8, A9, A10,
+						       A11,
+						       A12) >:MethodSignature
+  < T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11,
+  typename A12 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11, A12) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11,
+  typename A12 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9, A10, A11, A12) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11,
+  typename A12 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3,
+							    A4, A5, A6, A7,
+							    A8, A9, A10, A11,
+							    A12)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+			      A11, A12, A13);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						   A7, A8, A9, A10, A11, A12,
+						   A13) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11, A12, A13);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct MethodSignature <T, RV (T::*) (A0, A1, A2, A3, A4, A5,
+						       A6, A7, A8, A9, A10,
+						       A11, A12,
+						       A13) >:MethodSignature
+  < T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11, A12, A13) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9, A10, A11, A12, A13) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13 > struct ConstMethodSignature <T, RV (T::*) (A0, A1, A2, A3,
+							    A4, A5, A6, A7,
+							    A8, A9, A10, A11,
+							    A12, A13)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
+{
+};
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11, typename A12, typename A13,
+  typename A14 > struct FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
+{
+  typedef RV (*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+			      A11, A12, A13, A14);
+};
+
+template < typename RV, typename A0, typename A1, typename A2, typename A3,
+  typename A4, typename A5, typename A6, typename A7, typename A8,
+  typename A9, typename A10, typename A11, typename A12, typename A13,
+  typename A14 > struct FunctionSignature <RV (*) (A0, A1, A2, A3, A4, A5, A6,
+						   A7, A8, A9, A10, A11, A12,
+						   A13,
+						   A14) >:FunctionSignature <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
+{
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13, typename A14 > struct MethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11, A12, A13, A14);
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13, typename A14 > struct MethodSignature <T, RV (T::*) (A0, A1,
+								     A2, A3,
+								     A4, A5,
+								     A6, A7,
+								     A8, A9,
+								     A10, A11,
+								     A12, A13,
+								     A14)
+  >:MethodSignature < T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
+{
+};
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13, typename A14 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >:
+  SignatureBase <
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
+{
+  typedef T ClassType;
+  typedef RV (T::*FunctionType) (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10,
+				 A11, A12, A13, A14) const;
+};
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13, typename A14 > struct ConstMethodSignature <T,
+RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)
+     const >:ConstMethodSignature < T, RV (A0, A1, A2, A3, A4, A5, A6, A7, A8,
+					   A9, A10, A11, A12, A13, A14) >
+{
+};
+
+
+template < typename T, typename RV, typename A0, typename A1, typename A2,
+  typename A3, typename A4, typename A5, typename A6, typename A7,
+  typename A8, typename A9, typename A10, typename A11, typename A12,
+  typename A13, typename A14 > struct ConstMethodSignature <T, RV (T::*) (A0,
+									  A1,
+									  A2,
+									  A3,
+									  A4,
+									  A5,
+									  A6,
+									  A7,
+									  A8,
+									  A9,
+									  A10,
+									  A11,
+									  A12,
+									  A13,
+									  A14)
+     const >:
+       ConstMethodSignature <
+       T,
+     RV (A0, A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
+{
+};
 #endif // if !defined(DOXYGEN)

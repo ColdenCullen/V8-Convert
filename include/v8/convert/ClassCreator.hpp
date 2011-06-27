@@ -225,7 +225,25 @@ namespace v8 { namespace convert {
     void const * ClassCreator_TypeID_Base<T,Name>::Value = Name;
     
     /**
-        ClassCreator policy type which defines
+        ClassCreator policy type which defines a "type ID" value
+        for a type wrapped using ClassCreator. This is used
+        together with JSToNative_ObjectWithInternalFieldsTypeSafe
+        (type THAT 10 times fast) to provide a lightweight
+        (but highly effective) type check when extracting
+        natives from v8 (as void pointers). The default
+        implementation is fine for all cases i can think of,
+        i can concieve of one or two uses for specializations
+        (e.g. storing the JS-side name of the class as the type ID).
+        
+        The type id must be unique per type. If multiple types share
+        the same type ID, the type-safety check can be bypassed,
+        _potentially_ leading to an illegal static_cast() and subsequent
+        mis-use of the pointer. i stress the word "potentially" because
+        to get that condition one would have to (A) abuse the object
+        via the C++ API (which doesn't happen via the binding process,
+        and you're probably also not going to do it) or (B) write some 
+        script code to confuse two bound native types about who is really
+        who when a particular member is called.
     */
     template <typename T>
     struct ClassCreator_TypeID : ClassCreator_TypeID_Base<T, Detail::ClassCreator_TypeID_Unnamed<T>::Value>

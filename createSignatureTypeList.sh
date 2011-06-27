@@ -24,7 +24,8 @@ struct Signature< RV () >
     typedef RV ReturnType;
     enum { Arity = 0, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)()
+    //typedef RV (FunctionType)();
+    typedef RV (*FunctionType)();
     typedef tmp::NilType Head;
     typedef Head Tail;
 };
@@ -68,7 +69,7 @@ struct Signature< RV (${targs}) >
     typedef RV ReturnType;
     enum { Arity = ${i}, IsConst = 0 };
     typedef void Context;
-    //typedef RV (Fingerprint)(${targs});
+    typedef RV (*FunctionType)(${targs});
     typedef ${head} Head;
     typedef ${tail} Tail;
 };

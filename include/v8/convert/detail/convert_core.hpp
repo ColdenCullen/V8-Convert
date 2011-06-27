@@ -737,12 +737,72 @@ namespace v8 { namespace convert {
         in the object-internal field specified by ObjectFieldIndex.
         
         Each value to be converted is checked for an internal field 
-        at the index specified by TypeIdFieldIndex. If (and only if) 
-        that field contains the value TypeID is the conversion 
-        considered legal. If they match but the native value stored
-        in field ObjectFieldIndex is NOT-a-T then results are undefined.
-        Note that the TypeID value is compared by pointer address, not
-        by its string contents (which may legally be NULL).
+        (of type v8::External) at the index specified by 
+        TypeIdFieldIndex. If (and only if) that field contains a 
+        v8::External which holds the value TypeID is the conversion 
+        considered legal. If they match but the native value stored 
+        in field ObjectFieldIndex is NOT-a-T then results are 
+        undefined. Note that the TypeID value is compared by pointer 
+        address, not by its byte contents (which may legally be 
+        NULL).
+        
+        If SearchPrototypeChain is true and the passed-in object 
+        contains no native T then the prototype chain is checked 
+        recursively. This is normally only necessary if the native 
+        type is allowed to be subclasses from JS code (at which point
+        the JS 'this' is not the same exact object as the one 
+        holding the native 'this' pointer, and we need to search the 
+        prototype chain).
+
+        For this all to work: the class-binding mechanism being used 
+        by the client must store the TypeID value in all new 
+        JS-created instances of T by calling SetInternalField( 
+        TypeIdFieldIndex, theTypeID ) and store the native object 
+        pointer in the field internal field ObjectFieldIndex. And 
+        then they should do:
+
+        @code
+        // in the v8::convert namespace:
+        template <>
+        struct JSToNative<MyType> :
+          JSToNative_ObjectWithInternalFieldsTypeSafe<MyType,MyTypeID...>
+          {};
+        @endcode
+
+        At which point CastFromJS<T>() will take advantage of this
+        type check.
+
+
+        The real docs end here. What follows is pseudorandom blather...
+
+        Theoretically (i haven't tried this but i know how the 
+        underlying code works), it is possible for script code to 
+        create a condition which will lead to an invalid cast if the 
+        check performed by this class (or something equivalent) is 
+        _not_ performed:
+        
+        @code
+        var x = new Native1();
+        var y = new Native2();
+        // assume y.someFunc and x.otherFunc are both bound to native functions
+        y.someFunc = x.otherFunc;
+        y.someFunc( ... ); // here is where it will likely end badly
+        @endcode
+        
+        When y.someFunc() is called, JS will look for a 'this' 
+        object of type Native1, not Native2, because the type 
+        information related to the conversion is "stored" in the 
+        callback function itself, not in the native object. (This is 
+        a side-effect of us using templates to create 
+        InvocationCallback implementations.) It will not find a Native1, but
+        it might (depending on how both classes are bound to JS) find a Native2
+        pointer and _think_ it is a Native1. And by "think it is" i mean
+        "it will try to cast it to," but the cast is illegal in that case.
+        In any case it would be bad news.
+        
+        The check performed by this class can catch that condition 
+        (and similar ones) and fail gracefully (i.e. returning a 
+        NULL instead of performing an illegal cast).
     */
     template <typename T,
               void const * & TypeID,
@@ -756,8 +816,9 @@ namespace v8 { namespace convert {
         typedef char AssertIndexRanges
         [(InternalFieldCount>=2)
          && (TypeIdFieldIndex != ObjectFieldIndex)
-         && (ObjectFieldIndex>=0)
-         && (ObjectFieldIndex>0)
+         && (TypeIdFieldIndex >= 0)
+         && (TypeIdFieldIndex < InternalFieldCount)
+         && (ObjectFieldIndex >= 0)
          && (ObjectFieldIndex < InternalFieldCount)
          ? 1 : -1];
     public:
@@ -1360,9 +1421,11 @@ namespace v8 { namespace convert {
        @code
        StringBuffer msg;
        msg << "Could not set property "
-       << "'" << propName
-       <<"' on object " << myJSObject << '!';
+           << "'" << propName
+           <<"' on object " << myJSObject << '!';
        return v8::ThrowException(msg.toError());
+       // or:
+       return Toss(msg);
        @endcode
     */
     class StringBuffer
@@ -1528,10 +1591,14 @@ namespace v8 { namespace convert {
            conversion, as long as they release it when the destruct.
            See ArgCaster<char const *> for an example of that.
         */
-        inline ResultType ToNative( v8::Handle<v8::Value> const & v )
+        inline ResultType ToNative( v8::Handle<v8::Value> const & v ) const
         {
             return CastFromJS<T>( v );
         }
+        /**
+            To eventually be used for some internal optimizations.
+        */
+        enum { HasConstOp = 1 };
     };
     /**
        Specialization for (char const *). The value returned from
@@ -1595,6 +1662,10 @@ namespace v8 { namespace convert {
             this->val = C()( v );
             return this->val.c_str();
         }
+        /**
+            To eventually be used for some internal optimizations.
+        */
+        enum { HasConstOp = 0 };
     };
 
 

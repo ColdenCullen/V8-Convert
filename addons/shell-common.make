@@ -24,7 +24,6 @@ ifeq (1,1)
 	cp $< $@
   $(SHELL.DIR)/shell.cpp:
   $(SHELL.LOCAL).o: $(SHELL.LOCAL).cpp
-  CLEAN_FILES += $(SHELL.LOCAL).cpp $(SHELL.LOCAL).cpp
   shell.BIN.OBJECTS := $(SHELL.LOCAL).o
   shell.BIN.LDFLAGS := $(LDFLAGS_V8) $(SHELL_LDFLAGS)
   $(eval $(call ShakeNMake.CALL.RULES.BINS,shell))
@@ -32,5 +31,6 @@ ifeq (1,1)
   $(SHELL.LOCAL).o: CPPFLAGS+=-DINCLUDE_SHELL_BINDINGS='"$(SHELL_BINDINGS_HEADER)"'
   $(SHELL.LOCAL).o: $(ALL_MAKEFILES)
   $(shell.BIN): $(SHELL_DEPS)
+  CLEAN_FILES += $(SHELL.LOCAL).cpp $(SHELL.LOCAL).cpp $(shell.BIN)
   all: $(shell.BIN)
 endif

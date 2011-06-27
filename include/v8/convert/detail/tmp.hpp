@@ -59,6 +59,18 @@ namespace tmp {
     };
     
     template <typename T>
+    struct PlainType
+    {
+        typedef T Type;
+    };
+    template <typename T>
+    struct PlainType<T const> : PlainType<T> {};
+    template <typename T>
+    struct PlainType<T *> : PlainType<T> {};
+    template <typename T>
+    struct PlainType<T const *> : PlainType<T> {};
+    
+    template <typename T>
     struct IsConst : BoolVal<false> {};
     template <typename T>
     struct IsConst<T const> : BoolVal<true> {};

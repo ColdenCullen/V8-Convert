@@ -90,8 +90,8 @@ $(eval $(call GEN_TYPELIST,15))
 
 ########################################################################
 # shell app...
-SHELL.DIR := $(PWD)/addons/shell-skel
+SHELL.DIR := addons/shell-skel
 SHELL_LDFLAGS := ConvertDemo.o
 SHELL_BINDINGS_HEADER := ConvertDemo.hpp
 SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
-include $(PWD)/addons/shell-common.make
+include addons/shell-common.make

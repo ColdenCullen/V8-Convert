@@ -229,8 +229,8 @@ namespace v8 { namespace convert {
         has a certain range of argument count.
         
         Min is the minimum number. Max is the maximum. The range is 
-        inclusive. Use (Max<Min) to mean (MIN..end). Use (Min==Max)
-        to mean only that many arguments.
+        inclusive. Use (Max<Min) to mean (at least MIN). Use 
+        (Min==Max) to mean only that many arguments.
     */
     template <int Min_, int Max_ = Min_>
     struct ArgPred_Length : ArgumentsPredicateConcept
@@ -277,7 +277,9 @@ namespace v8 { namespace convert {
     
         Index = arg index to check.
         
-        T is a type for which ValIs<T> is legal.
+        T is a type for which ValIs<T> is legal. The functor
+        returns true if ValIs<T> returns true the argument
+        at the given index.
     */
     template <unsigned short Index, typename T>
     struct ArgAt_IsA : ArgAt_Is< Index, ValIs<T> > {};

@@ -112,7 +112,7 @@ namespace sl {
     };
     template < typename ListT >
     struct At<0, ListT>
-    { // reminder to self: We can't subclass Identity<ListT::Head> here b/c Type could be wrong.
+    {
          typedef typename ListT::Head Type;
     };
 
@@ -242,6 +242,8 @@ struct SignatureBase : Signature<Sig>
    @code
    static const int Arity = num_args_in_func_sig; // or enum
    typedef FunctionSig FunctionType;
+   typedef the_return_type ReturnType;
+   typedef void Context; // other values might become legal in the future
    @endcode
 
    Examples:
@@ -273,6 +275,8 @@ struct FunctionSignature;
    typedef T Type;
    static const int Arity = num_args_in_func_sig; // or enum
    typedef Sig FunctionType;
+   typedef the_return_type ReturnType;
+   typedef T Context;   
    @endcode
 
    Examples: 
@@ -331,9 +335,6 @@ template <typename RV >
 struct FunctionSignature< RV () > : SignatureBase< RV () >
 {
     typedef RV (*FunctionType)();
-    typedef void Context;
-    typedef tmp::NilType Head;
-    typedef Head Tail;
 };
 
 template <typename RV >
@@ -344,9 +345,7 @@ struct FunctionSignature< RV (*)() > : FunctionSignature< RV () >
 template <typename T, typename RV >
 struct MethodSignature< T, RV () > : SignatureBase< RV () >
 {
-    typedef T Context;
-    typedef tmp::NilType Head;
-    typedef Head Tail;
+    typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (T::*FunctionType)();
 };
 
@@ -358,9 +357,7 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : SignatureBase< RV () >
 {
-    typedef T Context;
-    typedef tmp::NilType Head;
-    typedef Head Tail;
+    typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (T::*FunctionType)() const;
 };
 
@@ -373,9 +370,7 @@ struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () const >
 {
-    typedef T Context;
-    typedef tmp::NilType Head;
-    typedef Head Tail;
+    typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (T::*FunctionType)() const;
 };
 #if 0
