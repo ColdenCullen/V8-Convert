@@ -50,18 +50,30 @@ Converting types:
 
 Implementing custom conversions:
 
-- v8::convert::NativeToJS<T>
-- v8::convert::JSToNative<T>
+- v8::convert::NativeToJS
+- v8::convert::JSToNative
 
 Converting functions to v8::InvocationCallback:
 
-- v8::convert::FunctionToInCa<>
-- v8::convert::MethodToInCa<>
-- v8::convert::ConstMethodToInCa<>
+- v8::convert::FunctionToInCa
+- v8::convert::MethodToInCa
+- v8::convert::ConstMethodToInCa
+- v8::convert::ToInCa
+
+Other utilities:
+
+- CtorForwarder and CtorForwarderDispatcher
+- The tmp and sl namespaces hold template metaprogramming bits.
 
 Most of the code in this library are internal template specializations
 which take care of the dirty work. Typical clients won't typically need
 more than what's listed above.
+
+A core rule of this library is "if it ain't documented, don't use 
+it." All public API members which are intended for client-side use 
+are documented. Some one-line proxies whose purpose is either very 
+obvious, exist only for template type resolution reasons, or 
+are strictly internal are not necessarily documented.
 
 */
 #include "convert.hpp"

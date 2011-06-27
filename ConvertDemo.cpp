@@ -718,6 +718,7 @@ namespace { // testing ground for some compile-time assertions...
         typedef FunctionSignature< void (int, double, int, char) > BL4c;
         tmp::Assertion<true> ass;
 #define ASS ass = tmp::Assertion
+        ASS< -1 == sl::Arity< Signature<void (v8::Arguments const &)> >::Value >();
         ASS< tmp::SameType< sl::At<2,BLSig>::Type, char >::Value >();
         ASS< 0 == sl::Length<BL0>::Value >();
         ASS< 3 == BLSig::Arity >();

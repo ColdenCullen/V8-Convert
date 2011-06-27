@@ -663,10 +663,16 @@ namespace v8 { namespace convert {
        is not a T (or publically derived from T) then results are
        undefined (this could lead to a crash at runtime).
        
-       TODO: a variation of this class which requires at least 2 internal
-       fields. The first one would be a type identifier and the second
-       is the actual object. The type ID would be a (void const *)
-       template arguments.
+       There are cases where very-misbehaving JS code can force this 
+       particular conversion algorithm to mis-cast the native. While 
+       they have never been seen "in the wild", they can 
+       theoretically happen. If that bothers you, and you want to be 
+       able to sleep soundly at night, use 
+       JSToNative_ObjectWithInternalFieldsTypeSafe instead of this 
+       class.
+       
+       @see JSToNative_ObjectWithInternalFieldsTypeSafe
+       
     */
     template <typename T,
               int InternalFieldCount = 1,
@@ -947,9 +953,13 @@ namespace v8 { namespace convert {
         ResultType operator()( v8::Handle<v8::Value> const & h );
     };
 #else
+#if 0 // it turns out no current (20110627) code uses this.
+// We might want to leave it in b/c that will cause compile errors
+// in some use cases rather than link errors ("undefined ref...").
     /** Not great, but a happy medium. */
     template <>
     struct JSToNative<char const *> : JSToNative<std::string> {};
+#endif
 #endif
 
 
@@ -1656,6 +1666,8 @@ namespace v8 { namespace convert {
        typedef CtorForwarder<MyType *(double,int)> CF2;
        typedef CtorForwarder<MyType *(v8::Arguments const &)> CFAny;
        @endcode
+       
+       @see CtorForwarderDispatcher
     */
     template <typename Sig>
     struct CtorForwarder : Signature<Sig>

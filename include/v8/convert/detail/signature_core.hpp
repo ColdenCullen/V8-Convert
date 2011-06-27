@@ -10,17 +10,29 @@ function/method signatures as full-fleged types.
 
 
 
-/**
+/** @class Signature
+
     Base (unimplemented) template for figuring out function argument types
     types at compile time. All implementations are generated code implementing
     the tmp::TypeList interface. They can be used with tmp::LengthOf,
     tmp::TypeAt, etc.
     
-    Sig must be a function-signature-style parameter list.
+    Sig must be a function-signature-style parameter list, e.g.:
+    
+    @code
+    Signature< void (int, double) >
+    Signature< void (MyType*::)( int double ) >
+    @endcode
+    
+    This interface treates the "function paramter part" of its 
+    arguments as a "type list", and several algorithms in the sl 
+    namespace are available for fetching type information from a 
+    Signature type. This is an "extended" typelist, however, because 
+    it also remembers the return type optionally the class 
+    containing a function described by the signature (neither of 
+    those are counted as part of the list).
 
-    Require interface: it must implement the tmp::TypeList interface and
-    the entries in the TypeList must be the function argument types
-    (or an empty list for nullary functions). In addition it must have:
+    Require interface for specializations:
     
     @code
     typedef functionReturnType ReturnType;
@@ -28,12 +40,14 @@ function/method signatures as full-fleged types.
     typedef T Context; // void for non-member functions, T for all T members
     @endcode
     
-    Reminder: we no longer really need the Arity member (we can calculate it
-    at compile-time) but lots of code uses it for legacy reasons and
-    it saves a small bit if typing (keyboard typing, not C++ typing).
+    Reminder: we no longer really need the Arity member (we can 
+    calculate it at compile-time) but lots of code uses it for 
+    legacy reasons and it saves a small bit if typing (keyboard 
+    typing, not C++ typing).
     
-    Arity values of less than 0 are reserved for use in functions
-    taking v8::Arguments (which makes them N-arity).
+    The Arity value -1 is reserved for use in functions taking 
+    v8::Arguments (which makes them N-arity). Other negative numbers
+    may be used later on for other special-case purposes.
 
     It is intended to be used like this:
     
@@ -42,7 +56,9 @@ function/method signatures as full-fleged types.
     assert( Sig::Arity == 2 );
     assert( sl::Length<Sig>::Value == Sig::Arity )
     assert( (tmp::SameType< char const *, sl::At<0,Sig>::Type >::Value) );
-    assert( (tmp::SameType< double, sl::At<0,Sig>::Type >::Value) );
+    assert( (tmp::SameType< double, sl::At<1,Sig>::Type >::Value) );
+    assert( 1 == sl::Index< double, Sig >::Value) );
+    assert( !sl::Contains< int, Sig >::Value) ); // Sig::ReturnType doesn't count here!!!
     @endcode
 
     The IsConst bit is mildly unsettling but i needed it to implement ToInCa
@@ -106,9 +122,10 @@ namespace sl {
 
     /**
         Metafunction whose Type Value member evaluates to the 0-based
-        index of the first occurrance of the the type T in the
-        given Signature. Evaluates to -1 if T is not contained in the
-        argument list.
+        index of the first occurrance of the the type T in the 
+        given Signature's argument list. Evaluates to -1 if T is not 
+        contained in the argument list. Signature::ReturnType and 
+        Signature::Context are not evaluated.
     */
     template < typename T, typename ListT, unsigned short Internal = 0 >
     struct Index : tmp::IntVal< tmp::SameType<T, typename ListT::Head>::Value
@@ -120,10 +137,42 @@ namespace sl {
     template < typename T, unsigned short Internal >
     struct Index<T,tmp::nil,Internal> : tmp::IntVal<-1> {};
     
+    /**
+        Convenience form of Index<T,ListT> which evaluates to true 
+        if Index returns a non-negative value, else it evaluates
+        to false.        
+    */
     template < typename T, typename ListT>
     struct Contains : tmp::BoolVal< Index<T,ListT>::Value >= 0  > {};
+    
+    
+
+    /**
+        A metatype whos Value member evaluates to the number of arguments
+        in the given typelist, but evaluates to -1 if the only argument
+        is (v8::Arguments const &).
+    */
+    template <typename SigT>
+    struct Arity
+    {
+        enum {
+            Value = ((1==Length<SigT>::Value)
+                    && (0==Index<v8::Arguments const &,SigT>::Value))
+                    ? -1
+                    : sl::Length<SigT>::Value
+        };
+    };
+    
+    /**
+        This metafunction evaluates to true if SigT appears to be
+        "InvocationCallback-like" (returns any type and takes one
+        (v8::Arguments const &) parameter).
+    */
+    template <typename SigT>
+    struct IsInCaLike : tmp::BoolVal< -1 == Arity<SigT>::Value > {};
 }
 
+//! Highly arguably specialization.
 template <typename RV> struct Signature< Signature<RV> > : Signature<RV> {};
 
 /**
@@ -183,7 +232,7 @@ struct SignatureBase : Signature<Sig>
     //typedef Sig FunctionType;
 };
 
-/**
+/** @class FunctionSignature
    Base (unimplemented) signature for FunctionSignature
    specializations. The type passed to it must be a function
    signature.
@@ -212,7 +261,7 @@ struct SignatureBase : Signature<Sig>
 template <typename FunctionSig>
 struct FunctionSignature;
 
-/**
+/** @class MethodSignature
    Base (unimplemented) signature for MethodSignature
    specializations. The Sig type passed to it must be a member method
    signature of a function from the class T.
@@ -243,7 +292,7 @@ struct FunctionSignature;
 template <typename T, typename Sig>
 struct MethodSignature;
 
-/**
+/** @class ConstMethodSignature
    Base (unimplemented) signature for ConstMethodSignature
    specializations. The Sig type passed to it must be a member
    method signature of a const function from the class T.
@@ -393,24 +442,6 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
 };
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType FuncPtr>
 typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
-
-#if 0
-/**
-    A (slightly) convenience wrappar around tmp::TypeAt.
-    
-    SigLisType must derive from Signature (or be API-compatible).
-    I is the 0-based index for which we want the type. The type is
-    available via this class' Type typedef.
-    
-    e.g.
-    
-    @code
-    SignatureParamAt< FunctionSignature< void (int,double) >, 1>::Type; // is double
-    @endcode
-*/
-template <unsigned short I, typename SigListType>
-struct SignatureParamAt : sl::At<I, SigListType> {};
-#endif
 
 #include "signature_generated.hpp"
 }} // namespaces

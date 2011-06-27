@@ -20,6 +20,18 @@ conversion.
 #define V8_CONVERT_CATCH_BOUND_FUNCS 0
 namespace v8 { namespace convert {
 
+/**
+    A marker class, primarily for documentation purposes.
+*/
+struct Callable
+{
+    /**
+        Matches the v8::InvocationCallback interface. All function 
+        bindings created by this framework use this function as 
+        their class-level InvocationCallback interface.
+    */
+    static v8::Handle<v8::Value> Call( v8::Arguments const & );
+};
 
 /** Temporary internal macro - it is undef'd at the end of this file. It is used
     by internal generated code, so don't go renaming it without also changing the
@@ -158,6 +170,8 @@ namespace Detail {
         inline void Dispose() const
         {}
     };
+    
+    
 
 }
 
@@ -309,6 +323,7 @@ struct SignatureIsUnlockable : tmp::BoolVal<
         IsUnlockable<typename SigTList::Head>::Value &&
         SignatureIsUnlockable<typename SigTList::Tail>::Value
         > {};
+//! End-of-list specialization.
 template <>
 struct SignatureIsUnlockable<tmp::NilType> : tmp::BoolVal<true> {};
 
@@ -703,7 +718,7 @@ namespace Detail {
 template <typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
-struct ArgsToFunctionForwarder
+struct ArgsToFunctionForwarder : Callable
 {
 private:
     typedef typename
@@ -752,7 +767,7 @@ namespace Detail {
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionToInCa : FunctionPtr<Sig, Func>
+    struct FunctionToInCa : FunctionPtr<Sig, Func>, Callable
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -767,7 +782,7 @@ namespace Detail {
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionToInCaVoid : FunctionPtr<Sig,Func>
+    struct FunctionToInCaVoid : FunctionPtr<Sig,Func>, Callable
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -784,7 +799,7 @@ namespace Detail {
               typename MethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
               >
-    struct MethodToInCa : MethodPtr<T,Sig, Func>
+    struct MethodToInCa : MethodPtr<T,Sig, Func>, Callable
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -808,7 +823,7 @@ namespace Detail {
               typename MethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
               >
-    struct MethodToInCaVoid : MethodPtr<T,Sig,Func>
+    struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, Callable
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -833,7 +848,7 @@ namespace Detail {
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
               >
-    struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>
+    struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>, Callable
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -856,7 +871,7 @@ namespace Detail {
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
               >
-    struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>
+    struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>, Callable
     {
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
@@ -941,7 +956,8 @@ struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
    
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
 */
-template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
+template <typename T, typename Sig,
+          typename MethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
           >
 struct MethodToInCa
@@ -956,7 +972,8 @@ struct MethodToInCa
     See FunctionToInCaVoid - this is identical exception that it
     works on member functions of T.
 */
-template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
+template <typename T, typename Sig,
+          typename MethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
           >
 struct MethodToInCaVoid
@@ -990,7 +1007,8 @@ struct ConstMethodToInCaVoid : Detail::ConstMethodToInCaVoid<T, Sig, Func, Unloc
 {};
 
 
-/**
+/** @deprecated Use FunctionToInCa::Call() instead.
+
    A v8::InvocationCallback implementation which forwards the arguments from argv
    to the template-specified function. If Func returns void then the return
    value will be v8::Undefined().
@@ -1008,7 +1026,8 @@ v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
     return FunctionToInCa<Sig,Func>::Call(argv);
 }
 
-/**
+/** @deprecated Use MethodToInCa::Call() instead.
+
    A v8::InvocationCallback implementation which forwards the arguments from argv
    to the template-specified member of "a" T object. This function uses
    CastFromJS<T>( argv.This() ) to fetch the native 'this' object, and will
@@ -1031,7 +1050,8 @@ v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
 }
 
 
-/**
+/** @deprecated Use ConstMethodToInCa::Call() instead.
+
    Identical to MethodToInvocationCallback(), but is for const member functions.
 
    @code
@@ -1108,7 +1128,7 @@ public:
 
 
 /**
-   Identicial to ArgsToMethodForwarder, but works on const member methods.
+   Identical to ArgsToMethodForwarder, but works on const member methods.
 */
 template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
@@ -1421,7 +1441,8 @@ struct InCa : FunctionToInCa< v8::Handle<v8::Value> (v8::Arguments const &), ICB
 #if 1
 /**
    "Converts" an InCa<ICB> instance to JS by treating it as an
-   InvocationCallback function.
+   InvocationCallback function. This is primarily useful in
+   conjunction with ClassCreator::Set() to add function bindings.
 */
 template <v8::InvocationCallback ICB>
 struct NativeToJS< InCa<ICB> >
@@ -1543,7 +1564,7 @@ template < typename ExceptionT,
            v8::InvocationCallback ICB,
            bool PropagateOtherExceptions = false
     >
-struct InCaCatcher
+struct InCaCatcher : Callable
 {
     static v8::Handle<v8::Value> Call( v8::Arguments const & args )
     {
@@ -1595,7 +1616,7 @@ template < int Arity,
            v8::InvocationCallback ICB,
            v8::InvocationCallback Fallback = Detail::TossArgCountError<Arity>
 >
-struct InCaOverloader
+struct InCaOverloader : Callable
 {
     /**
        When called, if (Artity==-1) or if (Arity==args.Length()) then
@@ -1661,7 +1682,7 @@ namespace Detail
     namespace cv = v8::convert;
     namespace tmp = cv::tmp;
     template <typename FWD>
-    struct ArityOverloaderOne
+    struct ArityOverloaderOne : Callable
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -1684,7 +1705,7 @@ namespace Detail
        Internal dispatch end-of-list routine.
     */
     template <>
-    struct ArityOverloaderOne<tmp::NilType>
+    struct ArityOverloaderOne<tmp::NilType> : private Callable
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -1695,7 +1716,7 @@ namespace Detail
        FwdList must be-a TypeList of classes with Call() and Arity members.
     */
     template <typename List>
-    struct ArityOverloaderList
+    struct ArityOverloaderList : Callable
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -1716,7 +1737,7 @@ namespace Detail
        End-of-list specialization.
     */
     template <>
-    struct ArityOverloaderList<tmp::NilType>
+    struct ArityOverloaderList<tmp::NilType> : Callable
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -1765,7 +1786,7 @@ namespace Detail
    is all done at compile-time.
 */
 template < typename FwdList >
-struct InCaOverloadList
+struct InCaOverloadList : Callable
 {
     // arguable: static const Arity = -1;
     /**
@@ -1909,7 +1930,6 @@ template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
         >
 struct ToInCa : Detail::ToInCaSigSelector<T,Sig>::template Base<Func,UnlockV8>
-//Detail::ToInCaImplKindOf<T,Sig,Func,UnlockV8>
 {
 };
 
@@ -2010,43 +2030,8 @@ struct PredicatedInCaOverloader;
 
 namespace Detail
 {
-#if 0
-    using namespace cv::tmp;
-    template <typename T> struct PredicatedInCaOverloader
-    {
-        bool operator()( v8::Arguments const & argv ) const
-        {
-            return false;
-        }
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            return cv::Toss(cv::StringBuffer()<<"No predicates in the "
-                            << "argument dispatcher matched the given "
-                            << "arguments (arg count="<<argv.Length()
-                            << ").");
-        }
-    };
-    template <>
-    struct PredicatedInCaOverloader< TypeChain<NilType,NilType> > : PredicatedInCaOverloader< NilType > {};
-
-    template <typename H, typename T>
-    struct PredicatedInCaOverloader< TypeChain<H,T> >
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            if( H()( argv ) )
-            {
-                return H::Call( argv );
-            }
-            else
-            {
-                return cv::PredicatedInCaOverloader<T>::Call(argv);
-            }
-        }
-    };
-#else
     template <typename ListType>
-    struct PredicatedInCaOverloader
+    struct PredicatedInCaOverloader : Callable
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -2063,7 +2048,7 @@ namespace Detail
         }
     };
     template <>
-    struct PredicatedInCaOverloader< tmp::NilType >
+    struct PredicatedInCaOverloader< tmp::NilType > : Callable
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -2073,7 +2058,6 @@ namespace Detail
                             << ").");
         }
     };
-#endif
 }
 
 /**
@@ -2097,7 +2081,7 @@ struct PredicatedInCaOverloader : Detail::PredicatedInCaOverloader<TList>
     not dynamically-allocated resources).
 */
 template <typename InCaT, typename InitFunctor>
-struct OneTimeInitInCa
+struct OneTimeInitInCa : Callable
 {
     /**
         The first time this function is called it runs 
@@ -2109,6 +2093,10 @@ struct OneTimeInitInCa
         
         If initialization, InCaT::Call(argv) is called and its value 
         is returned.
+        
+        Pedantic note: if this class is used in code which is linked
+        in from multiple DLLs, the init routine might be called
+        more than once, depending on the platform.
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {

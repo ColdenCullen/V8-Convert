@@ -7,22 +7,46 @@
 
 namespace v8 { namespace convert {
 
+    /**
+        A functor which fetches an argument by index.
+        
+        I = the argument index to fetch.
+        
+        The class is intended mainly to be invoked via code paths 
+        selected by template metaprograms, thus the hard-coding of 
+        the argument parameter index at compile-time.
+    */
     template <int I>
     struct ArgAt
     {
         typedef char AssertIndex[ (I>=0) ? 1 : -1];
+        /**
+            Returns argv[I] if argv.Length() is <= I, else v8::Undefined()
+            is returned.
+        */
         v8::Handle<v8::Value> operator()( v8::Arguments const & argv ) const
         {
             return (argv.Length() > I) ? argv[I] : v8::Undefined();
         }
     };
 
+    /**
+        Functor to fetch an argument and return its result
+        as a native value.
+        
+        I = the argument index to fetch.
+        
+        T = the native type to convert to. CastFromJS<T>() must be legal.
+    */
     template <int I, typename T>
     struct ArgAtCast
     {
         typedef JSToNative<T> J2N;
         typedef typename J2N::ReturnType ReturnType;
         typedef char AssertIndex[ (I>=0) ? 1 : -1];
+        /**
+            Returns CastFromJS<T>( ArtAt<I>(argv) ).
+        */
         ReturnType operator()( v8::Arguments const & argv ) const
         {
             typedef ArgAt<I> Proxy;
@@ -30,15 +54,40 @@ namespace v8 { namespace convert {
         }
     };
 
+    /**
+        Marker class, for documentation purposes.
+    */
     struct ValuePredicateConcept
     {
-        bool operator()( v8::Handle<v8::Value> const & ) const;
+        /**
+            Must evaluate the handle and return true or false.
+            The framework cannot guaranty that h.IsEmpty() is false,
+            so implementations should be in the habit of checking it.
+        */
+        bool operator()( v8::Handle<v8::Value> const & h ) const;
     };
 
+    /**
+        A functor interface for determining if a JS value
+        "is-a" value of a particular native type. The default
+        implementation is useable for any type for which the
+        following is legal:
+        
+        @code
+        T * t = CastFromJS<T const *>( aV8Handle );
+        @endcode
+        
+        Specializations are used for most data types, but this
+        one is fine for client-bound types conformant with
+        CastFromJS().
+    */
     template <typename T>
     struct ValIs : ValuePredicateConcept
     {
         typedef T Type;
+        /**
+            Returns true if v appears to contain a (T*).
+        */
         inline bool operator()( v8::Handle<v8::Value> const & v ) const
         {
             return NULL != CastFromJS<T const *>(v);
@@ -50,13 +99,21 @@ namespace v8 { namespace convert {
     template <typename T> struct ValIs<T *> : ValIs<T> {};
     template <typename T> struct ValIs<T const *> : ValIs<T> {};
 
+    /**
+        Specialization which treats void as the v8::Undefined() value.
+    */
     template <>
     struct ValIs<void>
     {
         typedef void Type;
+        /**
+            Returns true only if h is not empty and h->IsUndefined().
+            Note that an empty handle evaluates to false in this
+            context because.
+        */
         inline bool operator()( v8::Handle<v8::Value> const & h ) const
         {
-            return h.IsEmpty() || h->IsUndefined();
+            return h.IsEmpty() ? false : h->IsUndefined();
         }
     };
     
@@ -70,21 +127,6 @@ namespace v8 { namespace convert {
             }  
         };
     }
-    struct ValIs_Array : Detail::ValIs_X<&v8::Value::IsArray> {};
-    struct ValIs_Object : Detail::ValIs_X<&v8::Value::IsObject> {};
-    struct ValIs_Boolean : Detail::ValIs_X<&v8::Value::IsBoolean> {};
-    struct ValIs_Date : Detail::ValIs_X<&v8::Value::IsDate> {};
-    struct ValIs_External : Detail::ValIs_X<&v8::Value::IsExternal> {};
-    struct ValIs_False : Detail::ValIs_X<&v8::Value::IsFalse> {};
-    struct ValIs_Function : Detail::ValIs_X<&v8::Value::IsFunction> {};
-    struct ValIs_Int32 : Detail::ValIs_X<&v8::Value::IsInt32> {};
-    struct ValIs_UInt32 : Detail::ValIs_X<&v8::Value::IsUint32> {};
-    struct ValIs_Null : Detail::ValIs_X<&v8::Value::IsNull> {};
-    struct ValIs_Undefined : Detail::ValIs_X<&v8::Value::IsUndefined> {};
-    struct ValIs_Number : Detail::ValIs_X<&v8::Value::IsNumber> {};
-    struct ValIs_RegExp : Detail::ValIs_X<&v8::Value::IsRegExp> {};
-    struct ValIs_String : Detail::ValIs_X<&v8::Value::IsString> {};
-    struct ValIs_True : Detail::ValIs_X<&v8::Value::IsTrue> {};
 
 
     namespace Detail {
@@ -114,28 +156,34 @@ namespace v8 { namespace convert {
         };
     }
 
-    template <>
-    struct ValIs<int8_t> : Detail::ValIs_NumberStrictRange<int8_t> {};
-    template <>
-    struct ValIs<uint8_t> : Detail::ValIs_NumberStrictRange<uint8_t> {};
-    template <>
-    struct ValIs<int16_t> : Detail::ValIs_NumberStrictRange<int16_t> {};
-    template <>
-    struct ValIs<uint16_t> : Detail::ValIs_NumberStrictRange<uint16_t> {};
-    template <>
-    struct ValIs<int32_t> : Detail::ValIs_NumberStrictRange<int32_t> {};
-    template <>
-    struct ValIs<uint32_t> : Detail::ValIs_NumberStrictRange<uint32_t> {};
-    template <>
-    struct ValIs<int64_t> : Detail::ValIs_NumberStrictRange<int64_t> {};
-    template <>
-    struct ValIs<uint64_t> : Detail::ValIs_NumberStrictRange<uint64_t> {};
-    template <>
-    struct ValIs<double> : ValIs_Number {};
+    struct ValIs_Array :  Detail::ValIs_X<&v8::Value::IsArray> {};
+    struct ValIs_Object : Detail::ValIs_X<&v8::Value::IsObject> {};
+    struct ValIs_Boolean : Detail::ValIs_X<&v8::Value::IsBoolean> {};
+    struct ValIs_Date : Detail::ValIs_X<&v8::Value::IsDate> {};
+    struct ValIs_External : Detail::ValIs_X<&v8::Value::IsExternal> {};
+    struct ValIs_False : Detail::ValIs_X<&v8::Value::IsFalse> {};
+    struct ValIs_Function : Detail::ValIs_X<&v8::Value::IsFunction> {};
+    struct ValIs_Int32 : Detail::ValIs_X<&v8::Value::IsInt32> {};
+    struct ValIs_UInt32 : Detail::ValIs_X<&v8::Value::IsUint32> {};
+    struct ValIs_Null : Detail::ValIs_X<&v8::Value::IsNull> {};
+    struct ValIs_Undefined : Detail::ValIs_X<&v8::Value::IsUndefined> {};
+    struct ValIs_Number : Detail::ValIs_X<&v8::Value::IsNumber> {};
+    struct ValIs_RegExp : Detail::ValIs_X<&v8::Value::IsRegExp> {};
+    struct ValIs_String : Detail::ValIs_X<&v8::Value::IsString> {};
+    struct ValIs_True : Detail::ValIs_X<&v8::Value::IsTrue> {};
+
+    // FIXME: reverse the parent relationships between e.g. ValIs<v8::Array> and ValIs_Array.
+    template <> struct ValIs<int8_t> : Detail::ValIs_NumberStrictRange<int8_t> {};
+    template <> struct ValIs<uint8_t> : Detail::ValIs_NumberStrictRange<uint8_t> {};
+    template <> struct ValIs<int16_t> : Detail::ValIs_NumberStrictRange<int16_t> {};
+    template <> struct ValIs<uint16_t> : Detail::ValIs_NumberStrictRange<uint16_t> {};
+    template <> struct ValIs<int32_t> : Detail::ValIs_NumberStrictRange<int32_t> {};
+    template <> struct ValIs<uint32_t> : Detail::ValIs_NumberStrictRange<uint32_t> {};
+    template <> struct ValIs<int64_t> : Detail::ValIs_NumberStrictRange<int64_t> {};
+    template <> struct ValIs<uint64_t> : Detail::ValIs_NumberStrictRange<uint64_t> {};
+    template <> struct ValIs<double> : ValIs_Number {};
     template <> struct ValIs<char const *> : ValIs_String {};
-   
     template <> struct ValIs<std::string> : ValIs_String {};
-    
     template <> struct ValIs<v8::Array> : ValIs_Array {};
     template <> struct ValIs<v8::Object> : ValIs_Object {};
     template <> struct ValIs<v8::Boolean> : ValIs_Boolean {};
@@ -148,16 +196,51 @@ namespace v8 { namespace convert {
     template <> struct ValIs<v8::RegExp> : ValIs_RegExp {};
     template <> struct ValIs<v8::String> : ValIs_String {};
     template <typename T> struct ValIs< v8::Handle<T> > : ValIs< T > {};
+    template <typename T> struct ValIs< v8::Local<T> > : ValIs< T > {};
+    template <typename T> struct ValIs< v8::Persistent<T> > : ValIs< T > {};
 
+    /**
+        Marker class, for documentation purposes.
+        
+        Classes matching this concept "evaluate" a v8::Arguments 
+        object for validity without actually performing any 
+        "application logic." These are inended to be used as 
+        functors, primarily triggered via code paths selected by 
+        template metaprograms.
+        
+        They must be default-construcable and should have no
+        private state. Their public API consists of only operator().
+
+        This Concept's operator() is intended only to be used for 
+        decision-making purposes ("are there enough arguments?" or 
+        "are the arguments of the proper types?"), and not 
+        higher-level application logic.
+    */
     struct ArgumentsPredicateConcept
     {
+        /**
+            Must "evaluate" the arguments and return true or false. 
+        */
         bool operator()( v8::Arguments const & ) const;
     };
 
+    /**
+        Functor to evaluate whether an Arguments list
+        has a certain range of argument count.
+        
+        Min is the minimum number. Max is the maximum. The range is 
+        inclusive. Use (Max<Min) to mean (MIN..end). Use (Min==Max)
+        to mean only that many arguments.
+    */
     template <int Min_, int Max_ = Min_>
     struct ArgPred_Length : ArgumentsPredicateConcept
     {
         enum { Min = Min_, Max = Max_ };
+        /**
+            Returns true if av meets the argument count
+            requirements defined by the Min and Max
+            values.
+        */
         bool operator()( v8::Arguments const & av ) const
         {
             
@@ -168,9 +251,19 @@ namespace v8 { namespace convert {
         }
     };
 
+    /**
+        Arguments predicate functor.
+    
+        Index = arg index to check.
+        
+        ValIsType must match the ValuePredicateConcept interface.
+    */
     template <unsigned short Index, typename ValIsType >
     struct ArgAt_Is : ArgumentsPredicateConcept
     {
+        /**
+            Returns true if ValType()( av[Index] ) is true.
+        */
         bool operator()( v8::Arguments const & av ) const
         {
             return (Index >= av.Length())
@@ -179,13 +272,30 @@ namespace v8 { namespace convert {
         }
     };
 
+    /**
+        Arguments predicate functor.
+    
+        Index = arg index to check.
+        
+        T is a type for which ValIs<T> is legal.
+    */
     template <unsigned short Index, typename T>
     struct ArgAt_IsA : ArgAt_Is< Index, ValIs<T> > {};
 
     namespace Detail {
+        /**
+            Functor which proxies the v8::Value "is-a" functions.
+            
+            Index is the argument index to check. Getter is the 
+            member to be used to perform the is-a evaluation.
+        */
         template <unsigned short Index, bool (v8::Value::*Getter)() const>
         struct ArgAt_IsX : ArgumentsPredicateConcept
         {
+            /**
+                Returns true only if (Index < av.Length())
+                and av->Getter() returns true.
+            */
             bool operator()( v8::Arguments const & av ) const
             {
                 return ( av.Length() <= Index )

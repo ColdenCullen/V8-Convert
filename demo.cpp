@@ -179,37 +179,31 @@ ValueHandle test1_callback( v8::Arguments const & argv )
 
 struct MyType
 {
-    MyType()
-    {
+    MyType() {
         CERR << "MyType::MyType() @ "<<this<<'\n';
     }
-    MyType( int i, double d )
-    {
+    MyType( int i, double d ) {
         CERR << "MyType::MyType("<<i<<", "<<d<<") @ "<<this<<'\n';
     }
-    MyType( char const * str )
-    {
+    MyType( char const * str ) {
         CERR << "MyType::MyType("<<str<<") @ "<<this<<'\n';
     }
-    MyType( v8::Arguments const & argv )
-    {
+    MyType( v8::Arguments const & argv ) {
         CERR << "MyType::MyType("<<argv.Length()<<" arg(s)) @ "<<this<<'\n';
     }
-    ~MyType()
-    {
+    ~MyType() {
         CERR << "MyType::~MyType() @ "<<this<<'\n';
     }
     
-    typedef //cv::tmp::TypeList<
-            cv::Signature<void ( // this also works.
+    // Ctors we want to bind to v8 (there are several other ways to do this):
+    typedef cv::tmp::TypeList<
+            //cv::Signature<void ( // this also works.
                 cv::CtorForwarder<MyType *()>,
                 cv::CtorForwarder<MyType *(char const *)>,
                 cv::CtorForwarder<MyType *( int, double )>,
-                // This one compiles but is not yet picked up properly at runtime:
                 cv::CtorForwarder<MyType *( v8::Arguments const &)>
-            )
+            //)
             > Ctors;
-        
 };
 
 //-----------------------------------
