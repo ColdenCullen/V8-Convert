@@ -33,12 +33,6 @@ struct Callable
     static v8::Handle<v8::Value> Call( v8::Arguments const & );
 };
 
-/** Temporary internal macro - it is undef'd at the end of this file. It is used
-    by internal generated code, so don't go renaming it without also changing the
-    code generator (been there, done that!).
-*/
-#define JS_THROW(MSG) v8::ThrowException(v8::Exception::Error(v8::String::New(MSG)))
-
 /**
    Partial specialization for v8::InvocationCallback-like functions
    (differing only in their return type) with an Arity value of -1.
@@ -449,7 +443,7 @@ namespace Detail {
             T * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
         ASSERT_UNLOCK_SANITY_CHECK;
     };
@@ -471,7 +465,7 @@ namespace Detail {
             T * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -507,7 +501,7 @@ namespace Detail {
             T * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
 
@@ -528,7 +522,7 @@ namespace Detail {
             T * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -564,7 +558,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
 
@@ -585,7 +579,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -621,7 +615,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
         ASSERT_UNLOCK_SANITY_CHECK;
     };
@@ -644,7 +638,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -750,7 +744,7 @@ public:
         }
         catch(...)
         {
-            return JS_THROW("Native code through unknown exception type.");
+            return Toss("Native code through unknown exception type.");
         }
 #endif
     }
@@ -1108,7 +1102,7 @@ public:
         }
         catch(...)
         {
-            return JS_THROW("Native code through unknown exception type.");
+            return Toss("Native code through unknown exception type.");
         }
 #endif
     }
@@ -1122,7 +1116,7 @@ public:
         T * self = CastFromJS<T>(argv.This());
         return self
             ? Call(*self, func, argv)
-            : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+            : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
     }
 };
 
@@ -1166,7 +1160,7 @@ public:
         }
         catch(...)
         {
-            return JS_THROW("Native code through unknown exception type.");
+            return Toss("Native code through unknown exception type.");
         }
 #endif
     }
@@ -1180,7 +1174,7 @@ public:
         T const * self = CastFromJS<T>(argv.This());
         return self
             ? Call(*self, func, argv)
-            : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+            : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
     }
 };
 
@@ -1574,16 +1568,16 @@ struct InCaCatcher : Callable
         }
         catch( ExceptionT const & e2 )
         {
-            return v8::ThrowException(v8::Exception::Error(CastToJS((e2.*Getter)())->ToString()));
+            return Toss(CastToJS((e2.*Getter)())->ToString());
         }
         catch( ExceptionT const * e2 )
         {
-            return v8::ThrowException(v8::Exception::Error(CastToJS((e2->*Getter)())->ToString()));
+            return Toss(CastToJS((e2->*Getter)())->ToString());
         }
         catch(...)
         {
             if( PropagateOtherExceptions ) throw;
-            else return JS_THROW("Unknown native exception thrown!");
+            else return Toss("Unknown native exception thrown!");
         }
     }
 };
@@ -2115,6 +2109,5 @@ struct OneTimeInitInCa : Callable
 
 }} // namespaces
 
-#undef JS_THROW
 #undef V8_CONVERT_CATCH_BOUND_FUNCS
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */

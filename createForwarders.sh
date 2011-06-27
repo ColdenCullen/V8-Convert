@@ -296,7 +296,7 @@ namespace Detail {
             T ${constness} * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
 
@@ -321,7 +321,7 @@ namespace Detail {
             T ${constness} * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
 }
