@@ -704,8 +704,9 @@ namespace v8 { namespace convert {
         typedef cv::CtorForwarder< JSSocket * (int,int)> Ctor2;
         typedef cv::CtorForwarder< JSSocket * (int,int,int)> Ctor3;
         typedef cv::CtorForwarder< JSSocket * (int,int,int,int)> Ctor4; // this one is only for internal use
-        typedef cv::CtorForwarderDispatcher< cv::tmp::TypeList<
-            Ctor0, Ctor1, Ctor2, Ctor3, Ctor4 >
+        typedef cv::CtorForwarderDispatcher< cv::Signature< JSSocket *(
+                Ctor0, Ctor1, Ctor2, Ctor3, Ctor4 
+            )>
         > Dispatch;
         JSSocket * s = Dispatch::Ctor( argv );
         if( s )
