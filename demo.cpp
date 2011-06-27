@@ -210,7 +210,7 @@ namespace v8 { namespace convert {
 
     template <>
     class ClassCreator_Factory<MyType>
-     : public ClassCreator_Factory_CtorForwarder< MyType, MyType::Ctors >
+     : public ClassCreator_Factory_CtorArityDispatcher< MyType, MyType::Ctors >
     {};
     template <>
     struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >

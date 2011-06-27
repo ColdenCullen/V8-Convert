@@ -8,12 +8,7 @@
    set in the demo app (ConvertDemo.cpp), and changing them there might
    (should) cause these tests to fail.
 */
-if( 'function' == typeof loadPlugin )
-    (function(){
-        var lp = loadPlugin("juice-plugin/v8-juice-ConvertDemo");
-        print("Loaded v8-juice plugin. "+lp);
-    })();
-
+load('addons/test-common.js');
 
 function printStackTrace(indention)
 {
@@ -29,55 +24,14 @@ function getCallLocation(framesBack){
 }
 
 
-function assert(cond,msg)
-{
-    if( ! cond ) {
-        msg = 'Assertion failed at (or around) line '+getCallLocation(3).line+': '+(msg||'')+
-            '\nStacktrace: '+JSON.stringify(getStacktrace(),0,0);
-        throw new Error(msg);
-    }
-    else {
-        print("Assertion OK: "+msg);
-    }
-}
-
-function asserteq(got,expect,msg)
-{
-    msg = msg || (got+' == '+expect);
-    if(1) {
-        if( got != expect ) {
-            var st = getStacktrace(4);
-            msg = 'Assertion failed at line '+st[1].line+': '+msg+
-                '\nStacktrace: '+JSON.stringify(st,0,0);
-            throw new Error(msg);
-        }
-        else print("Assertion OK: "+msg);
-    }
-    else {
-        if( got != expect ) {
-            throw new Error('Assertion failed: '+msg);
-        }
-        else print("Assertion OK: "+msg);
-    }
-        
-}
-
-function assertThrows( func ) {
-    var ex = undefined;
-    try { func(); }
-    catch(e) { ex = e; }
-    assert( !!ex, "Got expected exception: "+ex );
-    if(0) printStackTrace(4);
-}
-
 function test1()
 {
     { // if these fail they'll probably cause an assertion in v8...
         BoundNative.testLocker();
         BoundNative.testLockerNoUnlocking()
     }
-    
-    var f = new BoundNative();
+
+    var f = new BoundNative(42);
     print('f='+f);
     f.puts("hi, world");
     f.cputs("hi, world");
@@ -149,6 +103,11 @@ function test1()
 
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );
+
+    assertThrows( function() {
+        new BoundNative(1,2,3,4,5,6);
+    });
+
 }
 
 function test2()

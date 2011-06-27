@@ -65,7 +65,7 @@
 #include <cassert>
 #include "convert.hpp"
 //#include <iostream> // only for debuggering
-
+#include "NativeToJSMap.hpp"
 namespace v8 { namespace convert {
 
     /**
@@ -994,7 +994,7 @@ namespace v8 { namespace convert {
         namespace cv = v8::convert;
         namespace tmp = cv::tmp;
         /**
-           A base class for ClassCreator_Factory_CtorForwarder.
+           A base class for ClassCreator_Factory_CtorArityDispatcher.
            We don't really need this level of indirection, i think.
         */
         template <typename T>
@@ -1031,6 +1031,71 @@ namespace v8 { namespace convert {
         Can be used as a concrete ClassCreator_Factor<T> 
         specialization to forward JS ctor calls directly to native 
         ctors.
+    
+        T must be the ClassCreator'd type to construct. CtorProxy must
+        be a type having this interface:
+        
+        @code
+        TypeInfo<T>::NativeHandle Ctor( v8::Arguments const & );
+        @endcode
+
+        Normally CtorProxy would be CtorForwarder CtorForwarderDispatcher,
+        but any interface-compatible type will do.
+
+        It must return a new object instance on success. On error it
+        may return NULL and "should" throw a native exception explaining
+        the problem. The exception will be caught by ClassCreator and
+        transformed into a JS-side exception.
+        
+        If CtorProxy::Ctor() succeeds (returns non-NULL and does not throw)
+        then NativeToJSMap<T> is used to create a native-to-JS mapping.
+        To make use of this, the client should do the following:
+        
+        @code
+        // in the v8::convert namespace:
+        template <>
+            struct NativeToJS<T> : NativeToJSMap<T>::NativeToJSImpl {};
+        @endcode
+        
+        After that, CastToJS<T>( theNativeObject ) can work.
+        
+        The mapping is cleaned up when (if!) the object is sent through
+        the JS garbage collector or the client somehow triggers its
+        JS-aware destruction (e.g. via ClassCreator::DestroyObject(),
+        assuming the type was wrapped using ClassCreator).
+    */
+    template <typename T, typename CtorProxy>
+    struct ClassCreator_Factory_NativeToJSMap : Detail::Factory_CtorForwarder_Base<T>
+    {
+    public:
+        typedef NativeToJSMap<T> N2JMap;
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        
+        /**
+            If CtorProxy::Ctor(argv) succeeds, N2JMap::Insert(jself, theNative)
+            is called. The result of CtorProxy::Ctor() is returned.
+        */
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
+        {
+            NativeHandle n = CtorProxy::Ctor( argv );
+            if( n ) N2JMap::Insert( jself, n );
+            return n;
+        }
+        /**
+            Calls N2JMap::Remove( nself ) then (delete nself).
+        */
+        static void Delete( NativeHandle nself )
+        {
+            N2JMap::Remove( nself );
+            delete nself;
+        }
+    };
+
+    /**
+        Can be used as a concrete ClassCreator_Factor<T> 
+        specialization to forward JS ctor calls directly to native 
+        ctors.
         
         T must (or is assumed to) be a ClassCreator<T>-wrapped 
         class. CtorForwarderList must be a tmp::TypeList of 
@@ -1047,7 +1112,7 @@ namespace v8 { namespace convert {
         // Then create Factory specialization based on those:
         template <>
         struct ClassCreator_Factory<CFT> : 
-            ClassCreator_Factory_CtorForwarder<CFT, CtorList> {};
+            ClassCreator_Factory_CtorArityDispatcher<CFT, CtorList> {};
         @endcode
         
         TODO: see if this work:
@@ -1057,7 +1122,7 @@ namespace v8 { namespace convert {
         @endcode
     */
     template <typename T,typename CtorForwarderList>
-    struct ClassCreator_Factory_CtorForwarder : Detail::Factory_CtorForwarder_Base<T>
+    struct ClassCreator_Factory_CtorArityDispatcher : Detail::Factory_CtorForwarder_Base<T>
     {
     public:
         typedef typename TypeInfo<T>::Type Type;

@@ -1686,6 +1686,9 @@ namespace v8 { namespace convert {
         */
         static ReturnType Ctor( v8::Arguments const & argv )
         {
+            // TODO: refactor CtorForwarderProxy to not take an arity,
+            // but use CtorForwarderProxy<Sig> instead. The current impl
+            // pre-dates some of our templates-related advances.
             typedef Detail::CtorForwarderProxy<STL::Arity> Proxy;
             return Proxy::template Ctor<Sig>( argv );
         }
@@ -1802,8 +1805,6 @@ namespace v8 { namespace convert {
     template <typename CtorList>
     struct CtorForwarderDispatcher
     {
-        //typedef typename sl::At<0,CtorList>::Type FirstCtor;
-        //typedef typename FirstCtor::ClassType Type;
         typedef typename CtorList::ReturnType RT;
         typedef typename TypeInfo<RT>::NativeHandle NativeHandle;
         static NativeHandle Ctor( v8::Arguments const & argv )

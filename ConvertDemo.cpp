@@ -42,10 +42,12 @@ namespace v8 { namespace convert {
     // A helper to support converting from BoundNative to its JS handle.
     typedef NativeToJSMap<BoundNative> BMap;
     typedef NativeToJSMap<BoundSubNative> BSubMap;
+    
     BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
-        BoundNative * b = new BoundNative;
-        BMap::Insert( jsSelf, b );
+        typedef cv::CtorForwarderDispatcher<BoundNativeCtors> Proxy;
+        BoundNative * b = Proxy::Ctor( argv );
+        if( b ) BMap::Insert( jsSelf, b );
         return b;
     }
     void ClassCreator_Factory<BoundNative>::Delete( BoundNative * obj )
@@ -64,54 +66,6 @@ namespace v8 { namespace convert {
         BSubMap::Remove( obj );
         delete obj;
     }
-
-#if 0 // don't use this - it doesn't work
-    // An experiment.
-    v8::Handle<v8::Value> ICListEnd( v8::Arguments const & )
-    {
-        return v8::Undefined();
-    }
-
-    // An experiment.
-    template <>
-    struct FunctionPtr<v8::InvocationCallback,ICListEnd>
-        : SignatureBase<v8::Handle<v8::Value>, -2>
-    {
-        public:
-        typedef FunctionSignature<v8::InvocationCallback> SignatureType;
-        typedef typename SignatureType::ReturnType ReturnType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        static FunctionType GetFunction()
-        {
-            return ICListEnd;
-        }
-        static v8::Handle<v8::Value> Call( v8::Arguments const & args  )
-        {
-            return ICListEnd(args);
-        }
-    };
-    typedef FunctionPtr<v8::InvocationCallback,ICListEnd> ICForwardEOL;
-    template < typename Callable0,
-               typename Callable1 = ICForwardEOL,
-               typename Callable2 = ICForwardEOL
-               >
-    struct ICForwardByArity
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & args )
-        {
-            int const n = args.Length();
-            CERR << "ICForwardByArity::Call(): args.Length=="<<n<<'\n';
-#define CHECK(N)                 CERR << "Checking against arity " << Callable##N::Arity << '\n'; \
-            if( Callable##N::Arity == n ) {                             \
-                return Callable##N::GetFunction()(args);                \
-            } (void)0
-            CHECK(0); CHECK(1); CHECK(2);
-            return v8::ThrowException(StringBuffer() << "This function was passed "<<n<<" arguments, "
-                                      << "but no overload was found matching that number of "
-                                      << "arguments.");
-        }
-    };
-#endif
 
 } }
 
@@ -174,7 +128,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 
     /**
         Create some logic (via a Predicate template) to use in 
-        associating an InCa with each set of rules....
+        associating an InCa with each set of dispatching rules....
     */
 
     typedef PredicatedInCa< ArgAt_IsA<0,int16_t>, FunctionToInCa<int16_t (int16_t), bogo_callback_int16> > PredIsaInt16;
@@ -614,7 +568,7 @@ namespace { // testing ground for some compile-time assertions...
         ctor = C2::Ctor;
         //ctor = C0Sub::Ctor;
         typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
-        //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
+        //typedef ClassCreator_Factory_CtorArityDispatcher<CtorList> CFTFactory;
         typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
         typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
         FacT fac;

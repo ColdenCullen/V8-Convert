@@ -38,8 +38,8 @@ struct BoundNative
 public:
     int publicInt;
     static int publicStaticInt;
-    BoundNative()
-        : publicInt(42)
+    BoundNative(int val = 42)
+        : publicInt(val)
     {
         CERR << "@"<<(void const *)this<<" is constructing.\n";
     }
@@ -214,6 +214,11 @@ public:
     
 };
 
+// BoundNative Ctors we want to bind to v8 (there are several other ways to do this):
+typedef cv::Signature<BoundNative (
+    cv::CtorForwarder<BoundNative *()>,
+    cv::CtorForwarder<BoundNative *(int)>
+)> BoundNativeCtors;
 /**
    A class for testing/demonstrating subclassing of bound types.
  */
@@ -306,6 +311,10 @@ namespace v8 { namespace convert {
       This policy class is required unless you just want to bind to 
       the default constructor. It creates native objects for the 
       underlying binding code.
+      
+      TODO: use ClassCreator_Factory_CtorArityDispatcher once i add the 
+      layer (or two?) of indirection i need to add NativeToJSMap support
+      at this level.      
      */
     template <>
     class ClassCreator_Factory<BoundNative>
@@ -315,6 +324,7 @@ namespace v8 { namespace convert {
         static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv );
         static void Delete( ReturnType obj );
     };
+
     template <>
     class ClassCreator_Factory<BoundSubNative>
     {
