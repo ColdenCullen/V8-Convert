@@ -1672,7 +1672,6 @@ namespace v8 { namespace convert {
     template <typename Sig>
     struct CtorForwarder : Signature<Sig>
     {
-        typedef typename Signature<Sig>::ReturnType ClassType;
         typedef Signature<Sig> STL;
         typedef typename STL::ReturnType ReturnType;
         /**
@@ -1680,7 +1679,8 @@ namespace v8 { namespace convert {
             then the constructor is called with Arity arguments
             (if it >=0) or with 1 v8::Arguments parameter (for Arity<0).
             
-            Returns the result of (new Type(...)).
+            Returns the result of (new Type(...)), transfering ownership
+            to the caller.
             
             May propagate native exceptions.
         */
@@ -1769,55 +1769,46 @@ namespace v8 { namespace convert {
     }
     
     /**
-        Given a tmp::TypeList of CtorForwarder instances, this type
-        can dispatch v8::Arguments to the ctor with a matching arity.
+        Proxies a list of constructors from v8::Arguments.
         
-        CtorList must be a tmp::TypeList containing CtorForwarder
-        types (or compatible).
-        
-        To figure out what base native type we're working with,
-        the Type typedef of the first CtorForwarder in the list
-        is used.
-        
-        CtorList may optionally be a Signature object where the
-        "return value" part is ignored for this purpose:
-        
-        Example:
+        CtorList must be-a a Signature type in this form:
         
         @code
-        typedef cv::tmp::TypeList<
-            //cv::Signature<void ( // this also works.
-                cv::CtorForwarder<MyType *()>,
-                cv::CtorForwarder<MyType *(char const *)>,
-                cv::CtorForwarder<MyType *( int, double )>,
-                cv::CtorForwarder<MyType *( v8::Arguments const &)>
-            //)
-        > Ctors;
+        typedef Signature<MyType ( // may optionally be (MyType *) - same effect
+            CtorForwarder<MyType *()>,
+            CtorForwarder<MyType *(char const *)>,
+            CtorForwarder<MyType *( int, double )>,
+            CtorForwarder<MyType *( v8::Arguments const &)>
+        )> Ctors;
         @endcode
         
-        Using Signature instead of TypeList has the slight advantage 
-        that most programming editors can visually match-up 
-        parenthesis but cannot do so with the '<' and '>' symbols. 
-        But it has the disadvantage that the ignored first parameter 
-        might confuse someone who's not sure what it is, or thinks 
-        that it must have a certain type. If C++ syntax would allow 
-        it, we wouldn't need that part of the parameter, but it 
-        does, so we do.
+        All entries in the typelist must be interface-compatible with
+        CtorForwarder. No two entries should have the same number 
+        of arguments with one exception: an InvocationCallback-like 
+        function taking (v8::Arguments const &) can be used as a 
+        catch-all for any number of arguments. If used, it must be 
+        the LAST entry because it will always match any argument 
+        count (and will therefore trump any which (would) come after 
+        it.
         
-        TODO, possibly: remove the TypeList support altogether
-        and require the Signature style. We could then use the return-type
-        part (CtorList::ReturnType) as the type to instantiate. THEN...
-        we could use types other than CtorForwarder which might return
-        subtypes of the given type. i've got uses for that.
+        The ctors are dispatched based solely on the argument count,
+        not their types. The first one with a matching arity
+        is called.
+        
+        IN THEORY (untested), the factories passed in the list may 
+        legally return a type publically derived from 
+        CtorList::ReturnType.
     */
     template <typename CtorList>
     struct CtorForwarderDispatcher
     {
-        typedef typename sl::At<0,CtorList>::Type FirstCtor;
-        typedef typename FirstCtor::ClassType Type;
-        typedef typename TypeInfo<Type>::NativeHandle NativeHandle;
+        //typedef typename sl::At<0,CtorList>::Type FirstCtor;
+        //typedef typename FirstCtor::ClassType Type;
+        typedef typename CtorList::ReturnType RT;
+        typedef typename TypeInfo<RT>::NativeHandle NativeHandle;
         static NativeHandle Ctor( v8::Arguments const & argv )
         {
+            typedef typename TypeInfo<RT>::Type Type;
             typedef Detail::CtorFwdDispatchList<Type, CtorList> Proxy;
             return Proxy::Ctor( argv );
         }

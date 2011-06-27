@@ -613,7 +613,7 @@ namespace { // testing ground for some compile-time assertions...
         ctor = C1::Ctor;
         ctor = C2::Ctor;
         //ctor = C0Sub::Ctor;
-        typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
+        typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
         //typedef ClassCreator_Factory_CtorForwarder<CtorList> CFTFactory;
         typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
         typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );

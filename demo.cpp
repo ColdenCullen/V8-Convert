@@ -196,14 +196,12 @@ struct MyType
     }
     
     // Ctors we want to bind to v8 (there are several other ways to do this):
-    typedef cv::tmp::TypeList<
-            //cv::Signature<void ( // this also works.
-                cv::CtorForwarder<MyType *()>,
-                cv::CtorForwarder<MyType *(char const *)>,
-                cv::CtorForwarder<MyType *( int, double )>,
-                cv::CtorForwarder<MyType *( v8::Arguments const &)>
-            //)
-            > Ctors;
+    typedef cv::Signature<MyType (
+        cv::CtorForwarder<MyType *()>,
+        cv::CtorForwarder<MyType *(char const *)>,
+        cv::CtorForwarder<MyType *( int, double )>,
+        cv::CtorForwarder<MyType *( v8::Arguments const &)>
+    )> Ctors;
 };
 
 //-----------------------------------
