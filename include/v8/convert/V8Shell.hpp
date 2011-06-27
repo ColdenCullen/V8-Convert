@@ -13,8 +13,6 @@
 #include <v8.h>
 
 namespace v8 { namespace convert {
-/** Temporary internal macro - undef'd at the end of this file. */
-#define V8_CONVERT_SHELL_HIDDEN_FIELD "V8Shell<>::Include()"
     /**
         This class implements a very basic shell for v8. Its template
         type is ignored - it is only a class template so that we 
@@ -480,11 +478,7 @@ namespace v8 { namespace convert {
             int const argc = argv.Length();
             if( argc < 1 ) return v8::Undefined();
             v8::HandleScope hsc;
-#if 1
             v8::Local<v8::Value> const jvself(argv.Data());
-#else // causes a v8 assertion on me downstream
-            v8::Local<v8::Value> const jvself(argv.Callee()->GetHiddenValue(v8::String::New(V8_CONVERT_SHELL_HIDDEN_FIELD)));
-#endif
             if( jvself.IsEmpty() || !jvself->IsExternal() )
             {
                 return v8::ThrowException(v8::Exception::Error(v8::String::New("Include() callback is missing its native V8Shell object.")));
@@ -514,14 +508,7 @@ namespace v8 { namespace convert {
         */
         v8::Handle<v8::Function> CreateIncludeFunction()
         {
-#if 1
             return v8::FunctionTemplate::New(Include, v8::External::New(this))->GetFunction();
-#else
-            using namespace v8;
-            Handle<Function> f( FunctionTemplate::New(Include)->GetFunction() );
-            f->SetHiddenValue( String::New(V8_CONVERT_SHELL_HIDDEN_FIELD), v8::External::Wrap(this) );
-            return f;
-#endif
         }
         
         /**
@@ -608,7 +595,6 @@ namespace v8 { namespace convert {
             return *this;
         }
     };
-#undef  V8_CONVERT_SHELL_HIDDEN_FIELD
 
     /**
         Convenience typedef for V8Shell<>.

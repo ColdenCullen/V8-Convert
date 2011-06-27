@@ -239,7 +239,9 @@ void test1(cv::Shell & shell)
     Undefined()
     };
     CERR << "Calling binding function...\n";
+    TryCatch catcher;
     hf->Call( shell.Context()->Global(), 3, args );
+    catcher.Reset();
     CERR << "Returned from binding function.\n";
 
     char const * extScr = "./test.js";

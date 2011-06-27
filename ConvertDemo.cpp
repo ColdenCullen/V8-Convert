@@ -295,7 +295,9 @@ v8::Handle<v8::Value> test_anton_callback( v8::Arguments const & args )
 template <bool IsUsingUnlock>
 void test_using_locker()
 {
-    CERR << "Callback "<<(IsUsingUnlock?"with":"without") << " Unlocker support. Briefly locking v8...\n";
+    CERR << "Callback "<<(IsUsingUnlock?"with":"without")
+        << " Unlocker support. "
+        << (IsUsingUnlock ? "Briefly" : "NOT") << " locking v8...\n";
     // If something is broken in our locking setup then the following will likely assert in v8:
     v8::Locker lock();
     cv::StringBuffer msg;
