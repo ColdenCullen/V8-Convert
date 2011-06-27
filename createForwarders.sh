@@ -12,17 +12,11 @@ Commands:
   ConstMethodSignature
   ArgsToMethodForwarder
   ArgsToFunctionForwarder
-  CtorForwarder
 EOF
     echo "Generates specializations for operations taking exactly NUMBER argumnents."
     exit 1
 }
 shift
-
-indent=$(which indent 2>/dev/null)
-if [[ x = "${indent}" ]]; then
-    indent=/bin/cat
-fi
 
 ValueHandle="v8::Handle<v8::Value>"
 tmplsig="typename WrappedType, typename RV, "
@@ -31,12 +25,10 @@ tmplsigV="typename WrappedType, void, "
 aTDecl="" # typename A0, typename A1,...
 aTParam="" # A0, A1 ...
 castCalls="" # CastFromJS<A0>(argv[0]), ...
-castCallsUnlocked="" # CastFromJS<A0>(argv[0]), ...
 castTypedefs="" # typedef ArgCaster<A#> AC#, ...
 castInits="" # AC# ac#; ...
-castInitsUnlocked="" # AC# ac#; ...
 callArgs="" # a0, ... aN
-sigTypeDecls="typedef Signature<Sig> SigT; " # SignatureType::ArgType# A#...
+sigTypeDecls="" # SignatureType::ArgType# A#...
 at=0
 
 ########################################################
@@ -52,23 +44,18 @@ function makeLists()
 	aTDecl="${aTDecl} typename ${AT}"
 	aTParam="${aTParam} ${AT}"
 	callArgs="${callArgs}${AT}"
-#reminder: the various ArgCaster bits are done in two steps: create
-# all ArgCasters, then make the call. This is required for the support
-# of v8::Unlocker, but is a performance hit for others and for types
-# which cannot/should not be locked (e.g. CtorForwarder).
         #sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
-        sigTypeDecls="${sigTypeDecls}typedef typename sl::At< ${at}, SigT >::Type ${AT};\n"
+        sigTypeDecls="${sigTypeDecls}typedef typename sl::At< ${at}, Signature<Sig> >::Type ${AT};\n"
 	#castCalls="${castCalls} CastFromJS< ${AT} >(argv[${at}])"
         castTypedefs="${castTypedefs} typedef ArgCaster<${AT}> AC${at};\n"
+        #castInits="${castInits} AC${at} ac${at};"
+        #castCalls="${castCalls} ac${at}.ToNative(argv[${at}])"
         castInits="${castInits} AC${at} ac${at}; A${at} arg${at}(ac${at}.ToNative(argv[${at}]));\n"
-        castInitsUnlocked="${castInitsUnlocked} AC${at} /*fixme: can't be const b/c of (char const *)*/ ac${at};"
         castCalls="${castCalls} arg${at}"
-        castCallsUnlocked="${castCallsUnlocked} ac${at}.ToNative(argv[${at}])"
 	test $at -ne $((count-1)) && {
 	    aTDecl="${aTDecl}, "
 	    aTParam="${aTParam}, "
 	    castCalls="${castCalls}, "
-        castCallsUnlocked="${castCallsUnlocked}, "
         callArgs="${callArgs}, "
 	}
     done
@@ -82,7 +69,7 @@ function makeLists()
 
 function mycat()
 {
-    perl -pe 's|\\n|\n|g;' | $indent
+    perl -pe 's|\\n|\n\t\t|g'
 }
 
 #######################################################
@@ -96,7 +83,7 @@ function makeCtorForwarder()
     mycat <<EOF
 namespace Detail {
 template <>
-struct CtorForwarderProxy<${count}>
+struct CtorForwarderProxy<${count}> // todo: subclass Signature<Sig>
 {
     enum { Arity = ${count} };
     template <typename Sig>
@@ -112,8 +99,8 @@ struct CtorForwarderProxy<${count}>
             typedef typename TypeInfo<Type_>::Type Type;
             ${sigTypeDecls}
             ${castTypedefs}
-            ${castInitsUnlocked}
-            return new Type( ${castCallsUnlocked} );
+            ${castInits}
+            return new Type( ${castCalls} );
         }
     }
 };
@@ -238,6 +225,40 @@ namespace Detail {
 }
 EOF
 
+:<<EOF
+    template <typename Sig>
+    struct ArgsToFunctionForwarder<${count},Sig,false> : FunctionSignature<Sig>
+    {
+    public:
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            ${sigTypeDecls}
+            ${castTypedefs}
+            ${castInits}
+            return CastToJS( (*func)( ${castCalls} ) );
+        }
+    };
+    template <typename Sig>
+    struct ArgsToFunctionForwarder<${count},Sig,true> : FunctionSignature<Sig>
+    {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            ${sigTypeDecls}
+            ${castTypedefs}
+            ${castInits}
+            typedef typename SignatureType::ReturnType RV;
+            V8Unlocker<true> unlocker;
+            RV rv( (*func)( ${castCalls} ) );
+            unlocker.Dispose();
+            return CastToJS( rv );
+        }
+    };
+EOF
+
 }
 
 ########################################################################
@@ -275,7 +296,7 @@ namespace Detail {
             T ${constness} * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
 
@@ -300,7 +321,7 @@ namespace Detail {
             T ${constness} * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : JS_THROW("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
         }
     };
 }
