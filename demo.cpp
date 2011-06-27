@@ -49,7 +49,7 @@ ValueHandle test1_callback( v8::Arguments const & argv )
     BoundNative * fooPtr;
     Local<Object> myobj;
     {
-        BoundNative::bindJSClass( v8::Context::GetCurrent()->Global() );
+        BoundNative::SetupBindings( v8::Context::GetCurrent()->Global() );
         //v8::HandleScope scope;
         Handle<Function> const & ctor( cv::ClassCreator<BoundSubNative>::Instance().CtorFunction() );
         CERR << "Calling NewInstance()\n";

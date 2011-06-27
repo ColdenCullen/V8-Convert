@@ -218,7 +218,7 @@ if( ('sleep' in this) && ('function' === typeof sleep) ) {
     testUnlockedFunctions();
 }
 testPredicateOverloads()
-testMyType();
+if( ('MyType' in this) && ('function' === typeof this.MyType)) testMyType();
 if(0) {
     try {
         asserteq(1,2,"Intentional error to check fetching of current line number.");

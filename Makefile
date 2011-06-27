@@ -14,12 +14,12 @@ include config.make # see that file for certain configuration options.
 V8_PREFIX := $(HOME)
 CPPFLAGS += -I$(V8_PREFIX)/include
 
+TMPL_GENERATOR_COUNT := 15# max number of arguments generate template specializations can handle
 INCDIR_DETAIL := $(TOP_INCDIR)/v8/convert/detail
 sig_gen_h := $(INCDIR_DETAIL)/signature_generated.hpp
 invo_gen_h := $(INCDIR_DETAIL)/invocable_generated.hpp
 conv_gen_h := $(INCDIR_DETAIL)/convert_generated.hpp
 TMPL_GENERATOR := $(TOP_SRCDIR_REL)/createForwarders.sh
-TMPL_GENERATOR_COUNT := 10# max number of arguments generate template specializations can handle
 MAKEFILE_DEPS_LIST = $(filter-out $(ShakeNMake.CISH_DEPS_FILE),$(MAKEFILE_LIST))
 createSignatureTypeList.sh:
 $(sig_gen_h): $(TMPL_GENERATOR) createSignatureTypeList.sh $(MAKEFILE_DEPS_LIST)
@@ -86,3 +86,12 @@ endef
 $(eval $(call GEN_TYPELIST,05))
 $(eval $(call GEN_TYPELIST,10))
 $(eval $(call GEN_TYPELIST,15))
+
+
+########################################################################
+# shell app...
+SHELL.DIR := $(PWD)/addons/shell-skel
+SHELL_LDFLAGS := ConvertDemo.o
+SHELL_BINDINGS_HEADER := ConvertDemo.hpp
+SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
+include $(PWD)/addons/shell-common.make

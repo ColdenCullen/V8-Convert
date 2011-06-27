@@ -16,12 +16,13 @@ $(warning You have not set SHELL_LDFLAGS, which means we are not linking the she
 endif
 
 ifeq (1,1)
-  SHELL.DIR := ../shell-skel
+  SHELL.DIR ?= ../shell-skel
 #  shell.cpp: $(SHELL.DIR)/shell.cpp
 #	cp $< $@
   SHELL.LOCAL := _shell
   $(SHELL.LOCAL).cpp: $(SHELL.DIR)/shell.cpp
 	cp $< $@
+  $(SHELL.DIR)/shell.cpp:
   $(SHELL.LOCAL).o: $(SHELL.LOCAL).cpp
   CLEAN_FILES += $(SHELL.LOCAL).cpp $(SHELL.LOCAL).cpp
   shell.BIN.OBJECTS := $(SHELL.LOCAL).o

@@ -173,7 +173,7 @@ public:
 
        Returns dest. 
     */
-    static v8::Handle<v8::Value> bindJSClass( v8::Handle<v8::Object> dest );
+    static v8::Handle<v8::Value> SetupBindings( v8::Handle<v8::Object> dest );
 
     int getInt() const
     {

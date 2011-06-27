@@ -491,7 +491,7 @@ namespace v8 { namespace convert {
     };
 } }
 
-v8::Handle<v8::Value> BoundNative::bindJSClass( v8::Handle<v8::Object> dest )
+v8::Handle<v8::Value> BoundNative::SetupBindings( v8::Handle<v8::Object> dest )
 {
     return cv::ClassCreator<BoundNative>::Instance().InitBindings(dest);
 }
