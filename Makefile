@@ -33,6 +33,7 @@ $(sig_gen_h): $(TMPL_GENERATOR) createSignatureTypeList.sh $(MAKEFILE_DEPS_LIST)
 	done >> $@
 	@echo "#endif // if !defined(DOXYGEN)" >> $@
 gen: $(sig_gen_h)
+all: $(sig_gen_h)
 $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
 	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
@@ -46,6 +47,7 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	done >> $@
 	@echo "#endif // if !defined(DOXYGEN)" >> $@;
 gen: $(invo_gen_h)
+all: $(invo_gen_h)
 
 $(conv_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for functions taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
@@ -59,6 +61,7 @@ $(conv_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	done >> $@
 	@echo "#endif // if !defined(DOXYGEN)" >> $@;
 gen: $(conv_gen_h)
+all: $(conv_gen_h)
 
 V8_LDFLAGS := -L$(V8_PREFIX)/lib -lv8_g
 
