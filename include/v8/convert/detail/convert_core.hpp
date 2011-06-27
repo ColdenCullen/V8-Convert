@@ -1645,7 +1645,7 @@ namespace v8 { namespace convert {
        
        - Sig is "almost" a function-signature-style type, but 
        because ctors don't have a return value in the conventional 
-       sense, we have to use a tiny workaround. Sig should be passed 
+       sense, we have to use a tiny workaround: Sig should be passed 
        in like this from client code:
 
        @code
@@ -1778,6 +1778,37 @@ namespace v8 { namespace convert {
         To figure out what base native type we're working with,
         the Type typedef of the first CtorForwarder in the list
         is used.
+        
+        CtorList may optionally be a Signature object where the
+        "return value" part is ignored for this purpose:
+        
+        Example:
+        
+        @code
+        typedef cv::tmp::TypeList<
+            //cv::Signature<void ( // this also works.
+                cv::CtorForwarder<MyType *()>,
+                cv::CtorForwarder<MyType *(char const *)>,
+                cv::CtorForwarder<MyType *( int, double )>,
+                cv::CtorForwarder<MyType *( v8::Arguments const &)>
+            //)
+        > Ctors;
+        @endcode
+        
+        Using Signature instead of TypeList has the slight advantage 
+        that most programming editors can visually match-up 
+        parenthesis but cannot do so with the '<' and '>' symbols. 
+        But it has the disadvantage that the ignored first parameter 
+        might confuse someone who's not sure what it is, or thinks 
+        that it must have a certain type. If C++ syntax would allow 
+        it, we wouldn't need that part of the parameter, but it 
+        does, so we do.
+        
+        TODO, possibly: remove the TypeList support altogether
+        and require the Signature style. We could then use the return-type
+        part (CtorList::ReturnType) as the type to instantiate. THEN...
+        we could use types other than CtorForwarder which might return
+        subtypes of the given type. i've got uses for that.
     */
     template <typename CtorList>
     struct CtorForwarderDispatcher
