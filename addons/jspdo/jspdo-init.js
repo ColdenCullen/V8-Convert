@@ -72,19 +72,19 @@
        finalized by exec, regardless of success or failure. If sql 
        is-not-a Statement then this option is ignored.
 
-       .each: function(row,callbackData,statement) is called for
-       each row.  If foreach() is not set then the query is executed
-       (only one time) using step(). The exact type of the row param
-       depends on the 'mode' option. If each() returns a literal
+       .each: function(row,callbackData,statement) is called for each
+       row.  If each() is not set then the query is executed using
+       step() (only one time). The exact type of the row param depends
+       on the 'mode' option (see below). If each() returns a literal
        false (as opposed to an arbitrary false value like null or
-       undefined) then looping stops without an error. To report
-       an error each() should throw an exception.
+       undefined) then looping stops without an error. To report an
+       error each() should throw an exception.
 
-       .mode: 'object' means stepArray(), 'array' means stepArray(),
+       .mode: 'object' means stepObject(), 'array' means stepArray(),
        and anything else means step(). In the case of object/array,
        each() is passed an object/array. In the case of step(), the
        statement object itself is passed as the first argument to
-       foreach().
+       each().
 
        .callbackData: Optional arbitrary value passed as 2nd argument to
        each().
