@@ -75,8 +75,16 @@ namespace v8 { namespace convert {
            Adds the JSPDO class to dest. It throws a native exception if
            something goes horribly wrong.
         */
-        static void SetupBindings( v8::Handle<v8::Object> dest );
+        static void SetupBindings( v8::Handle<v8::Object> const & dest );
     };
+
+/**
+    FIXME: put the various ClassCreator_XXX policies here. The problem is
+    that the policies don't actually use a publically-visible type and i don't
+    want to leak those types to the C++ interface. :/ We have the same
+    problem with JSToNative and friends. But... i could forward-declare those
+    types, i guess, instead of #includ'ing them...
+*/
 }}
 
 

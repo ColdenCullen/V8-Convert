@@ -310,9 +310,9 @@ namespace v8 { namespace convert {
 
 
     template <>
-    struct ClassCreator_Init<BoundNative>
+    struct ClassCreator_SetupBindings<BoundNative>
     {
-        static void InitBindings( v8::Handle<v8::Object> & dest )
+        static void SetupBindings( v8::Handle<v8::Object> const & dest )
         {
             using namespace v8;
 
@@ -491,9 +491,9 @@ namespace v8 { namespace convert {
     };
 } }
 
-v8::Handle<v8::Value> BoundNative::SetupBindings( v8::Handle<v8::Object> dest )
+void BoundNative::SetupBindings( v8::Handle<v8::Object> const & dest )
 {
-    return cv::ClassCreator<BoundNative>::Instance().InitBindings(dest);
+    cv::ClassCreator<BoundNative>::Instance().SetupBindings(dest);
 }
 
 v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )

@@ -673,29 +673,11 @@ int cv::JSSocket::setTimeoutMs( unsigned int ms )
 // Set up our ClassCreator policies...
 namespace v8 { namespace convert {
     
-    template <>
-    struct ClassCreator_Factory<JSSocket>
+    v8::Handle<v8::Value> NativeToJS< JSSocket >::operator()( JSSocket * x ) const
     {
-        typedef JSSocket * ReturnType;
-        static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
-        static void Delete( JSSocket * obj );
-    };
-
-    template <>
-    struct JSToNative< JSSocket > : JSToNative_ClassCreator< JSSocket >
-    {};
-    
-    template <>
-    struct NativeToJS< JSSocket >
-    {
-	typedef JSSocket * ArgType;
-        v8::Handle<v8::Value> operator()( ArgType x ) const
-        {
-            if( x ) return x->jsSelf;
-            else return v8::Null();
-        }
-    };
-
+        if( x ) return x->jsSelf;
+        else return v8::Null();
+    }
 
     JSSocket * ClassCreator_Factory<JSSocket>::Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
@@ -1010,7 +992,7 @@ cv::JSSocket * cv::JSSocket::accept()
     return cv::CastFromJS<JSSocket>( jobj );
 }
 
-void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> dest )
+void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 {
     using namespace v8;
     HandleScope scope;

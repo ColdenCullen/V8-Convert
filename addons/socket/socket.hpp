@@ -83,7 +83,7 @@
 #endif
 
 #include <v8.h>
-
+#include "v8/convert/ClassCreator.hpp"
 namespace v8 { namespace convert {
 
 /**
@@ -101,7 +101,9 @@ private:
     int type;
     bool hitTimeout;
 public:
-    /** JS-side 'this' object. Set by v8::juice::cw::WeakWrap<JSSocket>::Wrap(). */
+    /** JS-side 'this' object. Set by ClassCreator_WeakWrap<JSSocket>::Wrap()
+        and used by NativeToJS<JSSocket>. Please don't touch this from client code!
+    */
     v8::Handle<v8::Object> jsSelf;
     
 private:
@@ -178,7 +180,7 @@ public:
        - string addressToName( string address )
    
     */
-    static void SetupBindings( v8::Handle<v8::Object> dest );
+    static void SetupBindings( v8::Handle<v8::Object> const & dest );
 
     /**
        JS Usage:
@@ -384,6 +386,29 @@ public:
     int setTimeoutMs( unsigned int ms );
 
 }/*JSSocket*/;
+
+    
+template <>
+struct ClassCreator_Factory<JSSocket>
+{
+    typedef JSSocket * ReturnType;
+    static ReturnType Create( v8::Handle<v8::Object> & jsSelf, v8::Arguments const & argv );
+    static void Delete( JSSocket * obj );
+};
+
+template <>
+struct JSToNative< JSSocket > : JSToNative_ClassCreator< JSSocket >
+{};
+
+template <>
+struct NativeToJS< JSSocket >
+{
+    typedef JSSocket * ArgType;
+    v8::Handle<v8::Value> operator()( ArgType x ) const;
+};
+template <>
+struct ClassCreator_SetupBindings<JSSocket> : ClassCreator_SetupBindings_ClientFunc<JSSocket,&JSSocket::SetupBindings>
+{};
 
 } }
 

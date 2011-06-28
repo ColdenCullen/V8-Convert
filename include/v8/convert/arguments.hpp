@@ -80,6 +80,11 @@ namespace v8 { namespace convert {
         Specializations are used for most data types, but this
         one is fine for client-bound types conformant with
         CastFromJS().
+
+        Note that the default specializations treat T as a plain type,
+        discarding const/pointer/reference qualifiers. Certain types may
+        require that ValIs<T const &> (and similar) be specialized in order
+        to behave properly.        
     */
     template <typename T>
     struct ValIs : ValuePredicateConcept
@@ -107,9 +112,11 @@ namespace v8 { namespace convert {
     {
         typedef void Type;
         /**
-            Returns true only if h is not empty and h->IsUndefined().
-            Note that an empty handle evaluates to false in this
-            context because.
+            Returns true only if h is not empty and h->IsUndefined(). Note
+            that an empty handle evaluates to false in this context because
+            Undefined is a legal value whereas an empty handle is not.
+            (Though Undefined might not be semantically legal in any given
+            use case.)            
         */
         inline bool operator()( v8::Handle<v8::Value> const & h ) const
         {
@@ -118,10 +125,15 @@ namespace v8 { namespace convert {
     };
     
     namespace Detail {
+        /**
+            Getter must be a pointer to one of the v8::Value::IsXXX()
+            functions. This functor returns true if the passed-in handle is
+            not empty and it's IsXXX() function returns true.
+        */
         template <bool (v8::Value::*Getter)() const>
         struct ValIs_X
         {
-            bool operator()( v8::Handle<v8::Value> const & v ) const
+            inline bool operator()( v8::Handle<v8::Value> const & v ) const
             {
                 return v.IsEmpty() ? false : ((*v)->*Getter)();
             }  

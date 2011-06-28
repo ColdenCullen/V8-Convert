@@ -170,10 +170,10 @@ public:
     /**
        Adds a JS binding of this class, called "BoundNative", to the given
        object. It also installs the BoundSubNative class.
+       Throws a native exception on error.
 
-       Returns dest. 
     */
-    static v8::Handle<v8::Value> SetupBindings( v8::Handle<v8::Object> dest );
+    static void SetupBindings( v8::Handle<v8::Object> const & dest );
 
     int getInt() const
     {
@@ -277,17 +277,19 @@ struct BoundSubNative : public BoundNative
    to customize the ClassCreator bindings for a particular class.
 */
 namespace v8 { namespace convert {
-#if 0
+#if 1
     /**
        Optional: customize internal field layout for the JS class.
 
        When subclassing bound types from other bound types, all must
-       have the same layout or native object lookups won't work
-       properly.
+       have the same layout (and possibly the same base internal type ID)
+       or native object lookups won't work properly. To do this, wrapped
+       subclasses should implement their ClassCreator_InternalFields from the
+       parent class' ClassCreator_InternalFields.
     */
     template <>
     struct ClassCreator_InternalFields<BoundNative>
-        : ClassCreator_InternalFields_Base<BoundNative,3,1>
+        : ClassCreator_InternalFields_Base<BoundNative,3,1,2>
     {
     };
     /**

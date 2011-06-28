@@ -63,6 +63,7 @@
 */
 
 #include <cassert>
+#include <stdexcept>
 #include "convert.hpp"
 //#include <iostream> // only for debuggering
 #include "NativeToJSMap.hpp"
@@ -168,39 +169,6 @@ namespace v8 { namespace convert {
     template <typename T>
     struct ClassCreator_SearchPrototypeForThis : Opt_Bool<true>
     {};
-
-
-    /**
-       This policy is used by ClassCreator<T>::InitBindings()
-       to "plug in" native bindings. This policy is only required
-       if ClassCreator<T>::InitBindings() is used by the client,
-       and the intention is to provide a single interface which
-       clients of the T bindings can add the support to their
-       JS engine.
-    */
-    template <typename T>
-    struct ClassCreator_Init
-    {
-        /**
-           Implementations must do something like this following:
-
-           @code
-           typedef ClassCreator<T> CC;
-           CC & cc( CC::Instance() );
-           if( cc.IsSealed() )
-           {
-              // assume primary bindings are already done, and add
-              // the class to the new target:
-              cc.AddClassTo( "BoundNative", target );
-              return;
-           }
-           ... initialize the class bindings. End with:
-           cc.AddClassTo( "BoundNative", dest );
-           // or the logical equivalent for your plugin case.
-           @endcode
-        */
-        static void InitBindings( v8::Handle<v8::Object> target );
-    };
 
     namespace Detail {
     
@@ -335,18 +303,90 @@ namespace v8 { namespace convert {
        but experience hasn't shown that subclasses need their own
        internal fields. Normaly a single internal field is all we need
        when binding native data. And when i say "normally", i mean
-       "almost always." i haven't yet seen a use case which would benefit
-       from more, though i can conceive of a couple.
+       "almost always."
 
-       This must-match requirement is partially a side-effect of the
-       library internally using the field count as a santiy check
-       before trying to extract data from internal fields.
+       This must-match requirement is partially a side-effect of the library
+       internally using the field count as a santiy check before trying to
+       extract data from internal fields. It also exists so that the
+       optional (but recommended) type-safety-check support (added in late
+       June 2011: see JSToNative_ObjectWithInternalFieldsTypeSafe) will
+       treat the subclasses as instances of the base class.
     */
     template <typename T>
     struct ClassCreator_InternalFields : ClassCreator_InternalFields_Base<T>
     {
     };
 
+
+    /**
+        This policy is used by ClassCreator::SetupBindings() as the generic
+        interface for plugging in a bound class. Clients are not required to
+        specialise this, but see this class' SetupBindings() for what might
+        happen if they don't.
+    */
+    template <typename T>
+    struct ClassCreator_SetupBindings
+    {
+        /**
+            Specializations should perform any class/function-related binding
+            here, adding their functionality to the given object (which is
+            normally the logical global object but need not be). (Note that the
+            handle refererence is const but that object itself can be modified.
+
+            The default implementation throws an exception deriving from
+            std::exception, so it must be specialized to be useful. A default
+            specialization exists because there are probably a few cases
+            out there which don't really need this. But most (if not all)
+            need a setup function, and this is the official one for
+            ClassCreator-wrapped types. Implementations may of course simply
+            forward the call to another, client-provided function.
+
+            On error the binding should throw a NATIVE exception (ideally
+            deriving from std::exception because (A) it's portable practice
+            and (B) parts of the v8::convert API handles those explicitly).
+
+            Several years of experience have shown that this function (or
+            similar implementations) should take some care to make sure
+            not to set up their bindings twice. We can do that by using the
+            following pattern:
+
+            @code
+            typedef ClassCreator<T> CC;
+            CC & cc( CC::Instance() );
+            if( cc.IsSealed() ) {
+                cc.AddClassTo( "T", dest );
+                return;
+            }
+            
+            // ... do your bindings here...
+
+            // As the final step:            
+            cc.AddClassTo( "T", dest );
+            return;
+            @endcode
+        */
+        static void SetupBindings( v8::Handle<v8::Object> const & target )
+        {
+            throw std::runtime_error("ClassCreator_SetupBindings<T> MUST be specialized "
+                                     "in order to be useful!");
+        }
+    };
+
+    /**
+        A concrete ClassCreator_SetupBindings implementation which forwards
+        the call to a user-defined function.
+    */
+    template <typename T, void (*Func)( v8::Handle<v8::Object> const &) >
+    struct ClassCreator_SetupBindings_ClientFunc
+    {
+        /**
+            Calls Func(target).
+        */
+        static void SetupBindings( v8::Handle<v8::Object> const & target )
+        {
+            Func(target);
+        }
+    };
 
     /**
        The ClassCreator policy class responsible for doing optional
@@ -862,7 +902,7 @@ namespace v8 { namespace convert {
            This implicitly "seals" the class (see CtorFunction() for
            details).
         */
-        inline void AddClassTo( char const * thisClassName, v8::Handle<v8::Object> & dest )
+        inline void AddClassTo( char const * thisClassName, v8::Handle<v8::Object> const & dest )
         {
             dest->Set(v8::String::New(thisClassName),
                       this->CtorFunction());
@@ -925,34 +965,6 @@ namespace v8 { namespace convert {
         }
 
         /**
-           Class ClassCreator_Init<T>::Setup(dest) to initialize the
-           class bindings for the native class. If that function
-           throws then the exception is converted to a JS exception,
-           otherwise success is assumed and dest is returned. We do
-           not return the new class' constructor because the bindings
-           may actually set up things other than the actual class, and
-           that return value wouldn't give access to them to the
-           caller.
-        */
-        v8::Handle<v8::Value> InitBindings( v8::Handle<v8::Object> dest )
-        {
-            try
-            {
-                typedef ClassCreator_Init<T> S;
-                S::InitBindings( dest );
-                return dest;
-            }
-            catch(std::exception const & ex)
-            {
-                return CastToJS(ex);
-            }
-            catch(...)
-            {
-                return Toss("Native class bindings threw an unspecified exception during setup.");
-            }
-        }
-
-        /**
             Tells v8 that this bound type inherits ParentType. 
             ParentType _must_ be a class wrapped by ClassCreator. 
             This function throws if it believes something evil is 
@@ -972,6 +984,15 @@ namespace v8 { namespace convert {
                 throw std::runtime_error("ClassCreator<ParentType> has not been sealed yet!");
             }
             this->CtorTemplate()->Inherit( p.CtorTemplate() );
+        }
+
+        /**
+            Simply runs ClassCreator_SetupBindings<T>::SetupBindings( target ).
+            It is provided here to simplify the client-side interface.
+        */
+        static void SetupBindings( v8::Handle<v8::Object> const & target )
+        {
+            ClassCreator_SetupBindings<T>::SetupBindings( target );
         }
         
     };
@@ -1009,8 +1030,6 @@ namespace v8 { namespace convert {
 #if !defined(DOXYGEN)
     namespace Detail
     {
-        namespace cv = v8::convert;
-        namespace tmp = cv::tmp;
         /**
            A base class for ClassCreator_Factory_CtorArityDispatcher.
            We don't really need this level of indirection, i think.
@@ -1018,8 +1037,8 @@ namespace v8 { namespace convert {
         template <typename T>
         struct Factory_CtorForwarder_Base
         {
-            typedef typename cv::TypeInfo<T>::Type Type;
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
             static void Delete( NativeHandle nself )
             {
                 delete nself;
@@ -1035,7 +1054,7 @@ namespace v8 { namespace convert {
                 if( argv.Length() >= Arity ) return true;
                 else
                 {
-                    cv::StringBuffer msg;
+                    StringBuffer msg;
                     msg << "constructor requires " << Arity << " arguments!";
                     throw std::range_error(msg.Content().c_str());
                     return false;

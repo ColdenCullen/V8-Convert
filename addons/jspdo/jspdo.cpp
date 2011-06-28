@@ -1060,9 +1060,9 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 namespace v8 { namespace convert {
 
     template <>
-    struct ClassCreator_Init<cpdo::driver>
+    struct ClassCreator_SetupBindings<cpdo::driver>
     {
-        static void InitBindings( v8::Handle<v8::Object> & dest )
+        static void SetupBindings( v8::Handle<v8::Object> const & dest )
         {
             using namespace v8;
             HandleScope hscope;
@@ -1239,9 +1239,9 @@ namespace v8 { namespace convert {
    Pass the JS engine's global object (or a "virtual" global
    object of your choice) to add the JSPDO class to it.
 */
-void cv::JSPDO::SetupBindings( v8::Handle<v8::Object> dest )
+void cv::JSPDO::SetupBindings( v8::Handle<v8::Object> const & dest )
 {
-    cv::ClassCreator_Init<cpdo::driver>::InitBindings(dest);
+    cv::ClassCreator_SetupBindings<cpdo::driver>::SetupBindings(dest);
 }
 
 #undef ASSERT_ARGV

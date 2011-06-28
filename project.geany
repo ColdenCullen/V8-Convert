@@ -16,15 +16,11 @@ long_line_behaviour=1
 long_line_column=80
 
 [files]
-current_page=6
+current_page=3
 FILE_NAME_0=6631;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/invocable_core.hpp;0
 FILE_NAME_1=54536;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/convert_core.hpp;0
 FILE_NAME_2=18931;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/ConvertDemo.cpp;0
-FILE_NAME_3=39737;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/ClassCreator.hpp;0
-FILE_NAME_4=10438;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/signature_core.hpp;0
-FILE_NAME_5=2110;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/tmp.hpp;0
-FILE_NAME_6=1068;Sh;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/createForwarders.sh;0
-FILE_NAME_7=574;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/detail/convert_generated.hpp;0
+FILE_NAME_3=40770;C++;0;16;0;1;0;/home/stephan/cvs/v8-juice/convert/include/v8/convert/ClassCreator.hpp;0
 
 [build-menu]
 NF_01_LB=Make Custom _Target
