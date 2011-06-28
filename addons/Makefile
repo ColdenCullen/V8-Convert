@@ -2,7 +2,7 @@
 default: all
 
 
-SUBDIRS := shell-skel bytearray socket time jspdo
+SUBDIRS := bytearray jspdo shell-skel socket sprintf time
 
 .PHONY: $(SUBDIRS)
 $(SUBDIRS):

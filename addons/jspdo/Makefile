@@ -129,6 +129,7 @@ SHELL_LDFLAGS := $(LDFLAGS_JSPDO)
 SHELL_BINDINGS_HEADER := jspdo.hpp
 SHELL_BINDINGS_FUNC := v8::convert::JSPDO::SetupBindings
 SHELL_DEPS := $(libjspdo.DLL) $(libjspdo.LIB)
+SHELL.NAME := jspdo
 include ../shell-common.make
 
 .PHONY: amal-cpp

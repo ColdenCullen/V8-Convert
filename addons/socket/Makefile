@@ -41,6 +41,7 @@ all: $(libv8socket.DLL)
 
 ########################################################################
 # shell app...
+SHELL.NAME := shell-socket
 SHELL_LDFLAGS := -L. -lv8socket
 SHELL_BINDINGS_HEADER := socket.hpp
 SHELL_BINDINGS_FUNC := v8::convert::JSSocket::SetupBindings
