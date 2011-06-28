@@ -35,8 +35,6 @@ by Ondrej Zara
 #include <iostream> // only for debuggering
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
 #define DBGOUT if(cv::JSSocket::enableDebug) CERR
-#define JSERR v8::Exception::Error
-#define JSTOSS v8::ThrowException
 #define JSTR(X) v8::String::New(X)
 namespace cv = v8::convert;
 bool cv::JSSocket::enableDebug = false;
@@ -51,7 +49,7 @@ static void signal_ignore(int)
       kills my app violently during Socket.accept(), as would be expected. If
       i do install a handler then accept() returns with errno=EINTR.
     */
-    //JSTOSS(v8::String::New("C signal caught!"));
+    //Toss("C signal caught!");
 }
 #endif
 
@@ -139,7 +137,7 @@ static int create_addr(char const * address, int port, int family, sock_addr_t *
           memset(addr, 0, sizeof(sockaddr_un));
           
           if (length >= sizeof(addr->sun_path)) {
-              JSTOSS( JSERR(JSTR("Unix socket path too long")));
+              cv::Toss("Unix socket path too long");
               return 1;
           }
           addr->sun_family = AF_UNIX;
@@ -256,10 +254,24 @@ void cv::JSSocket::init(int family, int type, int proto, int socketFD )
     if( this->fd < 0 )
     {
         cv::StringBuffer msg;
-        msg << "socket("<<family<<", "<<type<<", "<<proto<<") failed. errno="<<errno<<'.';
+        msg << "socket("<<family<<", "<<type<<", "<<proto<<") failed. errno="
+                <<errno<<" ("<<::strerror(errno)<<").";
         throw std::runtime_error( msg.Content().c_str() );
     }
+    { /* this idea comes from some code in Google v8 (platform-posix.cc, the POSIXSocket class)...*/
+        static const int fastReUse = 1;
+        int const rc = setsockopt(this->fd, SOL_SOCKET, SO_REUSEADDR, &fastReUse, sizeof(fastReUse));
+        if( 0 != rc )
+        {
+            this->close();
+            cv::StringBuffer msg;
+            msg << "setsockopt() failed. errno="<<errno
+                <<" ("<<::strerror(errno)<<").";
+            throw std::runtime_error( msg.Content().c_str() );
+        }
+    }
 }
+
 cv::JSSocket::JSSocket(int family, int type, int proto, int socketFD )
     : fd(-1), family(0), proto(0),type(0),
       hitTimeout(false),
@@ -275,6 +287,10 @@ cv::JSSocket::~JSSocket()
 
 void cv::JSSocket::close()
 {
+    // FIXME: if we are a unix _server_ (listen()er) socket then we
+    // created the socket file and need to remove it.
+    // Reminder to self: we can use SO_ACCEPTCONN (see socket(7))
+    // to figure this out or we can set a flag when listen() is called.
     if( this->fd >= 0 )
     {
         DBGOUT << "JSSocket@"<<(void const *)this<<"->close()\n";
@@ -288,7 +304,7 @@ int cv::JSSocket::bind( char const * where, int port )
 {
     if( ! where || !*where )
     {
-        JSTOSS(JSERR(JSTR("Address argument may not be empty!")));
+        Toss("Address argument may not be empty!");
         return -1;
     }
     sock_addr_t addr;
@@ -333,7 +349,7 @@ int cv::JSSocket::bind( char const * where, int port )
     }
     if( 0 != rc )
     {
-        JSTOSS( msg.toError() );
+        Toss( msg.toError() );
     }
     return rc;
 }
@@ -353,7 +369,7 @@ int cv::JSSocket::listen( int backlog )
         msg << "listen() failed: errno="<<errno
             << " ("<<strerror(errno)<<')'
             ;
-        JSTOSS(msg.toError());
+        Toss(msg.toError());
     }
     return rc;
 }
@@ -373,7 +389,7 @@ v8::Handle<v8::Value> cv::JSSocket::nameToAddress( char const * name, int family
 {
     if( ! name || !*name )
     {
-        return JSTOSS(JSERR(JSTR("'name' parameter may not be empty!")));
+        return Toss("'name' parameter may not be empty!");
     }
     struct addrinfo hints, * servinfo = NULL;
     memset(&hints, 0, sizeof(hints));
@@ -388,7 +404,7 @@ v8::Handle<v8::Value> cv::JSSocket::nameToAddress( char const * name, int family
     {
         cv::StringBuffer msg;
         msg << "getaddrinfo(\""<<name<<"\",...) failed: "<<gai_strerror(rc);
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
                 
     v8::Handle<v8::Value> rv = create_peer(servinfo->ai_addr);
@@ -415,7 +431,7 @@ v8::Handle<v8::Value> cv::JSSocket::addressToName( char const * addy, int family
 {
     if( ! addy || !*addy )
     {
-        return JSTOSS(JSERR(JSTR("'address' parameter may not be empty!")));
+        return Toss("'address' parameter may not be empty!");
     }
     if( ! family ) family = AF_INET;
     char hn[NI_MAXHOST+1];
@@ -434,7 +450,7 @@ v8::Handle<v8::Value> cv::JSSocket::addressToName( char const * addy, int family
     {
         cv::StringBuffer msg;
         msg << "Malformed address: "<<addy;
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
     rc = ::getnameinfo( (sockaddr*) &addr, len, hn, NI_MAXHOST, NULL, 0, 0 );
     if( 0 != rc )
@@ -443,7 +459,7 @@ v8::Handle<v8::Value> cv::JSSocket::addressToName( char const * addy, int family
         CSignalSentry const sigSentry;
         msg << "getnameinfo() failed with rc "<<rc <<
             " ("<<gai_strerror(rc)<<")";
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
     else
     {
@@ -461,7 +477,7 @@ int cv::JSSocket::connect( char const * where, int port )
 {
     if( ! where || !*where )
     {
-        JSTOSS( JSERR(JSTR("Address may not be empty!")) );
+        Toss("Address may not be empty!");
         return -1;
     }
     // FIXME: consolidate the duplicate code here and in bind():
@@ -486,7 +502,7 @@ int cv::JSSocket::connect( char const * where, int port )
         {
             cv::StringBuffer msg;
             msg << "Malformed address: "<<where;
-            JSTOSS(msg.toError());
+            Toss(msg.toError());
             return rc;
         }
     }
@@ -502,7 +518,7 @@ int cv::JSSocket::connect( char const * where, int port )
         cv::StringBuffer msg;
         msg << "connect() failed: errno="<<errNo
             << " ("<<strerror(errNo)<<')';
-        JSTOSS(msg.toError());
+        Toss(msg.toError());
         return rc;
     }
     else
@@ -534,7 +550,7 @@ std::string cv::JSSocket::hostname()
         cv::StringBuffer msg;
         msg << "gethostname() failed: errno="<<errno
             << "( "<<strerror(errno)<<").";
-        JSTOSS(msg.toError());
+        Toss(msg.toError());
         return std::string();
     }
     else
@@ -577,7 +593,7 @@ v8::Handle<v8::Value> cv::JSSocket::peerInfo()
             cv::StringBuffer msg;
             msg << "getpeername("<<this->fd<<",...) failed! errno="<<errno
                 << " ("<<strerror(errno)<<")!";
-            return JSTOSS(msg.toError());
+            return Toss(msg.toError());
         }
     }
     return this->jsSelf->Get(JSTR(socket_strings.fieldPeer));
@@ -593,7 +609,7 @@ int cv::JSSocket::setOpt( int key, int val )
         msg << "setsockopt("<<key<<", "<<val<<") failed! errno="<<errno
             << " ("<<strerror(errno)<<")"
             ;
-        JSTOSS(msg.toError());
+        Toss(msg.toError());
     }
     return rc;
 }
@@ -609,7 +625,7 @@ v8::Handle<v8::Value> cv::JSSocket::getOpt( int key )
         msg << "getsockopt("<<key<<") failed! errno="<<rc
             << " ("<<strerror(errno)<<")"
             ;
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
     else
     {
@@ -630,7 +646,7 @@ v8::Handle<v8::Value> cv::JSSocket::getOpt( int key, unsigned int len )
         msg << "getsockopt("<<key<<") failed! errno="<<rc
             << " ("<<strerror(errno)<<")"
             ;
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
     else
     {
@@ -722,7 +738,7 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
 {
     if( (argv.Length()<3) || (argv.Length()>4) )
     {
-        return JSTOSS(JSERR(JSTR("write() requires 3-4 arguments!")));
+        return Toss("write() requires 3-4 arguments!");
     }
     JSSocket * so = cv::CastFromJS<JSSocket>( argv.This() );
     if( ! so )
@@ -730,7 +746,7 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
         cv::StringBuffer msg;
         msg << "Could not find native 'this' argument for "
             << "socket object!";
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
     std::string where = cv::JSToStdString(argv[0]);
     int port = cv::JSToInt32(argv[1]);
@@ -756,7 +772,7 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
         {
             cv::StringBuffer msg;
             msg << "Malformed address(?): "<<where;
-            return JSTOSS(msg.toError());
+            return Toss(msg.toError());
         }
     }
 
@@ -780,7 +796,7 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
         {
             cv::StringBuffer msg;
             msg << "The second argument must be a String or ByteArray.";
-            return JSTOSS(msg.toError());
+            return Toss(msg.toError());
         }
         if( argv.Length() > 3 )
         {
@@ -800,7 +816,7 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
         cv::StringBuffer msg;
         msg << "::sendto("<<so->fd<<"["<<where<<":"<<port<<"], <buffer>, "<<len<<",...) failed: errno="<<errno
             << " ("<<strerror(errno)<<")";
-        return JSTOSS( msg.toError() );
+        return Toss( msg.toError() );
     }
     return cv::CastToJS( sendToRC );
 }
@@ -809,14 +825,14 @@ v8::Handle<v8::Value> cv::JSSocket::writeN( v8::Arguments const & argv )
 {
     if( argv.Length() > 2 )
     {
-        return JSTOSS(JSERR(JSTR("write() requires 1 or 2 arguments!")));
+        return Toss("write() requires 1 or 2 arguments!");
     }
     JSSocket * so = cv::CastFromJS<JSSocket>( argv.This() );
     if( ! so )
     {
         cv::StringBuffer msg;
         msg << "Could not find native 'this' argument for socket object!";
-        return JSTOSS(msg.toError());
+        return Toss(msg.toError());
     }
     unsigned int len = 0;
     if( argv[0]->IsString() )
@@ -838,7 +854,7 @@ v8::Handle<v8::Value> cv::JSSocket::writeN( v8::Arguments const & argv )
         {
             cv::StringBuffer msg;
             msg << "The first argument must be a String or ByteArray.";
-            return JSTOSS(msg.toError());
+            return Toss(msg.toError());
         }
         if( argv.Length() > 1 )
         {
@@ -876,7 +892,7 @@ unsigned int cv::JSSocket::write2( char const * src, unsigned int n )
             cv::StringBuffer msg;
             msg << "socket write() failed! errno="<<errno
                 << " ("<<strerror(errno)<<")";
-            JSTOSS( msg.toError() );
+            Toss( msg.toError() );
             rc = 0;
         }
     }
@@ -891,17 +907,22 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
     VT vec(n,'\0');
     ssize_t rc = 0;
     sock_addr_t addr;
-    memset( &addr, 0, sizeof(sock_addr_t) );
-    socklen_t len = 0;
+    socklen_t len = sizeof(sock_addr_t);
+    memset( &addr, 0, len );
     {
         v8::Unlocker unl;
         CSignalSentry const sigSentry;
         DBGOUT << "read("<<n<<", "<<binary<<")...\n";
-#if 1
-        rc = ::recvfrom(this->fd, &vec[0], n, 0, (sockaddr *) &addr, &len);
-#else
-        rc = ::read(this->fd, &vec[0], n);
-#endif
+        if(SOCK_DGRAM == this->type)
+        { // UNTESTED!
+            socklen_t rdlen = len;
+            rc = ::recvfrom(this->fd, &vec[0], n, 0, (sockaddr *) &addr, &rdlen);
+            // FIXME: ensure that rdlen<=len.
+        }
+        else
+        {
+            rc = ::read(this->fd, &vec[0], n);
+        }
         DBGOUT << "read("<<n<<", "<<binary<<") == "<<rc<<"\n";
     }
     if( 0 == rc ) /*EOF*/ return v8::Undefined();
@@ -917,7 +938,7 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
         cv::StringBuffer msg;
         msg << "socket read() failed! errno="<<errno
             << " ("<<strerror(errno)<<")";
-        return JSTOSS( msg.toError() );
+        return Toss( msg.toError() );
     }
     else
     {
@@ -945,7 +966,7 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
             {
                 cv::StringBuffer msg;
                 msg << "Creation of ByteArray object failed!";
-                return JSTOSS( msg.toError() );
+                return Toss( msg.toError() );
             }
             ba->swapBuffer( vec );
             return jba;
@@ -976,7 +997,7 @@ cv::JSSocket * cv::JSSocket::accept()
         cv::StringBuffer msg;
         msg << "accept() failed: errno="<<errno
             << " ("<<strerror(errno)<<')';
-        JSTOSS(msg.toError());
+        Toss(msg.toError());
         return NULL;
     }
     typedef v8::convert::ClassCreator<JSSocket> CC;
@@ -1105,7 +1126,5 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 #undef CloseSocket
 #undef DBGOUT
 #undef JSTR
-#undef JSERR
-#undef JSTOSS
 #undef USE_SIGNALS
 #undef CERR
