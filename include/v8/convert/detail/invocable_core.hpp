@@ -506,137 +506,6 @@ namespace Detail {
 }
 
 
-/**
-   InvocationCallback wrapper which calls another InvocationCallback
-   and translates any native ExceptionT exceptions thrown by that
-   function into JS exceptions.
-
-   ExceptionT must be an exception type which is thrown by copy
-   (e.g. STL-style) as opposed to by pointer (MFC-style).
-   
-   SigGetMsg must be a function-signature-style argument describing
-   a method within ExceptionT which can be used to fetch the message
-   reported by the exception. It must meet these requirements:
-
-   a) Be const
-   b) Take no arguments
-   c) Return a type convertible to JS via CastToJS()
-
-   Getter must be a pointer to a function matching that signature.
-
-   ICB must be a v8::InvocationCallback. When this function is called
-   by v8, it will pass on the call to ICB and catch exceptions.
-
-   Exceptions of type ExceptionT which are thrown by ICB get
-   translated into a JS exception with an error message fetched using
-   ExceptionT::Getter().
-
-   If PropagateOtherExceptions is true then exception of types other
-   than ExceptionT are re-thrown (which can be fatal to v8, so be
-   careful). If it is false then they are not propagated but the error
-   message in the generated JS exception is unspecified (because we
-   have no generic way to get such a message). If a client needs to
-   catch multiple exception types, enable propagation and chain the
-   callbacks together. In such a case, the outer-most (first) callback
-   in the chain should not propagate unknown exceptions (to avoid
-   killing v8).
-
-
-   This type can be used to implement "chaining" of exception
-   catching, such that we can use the InCaCatcher
-   to catch various distinct exception types in the context
-   of one v8::InvocationCallback call.
-
-   Example:
-
-   @code
-   // Here we want to catch MyExceptionType, std::runtime_error, and
-   // std::exception (the base class of std::runtime_error, by the
-   // way) separately:
-
-   // When catching within an exception hierarchy, start with the most
-   // specific (most-derived) exceptions.
-
-   // Client-specified exception type:
-   typedef InCaCatcher<
-      MyExceptionType,
-      std::string (),
-      &MyExceptionType::getMessage,
-      MyCallbackWhichThrows, // the "real" InvocationCallback
-      true // make sure propagation is turned on!
-      > Catch_MyEx;
-
-  // std::runtime_error:
-  typedef InCaCatcher<
-      std::runtime_error,
-      char const * (),
-      &std::runtime_error::what,
-      Catch_MyEx::Catch, // next Callback in the chain
-      true // make sure propagation is turned on!
-      > Catch_RTE;
-
-   // std::exception:
-   typedef InCaCatcher_std<
-       Catch_RTE::Call,
-       false // Often we want no propagation at the top-most level,
-             // to avoid killing v8.
-       > MyCatcher;
-
-   // Now MyCatcher::Call is-a InvocationCallback which will handle
-   // MyExceptionType, std::runtime_error, and std::exception via
-   // different catch blocks. Note, however, that the visible
-   // behaviour for runtime_error and std::exception (its base class)
-   // will be identical here, though they actually have different
-   // code.
-
-   @endcode
-
-   Note that the InvocationCallbacks created by most of the
-   v8::convert API adds (non-propagating) exception catching for
-   std::exception to the generated wrappers. Thus this type is not
-   terribly useful with them. It is, however, useful when one wants to
-   implement an InvocationCallback such that it can throw, but wants
-   to make sure that the exceptions to not pass back into v8 when JS
-   is calling the InvocationCallback (as propagating exceptions
-   through v8 is fatal to v8).
-
-   TODO: consider removing the default-imposed exception handling
-   created by most forwarders/wrappers in favour of this
-   approach. This way is more flexible and arguably "more correct",
-   but adds a burder to users who want exception catching built in.
-*/
-template < typename ExceptionT,
-           typename SigGetMsg,
-           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
-           // how to do something like this: ???
-           // template <class ET, class SGM> class SigT::FunctionType Getter,
-           v8::InvocationCallback ICB,
-           bool PropagateOtherExceptions = false
-    >
-struct InCaCatcher : Callable
-{
-    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
-    {
-        try
-        {
-            return ICB( args );
-        }
-        catch( ExceptionT const & e2 )
-        {
-            return Toss(CastToJS((e2.*Getter)())->ToString());
-        }
-        catch( ExceptionT const * e2 )
-        {
-            return Toss(CastToJS((e2->*Getter)())->ToString());
-        }
-        catch(...)
-        {
-            if( PropagateOtherExceptions ) throw;
-            else return Toss("Unknown native exception thrown!");
-        }
-    }
-};
-
 namespace Detail {
     
     /**
@@ -1763,6 +1632,147 @@ struct InCaOverloader : Callable
     }
 };
 
+
+/**
+   InvocationCallback wrapper which calls another InvocationCallback
+   and translates any native ExceptionT exceptions thrown by that
+   function into JS exceptions.
+
+   ExceptionT must be an exception type which is thrown by copy
+   (e.g. STL-style) as opposed to by pointer (MFC-style).
+   
+   SigGetMsg must be a function-signature-style argument describing
+   a method within ExceptionT which can be used to fetch the message
+   reported by the exception. It must meet these requirements:
+
+   a) Be const
+   b) Take no arguments
+   c) Return a type convertible to JS via CastToJS()
+
+   Getter must be a pointer to a function matching that signature.
+
+   ICB must be a v8::InvocationCallback. When this function is called
+   by v8, it will pass on the call to ICB and catch exceptions.
+
+   Exceptions of type ExceptionT which are thrown by ICB get
+   translated into a JS exception with an error message fetched using
+   ExceptionT::Getter().
+
+   If PropagateOtherExceptions is true then exception of types other
+   than ExceptionT are re-thrown (which can be fatal to v8, so be
+   careful). If it is false then they are not propagated but the error
+   message in the generated JS exception is unspecified (because we
+   have no generic way to get such a message). If a client needs to
+   catch multiple exception types, enable propagation and chain the
+   callbacks together. In such a case, the outer-most (first) callback
+   in the chain should not propagate unknown exceptions (to avoid
+   killing v8).
+
+
+   This type can be used to implement "chaining" of exception
+   catching, such that we can use the InCaCatcher
+   to catch various distinct exception types in the context
+   of one v8::InvocationCallback call.
+
+   Example:
+
+   @code
+   // Here we want to catch MyExceptionType, std::runtime_error, and
+   // std::exception (the base class of std::runtime_error, by the
+   // way) separately:
+
+   // When catching within an exception hierarchy, start with the most
+   // specific (most-derived) exceptions.
+
+   // Client-specified exception type:
+   typedef InCaCatcher<
+      MyExceptionType,
+      std::string (),
+      &MyExceptionType::getMessage,
+      MyCallbackWhichThrows, // the "real" InvocationCallback
+      true // make sure propagation is turned on!
+      > Catch_MyEx;
+
+  // std::runtime_error:
+  typedef InCaCatcher<
+      std::runtime_error,
+      char const * (),
+      &std::runtime_error::what,
+      Catch_MyEx::Catch, // next Callback in the chain
+      true // make sure propagation is turned on!
+      > Catch_RTE;
+
+   // std::exception:
+   typedef InCaCatcher_std<
+       Catch_RTE::Call,
+       false // Often we want no propagation at the top-most level,
+             // to avoid killing v8.
+       > MyCatcher;
+
+   // Now MyCatcher::Call is-a InvocationCallback which will handle
+   // MyExceptionType, std::runtime_error, and std::exception via
+   // different catch blocks. Note, however, that the visible
+   // behaviour for runtime_error and std::exception (its base class)
+   // will be identical here, though they actually have different
+   // code.
+
+   @endcode
+
+   Whether or not the various v8::convert-generated functions 
+   bindings propagate exceptions or turn them into JS exceptions 
+   depends on various template paramters throughout the framework. 
+   MissingThisException is handled internally (converted to JS) when 
+   it is thrown via v8-originated callbacks and is is propagated when 
+   certain lower-level calls are made (presumably from client code). 
+   Other exceptions _might_ be caught/converted internally, depending
+   on the aforementioned template parameters.
+
+   Note that the InvocationCallbacks created by most of the
+   v8::convert API adds (non-propagating) exception catching for
+   std::exception to the generated wrappers. Thus this type is not
+   terribly useful with them. It is, however, useful when one wants to
+   implement an InvocationCallback such that it can throw, but wants
+   to make sure that the exceptions to not pass back into v8 when JS
+   is calling the InvocationCallback (as propagating exceptions
+   through v8 is fatal to v8).
+
+   TODO: consider removing the default-imposed exception handling
+   created by most forwarders/wrappers in favour of this
+   approach. This way is more flexible and arguably "more correct",
+   but adds a burder to users who want exception catching built in.
+*/
+template < typename ExceptionT,
+           typename SigGetMsg,
+           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           // how to do something like this: ???
+           // template <class ET, class SGM> class SigT::FunctionType Getter,
+           v8::InvocationCallback ICB,
+           bool PropagateOtherExceptions = false
+    >
+struct InCaCatcher : Callable
+{
+    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
+    {
+        try
+        {
+            return ICB( args );
+        }
+        catch( ExceptionT const & e2 )
+        {
+            return Toss(CastToJS((e2.*Getter)())->ToString());
+        }
+        catch( ExceptionT const * e2 )
+        {
+            return Toss(CastToJS((e2->*Getter)())->ToString());
+        }
+        catch(...)
+        {
+            if( PropagateOtherExceptions ) throw;
+            else return Toss("Unknown native exception thrown!");
+        }
+    }
+};
+
 /**
    Convenience form of InCaCatcher which catches
    std::exception and uses their what() method to
@@ -1774,20 +1784,28 @@ struct InCaOverloader : Callable
    to catch most-derived types first.
    
    PropagateOtherExceptions defaults to false if ConcreteException is
-   std::exception, else it defaults to true. The reasoning is: when chaining
-   these handlers we need to catch the most-derived first. Those handlers
-   need to propagate other exceptions so that we can catch the lesser-derived
-   ones (or those from completely different hierarchies) in subsequent
-   catchers.
-   
+   std::exception (exactly, not a subtype), else it defaults to 
+   true. The reasoning is: when chaining these handlers we need to 
+   catch the most-derived first. Those handlers need to propagate 
+   other exceptions so that we can catch the lesser-derived ones (or 
+   those from completely different hierarchies) in subsequent 
+   catchers. The final catcher "should" (arguably) swallow unknown 
+   exceptions, converting them to JS exceptions with an unspecified 
+   message string (propagating them is technically legal but will 
+   most likely crash v8).
+
    Here is an example of chaining:
-   
+
    @code
     typedef InCaCatcher_std< MyThrowingCallback, std::logic_error > LECatch;
     typedef cv::InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
-    typedef cv::InCaCatcher_std< RECatch::Call > BaseCatch;
+    typedef cv::InCaCatcher_std< RECatch::Call, std::bad_cast > BCCatch;
+    typedef cv::InCaCatcher_std< BCCatch::Call > BaseCatch;
     v8::InvocationCallback cb = BaseCatch::Call;
    @endcode
+   
+   In the above example any exceptions would be processed in the order:
+   logic_error, runtime_error, bad_cast, std::exception, anything else.
 */
 template <v8::InvocationCallback ICB,
         typename ConcreteException = std::exception,
