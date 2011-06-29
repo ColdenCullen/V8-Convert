@@ -148,9 +148,17 @@ ValueHandle test1_callback( v8::Arguments const & argv )
      CERR << "same thing using forwardMethod(T, MemFunc, Arguments):\n";
      cv::forwardMethod( foo, &BoundNative::doFoo2, argv );
      cv::forwardMethod( foo, &BoundNative::doFoo, argv );
-     cv::forwardMethod<BoundNative>( &BoundNative::doFoo, argv )
-         /* won't actually work b/c argv.This() is-not-a BoundNative */
-         ;
+     try
+     {
+         cv::forwardMethod<BoundNative>( &BoundNative::doFoo, argv )
+             /* won't actually work b/c argv.This() is-not-a BoundNative */
+             ;
+     }
+     catch(cv::MissingThisException const & ex )
+     {
+         CERR << "Got expected exception: " << ex.Buffer() << '\n';
+     }
+     catch(...) { throw; }
 
      CERR << "argv-const-method-forwarder (void):\n";
      cv::ArgsToConstMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFooConst, argv );
@@ -158,10 +166,17 @@ ValueHandle test1_callback( v8::Arguments const & argv )
      CERR << "Calling forwardConstMethod(T, MemFunc, Arguments):\n";
      cv::forwardConstMethod( foo, &BoundNative::doFooConst, argv );
      cv::forwardConstMethod( foo, &BoundNative::doFooConstInt, argv );
-     cv::forwardConstMethod<BoundNative>( &BoundNative::doFooConstInt, argv )
-         /* won't actually work b/c argv.This() is-not-a BoundNative */
-         ;
-
+     try
+     {
+         cv::forwardConstMethod<BoundNative>( &BoundNative::doFooConstInt, argv )
+             /* won't actually work b/c argv.This() is-not-a BoundNative */
+             ;
+     }
+     catch(cv::MissingThisException const & ex )
+     {
+         CERR << "Got expected exception: " << ex.Buffer() << '\n';
+     }
+     catch(...) { throw; }
 #if 0
      jf = Function::Cast( *(myobj->Get(JSTR("destroy"))) );
      CERR << "Calling myObject.destroy()...\n";
@@ -236,17 +251,25 @@ void test1(cv::Shell & shell)
     using namespace v8;
     HandleScope scope;
     bind_MyType( shell.Global() );
-    Handle<Function> hf = FunctionTemplate::New(test1_callback)->GetFunction();
-    Handle<Value> args[] = {
-    Integer::New(3),
-    Number::New(5.1),
-    Undefined()
-    };
-    CERR << "Calling binding function...\n";
-    TryCatch catcher;
-    hf->Call( shell.Context()->Global(), 3, args );
-    catcher.Reset();
-    CERR << "Returned from binding function.\n";
+
+    if(1)
+    {
+        Handle<Function> hf = FunctionTemplate::New(test1_callback)->GetFunction();
+        Handle<Value> args[] = {
+            Integer::New(3),
+            Number::New(5.1),
+            Undefined()
+        };
+        CERR << "Calling binding function...\n";
+        TryCatch catcher;
+        hf->Call( shell.Context()->Global(), 3, args );
+        catcher.Reset();
+        CERR << "Returned from binding function.\n";
+    }
+    else
+    {
+        BoundNative::SetupBindings( shell.Global() );
+    }
 
     char const * extScr = "./test.js";
     CERR << "Calling external script ["<<extScr<<"]...\n";

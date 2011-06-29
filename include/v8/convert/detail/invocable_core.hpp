@@ -16,8 +16,6 @@ conversion.
 #include "signature_core.hpp"
 #include "TypeList.hpp"
 
-//! Refactoring-related macro. Will go away.
-#define V8_CONVERT_CATCH_BOUND_FUNCS 0
 namespace v8 { namespace convert {
 
 /**
@@ -130,39 +128,19 @@ namespace Detail {
     */
     template <bool> struct V8Unlocker;
     
+    /**
+        Equivalent to v8::Unlocker.
+    */
     template <>
-    struct V8Unlocker<true>
+    struct V8Unlocker<true> : v8::Unlocker
     {
-        private:
-            v8::Unlocker * unlocker;
-        public:
-            V8Unlocker() :
-                unlocker(new v8::Unlocker)
-            {}
-            ~V8Unlocker()
-            {
-                this->Dispose();
-            }
-            /**
-                Destroys the underlying Unlocker. This is
-                used internally so that we can properly
-                scope return values while still
-                being able to unlock.
-            */
-            void Dispose()
-            {
-                delete unlocker;
-                unlocker = NULL;
-            }
     };
     /**
-        A no-op instantiation.
+        A no-op specialization.
     */
     template <>
     struct V8Unlocker<false>
     {
-        inline void Dispose() const
-        {}
     };
     
     
@@ -321,16 +299,47 @@ struct SignatureIsUnlockable : tmp::BoolVal<
 template <>
 struct SignatureIsUnlockable<tmp::NilType> : tmp::BoolVal<true> {};
 
+/**
+    Internal exception type to allow us to differentiate
+    "no native 'this' pointer found" errors from all other
+    exceptions. It is thrown by the CallNative() functions
+    of various JS-to-Native function forwarders.
+*/
+struct MissingThisException
+{
+protected:
+    StringBuffer msg;
+    template <typename T>
+    void init()
+    {
+        this->msg << "CastFromJS<"<< TypeName<T>::Value
+        << ">() returned NULL. Throwing to avoid "
+        << "dereferencing a NULL pointer!";
+    }
+    MissingThisException() {}
+public:
+    /**
+        Returns the exception message text, which does not change
+        after construction.
+    */
+    StringBuffer const & Buffer() const { return msg; }
+};
+
+
+
 namespace Detail {
+/** Temporary internal macro. Undef'd at the end of this file. */
  #define HANDLE_PROPAGATE_EXCEPTION \
             catch(std::exception const &ex){ if( PropagateExceptions ) throw ex; else return CastToJS(ex); } \
             catch(...){ if( PropagateExceptions ) throw; else return Toss("Unknown native exception type thrown."); } (void)0
+/** Temporary internal macro. Undef'd at the end of this file. */
 #define HANDLE_PROPAGATE_EXCEPTION_T catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
             HANDLE_PROPAGATE_EXCEPTION
    
     /**
         Internal helper to create an exception when we require
-        a native (T*) pointer and don't find one.
+        a native (T*) pointer and don't find one. Returns the result
+        of v8::ThrowException(...).
     */  
     template <typename T>
     v8::Handle<v8::Value> TossMissingThis()
@@ -338,21 +347,11 @@ namespace Detail {
         return Toss(StringBuffer()<<"CastFromJS<"<<TypeName<T>::Value<<">() returned NULL! Cannot find 'this' pointer!");
     }
 
-    struct MissingThisException
-    {
-    protected:
-        StringBuffer msg;
-        template <typename T>
-        void init()
-        {
-            this->msg << "CastFromJS<"<< TypeName<T>::Value
-            << ">() returned NULL. Throwing to avoid "
-            << "dereferencing a NULL pointer!";
-        }
-    public:
-        StringBuffer const & buffer() const { return msg; }
-    };
-
+    /**
+        A MissingThisException type holding generic
+        message text which references TypeName<T>::Value
+        as being the problematic class.
+    */
     template <typename T>
     struct MissingThisExceptionT : MissingThisException
     {
@@ -429,7 +428,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ReturnType CallNative( FunctionType func, Arguments const & argv )
         {
-            V8Unlocker<true> unlocker;
+            V8Unlocker<UnlockV8> unlocker;
             return func();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -639,6 +638,10 @@ struct InCaCatcher : Callable
 };
 
 namespace Detail {
+    
+    /**
+        Internal impl for v8::convert::ArgsToConstMethodForwarder.
+    */
     template <typename T, int Arity_, typename Sig,
              bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value,
              bool PropagateExceptions = false
@@ -665,7 +668,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative( self, func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION;
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -820,6 +823,9 @@ namespace Detail {
         : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
     {};
     
+    /**
+        Internal impl for v8::convert::ArgsToConstMethodForwarder.
+    */
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value,
             bool PropagateExceptions = false
@@ -1007,11 +1013,20 @@ namespace Detail {
     Sig must be a function-signature-like argument. e.g. <double (int,double)>,
     and the members of this class expect functions matching that signature.
 
+    If PropagateExceptions is true then this class' Call() functions 
+    will propagate any native exceptions thrown by the underlying 
+    native functions. The CallNative() functions will _always_ 
+    propagate exceptions because they are never called directly by 
+    v8. If PropagateExceptions is false then std::exception will be 
+    converted to a JS using the exception's what() text and other 
+    exceptions will generate JS exceptions holding some generic 
+    error message.
+
     If UnlockV8 is true then v8::Unlocker will be used to unlock v8 
     for the duration of the call to Func(). HOWEVER... (the rest of 
     these docs are about the caveats)...
 
-    An UnlockV8 value of SignatureIsUnlockable<Sig>::Value of is a 
+    A UnlockV8 value of SignatureIsUnlockable<Sig>::Value uses a
     reasonably sound heuristic but it cannot predict certain 
     app-dependent conditions which render its guess semantically 
     invalid. See SignatureIsUnlockable for more information.
@@ -1047,15 +1062,9 @@ namespace Detail {
 
     Violating any of these leads to undefined behaviour. The library 
     tries to fail at compile time for invalid combinations when it 
-    can, but there are plenty of things which require more 
-    metatemplate coding in order to catch at compile-time, e.g. if a 
-    bound function takes a v8::Handle<> as an argument (which makes it
-    illegal for unlocking purpose).
+    can, but (as described aboved) it can be fooled into thinking that
+    unlocking is safe.
 
-    It might also be noteworthy that unlocking v8 requires, for
-    reasons of scoping, one additional (very small) memory allocation
-    vis-a-vis not unlocking. The memory is freed, of course, right
-    after the native call returns.
 */
 template <typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value,
@@ -2233,7 +2242,6 @@ struct OneTimeInitInCa : Callable
 
 }} // namespaces
 
-#undef V8_CONVERT_CATCH_BOUND_FUNCS
 #undef HANDLE_PROPAGATE_EXCEPTION
 #undef HANDLE_PROPAGATE_EXCEPTION_T
 
