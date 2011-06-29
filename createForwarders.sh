@@ -185,8 +185,8 @@ function makeArgsToFunctionForwarder()
 
 mycat <<EOF
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<${count},Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -203,16 +203,12 @@ namespace Detail {
         }
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -228,12 +224,8 @@ namespace Detail {
         }
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
@@ -255,8 +247,8 @@ function makeArgsToMethodForwarder_impl()
     fi
 mycat <<EOF
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ${class}<T, ${count},Sig, UnlockV8, PropagateExceptions> : ${parent}<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ${class}<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -288,8 +280,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ${class}Void<T, ${count},Sig, UnlockV8, PropagateExceptions> : ${parent}<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ${class}Void<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;

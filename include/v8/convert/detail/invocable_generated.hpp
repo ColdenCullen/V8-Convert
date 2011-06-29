@@ -1,8 +1,8 @@
 /* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */
 #if !defined(DOXYGEN)
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<1,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<1,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -22,16 +22,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<1,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<1,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -50,18 +46,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 1,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -96,8 +88,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 1,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -140,8 +132,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 1,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -176,8 +168,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 1,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -220,8 +212,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<2,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<2,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -244,16 +236,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<2,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<2,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -275,18 +263,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 2,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -324,8 +308,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 2,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -371,8 +355,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 2,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -410,8 +394,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 2,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -457,8 +441,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<3,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<3,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -484,16 +468,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<3,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<3,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -518,18 +498,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 3,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -570,8 +546,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 3,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -620,8 +596,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 3,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -662,8 +638,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 3,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -712,8 +688,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<4,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<4,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -742,16 +718,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<4,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<4,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -779,18 +751,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 4,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -834,8 +802,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 4,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -887,8 +855,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 4,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -932,8 +900,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 4,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -985,8 +953,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<5,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<5,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1018,16 +986,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<5,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<5,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1058,18 +1022,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 5,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1116,8 +1076,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 5,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1172,8 +1132,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 5,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1220,8 +1180,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 5,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1276,8 +1236,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<6,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<6,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1312,16 +1272,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<6,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<6,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1355,18 +1311,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 6,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1416,8 +1368,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 6,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1475,8 +1427,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 6,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1526,8 +1478,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 6,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1585,8 +1537,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<7,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<7,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1624,16 +1576,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<7,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<7,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1670,18 +1618,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 7,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1734,8 +1678,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 7,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1796,8 +1740,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 7,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1850,8 +1794,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 7,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1912,8 +1856,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<8,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<8,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -1954,16 +1898,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<8,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<8,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2003,18 +1943,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 8,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2070,8 +2006,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 8,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2135,8 +2071,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 8,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2192,8 +2128,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 8,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2257,8 +2193,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<9,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<9,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2302,16 +2238,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<9,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<9,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2354,18 +2286,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 9,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2424,8 +2352,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 9,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2492,8 +2420,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 9,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2552,8 +2480,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 9,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2620,8 +2548,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<10,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<10,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2668,16 +2596,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<10,Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<10,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2723,18 +2647,14 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 10,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2796,8 +2716,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T, 10,Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2867,8 +2787,8 @@ namespace Detail {
     };
 }
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, 10,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -2930,8 +2850,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, 10,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;

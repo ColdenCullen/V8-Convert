@@ -328,10 +328,15 @@ public:
 
 
 namespace Detail {
-/** Temporary internal macro. Undef'd at the end of this file. */
- #define HANDLE_PROPAGATE_EXCEPTION \
-            catch(std::exception const &ex){ if( PropagateExceptions ) throw ex; else return CastToJS(ex); } \
-            catch(...){ if( PropagateExceptions ) throw; else return Toss("Unknown native exception type thrown."); } (void)0
+/** Temporary internal macro. Undef'd at the end of this file.
+
+i don't LIKE this, by the way... i would really prefer to do all
+the catching via InCaCatcher (or similar) because it's more flexible,
+but... you know what? i'm going to remove the PropagateExceptions bits
+and only internally catch MissingThisException.
+
+*/
+#define HANDLE_PROPAGATE_EXCEPTION catch(...){ throw; } (void)0
 /** Temporary internal macro. Undef'd at the end of this file. */
 #define HANDLE_PROPAGATE_EXCEPTION_T catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
             HANDLE_PROPAGATE_EXCEPTION
@@ -384,12 +389,11 @@ namespace Detail {
     */
 
     template <int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::Signature<Sig> >::Value,
-            bool PropagateExceptions = false >
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::Signature<Sig> >::Value >
     struct ArgsToFunctionForwarder;
     
-    template <int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <int Arity, typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -403,11 +407,7 @@ namespace Detail {
 
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            try
-            {
-                return cv::CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return cv::CastToJS( CallNative( func, argv ) );
         }
 
         ASSERT_UNLOCKV8_IS_FALSE;
@@ -415,13 +415,13 @@ namespace Detail {
     };
 
     //! Reminder to self: we really do need this specialization for some cases.
-    template <int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8, PropagateExceptions>
-        : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <int Arity, typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
+        : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
     {};
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarder<0,Sig, UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
@@ -433,23 +433,18 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            try
-            {
-                return CastToJS( CallNative( func, argv ) );
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            return CastToJS( CallNative( func, argv ) );
         }
         ASSERT_UNLOCK_SANITY_CHECK;
         typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
 
     template <int Arity_, typename Sig,
-                bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value,
-                bool PropagateExceptions = false>
+                bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
     struct ArgsToFunctionForwarderVoid;
 
-    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
@@ -466,19 +461,15 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
         ASSERT_UNLOCK_SANITY_CHECK;
         typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
     
-    template <int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToFunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <int Arity, typename RV, bool UnlockV8>
+    struct ArgsToFunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -492,12 +483,8 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            try
-            {
-                CallNative( func, argv );
-                return v8::Undefined();
-            }
-            HANDLE_PROPAGATE_EXCEPTION;
+            CallNative( func, argv );
+            return v8::Undefined();
         }
         ASSERT_UNLOCKV8_IS_FALSE;
         typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
@@ -512,14 +499,13 @@ namespace Detail {
         Internal impl for v8::convert::ArgsToConstMethodForwarder.
     */
     template <typename T, int Arity_, typename Sig,
-             bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value,
-             bool PropagateExceptions = false
+             bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
      >
     struct ArgsToMethodForwarder;
 
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, 0, Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, 0, Sig, UnlockV8> : MethodSignature<T,Sig>
     {
     public:
         typedef MethodSignature<T,Sig> SignatureType;
@@ -557,8 +543,8 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : MethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -595,19 +581,18 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, typename RV, bool UnlockV8, int _Arity, bool PropagateExceptions>
-    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8, PropagateExceptions> :
+    template <typename T, typename RV, bool UnlockV8, int _Arity>
+    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
             ArgsToMethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
     template <typename T, int Arity_, typename Sig,
-        bool UnlockV8 = cv::SignatureIsUnlockable< cv::MethodSignature<T, Sig> >::Value,
-        bool PropagateExceptions = false
+        bool UnlockV8 = cv::SignatureIsUnlockable< cv::MethodSignature<T, Sig> >::Value
     >
     struct ArgsToMethodForwarderVoid;
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T,0,Sig, UnlockV8, PropagateExceptions>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T,0,Sig, UnlockV8>
         : MethodSignature<T,Sig>
     {
     public:
@@ -646,8 +631,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
         : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
@@ -687,22 +672,21 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8, PropagateExceptions>
-        : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
+        : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
     {};
     
     /**
         Internal impl for v8::convert::ArgsToConstMethodForwarder.
     */
     template <typename T, int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value,
-            bool PropagateExceptions = false
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
     >
     struct ArgsToConstMethodForwarder;
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T,0,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
@@ -738,8 +722,8 @@ namespace Detail {
         }
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -776,19 +760,18 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8, PropagateExceptions>
-        : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
+        : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
     template <typename T, int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value,
-            bool PropagateExceptions = false
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
     >
     struct ArgsToConstMethodForwarderVoid;
 
-    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T,0,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
@@ -828,8 +811,8 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
     
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -868,8 +851,8 @@ namespace Detail {
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
-    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8, PropagateExceptions>
+    template <typename T, int Arity, typename RV, bool UnlockV8>
+    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
     : ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
@@ -881,15 +864,6 @@ namespace Detail {
 
     Sig must be a function-signature-like argument. e.g. <double (int,double)>,
     and the members of this class expect functions matching that signature.
-
-    If PropagateExceptions is true then this class' Call() functions 
-    will propagate any native exceptions thrown by the underlying 
-    native functions. The CallNative() functions will _always_ 
-    propagate exceptions because they are never called directly by 
-    v8. If PropagateExceptions is false then std::exception will be 
-    converted to a JS using the exception's what() text and other 
-    exceptions will generate JS exceptions holding some generic 
-    error message.
 
     If UnlockV8 is true then v8::Unlocker will be used to unlock v8 
     for the duration of the call to Func(). HOWEVER... (the rest of 
@@ -936,8 +910,7 @@ namespace Detail {
 
 */
 template <typename Sig,
-        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value,
-        bool PropagateExceptions = false
+        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
 struct ArgsToFunctionForwarder : Callable
 {
