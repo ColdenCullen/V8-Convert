@@ -377,6 +377,16 @@ namespace v8 { namespace convert {
 
     /**
        Required: Install js-to-native conversion for BoundSubNative.
+       
+       In actuality...
+       
+       When subclassing, if client code (and any functions/properties
+       it binds) ONLY uses CastTo/FromJS<BaseType>(), as opposed to 
+       CastTo/FromJS<SubType>(), this specialization is not needed 
+       for subclasses. If a SubType binds new member functions not in
+       the parent interface, this specialization _is_ required 
+       because CastFromJS<SubType>() will internally be used to get 
+       the 'this' pointer when JS calls that member function.
     */
     template <>
     struct JSToNative<BoundSubNative>
