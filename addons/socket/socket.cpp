@@ -706,7 +706,7 @@ namespace v8 { namespace convert {
                 Ctor0, Ctor1, Ctor2, Ctor3, Ctor4 
             )>
         > Dispatch;
-        JSSocket * s = Dispatch::Ctor( argv );
+        JSSocket * s = Dispatch::Call( argv );
         if( s )
         {
             s->jsSelf = jsSelf;

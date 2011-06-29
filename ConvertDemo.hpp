@@ -386,6 +386,20 @@ namespace v8 { namespace convert {
     struct NativeToJS<BoundSubNative>
         :  NativeToJSMap<BoundSubNative>::NativeToJSImpl
     {};
+
+    //! Optional: used by some error reporting code.
+    template <>
+    struct TypeName< BoundNative >
+    {
+        static char const * Value;
+    };
+    //! Optional: used by some error reporting code.
+    template <>
+    struct TypeName< BoundSubNative >
+    {
+        static char const * Value;
+    };
+
 } }
 
 

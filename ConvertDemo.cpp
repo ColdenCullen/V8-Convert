@@ -12,6 +12,8 @@
 #include <unistd.h> // only for sleep() in some test code
 #endif
 
+char const * cv::TypeName< BoundNative >::Value = "BoundNative";
+char const * cv::TypeName< BoundSubNative >::Value = "BoundSubNative";
 
 int BoundNative::publicStaticInt = 42;
 
@@ -46,7 +48,7 @@ namespace v8 { namespace convert {
     BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
         typedef cv::CtorForwarderDispatcher<BoundNativeCtors> Proxy;
-        BoundNative * b = Proxy::Ctor( argv );
+        BoundNative * b = Proxy::Call( argv );
         if( b ) BMap::Insert( jsSelf, b );
         return b;
     }
@@ -565,16 +567,16 @@ namespace { // testing ground for some compile-time assertions...
         ASS<( Cn::Arity < 0 )>();
         typedef CFT * (*CFTCtor)( v8::Arguments const & );
         CFTCtor ctor;
-        ctor = C0::Ctor;
-        ctor = C1::Ctor;
-        ctor = C2::Ctor;
+        ctor = C0::Call;
+        ctor = C1::Call;
+        ctor = C2::Call;
         //ctor = C0Sub::Ctor;
         typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
         //typedef ClassCreator_Factory_CtorArityDispatcher<CtorList> CFTFactory;
         typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
         typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
         FacT fac;
-        fac = CDispatch::Ctor;
+        fac = CDispatch::Call;
         typedef int (CFT::*M1)(int) ;
         typedef int (CFT::*M2)(int,int) const;
         ASS<( !(tmp::IsConst<CFT>::Value) )>();

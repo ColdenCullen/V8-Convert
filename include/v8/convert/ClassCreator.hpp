@@ -1073,7 +1073,7 @@ namespace v8 { namespace convert {
         be a type having this interface:
         
         @code
-        TypeInfo<T>::NativeHandle Ctor( v8::Arguments const & );
+        TypeInfo<T>::NativeHandle Call( v8::Arguments const & );
         @endcode
 
         Normally CtorProxy would be CtorForwarder CtorForwarderDispatcher,
@@ -1084,7 +1084,7 @@ namespace v8 { namespace convert {
         the problem. The exception will be caught by ClassCreator and
         transformed into a JS-side exception.
         
-        If CtorProxy::Ctor() succeeds (returns non-NULL and does not throw)
+        If CtorProxy::Call() succeeds (returns non-NULL and does not throw)
         then NativeToJSMap<T> is used to create a native-to-JS mapping.
         To make use of this, the client should do the following:
         
@@ -1110,12 +1110,12 @@ namespace v8 { namespace convert {
         typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         
         /**
-            If CtorProxy::Ctor(argv) succeeds, N2JMap::Insert(jself, theNative)
-            is called. The result of CtorProxy::Ctor() is returned.
+            If CtorProxy::Call(argv) succeeds, N2JMap::Insert(jself, theNative)
+            is called. The result of CtorProxy::Call() is returned.
         */
         static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
         {
-            NativeHandle n = CtorProxy::Ctor( argv );
+            NativeHandle n = CtorProxy::Call( argv );
             if( n ) N2JMap::Insert( jself, n );
             return n;
         }
@@ -1130,13 +1130,14 @@ namespace v8 { namespace convert {
     };
 
     /**
-        Can be used as a concrete ClassCreator_Factor<T> 
+        Can be used as a concrete ClassCreator_Factory<T> 
         specialization to forward JS ctor calls directly to native 
         ctors.
         
         T must (or is assumed to) be a ClassCreator<T>-wrapped 
-        class. CtorForwarderList must be a tmp::TypeList of 
-        CtorForwarder types.
+        class. CtorForwarderList must be a Signature typelist of 
+        CtorForwarder types and its "return type" must be T (optionally
+        pointer-qualified).
         
         Example:
         
@@ -1144,7 +1145,8 @@ namespace v8 { namespace convert {
         typedef CtorFwdTest CFT;
         typedef cv::CtorForwarder<CFT *()> C0;
         typedef cv::CtorForwarder<CFT *(int)> C1;
-        typedef cv::tmp::TypeList< C0, C1, C2 > CtorList;
+        typedef cv::CtorForwarder<CFT *(int, double)> C2;
+        typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
         
         // Then create Factory specialization based on those:
         template <>
@@ -1167,7 +1169,7 @@ namespace v8 { namespace convert {
         static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
         {
             typedef CtorForwarderDispatcher<CtorForwarderList> Proxy;
-            return Proxy::Ctor( argv );
+            return Proxy::Call( argv );
         }
     };
 

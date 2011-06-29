@@ -215,6 +215,10 @@ namespace v8 { namespace convert {
     template <>
     struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >
     {};
+    
+    // used in some error reporting:
+    template <>
+    char const * TypeName< MyType >::Value = "MyType";
 }}
 //-----------------------------------
 // Ultra-brief ClassCreator demo. See ConvertDemo.?pp for MUCH more.

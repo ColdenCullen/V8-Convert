@@ -6,7 +6,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 1 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -16,10 +17,12 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -28,7 +31,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 1 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -37,10 +41,12 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -51,7 +57,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -60,17 +67,19 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -79,7 +88,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -87,10 +97,12 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -98,7 +110,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -108,7 +120,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -117,17 +130,19 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -136,7 +151,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -144,10 +160,12 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -155,7 +173,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -165,7 +183,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 2 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -178,10 +197,12 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -190,7 +211,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 2 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -202,10 +224,12 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -216,7 +240,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -228,17 +253,19 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -247,7 +274,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -258,10 +286,12 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -269,7 +299,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -279,7 +309,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -291,17 +322,19 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -310,7 +343,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -321,10 +355,12 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -332,7 +368,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -342,7 +378,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 3 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -358,10 +395,12 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -370,7 +409,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 3 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -385,10 +425,12 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -399,7 +441,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -414,17 +457,19 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -433,7 +478,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -447,10 +493,12 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -458,7 +506,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -468,7 +516,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -483,17 +532,19 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -502,7 +553,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -516,10 +568,12 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -527,7 +581,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -537,7 +591,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 4 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -556,10 +611,12 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -568,7 +625,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 4 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -586,10 +644,12 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -600,7 +660,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -618,17 +679,19 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -637,7 +700,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -654,10 +718,12 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -665,7 +731,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -675,7 +741,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -693,17 +760,19 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -712,7 +781,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -729,10 +799,12 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -740,7 +812,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -750,7 +822,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 5 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -772,10 +845,12 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -784,7 +859,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 5 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -805,10 +881,12 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -819,7 +897,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -840,17 +919,19 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -859,7 +940,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -879,10 +961,12 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -890,7 +974,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -900,7 +984,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -921,17 +1006,19 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -940,7 +1027,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -960,10 +1048,12 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -971,7 +1061,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -981,7 +1071,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 6 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1006,10 +1097,12 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -1018,7 +1111,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 6 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1042,10 +1136,12 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1056,7 +1152,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1080,17 +1177,19 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1099,7 +1198,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1122,10 +1222,12 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1133,7 +1235,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1143,7 +1245,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1167,17 +1270,19 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1186,7 +1291,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1209,10 +1315,12 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1220,7 +1328,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1230,7 +1338,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 7 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1258,10 +1367,12 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -1270,7 +1381,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 7 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1297,10 +1409,12 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1311,7 +1425,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1338,17 +1453,19 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1357,7 +1474,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1383,10 +1501,12 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1394,7 +1514,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1404,7 +1524,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1431,17 +1552,19 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1450,7 +1573,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1476,10 +1600,12 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1487,7 +1613,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1497,7 +1623,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 8 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1528,10 +1655,12 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -1540,7 +1669,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 8 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1570,10 +1700,12 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1584,7 +1716,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1614,17 +1747,19 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1633,7 +1768,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1662,10 +1798,12 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1673,7 +1811,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1683,7 +1821,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1713,17 +1852,19 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1732,7 +1873,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1761,10 +1903,12 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1772,7 +1916,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1782,7 +1926,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 9 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1816,10 +1961,12 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -1828,7 +1975,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 9 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -1861,10 +2009,12 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1875,7 +2025,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1908,17 +2059,19 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -1927,7 +2080,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1959,10 +2113,12 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -1970,7 +2126,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -1980,7 +2136,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2013,17 +2170,19 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -2032,7 +2191,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2064,10 +2224,12 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -2075,7 +2237,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -2085,7 +2247,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 10 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -2122,10 +2285,12 @@ namespace Detail {
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -2134,7 +2299,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 10 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -2170,10 +2336,12 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -2184,7 +2352,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2220,17 +2389,19 @@ namespace Detail {
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -2239,7 +2410,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2274,10 +2446,12 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -2285,7 +2459,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -2295,7 +2469,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2331,17 +2506,19 @@ namespace Detail {
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -2350,7 +2527,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2385,10 +2563,12 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -2396,7 +2576,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -2406,7 +2586,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 11 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -2446,10 +2627,12 @@ namespace Detail {
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -2458,7 +2641,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 11 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -2497,10 +2681,12 @@ namespace Detail {
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -2511,7 +2697,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2550,17 +2737,19 @@ namespace Detail {
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -2569,7 +2758,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2607,10 +2797,12 @@ namespace Detail {
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -2618,7 +2810,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -2628,7 +2820,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2667,17 +2860,19 @@ namespace Detail {
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -2686,7 +2881,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2724,10 +2920,12 @@ namespace Detail {
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -2735,7 +2933,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -2745,7 +2943,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 12 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -2788,10 +2987,12 @@ namespace Detail {
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -2800,7 +3001,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 12 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -2842,10 +3044,12 @@ namespace Detail {
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -2856,7 +3060,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2898,17 +3103,19 @@ namespace Detail {
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -2917,7 +3124,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2958,10 +3166,12 @@ namespace Detail {
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -2969,7 +3179,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -2979,7 +3189,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3021,17 +3232,19 @@ namespace Detail {
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -3040,7 +3253,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3081,10 +3295,12 @@ namespace Detail {
 		 AC10 ac10; A10 arg10(ac10.ToNative(argv[10]));
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -3092,7 +3308,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -3102,7 +3318,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 13 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -3148,10 +3365,12 @@ namespace Detail {
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -3160,7 +3379,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 13 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -3205,10 +3425,12 @@ namespace Detail {
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -3219,7 +3441,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3264,17 +3487,19 @@ namespace Detail {
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -3283,7 +3508,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3327,10 +3553,12 @@ namespace Detail {
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -3338,7 +3566,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -3348,7 +3576,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3393,17 +3622,19 @@ namespace Detail {
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -3412,7 +3643,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3456,10 +3688,12 @@ namespace Detail {
 		 AC11 ac11; A11 arg11(ac11.ToNative(argv[11]));
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -3467,7 +3701,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -3477,7 +3711,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 14 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -3526,10 +3761,12 @@ namespace Detail {
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -3538,7 +3775,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 14 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -3586,10 +3824,12 @@ namespace Detail {
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -3600,7 +3840,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3648,17 +3889,19 @@ namespace Detail {
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -3667,7 +3910,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3714,10 +3958,12 @@ namespace Detail {
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -3725,7 +3971,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -3735,7 +3981,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3783,17 +4030,19 @@ namespace Detail {
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -3802,7 +4051,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -3849,10 +4099,12 @@ namespace Detail {
 		 AC12 ac12; A12 arg12(ac12.ToNative(argv[12]));
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -3860,7 +4112,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -3870,7 +4122,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 15 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -3922,10 +4175,12 @@ namespace Detail {
 		 AC14 ac14; A14 arg14(ac14.ToNative(argv[14]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -3934,7 +4189,8 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == 15 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
@@ -3985,10 +4241,12 @@ namespace Detail {
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		 AC14 ac14; A14 arg14(ac14.ToNative(argv[14]));
 		
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -3999,7 +4257,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -4050,17 +4309,19 @@ namespace Detail {
 		 AC14 ac14; A14 arg14(ac14.ToNative(argv[14]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -4069,7 +4330,8 @@ namespace Detail {
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -4119,10 +4381,12 @@ namespace Detail {
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		 AC14 ac14; A14 arg14(ac14.ToNative(argv[14]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
+        }
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -4130,7 +4394,7 @@ namespace Detail {
             T  * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
@@ -4140,7 +4404,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -4191,17 +4456,19 @@ namespace Detail {
 		 AC14 ac14; A14 arg14(ac14.ToNative(argv[14]));
 		
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -4210,7 +4477,8 @@ namespace Detail {
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -4260,10 +4528,12 @@ namespace Detail {
 		 AC13 ac13; A13 arg13(ac13.ToNative(argv[13]));
 		 AC14 ac14; A14 arg14(ac14.ToNative(argv[14]));
 		
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9,  arg10,  arg11,  arg12,  arg13,  arg14 );
+        }
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
@@ -4271,7 +4541,7 @@ namespace Detail {
             T const * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }

@@ -61,6 +61,34 @@ namespace v8 { namespace convert {
     };
 
     /**
+        This may optionally be specialized for client-defined types
+        to define the type name used by some error reporting
+        code.
+        
+        The default implementation is usable but not all that useful.
+    */
+    template <typename T>
+    struct TypeName
+    {
+        /** Default implementation's value is "T".
+            Specializations must have a non-NULL value, and any number
+            of specializations may legally have the same name.
+        */
+        static char const * Value;
+    };
+    template <typename T>
+    char const * TypeName<T>::Value = "T";
+
+#if 0
+    template <typename T>
+    struct TypeName<T *> : TypeName<T> {};
+    template <typename T>
+    struct TypeName<T const> : TypeName<T> {};
+    template <typename T>
+    struct TypeName<T const *> : TypeName<T> {};
+#endif
+
+    /**
        Describes basic type information regarding a type, for purposes
        of static typing during JS-to/from-Native conversions.
 
@@ -1679,7 +1707,7 @@ namespace v8 { namespace convert {
         struct CtorForwarderProxy
         {
             template <typename Sig>
-            static typename Signature<Sig>::ReturnType Ctor( v8::Arguments const & );
+            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & );
         };
 
         //! Specialization for 0-arity ctors.
@@ -1687,7 +1715,7 @@ namespace v8 { namespace convert {
         struct CtorForwarderProxy<0>
         {
             template <typename Sig>
-            static typename Signature<Sig>::ReturnType Ctor( v8::Arguments const & )
+            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & )
             {
                 typedef typename Signature<Sig>::ReturnType RC;
                 typedef typename TypeInfo<RC>::Type RType;
@@ -1699,7 +1727,7 @@ namespace v8 { namespace convert {
         struct CtorForwarderProxy<-1>
         {
             template <typename Sig>
-            static typename Signature<Sig>::ReturnType Ctor( v8::Arguments const & argv )
+            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
             {
                 typedef Signature<Sig> SigT;
                 typedef typename SigT::ReturnType RV;
@@ -1756,13 +1784,13 @@ namespace v8 { namespace convert {
             
             May propagate native exceptions.
         */
-        static ReturnType Ctor( v8::Arguments const & argv )
+        static ReturnType Call( v8::Arguments const & argv )
         {
             // TODO: refactor CtorForwarderProxy to not take an arity,
             // but use CtorForwarderProxy<Sig> instead. The current impl
             // pre-dates some of our templates-related advances.
             typedef Detail::CtorForwarderProxy<STL::Arity> Proxy;
-            return Proxy::template Ctor<Sig>( argv );
+            return Proxy::template Call<Sig>( argv );
         }
     };
 
@@ -1780,9 +1808,9 @@ namespace v8 { namespace convert {
         struct CtorFwdDispatch
         {
             typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Ctor( v8::Arguments const &  argv )
+            static NativeHandle Call( v8::Arguments const &  argv )
             {
-                return CTOR::Ctor( argv );
+                return CTOR::Call( argv );
             }
         };
         /**
@@ -1792,7 +1820,7 @@ namespace v8 { namespace convert {
         struct CtorFwdDispatch<T,tmp::NilType>
         {
             typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Ctor( Arguments const &  argv )
+            static NativeHandle Call( Arguments const &  argv )
             {
                 return 0;
             }
@@ -1813,7 +1841,7 @@ namespace v8 { namespace convert {
                Tries to dispatch Arguments to one of the constructors
                in the List type, based on the argument count.
              */
-            static NativeHandle Ctor( Arguments const &  argv )
+            static NativeHandle Call( Arguments const &  argv )
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
@@ -1821,8 +1849,8 @@ namespace v8 { namespace convert {
                                 ? -1 : sl::Length<CTOR>::Value
                 };
                 return ( (Arity < 0) || (Arity == argv.Length()) )
-                    ?  CtorFwdDispatch< T, CTOR >::Ctor(argv )
-                    : CtorFwdDispatchList<T,Tail>::Ctor(argv);
+                    ?  CtorFwdDispatch< T, CTOR >::Call(argv )
+                    : CtorFwdDispatchList<T,Tail>::Call(argv);
             }
         };
         /**
@@ -1833,7 +1861,7 @@ namespace v8 { namespace convert {
         {
             typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
             /** Writes an error message to errmsg and returns 0. */
-            static NativeHandle Ctor( Arguments const &  argv )
+            static NativeHandle Call( Arguments const &  argv )
             {
                 cv::StringBuffer msg;
                 msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
@@ -1879,11 +1907,11 @@ namespace v8 { namespace convert {
     {
         typedef typename CtorList::ReturnType RT;
         typedef typename TypeInfo<RT>::NativeHandle NativeHandle;
-        static NativeHandle Ctor( v8::Arguments const & argv )
+        static NativeHandle Call( v8::Arguments const & argv )
         {
             typedef typename TypeInfo<RT>::Type Type;
             typedef Detail::CtorFwdDispatchList<Type, CtorList> Proxy;
-            return Proxy::Ctor( argv );
+            return Proxy::Call( argv );
         }
     };
 #endif // !DOXYGEN

@@ -87,7 +87,7 @@ struct CtorForwarderProxy<${count}> // todo: subclass Signature<Sig>
 {
     enum { Arity = ${count} };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Ctor( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -190,17 +190,20 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv( (*func)( ${castCalls} ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)( ${castCalls} );
+        }
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative( func, argv ) );
         }
     };
 
@@ -209,54 +212,23 @@ namespace Detail {
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             typedef char AssertArity[ SignatureType::Arity == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            {
-                V8Unlocker<UnlockV8> const unlocker();
-                (*func)( ${castCalls} );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(*func)( ${castCalls} );
+        }
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative( func, argv );
             return v8::Undefined();
         }
     };
 }
-EOF
-
-:<<EOF
-    template <typename Sig>
-    struct ArgsToFunctionForwarder<${count},Sig,false> : FunctionSignature<Sig>
-    {
-    public:
-        typedef FunctionSignature<Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
-        {
-            ${sigTypeDecls}
-            ${castTypedefs}
-            ${castInits}
-            return CastToJS( (*func)( ${castCalls} ) );
-        }
-    };
-    template <typename Sig>
-    struct ArgsToFunctionForwarder<${count},Sig,true> : FunctionSignature<Sig>
-    {
-        typedef FunctionSignature<Sig> SignatureType;
-        typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
-        {
-            ${sigTypeDecls}
-            ${castTypedefs}
-            ${castInits}
-            typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<true> unlocker;
-            RV rv( (*func)( ${castCalls} ) );
-            unlocker.Dispose();
-            return CastToJS( rv );
-        }
-    };
 EOF
 
 }
@@ -280,23 +252,26 @@ namespace Detail {
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
             typedef typename SignatureType::ReturnType RV;
-            V8Unlocker<UnlockV8> unlocker;
-            RV rv((self.*func)( ${castCalls} ));
-            unlocker.Dispose();
-            return CastToJS( rv );
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)( ${castCalls} );
+        }
+        static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        {
+            return CastToJS( CallNative( self, func, argv ) );
         }
         static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
         {
             T ${constness} * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 
@@ -305,15 +280,18 @@ namespace Detail {
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            {
-                V8Unlocker<UnlockV8> unlocker();
-                (self.*func)( ${castCalls} );
-            }
+            V8Unlocker<UnlockV8> const unlocker();
+            return (ReturnType)(self.*func)( ${castCalls} );
+        }
+        static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        {
+            CallNative( self, func, argv );
             return v8::Undefined();
         }
         static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
@@ -321,7 +299,7 @@ namespace Detail {
             T ${constness} * self = CastFromJS<T>(argv.This());
             return self
                 ? Call(*self, func, argv)
-                : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+                : TossMissingThis<T>();;
         }
     };
 }
