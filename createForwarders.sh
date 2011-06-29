@@ -185,8 +185,8 @@ function makeArgsToFunctionForwarder()
 
 mycat <<EOF
 namespace Detail {
-    template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarder<${count},Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -203,12 +203,16 @@ namespace Detail {
         }
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            try
+            {
+                return CastToJS( CallNative( func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
-    template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -224,8 +228,12 @@ namespace Detail {
         }
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -247,8 +255,8 @@ function makeArgsToMethodForwarder_impl()
     fi
 mycat <<EOF
 namespace Detail {
-    template <typename T, typename Sig, bool UnlockV8>
-    struct ${class}<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ${class}<T, ${count},Sig, UnlockV8, PropagateExceptions> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -264,22 +272,24 @@ namespace Detail {
         }
         static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
-            return CastToJS( CallNative( self, func, argv ) );
+            try { return CastToJS( CallNative( self, func, argv ) ); }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T ${constness} * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative(func, argv) );
+            try { return CastToJS( CallNative(func, argv) ); }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
     };
 
-    template <typename T, typename Sig, bool UnlockV8>
-    struct ${class}Void<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ${class}Void<T, ${count},Sig, UnlockV8, PropagateExceptions> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
@@ -294,19 +304,27 @@ namespace Detail {
         }
         static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
-            CallNative( self, func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( self, func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T ${constness} * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative(func, argv);
-            return v8::Undefined();
+            try
+            {
+                CallNative(func, argv);
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
     };
 }

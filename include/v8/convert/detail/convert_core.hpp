@@ -1467,6 +1467,14 @@ namespace v8 { namespace convert {
         StringBuffer() : os()
         {
         }
+        StringBuffer(StringBuffer const & other) : os(other.os.str())
+        {
+        }
+        StringBuffer & operator=(StringBuffer const & other)
+        {
+             this->os.str(other.os.str());
+             return *this;
+        }
 
         /**
            Empties out the message buffer. This invalidates any value

@@ -322,7 +322,12 @@ template <>
 struct SignatureIsUnlockable<tmp::NilType> : tmp::BoolVal<true> {};
 
 namespace Detail {
-    
+ #define HANDLE_PROPAGATE_EXCEPTION \
+            catch(std::exception const &ex){ if( PropagateExceptions ) throw ex; else return CastToJS(ex); } \
+            catch(...){ if( PropagateExceptions ) throw; else return Toss("Unknown native exception type thrown."); } (void)0
+#define HANDLE_PROPAGATE_EXCEPTION_T catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
+            HANDLE_PROPAGATE_EXCEPTION
+   
     /**
         Internal helper to create an exception when we require
         a native (T*) pointer and don't find one.
@@ -332,19 +337,30 @@ namespace Detail {
     {
         return Toss(StringBuffer()<<"CastFromJS<"<<TypeName<T>::Value<<">() returned NULL! Cannot find 'this' pointer!");
     }
-    /**
-        Internal helper to create (but not throw!) a std::exception when we require
-        a native (T*) pointer and don't find one.
-    */
-    template <typename T>
-    std::exception MissingThisException()
+
+    struct MissingThisException
     {
+    protected:
         StringBuffer msg;
-        msg << "CastFromJS<"<< TypeName<T>::Value
+        template <typename T>
+        void init()
+        {
+            this->msg << "CastFromJS<"<< TypeName<T>::Value
             << ">() returned NULL. Throwing to avoid "
             << "dereferencing a NULL pointer!";
-        return std::runtime_error(msg.Content().c_str());
-    }
+        }
+    public:
+        StringBuffer const & buffer() const { return msg; }
+    };
+
+    template <typename T>
+    struct MissingThisExceptionT : MissingThisException
+    {
+        MissingThisExceptionT()
+        {
+            this->init<T>();
+        }
+    };
 
 /**
     Temporary internal macro to trigger a static assertion if unlocking
@@ -368,10 +384,13 @@ namespace Detail {
         template parameter anymore.
     */
 
-    template <int Arity_, typename Sig, bool UnlockV8 = cv::SignatureIsUnlockable< cv::Signature<Sig> >::Value  >
+    template <int Arity_, typename Sig,
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::Signature<Sig> >::Value,
+            bool PropagateExceptions = false >
     struct ArgsToFunctionForwarder;
-    template <int Arity, typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
+    
+    template <int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -385,7 +404,11 @@ namespace Detail {
 
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            return cv::CastToJS( CallNative( func, argv ) );
+            try
+            {
+                return cv::CastToJS( CallNative( func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
 
         ASSERT_UNLOCKV8_IS_FALSE;
@@ -393,13 +416,13 @@ namespace Detail {
     };
 
     //! Reminder to self: we really do need this specialization for some cases.
-    template <int Arity, typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
-        : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
+    template <int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8, PropagateExceptions>
+        : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
     {};
 
-    template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarder<0,Sig, UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
@@ -411,17 +434,23 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            try
+            {
+                return CastToJS( CallNative( func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCK_SANITY_CHECK;
         typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
 
-    template <int Arity_, typename Sig, bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
+    template <int Arity_, typename Sig,
+                bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value,
+                bool PropagateExceptions = false>
     struct ArgsToFunctionForwarderVoid;
 
-    template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
+    template <typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8, PropagateExceptions> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
@@ -438,15 +467,19 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            CallNative( func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCK_SANITY_CHECK;
         typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
     
-    template <int Arity, typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8>
+    template <int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToFunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -460,8 +493,12 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
-            CallNative( func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
         typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
@@ -469,14 +506,148 @@ namespace Detail {
 
 }
 
+
+/**
+   InvocationCallback wrapper which calls another InvocationCallback
+   and translates any native ExceptionT exceptions thrown by that
+   function into JS exceptions.
+
+   ExceptionT must be an exception type which is thrown by copy
+   (e.g. STL-style) as opposed to by pointer (MFC-style).
+   
+   SigGetMsg must be a function-signature-style argument describing
+   a method within ExceptionT which can be used to fetch the message
+   reported by the exception. It must meet these requirements:
+
+   a) Be const
+   b) Take no arguments
+   c) Return a type convertible to JS via CastToJS()
+
+   Getter must be a pointer to a function matching that signature.
+
+   ICB must be a v8::InvocationCallback. When this function is called
+   by v8, it will pass on the call to ICB and catch exceptions.
+
+   Exceptions of type ExceptionT which are thrown by ICB get
+   translated into a JS exception with an error message fetched using
+   ExceptionT::Getter().
+
+   If PropagateOtherExceptions is true then exception of types other
+   than ExceptionT are re-thrown (which can be fatal to v8, so be
+   careful). If it is false then they are not propagated but the error
+   message in the generated JS exception is unspecified (because we
+   have no generic way to get such a message). If a client needs to
+   catch multiple exception types, enable propagation and chain the
+   callbacks together. In such a case, the outer-most (first) callback
+   in the chain should not propagate unknown exceptions (to avoid
+   killing v8).
+
+
+   This type can be used to implement "chaining" of exception
+   catching, such that we can use the InCaCatcher
+   to catch various distinct exception types in the context
+   of one v8::InvocationCallback call.
+
+   Example:
+
+   @code
+   // Here we want to catch MyExceptionType, std::runtime_error, and
+   // std::exception (the base class of std::runtime_error, by the
+   // way) separately:
+
+   // When catching within an exception hierarchy, start with the most
+   // specific (most-derived) exceptions.
+
+   // Client-specified exception type:
+   typedef InCaCatcher<
+      MyExceptionType,
+      std::string (),
+      &MyExceptionType::getMessage,
+      MyCallbackWhichThrows, // the "real" InvocationCallback
+      true // make sure propagation is turned on!
+      > Catch_MyEx;
+
+  // std::runtime_error:
+  typedef InCaCatcher<
+      std::runtime_error,
+      char const * (),
+      &std::runtime_error::what,
+      Catch_MyEx::Catch, // next Callback in the chain
+      true // make sure propagation is turned on!
+      > Catch_RTE;
+
+   // std::exception:
+   typedef InCaCatcher_std<
+       Catch_RTE::Call,
+       false // Often we want no propagation at the top-most level,
+             // to avoid killing v8.
+       > MyCatcher;
+
+   // Now MyCatcher::Call is-a InvocationCallback which will handle
+   // MyExceptionType, std::runtime_error, and std::exception via
+   // different catch blocks. Note, however, that the visible
+   // behaviour for runtime_error and std::exception (its base class)
+   // will be identical here, though they actually have different
+   // code.
+
+   @endcode
+
+   Note that the InvocationCallbacks created by most of the
+   v8::convert API adds (non-propagating) exception catching for
+   std::exception to the generated wrappers. Thus this type is not
+   terribly useful with them. It is, however, useful when one wants to
+   implement an InvocationCallback such that it can throw, but wants
+   to make sure that the exceptions to not pass back into v8 when JS
+   is calling the InvocationCallback (as propagating exceptions
+   through v8 is fatal to v8).
+
+   TODO: consider removing the default-imposed exception handling
+   created by most forwarders/wrappers in favour of this
+   approach. This way is more flexible and arguably "more correct",
+   but adds a burder to users who want exception catching built in.
+*/
+template < typename ExceptionT,
+           typename SigGetMsg,
+           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           // how to do something like this: ???
+           // template <class ET, class SGM> class SigT::FunctionType Getter,
+           v8::InvocationCallback ICB,
+           bool PropagateOtherExceptions = false
+    >
+struct InCaCatcher : Callable
+{
+    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
+    {
+        try
+        {
+            return ICB( args );
+        }
+        catch( ExceptionT const & e2 )
+        {
+            return Toss(CastToJS((e2.*Getter)())->ToString());
+        }
+        catch( ExceptionT const * e2 )
+        {
+            return Toss(CastToJS((e2->*Getter)())->ToString());
+        }
+        catch(...)
+        {
+            if( PropagateOtherExceptions ) throw;
+            else return Toss("Unknown native exception thrown!");
+        }
+    }
+};
+
 namespace Detail {
     template <typename T, int Arity_, typename Sig,
-             bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
+             bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value,
+             bool PropagateExceptions = false
      >
     struct ArgsToMethodForwarder;
 
-    template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 0, Sig, UnlockV8> : MethodSignature<T,Sig>
+
+    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToMethodForwarder<T, 0, Sig, UnlockV8, PropagateExceptions> : MethodSignature<T,Sig>
     {
     public:
         typedef MethodSignature<T,Sig> SignatureType;
@@ -490,24 +661,32 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( self, func, argv ) );
+            try
+            {
+                return CastToJS( CallNative( self, func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative(func, argv) );
+            try
+            {
+                return CastToJS( CallNative( func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
         : MethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -521,33 +700,43 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative(self, func, argv) );
+            try
+            {
+                return CastToJS( CallNative( self, func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative(func, argv) );
+            try
+            {
+                return CastToJS( CallNative(func, argv) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, typename RV, bool UnlockV8, int _Arity>
-    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
+    template <typename T, typename RV, bool UnlockV8, int _Arity, bool PropagateExceptions>
+    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8, PropagateExceptions> :
             ArgsToMethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
     template <typename T, int Arity_, typename Sig,
-        bool UnlockV8 = cv::SignatureIsUnlockable< cv::MethodSignature<T, Sig> >::Value
+        bool UnlockV8 = cv::SignatureIsUnlockable< cv::MethodSignature<T, Sig> >::Value,
+        bool PropagateExceptions = false
     >
     struct ArgsToMethodForwarderVoid;
 
-    template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,0,Sig, UnlockV8> : MethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToMethodForwarderVoid<T,0,Sig, UnlockV8, PropagateExceptions>
+        : MethodSignature<T,Sig>
     {
     public:
         typedef MethodSignature<T,Sig> SignatureType;
@@ -561,24 +750,33 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( Type & self, FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( self, func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( self, func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative(func, argv);
-            return v8::Undefined();
+            try
+            {
+                CallNative(func, argv);
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8> : MethodSignature<T,RV (v8::Arguments const &)>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
+        : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
         typedef MethodSignature<T,RV (v8::Arguments const &)> SignatureType;
@@ -591,35 +789,45 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( Type & self, FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( self, func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( self, func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
+
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative(func, argv);
-            return v8::Undefined();
+            try
+            {
+                CallNative(func, argv);
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
-        : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8, PropagateExceptions>
+        : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
     {};
     
     template <typename T, int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value,
+            bool PropagateExceptions = false
     >
     struct ArgsToConstMethodForwarder;
 
-    template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToConstMethodForwarder<T,0,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
@@ -633,22 +841,30 @@ namespace Detail {
         
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
-            return cv::CastToJS( CallNative( self, func, argv ) );
+            try
+            {
+                return cv::CastToJS( CallNative( self, func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative(func, argv) );
+            try
+            {
+                return CastToJS( CallNative(func, argv) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -662,34 +878,42 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
-            
-            return CastToJS( CallNative(self, func, argv) );
+            try
+            {
+                return cv::CastToJS( CallNative( self, func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative(func, argv) );
+            try
+            {
+                return CastToJS( CallNative(func, argv) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
-        : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8, PropagateExceptions>
+        : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
     {};
 
     template <typename T, int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
+            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value,
+            bool PropagateExceptions = false
     >
     struct ArgsToConstMethodForwarderVoid;
 
-    template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToConstMethodForwarderVoid<T,0,Sig, UnlockV8, PropagateExceptions> : ConstMethodSignature<T,Sig>
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
@@ -704,25 +928,33 @@ namespace Detail {
         
         static v8::Handle<v8::Value> Call( Type const & self, FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( self, func, argv );
-            return v8::Undefined();
+            try
+            {
+                CallNative( self, func, argv );
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
-            if( ! self ) throw MissingThisException<T>();
+            if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative(func, argv);
-            return v8::Undefined();
+            try
+            {
+                CallNative(func, argv);
+                return v8::Undefined();
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         ASSERT_UNLOCK_SANITY_CHECK;
     };
     
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8, PropagateExceptions>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -738,21 +970,31 @@ namespace Detail {
         }
         static v8::Handle<v8::Value> Call( Type const & self, FunctionType func, v8::Arguments const & argv )
         {
-            (self.*func)(argv);
-            return v8::Undefined();
+            try
+            {
+                CallNative( self, func, argv );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
+        }
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
+        {
+            T const * self = CastFromJS<T>(argv.This());
+            if( ! self ) throw MissingThisExceptionT<T>();
+            return CallNative(*self, func, argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            T const * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            try
+            {
+                return CastToJS( CallNative( func, argv ) );
+            }
+            HANDLE_PROPAGATE_EXCEPTION_T;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
 
-    template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
+    template <typename T, int Arity, typename RV, bool UnlockV8, bool PropagateExceptions>
+    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8, PropagateExceptions>
     : ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
@@ -816,16 +1058,16 @@ namespace Detail {
     after the native call returns.
 */
 template <typename Sig,
-        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
+        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value,
+        bool PropagateExceptions = false
 >
 struct ArgsToFunctionForwarder : Callable
 {
 private:
-    typedef typename
-    tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
-                 Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >,
-                 Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >
-    >::Type
+    typedef typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
+                                Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >,
+                                Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >
+        >::Type
     ProxyType;
 public:
     typedef typename ProxyType::SignatureType SignatureType;
@@ -1021,6 +1263,8 @@ namespace Detail {
 #undef ASSERT_UNLOCK_SANITY_CHECK
 #undef ASSERT_UNLOCKV8_IS_FALSE
 } // Detail namespace
+
+
 
 /**
    A template for converting free (non-member) function pointers
@@ -1309,22 +1553,7 @@ public:
     */
     static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
     {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
         return Proxy::Call( self, func, argv );
-#else
-        try
-        {
-            return Proxy::Call( self, func, argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return Toss("Native code through unknown exception type.");
-        }
-#endif
     }
 
     /**
@@ -1333,10 +1562,7 @@ public:
     */
     static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
-        T const * self = CastFromJS<T>(argv.This());
-        return self
-            ? Call(*self, func, argv)
-            : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        return Proxy::Call( func, argv );
     }
 };
 
@@ -1479,136 +1705,6 @@ struct NativeToJS< InCa<ICB> >
 };
 #endif
 
-/**
-   InvocationCallback wrapper which calls another InvocationCallback
-   and translates any native ExceptionT exceptions thrown by that
-   function into JS exceptions.
-
-   ExceptionT must be an exception type which is thrown by copy
-   (e.g. STL-style) as opposed to by pointer (MFC-style).
-   
-   SigGetMsg must be a function-signature-style argument describing
-   a method within ExceptionT which can be used to fetch the message
-   reported by the exception. It must meet these requirements:
-
-   a) Be const
-   b) Take no arguments
-   c) Return a type convertible to JS via CastToJS()
-
-   Getter must be a pointer to a function matching that signature.
-
-   ICB must be a v8::InvocationCallback. When this function is called
-   by v8, it will pass on the call to ICB and catch exceptions.
-
-   Exceptions of type ExceptionT which are thrown by ICB get
-   translated into a JS exception with an error message fetched using
-   ExceptionT::Getter().
-
-   If PropagateOtherExceptions is true then exception of types other
-   than ExceptionT are re-thrown (which can be fatal to v8, so be
-   careful). If it is false then they are not propagated but the error
-   message in the generated JS exception is unspecified (because we
-   have no generic way to get such a message). If a client needs to
-   catch multiple exception types, enable propagation and chain the
-   callbacks together. In such a case, the outer-most (first) callback
-   in the chain should not propagate unknown exceptions (to avoid
-   killing v8).
-
-
-   This type can be used to implement "chaining" of exception
-   catching, such that we can use the InCaCatcher
-   to catch various distinct exception types in the context
-   of one v8::InvocationCallback call.
-
-   Example:
-
-   @code
-   // Here we want to catch MyExceptionType, std::runtime_error, and
-   // std::exception (the base class of std::runtime_error, by the
-   // way) separately:
-
-   // When catching within an exception hierarchy, start with the most
-   // specific (most-derived) exceptions.
-
-   // Client-specified exception type:
-   typedef InCaCatcher<
-      MyExceptionType,
-      std::string (),
-      &MyExceptionType::getMessage,
-      MyCallbackWhichThrows, // the "real" InvocationCallback
-      true // make sure propagation is turned on!
-      > Catch_MyEx;
-
-  // std::runtime_error:
-  typedef InCaCatcher<
-      std::runtime_error,
-      char const * (),
-      &std::runtime_error::what,
-      Catch_MyEx::Catch, // next Callback in the chain
-      true // make sure propagation is turned on!
-      > Catch_RTE;
-
-   // std::exception:
-   typedef InCaCatcher_std<
-       Catch_RTE::Call,
-       false // Often we want no propagation at the top-most level,
-             // to avoid killing v8.
-       > MyCatcher;
-
-   // Now MyCatcher::Call is-a InvocationCallback which will handle
-   // MyExceptionType, std::runtime_error, and std::exception via
-   // different catch blocks. Note, however, that the visible
-   // behaviour for runtime_error and std::exception (its base class)
-   // will be identical here, though they actually have different
-   // code.
-
-   @endcode
-
-   Note that the InvocationCallbacks created by most of the
-   v8::convert API adds (non-propagating) exception catching for
-   std::exception to the generated wrappers. Thus this type is not
-   terribly useful with them. It is, however, useful when one wants to
-   implement an InvocationCallback such that it can throw, but wants
-   to make sure that the exceptions to not pass back into v8 when JS
-   is calling the InvocationCallback (as propagating exceptions
-   through v8 is fatal to v8).
-
-   TODO: consider removing the default-imposed exception handling
-   created by most forwarders/wrappers in favour of this
-   approach. This way is more flexible and arguably "more correct",
-   but adds a burder to users who want exception catching built in.
-*/
-template < typename ExceptionT,
-           typename SigGetMsg,
-           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
-           // how to do something like this: ???
-           // template <class ET, class SGM> class SigT::FunctionType Getter,
-           v8::InvocationCallback ICB,
-           bool PropagateOtherExceptions = false
-    >
-struct InCaCatcher : Callable
-{
-    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
-    {
-        try
-        {
-            return ICB( args );
-        }
-        catch( ExceptionT const & e2 )
-        {
-            return Toss(CastToJS((e2.*Getter)())->ToString());
-        }
-        catch( ExceptionT const * e2 )
-        {
-            return Toss(CastToJS((e2->*Getter)())->ToString());
-        }
-        catch(...)
-        {
-            if( PropagateOtherExceptions ) throw;
-            else return Toss("Unknown native exception thrown!");
-        }
-    }
-};
     
 namespace Detail {
     template <int Arity>
@@ -2138,4 +2234,7 @@ struct OneTimeInitInCa : Callable
 }} // namespaces
 
 #undef V8_CONVERT_CATCH_BOUND_FUNCS
+#undef HANDLE_PROPAGATE_EXCEPTION
+#undef HANDLE_PROPAGATE_EXCEPTION_T
+
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */
