@@ -266,12 +266,15 @@ namespace Detail {
         {
             return CastToJS( CallNative( self, func, argv ) );
         }
-        static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T ${constness} * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();;
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative(func, argv) );
         }
     };
 
@@ -294,12 +297,16 @@ namespace Detail {
             CallNative( self, func, argv );
             return v8::Undefined();
         }
-        static ${ValueHandle} Call( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T ${constness} * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();;
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative(func, argv);
+            return v8::Undefined();
         }
     };
 }

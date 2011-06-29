@@ -324,7 +324,7 @@ struct SignatureIsUnlockable<tmp::NilType> : tmp::BoolVal<true> {};
 namespace Detail {
     
     /**
-        Internal helper to create an exception when we expect
+        Internal helper to create an exception when we require
         a native (T*) pointer and don't find one.
     */  
     template <typename T>
@@ -332,6 +332,20 @@ namespace Detail {
     {
         return Toss(StringBuffer()<<"CastFromJS<"<<TypeName<T>::Value<<">() returned NULL! Cannot find 'this' pointer!");
     }
+    /**
+        Internal helper to create (but not throw!) a std::exception when we require
+        a native (T*) pointer and don't find one.
+    */
+    template <typename T>
+    std::exception MissingThisException()
+    {
+        StringBuffer msg;
+        msg << "CastFromJS<"<< TypeName<T>::Value
+            << ">() returned NULL. Throwing to avoid "
+            << "dereferencing a NULL pointer!";
+        return std::runtime_error(msg.Content().c_str());
+    }
+
 /**
     Temporary internal macro to trigger a static assertion if unlocking
     support is requested but cannot be implemented for the given
@@ -403,7 +417,7 @@ namespace Detail {
         typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
     };
 
-    template <int Arity_, typename Sig, bool UnlockV8>
+    template <int Arity_, typename Sig, bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
     struct ArgsToFunctionForwarderVoid;
 
     template <typename Sig, bool UnlockV8>
@@ -415,7 +429,12 @@ namespace Detail {
         static ReturnType CallNative( FunctionType func, Arguments const & argv )
         {
             V8Unlocker<UnlockV8> const unlocker();
-            return (ReturnType)func();
+            return (ReturnType)func()
+            /* the explicit cast there is a workaround for the RV==void
+               case. It is a no-op for other cases, since the return value
+               is already RV. Some compilers (MSVC) don't allow an explicit
+               return of a void expression without the cast.
+            */;
         }
         static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
         {
@@ -473,13 +492,17 @@ namespace Detail {
         {
             return CastToJS( CallNative( self, func, argv ) );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
         }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative(func, argv) );
+        }
+        
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
@@ -500,12 +523,15 @@ namespace Detail {
         {
             return CastToJS( CallNative(self, func, argv) );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative(func, argv) );
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -538,12 +564,16 @@ namespace Detail {
             CallNative( self, func, argv );
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative(func, argv);
+            return v8::Undefined();
         }
     };
 
@@ -564,12 +594,16 @@ namespace Detail {
             CallNative( self, func, argv );
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative(func, argv);
+            return v8::Undefined();
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -601,12 +635,15 @@ namespace Detail {
         {
             return cv::CastToJS( CallNative( self, func, argv ) );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative(func, argv) );
         }
     };
 
@@ -628,12 +665,15 @@ namespace Detail {
             
             return CastToJS( CallNative(self, func, argv) );
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            return CastToJS( CallNative(func, argv) );
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -667,12 +707,16 @@ namespace Detail {
             CallNative( self, func, argv );
             return v8::Undefined();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             T const * self = CastFromJS<T>(argv.This());
-            return self
-                ? Call(*self, func, argv)
-                : TossMissingThis<T>();
+            if( ! self ) throw MissingThisException<T>();
+            return (ReturnType)CallNative(*self, func, argv);
+        }
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+        {
+            CallNative(func, argv);
+            return v8::Undefined();
         }
         ASSERT_UNLOCK_SANITY_CHECK;
     };
@@ -785,22 +829,36 @@ private:
     ProxyType;
 public:
     typedef typename ProxyType::SignatureType SignatureType;
+    typedef typename ProxyType::ReturnType ReturnType;
     typedef typename ProxyType::FunctionType FunctionType;
     /**
        Passes the given arguments to func(), converting them to the appropriate
        types. If argv.Length() is less than SignatureType::Arity then
-       a JS exception is thrown.
+       a JS exception is thrown. The native return value of the call is
+       returned.
+    */
+    static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
+    {
+        return ProxyType::CallNative( func, argv );
+    }
+    /**
+        Equivalent to CastToJS( CallNative(func,argv) ) unless ReturnType
+        is void, in which case CastToJS() is not invoked and v8::Undefined()
+        will be returned.
     */
     static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
         return ProxyType::Call( func, argv );
     }
+
+#if 0
     /** Returns Call( Func, argv ). */
     template < typename FunctionSignature<Sig>::FunctionType Func >
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
         return Call( Func, argv );
-    }    
+    }
+#endif
 };
 
 namespace Detail {
@@ -808,15 +866,20 @@ namespace Detail {
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionToInCa : FunctionPtr<Sig, Func>, Callable
+    struct FunctionToInCa : FunctionPtr<Sig,Func>, Callable
     {
+        
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef ArgsToFunctionForwarder< SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( Arguments const & argv )
+        {
+            return (ReturnType)Proxy::CallNative( Func, argv );
+        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef FunctionSignature<Sig> SignatureType;
-            typedef ArgsToFunctionForwarder< SignatureType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
-        typedef FunctionSignature<Sig> SignatureType;
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
@@ -825,15 +888,20 @@ namespace Detail {
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
     struct FunctionToInCaVoid : FunctionPtr<Sig,Func>, Callable
     {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef ArgsToFunctionForwarderVoid< SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( Arguments const & argv )
+        {
+            return (ReturnType)Proxy::CallNative( Func, argv );
+        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef FunctionPtr<Sig, Func> ParentType;
-            typedef ArgsToFunctionForwarderVoid< ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
-        typedef FunctionSignature<Sig> SignatureType;
         ASSERT_UNLOCK_SANITY_CHECK;
     };
+
 
     template <typename T,
               typename Sig,
@@ -842,20 +910,25 @@ namespace Detail {
               >
     struct MethodToInCa : MethodPtr<T,Sig, Func>, Callable
     {
+        typedef MethodPtr<T, Sig, Func> SignatureType;
+        typedef ArgsToMethodForwarder< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T & self, Arguments const & argv )
+        {
+            return Proxy::CallNative( self, Func, argv );
+        }
+        static ReturnType CallNative( Arguments const & argv )
+        {
+            return Proxy::Call( Func, argv );
+        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            
-            typedef MethodPtr<T, Sig, Func> ParentType;
-            typedef ArgsToMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
         static v8::Handle<v8::Value> Call( T & self, Arguments const & argv )
         {
-            typedef MethodPtr<T, Sig, Func> ParentType;
-            typedef ArgsToMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( self, Func, argv );
         }
-        typedef MethodSignature<T,Sig> SignatureType;
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
@@ -866,21 +939,25 @@ namespace Detail {
               >
     struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, Callable
     {
+        typedef MethodPtr<T, Sig, Func> SignatureType;
+        typedef ArgsToMethodForwarderVoid< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T & self, Arguments const & argv )
+        {
+            return Proxy::CallNative( self, Func, argv );
+        }
+        static ReturnType CallNative( Arguments const & argv )
+        {
+            return Proxy::Call( Func, argv );
+        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef MethodPtr<T, Sig, Func> ParentType;
-            typedef ArgsToMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
+            return Proxy::Call( Func, argv );
         }
         static v8::Handle<v8::Value> Call( T & self, Arguments const & argv )
         {
-            typedef MethodPtr<T, Sig, Func> ParentType;
-            typedef ArgsToMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
-            Proxy::Call( self, Func, argv );
-            return v8::Undefined();
+            return Proxy::Call( self, Func, argv );
         }
-        typedef MethodSignature<T,Sig> SignatureType;
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
@@ -891,19 +968,25 @@ namespace Detail {
               >
     struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>, Callable
     {
+        typedef ConstMethodPtr<T, Sig, Func> SignatureType;
+        typedef ArgsToConstMethodForwarder< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, Arguments const & argv )
+        {
+            return Proxy::CallNative( self, Func, argv );
+        }
+        static ReturnType CallNative( Arguments const & argv )
+        {
+            return Proxy::Call( Func, argv );
+        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef ConstMethodSignature<T, Sig> ParentType;
-            typedef ArgsToConstMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( Func, argv );
         }
         static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
         {
-            typedef ConstMethodSignature<T, Sig> ParentType;
-            typedef ArgsToConstMethodForwarder< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
             return Proxy::Call( self, Func, argv );
         }
-        typedef ConstMethodSignature<T,Sig> SignatureType;
     };
 
     template <typename T,
@@ -913,22 +996,25 @@ namespace Detail {
               >
     struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>, Callable
     {
+        typedef ConstMethodPtr<T, Sig, Func> SignatureType;
+        typedef ArgsToConstMethodForwarderVoid< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef typename SignatureType::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, Arguments const & argv )
+        {
+            return Proxy::CallNative( self, Func, argv );
+        }
+        static ReturnType CallNative( Arguments const & argv )
+        {
+            return Proxy::Call( Func, argv );
+        }
         static v8::Handle<v8::Value> Call( Arguments const & argv )
         {
-            typedef ConstMethodPtr<T,Sig, Func> ParentType;
-            typedef ArgsToConstMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
-            Proxy::Call( Func, argv );
-            return v8::Undefined();
+            return Proxy::Call( Func, argv );
         }
-        
         static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
         {
-            typedef ConstMethodPtr<T, Sig, Func> ParentType;
-            typedef ArgsToConstMethodForwarderVoid< T, ParentType::Arity, Sig, UnlockV8 > Proxy;
-            Proxy::Call( self, Func, argv );
-            return v8::Undefined();
+            return Proxy::Call( self, Func, argv );
         }
-        typedef ConstMethodSignature<T,Sig> SignatureType;
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
@@ -945,9 +1031,14 @@ namespace Detail {
 
    If UnlockV8 is true then v8::Unlocker will be used to unlock v8 
    for the duration of the call to Func(). HOWEVER... see 
-   ArgsToFunctionForwarder for lots of details/caveats about that 
+   ArgsToFunctionForwarder for the details/caveats regarding that 
    parameter.
-
+   
+       Example:
+    @code
+    v8::InvocationCallback cb = 
+       FunctionToInCa< int (int), ::putchar>::Call;
+    @endcode
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,
@@ -968,7 +1059,15 @@ struct FunctionToInCa
     when you want the JS interface to always get the undefined
     return value.
     
-    Call() always returns v8::Undefined().
+    Call() always returns v8::Undefined(). CallNative(), however,
+    returns the real return type specified by Sig (which may be void).
+
+    Example:
+
+    @code
+    v8::InvocationCallback cb = 
+       FunctionToInCaVoid< int (int), ::putchar>::Call;
+    @endcode
 */
 template <typename Sig,
           typename FunctionSignature<Sig>::FunctionType Func,
@@ -995,6 +1094,13 @@ struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
    that signature.
    
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
+   
+    Example:
+
+    @code
+    v8::InvocationCallback cb = 
+       MethodToInCa< T, int (int), &T::myFunc>::Call;
+    @endcode
 */
 template <typename T, typename Sig,
           typename MethodSignature<T,Sig>::FunctionType Func,
@@ -1011,6 +1117,14 @@ struct MethodToInCa
 /**
     See FunctionToInCaVoid - this is identical exception that it
     works on member functions of T.
+    
+    Example:
+
+    @code
+    v8::InvocationCallback cb = 
+       MethodToInCaVoid< T, int (int), &T::myFunc>::Call;
+    @endcode
+
 */
 template <typename T, typename Sig,
           typename MethodSignature<T,Sig>::FunctionType Func,
@@ -1025,6 +1139,16 @@ struct MethodToInCaVoid
    Functionally identical to MethodToInCa, but for const member functions.
    
    See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
+   
+   Note that the Sig signature must be suffixed with a const qualifier!
+   
+    Example:
+
+    @code
+    v8::InvocationCallback cb = 
+       ConstMethodToInCa< T, int (int) const, &T::myFunc>::Call;
+    @endcode
+
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
@@ -1039,6 +1163,16 @@ struct ConstMethodToInCa
 /**
     See FunctionToInCaVoid - this is identical exception that it
     works on const member functions of T.
+   
+    Note that the Sig signature must be suffixed with a const qualifier!
+    
+    Example:
+
+    @code
+    v8::InvocationCallback cb = 
+       ConstMethodToInCaVoid< T, int (int) const, &T::myFunc>::Call;
+    @endcode
+
 */
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func,
           bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
@@ -1123,11 +1257,11 @@ private:
                  Detail::ArgsToMethodForwarderVoid< T, MethodSignature<T,Sig>::Arity, Sig, UnlockV8 >,
                  Detail::ArgsToMethodForwarder< T, MethodSignature<T,Sig>::Arity, Sig, UnlockV8 >
     >::Type
-    ProxyType;
+    Proxy;
 public:
-    typedef typename ProxyType::SignatureType SignatureType;
-    typedef typename ProxyType::FunctionType FunctionType;
-
+    typedef typename Proxy::SignatureType SignatureType;
+    typedef typename Proxy::FunctionType FunctionType;
+    typedef typename Proxy::ReturnType ReturnType;
     /**
        Passes the given arguments to (self.*func)(), converting them
        to the appropriate types. If argv.Length() is less than
@@ -1135,22 +1269,7 @@ public:
     */
     static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
     {
-#if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( self, func, argv );
-#else
-        try
-        {
-            return ProxyType::Call( self, func, argv );
-        }
-        catch(std::exception const &ex)
-        {
-            return CastToJS(ex);
-        }
-        catch(...)
-        {
-            return Toss("Native code through unknown exception type.");
-        }
-#endif
+        return Proxy::Call( self, func, argv );
     }
 
     /**
@@ -1159,10 +1278,7 @@ public:
     */
     static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
-        T * self = CastFromJS<T>(argv.This());
-        return self
-            ? Call(*self, func, argv)
-            : Toss("CastFromJS<T>() returned NULL! Cannot find 'this' pointer!");
+        return Proxy::Call( func, argv );
     }
 };
 
@@ -1181,10 +1297,10 @@ private:
                  Detail::ArgsToConstMethodForwarderVoid< T, ConstMethodSignature<T,Sig>::Arity, Sig, UnlockV8 >,
                  Detail::ArgsToConstMethodForwarder< T, ConstMethodSignature<T,Sig>::Arity, Sig, UnlockV8 >
     >::Type
-    ProxyType;
+    Proxy;
 public:
-    typedef typename ProxyType::SignatureType SignatureType;
-    typedef typename ProxyType::FunctionType FunctionType;
+    typedef typename Proxy::SignatureType SignatureType;
+    typedef typename Proxy::FunctionType FunctionType;
 
     /**
        Passes the given arguments to (self.*func)(), converting them
@@ -1194,11 +1310,11 @@ public:
     static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
     {
 #if !V8_CONVERT_CATCH_BOUND_FUNCS
-        return ProxyType::Call( self, func, argv );
+        return Proxy::Call( self, func, argv );
 #else
         try
         {
-            return ProxyType::Call( self, func, argv );
+            return Proxy::Call( self, func, argv );
         }
         catch(std::exception const &ex)
         {
@@ -1241,7 +1357,7 @@ namespace Detail {
         typedef cv::FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToFunctionForwarder<Sig,UnlockV8> Proxy;
-        static ReturnType Call( Sig func, v8::Arguments const & argv )
+        static ReturnType CastFromJS( Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
@@ -1254,7 +1370,7 @@ namespace Detail {
         typedef cv::FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToFunctionForwarder<Sig, UnlockV8> Proxy;
-        static void Call( Sig func, v8::Arguments const & argv )
+        static void CastFromJS( Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( func, argv );
         }
@@ -1270,11 +1386,11 @@ namespace Detail {
         typedef cv::MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToMethodForwarder<T,Sig> Proxy;
-        static ReturnType Call( T & self, Sig func, v8::Arguments const & argv )
+        static ReturnType CastFromJS( T & self, Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
         }
-        static ReturnType Call( Sig func, v8::Arguments const & argv )
+        static ReturnType CastFromJS( Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
@@ -1286,11 +1402,11 @@ namespace Detail {
         typedef cv::MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToMethodForwarder<T,Sig> Proxy;
-        static void Call( T & self, Sig func, v8::Arguments const & argv )
+        static void CastFromJS( T & self, Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( self, func, argv );
         }
-        static void Call( Sig func, v8::Arguments const & argv )
+        static void CastFromJS( Sig func, v8::Arguments const & argv )
         {
             Proxy::Call( func, argv );
         }
@@ -1300,13 +1416,13 @@ namespace Detail {
     struct ForwardConstMethod
     {
         typedef cv::ConstMethodSignature<T,Sig> SignatureType;
-        typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToConstMethodForwarder<T,Sig> Proxy;
-        static ReturnType Call( T const & self, Sig func, v8::Arguments const & argv )
+        typedef typename Proxy::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( self, func, argv ) );
         }
-        static ReturnType Call( Sig func, v8::Arguments const & argv )
+        static ReturnType CallNative( Sig func, v8::Arguments const & argv )
         {
             return cv::CastFromJS<ReturnType>( Proxy::Call( func, argv ) );
         }
@@ -1316,15 +1432,15 @@ namespace Detail {
     struct ForwardConstMethodVoid
     {
         typedef cv::ConstMethodSignature<T,Sig> SignatureType;
-        typedef typename SignatureType::ReturnType ReturnType;
         typedef cv::ArgsToConstMethodForwarder<T,Sig> Proxy;
-        static void Call( T const & self, Sig func, v8::Arguments const & argv )
+        typedef typename Proxy::ReturnType ReturnType;
+        static ReturnType CallNative( T const & self, Sig func, v8::Arguments const & argv )
         {
-            Proxy::Call( self, func, argv );
+            return (ReturnType)Proxy::CallNative( self, func, argv );
         }
-        static void Call( Sig func, v8::Arguments const & argv )
+        static ReturnType CallNative( Sig func, v8::Arguments const & argv )
         {
-            Proxy::Call( func, argv );
+            return (ReturnType)Proxy::Call( func, argv );
         }
     };
 }
@@ -1343,16 +1459,10 @@ forwardFunction( Sig func, Arguments const & argv )
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-        Detail::ForwardFunctionVoid< Sig >,
-        Detail::ForwardFunction< Sig >
-        >::Type ProxyType;
-    return (RV)ProxyType::Call( func, argv )
-        /* the explicit cast there is a workaround for the RV==void
-           case. It is a no-op for other cases, since the return value
-           is already RV. Some compilers (MSVC) don't allow an explit
-           return of a void expression without the cast.
-        */
-        ;
+        Detail::ArgsToFunctionForwarderVoid< MSIG::Arity, Sig >,
+        Detail::ArgsToFunctionForwarder< MSIG::Arity, Sig >
+        >::Type Proxy;
+    return (RV)Proxy::CallNative( func, argv );
 }
 
 /**
@@ -1372,16 +1482,10 @@ forwardMethod( T & self,
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardMethodVoid< T, Sig >,
-                 Detail::ForwardMethod< T, Sig >
-    >::Type ProxyType;
-    return (RV)ProxyType::Call( self, func, argv )
-        /* the explicit cast there is a workaround for the RV==void
-           case. It is a no-op for other cases, since the return value
-           is already RV. Some compilers (MSVC) don't allow an explit
-           return of a void expression without the cast.
-        */
-        ;
+                 Detail::ArgsToMethodForwarderVoid< T, MSIG::Arity, Sig >,
+                 Detail::ArgsToMethodForwarder< T, MSIG::Arity, Sig >
+    >::Type Proxy;
+    return (RV)Proxy::CallNative( self, func, argv );
 }
 
 /**
@@ -1399,16 +1503,10 @@ forwardMethod(Sig func, v8::Arguments const & argv )
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardMethodVoid< T, Sig >,
-                 Detail::ForwardMethod< T, Sig >
-    >::Type ProxyType;
-    return (RV)ProxyType::Call( func, argv )
-        /* the explicit cast there is a workaround for the RV==void
-           case. It is a no-op for other cases, since the return value
-           is already RV. Some compilers (MSVC) don't allow an explit
-           return of a void expression without the cast.
-        */
-        ;
+                 Detail::ArgsToMethodForwarderVoid< T, MSIG::Arity, Sig >,
+                 Detail::ArgsToMethodForwarder< T, MSIG::Arity, Sig >
+    >::Type Proxy;
+    return (RV)Proxy::CallNative( func, argv );
 }
 
     
@@ -1428,16 +1526,10 @@ forwardConstMethod( T const & self,
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardConstMethodVoid< T, Sig >,
-                 Detail::ForwardConstMethod< T, Sig >
-    >::Type ProxyType;
-    return (RV)ProxyType::Call( self, func, argv )
-        /* the explicit cast there is a workaround for the RV==void
-           case. It is a no-op for other cases, since the return value
-           is already RV. Some compilers (MSVC) don't allow an explit
-           return of a void expression without the cast.
-        */
-        ;
+                 Detail::ArgsToConstMethodForwarderVoid< T, MSIG::Arity, Sig >,
+                 Detail::ArgsToConstMethodForwarder< T, MSIG::Arity, Sig >
+    >::Type Proxy;
+    return (RV)Proxy::CallNative( self, func, argv );
 }
 
 /**
@@ -1455,15 +1547,10 @@ forwardConstMethod(Sig func, v8::Arguments const & argv )
     typedef typename MSIG::ReturnType RV;
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ForwardConstMethodVoid< T, Sig >,
-                 Detail::ForwardConstMethod< T, Sig >
-    >::Type ProxyType;
-    return (RV)ProxyType::Call( func, argv )
-        /* the explicit cast there is a workaround for the
-           RV==void case. It is a no-op for other cases,
-           since the return value is already RV.
-        */
-        ;
+                 Detail::ArgsToConstMethodForwarderVoid< T, MSIG::Arity, Sig >,
+                 Detail::ArgsToConstMethodForwarder< T, MSIG::Arity, Sig >
+    >::Type Proxy;
+    return (RV)Proxy::CallNative( func, argv );
 }
 
 /**

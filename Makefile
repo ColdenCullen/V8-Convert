@@ -14,7 +14,7 @@ include config.make # see that file for certain configuration options.
 V8_PREFIX := $(HOME)
 CPPFLAGS += -I$(V8_PREFIX)/include
 
-TMPL_GENERATOR_COUNT := 15# max number of arguments generate template specializations can handle
+TMPL_GENERATOR_COUNT := 10# max number of arguments generate template specializations can handle
 INCDIR_DETAIL := $(TOP_INCDIR)/v8/convert/detail
 sig_gen_h := $(INCDIR_DETAIL)/signature_generated.hpp
 invo_gen_h := $(INCDIR_DETAIL)/invocable_generated.hpp
