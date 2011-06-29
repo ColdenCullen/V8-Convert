@@ -73,7 +73,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -84,7 +84,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -112,7 +112,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -127,7 +127,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -153,7 +153,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -164,7 +164,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -192,7 +192,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -207,7 +207,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -293,7 +293,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -304,7 +304,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -335,7 +335,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -350,7 +350,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -379,7 +379,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -390,7 +390,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -421,7 +421,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -436,7 +436,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -531,7 +531,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -542,7 +542,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -576,7 +576,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -591,7 +591,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -623,7 +623,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -634,7 +634,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -668,7 +668,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -683,7 +683,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -787,7 +787,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -798,7 +798,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -835,7 +835,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -850,7 +850,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -885,7 +885,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -896,7 +896,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -933,7 +933,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -948,7 +948,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1061,7 +1061,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1072,7 +1072,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -1112,7 +1112,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1127,7 +1127,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1165,7 +1165,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1176,7 +1176,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -1216,7 +1216,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1231,7 +1231,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1353,7 +1353,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1364,7 +1364,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -1407,7 +1407,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1422,7 +1422,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1463,7 +1463,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1474,7 +1474,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -1517,7 +1517,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1532,7 +1532,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1663,7 +1663,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1674,7 +1674,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -1720,7 +1720,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1735,7 +1735,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1779,7 +1779,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1790,7 +1790,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -1836,7 +1836,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -1851,7 +1851,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -1991,7 +1991,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2002,7 +2002,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -2051,7 +2051,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2066,7 +2066,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -2113,7 +2113,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2124,7 +2124,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -2173,7 +2173,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2188,7 +2188,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -2337,7 +2337,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2348,7 +2348,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -2400,7 +2400,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2415,7 +2415,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -2465,7 +2465,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2476,7 +2476,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -2528,7 +2528,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2543,7 +2543,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -2701,7 +2701,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2712,7 +2712,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -2767,7 +2767,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2782,7 +2782,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }
@@ -2835,7 +2835,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2846,7 +2846,7 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -2901,7 +2901,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -2916,7 +2916,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 }

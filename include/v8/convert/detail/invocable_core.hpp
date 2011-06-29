@@ -328,18 +328,9 @@ public:
 
 
 namespace Detail {
-/** Temporary internal macro. Undef'd at the end of this file.
-
-i don't LIKE this, by the way... i would really prefer to do all
-the catching via InCaCatcher (or similar) because it's more flexible,
-but... you know what? i'm going to remove the PropagateExceptions bits
-and only internally catch MissingThisException.
-
-*/
-#define HANDLE_PROPAGATE_EXCEPTION catch(...){ throw; } (void)0
 /** Temporary internal macro. Undef'd at the end of this file. */
-#define HANDLE_PROPAGATE_EXCEPTION_T catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
-            HANDLE_PROPAGATE_EXCEPTION
+#define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
+            catch(...){ throw; } (void)0
    
     /**
         Internal helper to create an exception when we require
@@ -523,7 +514,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative( self, func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -537,7 +528,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative( func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         
         ASSERT_UNLOCK_SANITY_CHECK;
@@ -562,7 +553,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative( self, func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -576,7 +567,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative(func, argv) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -612,7 +603,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -627,7 +618,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -651,7 +642,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
 
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
@@ -667,7 +658,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -704,7 +695,7 @@ namespace Detail {
             {
                 return cv::CastToJS( CallNative( self, func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -718,7 +709,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative(func, argv) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
     };
 
@@ -741,7 +732,7 @@ namespace Detail {
             {
                 return cv::CastToJS( CallNative( self, func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -755,7 +746,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative(func, argv) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -791,7 +782,7 @@ namespace Detail {
                 CallNative( self, func, argv );
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -806,7 +797,7 @@ namespace Detail {
                 CallNative(func, argv);
                 return v8::Undefined();
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCK_SANITY_CHECK;
     };
@@ -832,7 +823,7 @@ namespace Detail {
             {
                 CallNative( self, func, argv );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
@@ -846,7 +837,7 @@ namespace Detail {
             {
                 return CastToJS( CallNative( func, argv ) );
             }
-            HANDLE_PROPAGATE_EXCEPTION_T;
+            HANDLE_PROPAGATE_EXCEPTION;
         }
         ASSERT_UNLOCKV8_IS_FALSE;
     };
@@ -2234,6 +2225,5 @@ struct OneTimeInitInCa : Callable
 }} // namespaces
 
 #undef HANDLE_PROPAGATE_EXCEPTION
-#undef HANDLE_PROPAGATE_EXCEPTION_T
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */
