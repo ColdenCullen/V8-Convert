@@ -233,7 +233,12 @@ namespace v8 { namespace convert {
        - TypeIndex or ObjectIndex are less than 0 or equal-greater HowMany.
        
        - (TypeIndex == ObjectIndex)
-
+       
+       
+       FIXME: allow TypeIndex<0 to indicate that no TypeID field 
+       should be stored (and fix ClassCreator to not store the 
+       TypeID field in that case). In this case, HowMany==1 would be 
+       legal.       
     */
     template <typename T, int HowMany = 2, int TypeIndex = 0, int ObjectIndex = 1>
     struct ClassCreator_InternalFields_Base
@@ -257,6 +262,7 @@ namespace v8 { namespace convert {
             This can be used in conjunction with 
             JSToNative_ObjectWithInternalFieldsTypeSafe (or similar)
             to provide an extra level of type safety at JS runtime.
+
         */
         static const int TypeIDIndex = TypeIndex;
     private:
@@ -281,11 +287,12 @@ namespace v8 { namespace convert {
        ACHTUNG SUBCLASSERS:
 
        When using a heirarchy of native types, more than one of which
-       is bound using ClassCreator, conversions from subtype to base type
-       will fail unless all use the same internal field placement. If
-       this code can detect a mismatch then it will fail gracefully
-       (e.g. a JS-side exception), and if not then it might mis-cast
-       an object and cause Undefined Behaviour.
+       is compatible with CastFromJS(), conversions from subtype to 
+       base type will fail unless all subtypes use the same internal 
+       field placement as the parent type. If this code can detect a 
+       mismatch then it will fail gracefully (e.g. a JS-side 
+       exception), and if not then it might mis-cast an object and 
+       cause Undefined Behaviour.
 
        If a given parent type uses a custom ClassCreator_InternalFields
        specialization then to ensure that subclasses always have the
@@ -649,9 +656,9 @@ namespace v8 { namespace convert {
                    bound to.
                 */
                 v8::Handle<v8::Object> nholder = FindHolder( jobj, native );
-#if 1
+#if 1 /* reminder: i've never actually seen this error happen, i'm just pedantic about checking... */
                 assert( ! nholder.IsEmpty() );
-                WeakWrap::Unwrap( nholder /*jobj? subtle difference*/, native );
+                WeakWrap::Unwrap( nholder /*jobj? subtle difference!*/, native );
                 if( nholder.IsEmpty() || (nholder->InternalFieldCount() != InternalFields::Count) )
                 {
                     StringBuffer msg;
@@ -790,7 +797,7 @@ namespace v8 { namespace convert {
         /**
            The native type being bound to JS.
         */
-        typedef T Type;
+        typedef typename tmp::PlainType<T>::Type Type;
 
         /**
            Returns the shared instance of this class.
@@ -959,11 +966,11 @@ namespace v8 { namespace convert {
         /**
             Tells v8 that this bound type inherits ParentType. 
             ParentType _must_ be a class wrapped by ClassCreator. 
-            This function throws if it believes something evil is 
-            afoot (e.g. ClassCreator<ParentType>::Instance() has not 
-            yet been sealed). We require that the parent class be 
-            sealed to avoid accidental mis-use caused by registering
-            a subclass of a class which has not yet been bound (and may
+            This function throws if 
+            ClassCreator<ParentType>::Instance().IsSealed() returns 
+            false). We require that the parent class be sealed to 
+            avoid accidental mis-use caused by registering a 
+            subclass of a class which has not yet been bound (and may
             may never be bound).
         */
         template <typename ParentType>
@@ -998,24 +1005,32 @@ namespace v8 { namespace convert {
        not specialize that type then this is irrelevant, but when
        specializing it, it must come before this JSToNative
        implementation is instantiated.
+       
+       If TypeSafe is true (the default) then this type is a proxy for
+       JSToNative_ObjectWithInternalFieldsTypeSafe, else it is a proxy
+       for JSToNative_ObjectWithInternalFields. Note that
+       ClassCreator is hard-wired to implant/deplant type id information,
+       with the _hope_ that JSToNative<T> will use it, but it does not
+       enforce that. For types where TypeSafe is true, ClassCreator will
+       still set up bits for the check, so disabling this does not save
+       that one v8::Object internal field needed for the type identifier.
     */
-    template <typename T>
+    template <typename T, bool TypeSafe = true>
     struct JSToNative_ClassCreator :
-#if 0
-        JSToNative_ObjectWithInternalFields<T,
+        tmp::IfElse< TypeSafe,
+            JSToNative_ObjectWithInternalFields<T,
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::NativeIndex,
                                             ClassCreator_SearchPrototypeForThis<T>::Value
-                                            >
-#else
-        JSToNative_ObjectWithInternalFieldsTypeSafe<T,
+                                            >,
+            JSToNative_ObjectWithInternalFieldsTypeSafe<T,
                                             ClassCreator_TypeID<T>::Value,
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::TypeIDIndex,
                                             ClassCreator_InternalFields<T>::NativeIndex,
                                             ClassCreator_SearchPrototypeForThis<T>::Value
                                             >
-#endif
+        >::Type
     {
     };
 
