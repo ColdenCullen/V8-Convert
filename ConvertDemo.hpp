@@ -380,7 +380,7 @@ namespace v8 { namespace convert {
     */
     template <>
     struct JSToNative<BoundSubNative>
-        : JSToNative_ClassCreator<BoundSubNative>
+        : JSToNative_ClassCreator<BoundSubNative,false>
     {};
     template <>
     struct NativeToJS<BoundSubNative>

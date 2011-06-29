@@ -187,17 +187,12 @@ function testPredicateOverloads()
 }
 
 function testMyType() {
-    try {
-        (new MyType()).destroy();
-        (new MyType("hi")).destroy();
-        (new MyType(1,2.3)).destroy();
-        (new MyType(1,2,3,4,5)).destroy();
-       
-    }
-    catch(e) {
-        print("MyType error: "+e);
-        throw e;
-    }
+    print("Testing constructor by-arity dispatcher...");
+    (new MyType()).destroy();
+    (new MyType("hi")).destroy();
+    (new MyType(1,2.3)).destroy();
+    (new MyType(1,2,3,4,5)).destroy();
+    print("If you got this far, ctor the overloader it worked.");
 }
 
 if(0) {
