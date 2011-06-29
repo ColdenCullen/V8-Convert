@@ -584,6 +584,7 @@ namespace v8 { namespace convert {
         static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> jo,
                                                   T const * nh )
         {
+            // FIXME: make this iterative instead of recursive.
             if( !nh || jo.IsEmpty() ) return v8::Handle<v8::Object>();
             typedef TypeInfo<T> TI;
             typedef T * NH;
@@ -591,25 +592,16 @@ namespace v8 { namespace convert {
                 ? jo->GetPointerFromInternalField(InternalFields::NativeIndex)
                 : NULL;
             if( ext == nh ) return jo;
-            else if( ! ext )
-            {
-                v8::Local<v8::Value> proto = jo->GetPrototype();
-                return ( !proto.IsEmpty() && proto->IsObject() )
-                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
-                    : v8::Handle<v8::Object>();
-            }
-            else if( ext != nh )
-            { // Bound native, but the wrong one. Keep looking...
-                v8::Local<v8::Value> proto = jo->GetPrototype();
-                return ( !proto.IsEmpty() && proto->IsObject() )
-                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
-                    : v8::Handle<v8::Object>();
-            }
             else
-            { // can this happen?
-                Toss(v8::String::New("UNHANDLED CONDITION IN native FindHolder<>()!\n"));
-                return jo;
-            }
+            { /* if !ext, there is no bound pointer. If (ext!=nh) then
+                there is one, but it's not the droid we're looking for.
+                In either case, check the prototype...
+                */
+                v8::Local<v8::Value> proto = jo->GetPrototype();
+                return ( !proto.IsEmpty() && proto->IsObject() )
+                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
+                    : v8::Handle<v8::Object>();
+            }            
         }
         
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
