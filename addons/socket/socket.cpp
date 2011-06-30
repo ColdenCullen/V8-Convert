@@ -947,14 +947,12 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
             // dammit... we cannot distinguish timeout from EOF here....
             // this->hitTimeout = true;
         }
-#if 1
         if(SOCK_DGRAM == this->type)
         {
             // i'm not quite sure what this is for. It's from the original implementation.
             this->jsSelf->Set( JSTR(socket_strings.fieldPeer),
                                create_peer( (sockaddr*)&addr) );
         }
-#endif
         vec.resize( rc );
         if( binary )
         {
