@@ -3,7 +3,7 @@
 
 /** @mainpage v8::convert API
 
-The v8::convert namespace houses APIs for handling the following
+The v8::convert namespace houses APIs for handling the following:
 
 - Converting between v8 Value handles and "native types" using generic
 interface. This allows us to write generic algorithms which convert

@@ -558,7 +558,7 @@ namespace v8 { namespace convert {
             return h;
         }
     };
-
+#if !defined(DOXYGEN)
     namespace Detail
     {
         template <typename V8Type,bool (v8::Value::*IsA)() const>
@@ -578,7 +578,7 @@ namespace v8 { namespace convert {
             }
         };  
     }
-
+#endif
     template <>
     struct JSToNative<v8::Handle<v8::Object> > : Detail::JSToNative_V8Type< v8::Object, &v8::Value::IsObject>
     {};
@@ -1050,7 +1050,6 @@ namespace v8 { namespace convert {
     struct JSToNative<char const *> : JSToNative<std::string> {};
 #endif
 #endif
-
 
     namespace Detail
     {
@@ -1704,8 +1703,25 @@ namespace v8 { namespace convert {
         enum { HasConstOp = 0 };
     };
 
-
+#if !defined(DOXYGEN)
     namespace Detail {
+        /*
+            Potential todo/fixme: refactor CtorForwarderProxy
+            to take the signature at the class level, not the Call() level.
+            The reason would be so that we don't have to use this call syntax:
+
+            CtorForwarderProxy::template Call<...>()
+
+            which is not likely to work with client-provided ctor factories.
+
+            i.e. to make the interface more generic.
+
+            That said, the current impl requires less code on my part. :/
+
+            We could just add one level of redirection on top of it, of
+            course... that always solves everything ;).            
+        */
+        
         /**
             Default (unimplemented) CtorForwarderProxy impl. A helper
             for the CtorForwarder class. All specializations except
@@ -1744,6 +1760,7 @@ namespace v8 { namespace convert {
             }
         };
     }
+#endif
     /**
        A utility type to help forward v8::Arguments to native 
        constructors. This type is intended to assist in the creation 

@@ -12,39 +12,48 @@ function/method signatures as full-fleged types.
 
 /** @class Signature
 
-    Base (unimplemented) template for figuring out function argument types
-    types at compile time. All implementations are generated code implementing
-    the tmp::TypeList interface. They can be used with tmp::LengthOf,
-    tmp::TypeAt, etc.
+    Base (unimplemented) template for holding function-signature-style argument
+    lists in a type-rich manner. All implementations are generated code implementing
+    a "type list" interface. The sl namespace contains several different
+    compile-time algorithms (sometimes called template metafunctions) for
+    querying the arity and types in a signature.
     
     Sig must be a function-signature-style parameter list, e.g.:
     
     @code
     Signature< void (int, double) >
     Signature< void (MyType*::)( int double ) >
+    Signature< void (MyType*::)( char const * ) const >
     @endcode
-    
-    This interface treates the "function paramter part" of its 
-    arguments as a "type list", and several algorithms in the sl 
-    namespace are available for fetching type information from a 
-    Signature type. This is an "extended" typelist, however, because 
-    it also remembers the return type optionally the class 
-    containing a function described by the signature (neither of 
-    those are counted as part of the list).
+
+    This interface treates the "function paramter part" of its arguments as
+    a "type list", and several algorithms in the sl namespace are available
+    for fetching type information from a Signature type. This is an
+    "extended" typelist, however, because it also remembers the return type
+    optionally the class containing a member function described by the
+    signature (neither of those are counted as part of the list, but are
+    accessible separately).
 
     Require interface for specializations:
-    
+
     @code
     typedef functionReturnType ReturnType;
     enum { Arity = FunctionArity, IsConst = True_Only_for_Const_Methods };
-    typedef T Context; // void for non-member functions, T for all T members
+    typedef T Context; // void for non-member functions, non-cvp T for all T members
     @endcode
-    
-    Reminder: we no longer really need the Arity member (we can 
-    calculate it at compile-time) but lots of code uses it for 
-    legacy reasons and it saves a small bit if typing (keyboard 
-    typing, not C++ typing).
-    
+
+    The IsConst part is a bit of an ugly hack. It originates from the design
+    decision that we separate const/non-const templates because MSVC
+    reportedly cannot differentiate templates when the difference is only in
+    const. i have since given up the policy of coddling to MSVC, so the
+    IsConst bit might go away at some point (if i can get it back out
+    without rewriting everything).
+
+    Reminder to self: we no longer really need the Arity member (we can
+    calculate it at compile-time) but lots of code uses it for legacy
+    reasons and it saves a small bit if typing (keyboard typing, not C++
+    typing). It's on the to-refactor list, though.
+
     The Arity value -1 is reserved for use in functions taking 
     v8::Arguments (which makes them N-arity). Other negative numbers
     may be used later on for other special-case purposes.
@@ -97,6 +106,7 @@ namespace sl {
             tmp::IsNil<typename ListT::Head>::Value ? 0 : (1 + Length<typename ListT::Tail>::Value)
             > {};
 
+    //! End-of-list specialization.
     template <>
     struct Length<tmp::nil> : tmp::IntVal<0> {};
 
@@ -110,12 +120,17 @@ namespace sl {
     {
         typedef char AssertIndex[ (I >= Length<ListT>::Value) ? -1 : 1 ];
     };
+
+    //! Beginning-of-list specialization.
     template < typename ListT >
     struct At<0, ListT>
     {
          typedef typename ListT::Head Type;
     };
 
+    /**
+        End-of-list specialization. i don't think we need this, actually.
+    */
     template <unsigned short I>
     struct At<I, tmp::nil> : tmp::Identity<tmp::nil>
     {};
@@ -133,7 +148,8 @@ namespace sl {
                             : Index<T, typename ListT::Tail, Internal+1>::Value>
     {
     };
-    
+
+    //! End-of-list specialization.
     template < typename T, unsigned short Internal >
     struct Index<T,tmp::nil,Internal> : tmp::IntVal<-1> {};
     
@@ -146,11 +162,13 @@ namespace sl {
     struct Contains : tmp::BoolVal< Index<T,ListT>::Value >= 0  > {};
     
     
-
     /**
         A metatype whos Value member evaluates to the number of arguments
         in the given typelist, but evaluates to -1 if the only argument
         is (v8::Arguments const &).
+
+        Note that this calculates the length, as opposed to querying
+        SigT::Arity (which i would like to get rid of).
     */
     template <typename SigT>
     struct Arity
@@ -159,7 +177,7 @@ namespace sl {
             Value = ((1==Length<SigT>::Value)
                     && (0==Index<v8::Arguments const &,SigT>::Value))
                     ? -1
-                    : sl::Length<SigT>::Value
+                    : Length<SigT>::Value
         };
     };
     
@@ -177,7 +195,10 @@ template <typename RV> struct Signature< Signature<RV> > : Signature<RV> {};
 
 /**
     Specialization to give "InvacationCallback-like" functions
-    an Arity value of less than 0.
+    an Arity value of -1.
+
+    Reminder: we can get rid of this if we factory out the Arity definition
+    and use sl::Arity instead. (IsConst might be problematic, though.)
 */
 template <typename RV>
 struct Signature<RV (v8::Arguments const &)>
@@ -189,7 +210,6 @@ struct Signature<RV (v8::Arguments const &)>
     typedef v8::Arguments const & Head;
     typedef Signature<RV ()> Tail;
 };
-
 
 template <typename RV>
 struct Signature<RV (*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>

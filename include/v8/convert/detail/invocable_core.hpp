@@ -120,7 +120,7 @@ struct ConstMethodPtr<T, RV (T::*)(v8::Arguments const &) const,FuncPtr>
      }
 };
 
-
+#if !defined(DOXYGEN)
 namespace Detail {
     /**
         A sentry class which instantiates a v8::Unlocker
@@ -146,6 +146,7 @@ namespace Detail {
     
 
 }
+#endif
 
 /**
     A metatemplate which we can use to determine if a given type
@@ -215,6 +216,7 @@ struct IsUnlockable<v8::Arguments> : tmp::BoolVal<false> {};
 template <typename TList>
 struct TypeListIsUnlockable;
 
+#if !defined(DOXYGEN)
 namespace Detail
 {
     template <typename ListType>
@@ -229,6 +231,7 @@ namespace Detail
     {};
    
 }
+#endif
 
 /**
     Given a TypeList, this metatypeplate's Value member evaluates
@@ -326,7 +329,7 @@ public:
 };
 
 
-
+#if !defined(DOXYGEN)
 namespace Detail {
 /** Temporary internal macro. Undef'd at the end of this file. */
 #define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
@@ -481,11 +484,6 @@ namespace Detail {
         typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
     };
 
-}
-
-
-namespace Detail {
-    
     /**
         Internal impl for v8::convert::ArgsToConstMethodForwarder.
     */
@@ -848,6 +846,7 @@ namespace Detail {
     {};
 
 }
+#endif // DOXYGEN
 
 /**
     A helper type for passing v8::Arguments lists to native non-member
@@ -901,7 +900,7 @@ namespace Detail {
 
 */
 template <typename Sig,
-        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
+        bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value
 >
 struct ArgsToFunctionForwarder : Callable
 {
@@ -934,17 +933,9 @@ public:
     {
         return ProxyType::Call( func, argv );
     }
-
-#if 0
-    /** Returns Call( Func, argv ). */
-    template < typename FunctionSignature<Sig>::FunctionType Func >
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-    {
-        return Call( Func, argv );
-    }
-#endif
 };
 
+#if !defined(DOXYGEN)
 namespace Detail {
 
     template <typename Sig,
@@ -1102,10 +1093,10 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
+} // Detail namespace
+#endif // DOXYGEN
 #undef ASSERT_UNLOCK_SANITY_CHECK
 #undef ASSERT_UNLOCKV8_IS_FALSE
-} // Detail namespace
-
 
 
 /**
@@ -1547,19 +1538,20 @@ struct NativeToJS< InCa<ICB> >
 };
 #endif
 
-    
+#if !defined(DOXYGEN)
 namespace Detail {
-    template <int Arity>
+    /** Internal code duplication reducer. */
+    template <int ExpectingArity>
     v8::Handle<v8::Value> TossArgCountError( v8::Arguments const & args )
     {
         using v8::convert::StringBuffer;
         return v8::ThrowException(v8::Exception::Error(StringBuffer()
                                                        <<"Incorrect argument count ("<<args.Length()
                                                        <<") for function - expecting "
-                                                       <<Arity<<" arguments."));
+                                                       <<ExpectingArity<<" arguments."));
     }
-
 }
+#endif
 
 /**
    A utility template to assist in the creation of InvocationCallbacks
@@ -1785,7 +1777,7 @@ struct InCaCatcher_std :
 {};
 
 
-
+#if !defined(DOXYGEN)
 namespace Detail
 {
     namespace cv = v8::convert;
@@ -1858,6 +1850,7 @@ namespace Detail
         }
     };       
 } // namespace Detail
+#endif // DOXYGEN
 
 /**
    A helper class which allows us to dispatch to multiple
@@ -1914,7 +1907,7 @@ struct InCaOverloadList : Callable
 
 #include "invocable_generated.hpp"
 
-
+#if !defined(DOXYGEN)
 namespace Detail {
     namespace cv = v8::convert;
 
@@ -1993,6 +1986,7 @@ namespace Detail {
     struct ToInCaSigSelectorVoid<void,Sig,true> : ToInCaSigSelectorVoid<void,Sig,false> {};
 
 }
+#endif // DOXYGEN
 
 /**
     A wrapper for MethodToInCa, ConstMethodToInCa, and 
@@ -2137,6 +2131,7 @@ struct PredicatedInCa : InCaT
 template <typename TList>
 struct PredicatedInCaOverloader;
 
+#if !defined(DOXYGEN)
 namespace Detail
 {
     template <typename ListType>
@@ -2168,6 +2163,7 @@ namespace Detail
         }
     };
 }
+#endif // DOXYGEN
 
 /**
     Don't use this yet - it's an experiment.
