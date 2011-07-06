@@ -52,11 +52,11 @@ while [[ $i -le $to ]]; do
     head="${targs%%,*}"
     tail="${targs#*,}"
     if [[ "$tail" = "$head" ]]; then # happens on 1-arity form
-        if [[ $i -eq 0 ]]; then
+        #if [[ $i -eq 0 ]]; then
             tail="tmp::NilType"
-        else
-            tail="Signature< RV () >"
-        fi
+        #else
+        #    tail="Signature< RV () >"
+        #fi
     else
         tail="Signature<RV (${tail})>"
     fi

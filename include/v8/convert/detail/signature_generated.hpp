@@ -29,7 +29,7 @@ struct Signature< RV (A1) >
     typedef void Context;
     typedef RV (*FunctionType)(A1);
     typedef A1 Head;
-    typedef Signature< RV () > Tail;
+    typedef tmp::NilType Tail;
 };
 
 //! Specialization for 1 arg(s).

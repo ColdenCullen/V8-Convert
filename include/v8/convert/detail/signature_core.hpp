@@ -44,6 +44,9 @@ function/method signatures as full-fleged types.
     typedef T Context; // void for non-member functions, non-cvp T for all T members
     typedef firstArgType Head; // head type of type-list.
     typedef Signature< RV (...)> Tail; // tail of type-list. (...)==arg types 2..N.
+    // When Arity==1 or 0, Tail must be tmp::NilType. In theory, for Arity==1
+    // Tail should be Signature<RV()>, but this interferes with some typelist
+    // algorithms.
     @endcode
 
     The IsConst part is a bit of an ugly hack. It originates from the design

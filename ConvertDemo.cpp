@@ -143,8 +143,11 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     > PredIsaFunction;
     
     // Group the rules into a PredicatedInCaOverloader "container".
-    typedef PredicatedInCaOverloader< tmp::TypeList<
+    typedef PredicatedInCaOverloader<
+    tmp::TypeList<
+    //Signature<void( // also works
         PredIsaFunction, PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
+    //)
     > > ByTypeOverloads;
     
     // Create a parent rule which only checks ByTypeOverloads if called
@@ -162,9 +165,12 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 
     // Now create the "top-most" callback, which performs the above-defined
     // dispatching at runtime:
-    typedef PredicatedInCaOverloader< tmp::TypeList<
-        Group1, Group2, GroupN
-    > > AllOverloads;
+    typedef PredicatedInCaOverloader<
+        //tmp::TypeList<
+        Signature<void( // also works
+            Group1, Group2, GroupN
+        )
+        > > AllOverloads;
 
     // This is the part we've been working towards: getting an InvocationCallback
     // function:
