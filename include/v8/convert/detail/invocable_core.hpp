@@ -2195,10 +2195,12 @@ struct OneTimeInitInCa : Callable
         caller and initialization is considered NOT to have 
         occurred, meaning the next call to this function will also 
         run InitFunctor()().
-        
-        If initialization, InCaT::Call(argv) is called and its value 
-        is returned.
-        
+
+        If initialization does not throw, InCaT::Call(argv) is 
+        called and its value is returned. Once initialization 
+        succeeds, it is _not_ triggered on subsequent calls to this 
+        function.
+
         Pedantic note: if this class is used in code which is linked
         in from multiple DLLs, the init routine might be called
         more than once, depending on the platform.

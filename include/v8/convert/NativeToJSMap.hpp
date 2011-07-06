@@ -31,7 +31,16 @@ namespace v8 { namespace convert {
         //typedef v8::Handle<v8::Object> JSObjHandle; // Hmmm.
         typedef std::pair<NativeHandle,JSObjHandle> ObjBindT;
         typedef std::map<void const *, ObjBindT> OneOfUsT;
-        /** Maps (void const *) to ObjBindT. */
+        /** Maps (void const *) to ObjBindT.
+        
+            Reminder to self: we might need to make this map a static
+            non-function member to work around linking problems (at 
+            least on Windows) which lead to multiple instances of 
+            the returned map being created when the types being 
+            bound are loaded from multiple DLLs. The out-of-class
+            initialization of the member is going to require a really
+            ugly set of template parameters, though.
+        */
         static OneOfUsT & Map()
         {
             static OneOfUsT bob;
