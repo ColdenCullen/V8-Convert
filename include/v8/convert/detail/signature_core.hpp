@@ -1,5 +1,5 @@
-#if !defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED)
-#define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED 1
+#if !defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED)
+#define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
 namespace v8 { namespace convert {
 /** @file signature_core.hpp
@@ -12,11 +12,13 @@ function/method signatures as full-fleged types.
 
 /** @class Signature
 
-    Base (unimplemented) template for holding function-signature-style argument
-    lists in a type-rich manner. All implementations are generated code implementing
-    a "type list" interface. The sl namespace contains several different
-    compile-time algorithms (sometimes called template metafunctions) for
-    querying the arity and types in a signature.
+    Base (unimplemented) template for holding 
+    function-signature-style argument lists in a type-rich manner. 
+    Most implementations are script-generated. All specializations 
+    implement a "type list" interface. The sl namespace contains 
+    several different compile-time algorithms (sometimes called 
+    template metafunctions) for querying the arity and types in a 
+    signature.
     
     Sig must be a function-signature-style parameter list, e.g.:
     
@@ -26,7 +28,7 @@ function/method signatures as full-fleged types.
     Signature< void (MyType*::)( char const * ) const >
     @endcode
 
-    This interface treates the "function paramter part" of its arguments as
+    This interface treates the "function parameter part" of its arguments as
     a "type list", and several algorithms in the sl namespace are available
     for fetching type information from a Signature type. This is an
     "extended" typelist, however, because it also remembers the return type
@@ -40,6 +42,8 @@ function/method signatures as full-fleged types.
     typedef functionReturnType ReturnType;
     enum { Arity = FunctionArity, IsConst = True_Only_for_Const_Methods };
     typedef T Context; // void for non-member functions, non-cvp T for all T members
+    typedef firstArgType Head; // head type of type-list.
+    typedef Signature< RV (...)> Tail; // tail of type-list. (...)==arg types 2..N.
     @endcode
 
     The IsConst part is a bit of an ugly hack. It originates from the design
@@ -75,18 +79,15 @@ function/method signatures as full-fleged types.
     
     Note that the length of the typelist does not include the return
     value type.
-    
-    Specializations have the following:
-    
-    - Arity enum value holding thier arity.
-    - ReturnType defines the return type of the function signature.
-
-   Functions taking one (v8::Arguments const &) argument and returning
-   any type are considered to be "InvocationCallback-like" and are treated
-   specially. They have an Arity value of "less than 0", which can be used
-   as a hint by binding code that the function can accept any number of
-   arguments.
-
+   
+    Functions taking one (v8::Arguments const &) argument and 
+    returning any type are considered to be 
+    "InvocationCallback-like" and are treated specially. They have 
+    an Arity value of -1, which is used as a hint by binding code 
+    that the function can accept any number of arguments when called 
+    from JS code (there is no way to create Arguments objects 
+    directly from C++, only indirectly via Call()ing or Apply()ing a 
+    v8::Function).
 */
 template <typename Sig> struct Signature;
 
@@ -185,6 +186,9 @@ namespace sl {
         This metafunction evaluates to true if SigT appears to be
         "InvocationCallback-like" (returns any type and takes one
         (v8::Arguments const &) parameter).
+        
+        We could implement this a number of different ways. The 
+        current impl simply checks if the arity is -1.
     */
     template <typename SigT>
     struct IsInCaLike : tmp::BoolVal< -1 == Arity<SigT>::Value > {};
@@ -217,11 +221,14 @@ struct Signature<RV (*)(v8::Arguments const &)> : Signature<RV (v8::Arguments co
 
 template <typename T, typename RV>
 struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
-{};
+{
+    typedef T Context;
+};
 
 template <typename T, typename RV>
 struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
 {
+    typedef T Context;
     enum { IsConst = 1 };
 };
 
@@ -257,14 +264,8 @@ struct SignatureBase : Signature<Sig>
    specializations. The type passed to it must be a function
    signature.
 
-   All implementations must define:
-
-   @code
-   static const int Arity = num_args_in_func_sig; // or enum
-   typedef FunctionSig FunctionType;
-   typedef the_return_type ReturnType;
-   typedef void Context; // other values might become legal in the future
-   @endcode
+   All implementations must define the interface described for 
+   Signature and its Context typedef must be void for this type.
 
    Examples:
 
@@ -289,15 +290,8 @@ struct FunctionSignature;
    signature of a function from the class T.
    e.g. (void (T::*)(int))
 
-   All implementations must define:
-
-   @code
-   typedef T Type;
-   static const int Arity = num_args_in_func_sig; // or enum
-   typedef Sig FunctionType;
-   typedef the_return_type ReturnType;
-   typedef T Context;   
-   @endcode
+   All implementations must have the interface called for by Signature
+   and the Context typedef must be non-cvp-qualified T.
 
    Examples: 
 
@@ -322,14 +316,9 @@ struct MethodSignature;
    method signature of a const function from the class T.
    e.g. (void (T::*)(int) const)
 
-   All implementations must define:
-
-   @code
-   typedef T Type;
-   static const int Arity = num_args_in_func_sig; // or enum
-   typedef Sig FunctionType;
-   @endcode
-
+   All implementations must have the interface called for by Signature
+   and the Context typedef must be non-cvp-qualified T. The IsConst
+   member (enum or static/const boolean) must be a true value.
 
    Examples: 
 
@@ -379,6 +368,14 @@ struct ConstMethodSignature< T, RV () > : SignatureBase< RV () >
 {
     typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (T::*FunctionType)() const;
+    enum { IsConst = 1 };
+};
+
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV () const > : ConstMethodSignature<T, RV () >
+{
+    typedef typename tmp::PlainType<T>::Type Context;
+    typedef RV (T::*FunctionType)() const;
 };
 
 
@@ -387,18 +384,7 @@ struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV
 {
 };
 
-template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () const >
-{
-    typedef typename tmp::PlainType<T>::Type Context;
-    typedef RV (T::*FunctionType)() const;
-};
-#if 0
-template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)() > : ConstMethodSignature<T, RV ()>
-{
-};
-#endif
+
 /**
    A "type-rich" function pointer.
 
@@ -461,4 +447,4 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
 #include "signature_generated.hpp"
 }} // namespaces
 
-#endif /* CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_V8_HPP_INCLUDED */
+#endif /* CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED */
