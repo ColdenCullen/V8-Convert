@@ -9,7 +9,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 1 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 1 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
              typedef ArgCaster<A0> AC0;
@@ -34,7 +34,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 1 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 1 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
              typedef ArgCaster<A0> AC0;
@@ -220,7 +220,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 2 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 2 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		
@@ -248,7 +248,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 2 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 2 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		
@@ -449,7 +449,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 3 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 3 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -480,7 +480,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 3 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 3 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -696,7 +696,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 4 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 4 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -730,7 +730,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 4 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 4 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -961,7 +961,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 5 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 5 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -998,7 +998,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 5 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 5 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1244,7 +1244,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 6 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 6 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1284,7 +1284,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 6 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 6 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1545,7 +1545,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 7 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 7 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1588,7 +1588,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 7 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 7 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1864,7 +1864,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 8 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 8 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1910,7 +1910,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 8 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 8 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2201,7 +2201,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 9 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 9 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2250,7 +2250,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 9 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 9 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2556,7 +2556,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 10 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 10 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2608,7 +2608,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == 10 ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 10 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;

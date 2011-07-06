@@ -405,7 +405,7 @@ namespace Detail {
         }
 
         ASSERT_UNLOCKV8_IS_FALSE;
-        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == -1 ? 1 : -1];
     };
 
     //! Reminder to self: we really do need this specialization for some cases.
@@ -430,7 +430,7 @@ namespace Detail {
             return CastToJS( CallNative( func, argv ) );
         }
         ASSERT_UNLOCK_SANITY_CHECK;
-        typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == 0 ? 1 : -1];
     };
 
     template <int Arity_, typename Sig,
@@ -459,7 +459,7 @@ namespace Detail {
             return v8::Undefined();
         }
         ASSERT_UNLOCK_SANITY_CHECK;
-        typedef char AssertArity[ SignatureType::Arity == 0 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == 0 ? 1 : -1];
     };
     
     template <int Arity, typename RV, bool UnlockV8>
@@ -481,7 +481,7 @@ namespace Detail {
             return v8::Undefined();
         }
         ASSERT_UNLOCKV8_IS_FALSE;
-        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == -1 ? 1 : -1];
     };
 
     /**
@@ -538,7 +538,7 @@ namespace Detail {
     {
     public:
         typedef MethodSignature<T, RV (v8::Arguments const &)> SignatureType;
-        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == -1 ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, FunctionType func, v8::Arguments const & argv )
@@ -717,7 +717,7 @@ namespace Detail {
     {
     public:
         typedef ConstMethodSignature<T, RV (v8::Arguments const &)> SignatureType;
-        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == -1 ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -806,7 +806,7 @@ namespace Detail {
     {
     public:
         typedef ConstMethodSignature<T, RV (v8::Arguments const &)> SignatureType;
-        typedef char AssertArity[ SignatureType::Arity == -1 ? 1 : -1];
+        typedef char AssertArity[ sl::Arity<SignatureType>::Value == -1 ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef typename TypeInfo<T>::Type Type;
@@ -906,8 +906,8 @@ struct ArgsToFunctionForwarder : Callable
 {
 private:
     typedef typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
-                                Detail::ArgsToFunctionForwarderVoid< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >,
-                                Detail::ArgsToFunctionForwarder< FunctionSignature<Sig>::Arity, Sig, UnlockV8 >
+                                Detail::ArgsToFunctionForwarderVoid< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                                Detail::ArgsToFunctionForwarder< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
         >::Type
     ProxyType;
 public:
@@ -916,9 +916,12 @@ public:
     typedef typename ProxyType::FunctionType FunctionType;
     /**
        Passes the given arguments to func(), converting them to the appropriate
-       types. If argv.Length() is less than SignatureType::Arity then
-       a JS exception is thrown. The native return value of the call is
-       returned.
+       types. If argv.Length() is less than sl::Arity< SignatureType >::Value then
+       a JS exception is thrown, with one exception: if the function has "-1 arity"
+       (i.e. it is InvocationCallback-like) then argv is passed on to it regardless
+       of the value of argv.Length().
+       
+       The native return value of the call is returned to the caller.
     */
     static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
     {
@@ -945,7 +948,7 @@ namespace Detail {
     {
         
         typedef FunctionSignature<Sig> SignatureType;
-        typedef ArgsToFunctionForwarder< SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef ArgsToFunctionForwarder< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( v8::Arguments const & argv )
         {
@@ -964,7 +967,7 @@ namespace Detail {
     struct FunctionToInCaVoid : FunctionPtr<Sig,Func>, Callable
     {
         typedef FunctionSignature<Sig> SignatureType;
-        typedef ArgsToFunctionForwarderVoid< SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef ArgsToFunctionForwarderVoid< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( v8::Arguments const & argv )
         {
@@ -986,7 +989,7 @@ namespace Detail {
     struct MethodToInCa : MethodPtr<T,Sig, Func>, Callable
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToMethodForwarder< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef ArgsToMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1015,7 +1018,7 @@ namespace Detail {
     struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, Callable
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToMethodForwarderVoid< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef ArgsToMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1044,7 +1047,7 @@ namespace Detail {
     struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>, Callable
     {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToConstMethodForwarder< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef ArgsToConstMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, v8::Arguments const & argv )
         {
@@ -1072,7 +1075,7 @@ namespace Detail {
     struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>, Callable
     {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToConstMethodForwarderVoid< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
+        typedef ArgsToConstMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, v8::Arguments const & argv )
         {
@@ -1331,8 +1334,8 @@ struct ArgsToMethodForwarder
 private:
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, MethodSignature<T,Sig>::Arity, Sig, UnlockV8 >,
-                 Detail::ArgsToMethodForwarder< T, MethodSignature<T,Sig>::Arity, Sig, UnlockV8 >
+                 Detail::ArgsToMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                 Detail::ArgsToMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
     >::Type
     Proxy;
 public:
@@ -1340,9 +1343,12 @@ public:
     typedef typename Proxy::FunctionType FunctionType;
     typedef typename Proxy::ReturnType ReturnType;
     /**
-       Passes the given arguments to (self.*func)(), converting them
-       to the appropriate types. If argv.Length() is less than
-       SignatureType::Arity then a JS exception is thrown.
+       Passes the given arguments to (self.*func)(), converting them 
+       to the appropriate types. If argv.Length() is less than 
+       sl::Arity<SignatureType>::Value then a JS exception is 
+       thrown, with one exception: if the function has "-1 arity" 
+       (i.e. it is InvocationCallback-like) then argv is passed on 
+       to it regardless of the value of argv.Length().
     */
     static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
     {
@@ -1371,8 +1377,8 @@ struct ArgsToConstMethodForwarder
 private:
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, ConstMethodSignature<T,Sig>::Arity, Sig, UnlockV8 >,
-                 Detail::ArgsToConstMethodForwarder< T, ConstMethodSignature<T,Sig>::Arity, Sig, UnlockV8 >
+                 Detail::ArgsToConstMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                 Detail::ArgsToConstMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
     >::Type
     Proxy;
 public:
@@ -1380,9 +1386,12 @@ public:
     typedef typename Proxy::FunctionType FunctionType;
 
     /**
-       Passes the given arguments to (self.*func)(), converting them
-       to the appropriate types. If argv.Length() is less than
-       SignatureType::Arity then a JS exception is thrown.
+       Passes the given arguments to (self.*func)(), converting them 
+       to the appropriate types. If argv.Length() is less than 
+       sl::Arity< Signature<Sig> >::Value then a JS exception is thrown, with one 
+       exception: if the function has "-1 arity" (i.e. it is 
+       InvocationCallback-like) then argv is passed on to it 
+       regardless of the value of argv.Length().
     */
     static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
     {
@@ -1400,10 +1409,12 @@ public:
 };
 
 /**
-   Tries to forward the given arguments to the given native
-   function. Will fail if argv.Lengt() is not at least
-   FunctionSignature<Sig>::Arity, throwing a JS exception
-   in that case.
+   Tries to forward the given arguments to the given native 
+   function. Will fail if argv.Lengt() is not at least 
+   sl::Arity<Signature<Sig>>::Value, throwing a JS exception in that 
+   case _unless_ the function is InvocationCallback-like, in which 
+   case argv is passed directly to it regardless of the value of 
+   argv.Length().
 */
 template <typename Sig>
 inline typename FunctionSignature<Sig>::ReturnType
@@ -1411,10 +1422,11 @@ forwardFunction( Sig func, Arguments const & argv )
 {
     typedef FunctionSignature<Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
+    enum { Arity = sl::Arity< Signature<Sig> >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-        Detail::ArgsToFunctionForwarderVoid< MSIG::Arity, Sig >,
-        Detail::ArgsToFunctionForwarder< MSIG::Arity, Sig >
+        Detail::ArgsToFunctionForwarderVoid< Arity, Sig >,
+        Detail::ArgsToFunctionForwarder< Arity, Sig >
         >::Type Proxy;
     return (RV)Proxy::CallNative( func, argv );
 }
@@ -1434,10 +1446,11 @@ forwardMethod( T & self,
 {
     typedef MethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
+    enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, MSIG::Arity, Sig >,
-                 Detail::ArgsToMethodForwarder< T, MSIG::Arity, Sig >
+                 Detail::ArgsToMethodForwarderVoid< T, Arity, Sig >,
+                 Detail::ArgsToMethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( self, func, argv );
 }
@@ -1455,10 +1468,11 @@ forwardMethod(Sig func, v8::Arguments const & argv )
 {
     typedef MethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
+    enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, MSIG::Arity, Sig >,
-                 Detail::ArgsToMethodForwarder< T, MSIG::Arity, Sig >
+                 Detail::ArgsToMethodForwarderVoid< T, Arity, Sig >,
+                 Detail::ArgsToMethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( func, argv );
 }
@@ -1478,10 +1492,11 @@ forwardConstMethod( T const & self,
 {
     typedef ConstMethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
+    enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, MSIG::Arity, Sig >,
-                 Detail::ArgsToConstMethodForwarder< T, MSIG::Arity, Sig >
+                 Detail::ArgsToConstMethodForwarderVoid< T, Arity, Sig >,
+                 Detail::ArgsToConstMethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( self, func, argv );
 }
@@ -1499,10 +1514,11 @@ forwardConstMethod(Sig func, v8::Arguments const & argv )
 {
     typedef ConstMethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
+    enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, MSIG::Arity, Sig >,
-                 Detail::ArgsToConstMethodForwarder< T, MSIG::Arity, Sig >
+                 Detail::ArgsToConstMethodForwarderVoid< T, Arity, Sig >,
+                 Detail::ArgsToConstMethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( func, argv );
 }
@@ -1787,7 +1803,8 @@ namespace Detail
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
-            if( (FWD::Arity<0) || (FWD::Arity == argv.Length()) )
+            enum { Arity = sl::Arity< FWD >::Value };
+            if( (Arity<0) || (Arity == argv.Length()) )
             {
                 return FWD::Call( argv );
             }
@@ -1797,7 +1814,7 @@ namespace Detail
                 msg << "ArityOverloaderOne<>::Call(): "
                     //<< argv.Callee()->GetName()
                     << "called with "<<argv.Length()<<" arguments, "
-                    << "but requires "<<(int)FWD::Arity<<"!\n";
+                    << "but requires "<<(int)Arity<<"!\n";
                 return v8::ThrowException(msg.toError());
             }
         }
@@ -1823,7 +1840,8 @@ namespace Detail
         {
             typedef typename List::Head FWD;
             typedef typename List::Tail Tail;
-            if( (FWD::Arity == argv.Length()) || (FWD::Arity<0) )
+            enum { Arity = sl::Arity< FWD >::Value };
+            if( (Arity == argv.Length()) || (Arity<0) )
             {
                 return ArityOverloaderOne< FWD >::Call( argv );
             }

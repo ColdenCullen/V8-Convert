@@ -24,8 +24,8 @@ function/method signatures as full-fleged types.
     
     @code
     Signature< void (int, double) >
-    Signature< void (MyType*::)( int double ) >
-    Signature< void (MyType*::)( char const * ) const >
+    Signature< void (MyType::*)( int double ) >
+    Signature< void (MyType::*)( char const * ) const >
     @endcode
 
     This interface treates the "function parameter part" of its arguments as
@@ -61,9 +61,10 @@ function/method signatures as full-fleged types.
     reasons and it saves a small bit if typing (keyboard typing, not C++
     typing). It's on the to-refactor list, though.
 
-    The Arity value -1 is reserved for use in functions taking 
-    v8::Arguments (which makes them N-arity). Other negative numbers
-    may be used later on for other special-case purposes.
+    The Arity value -1 is reserved for use with functions taking 
+    exactly one v8::Arguments object (which makes them N-arity). 
+    Other negative numbers may be used later on for other 
+    special-case purposes.
 
     It is intended to be used like this:
     

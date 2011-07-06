@@ -193,7 +193,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == ${count} ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
@@ -215,7 +215,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ SignatureType::Arity == ${count} ? 1 : -1];
+            typedef char AssertArity[ sl::Arity<SignatureType>::Value == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}

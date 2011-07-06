@@ -348,7 +348,7 @@ namespace v8 { namespace convert {
             if(1) // just an experiment
             {
                 typedef Signature<void (int,double)> AL2;
-                assert( 2 == AL2::Arity );
+                assert( 2 == sl::Arity<AL2>::Value );
                 assert( 2 == tmp::LengthOf<AL2>::Value );
                 assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
                 assert( (tmp::SameType< int, sl::At<0,AL2>::Type >::Value) );
@@ -358,7 +358,7 @@ namespace v8 { namespace convert {
                 typedef cv::FunctionPtr< int(char const *), ::puts> FPPuts;
                 FPPuts::Function("Hi, world.");
                 typedef Signature< FPPuts::FunctionType > ALPuts;
-                assert( 1 == ALPuts::Arity );
+                assert( 1 == sl::Arity<ALPuts>::Value );
                 
                 typedef Signature< int (BoundNative::*)(char const *) const > BNPutsC;
                 typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
@@ -562,9 +562,10 @@ namespace { // testing ground for some compile-time assertions...
     void compile_time_assertions()
     {
         namespace tmp = cv::tmp;
+        namespace sl = cv::sl;
 #define ASS ass = cv::tmp::Assertion
         tmp::Assertion<true> ass;
-        ASS< (0 > cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Arity)>();
+        ASS< (0 > sl::Arity< cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt> >::Value)>();
         typedef CtorFwdTest CFT;
         typedef cv::CtorForwarder<CFT * ()> C0;
         //typedef cv::CtorForwarder<CFT, CtorFwdTestSub *()> C0Sub;
@@ -681,14 +682,20 @@ namespace { // testing ground for some compile-time assertions...
         typedef FunctionSignature< void (int, double, v8::Arguments const &, char) > BL4a;
         typedef FunctionSignature< void (int, double, char, v8::Arguments const &) > BL4b;
         typedef FunctionSignature< void (int, double, int, char) > BL4c;
+        typedef Signature<void (v8::Arguments const &)> ICSig;
         tmp::Assertion<true> ass;
 #define ASS ass = tmp::Assertion
-        ASS< -1 == sl::Arity< Signature<void (v8::Arguments const &)> >::Value >();
+        ASS< -1 == sl::Arity< ICSig >::Value >();
+        ASS< 2 == sl::Arity< BL2 >::Value >();
+        ASS< 0 == sl::Arity< BL0 >::Value >();
+        ASS< 3 == sl::Arity< BLSig >::Value >();
+        ASS< 4 == sl::Arity< BL4a >::Value >();
+        ASS< 4 == sl::Arity< BL4c >::Value >();
+        ASS< 4 == sl::Arity< BL4b >::Value >();
         ASS< tmp::SameType< sl::At<2,BLSig>::Type, char >::Value >();
         ASS< 0 == sl::Length<BL0>::Value >();
-        ASS< 3 == BLSig::Arity >();
         ASS< tmp::SameType< double, sl::At<1,BLSig>::Type >::Value >();
-        ASS< BLSig::Arity == sl::Length<BLSig>::Value >();
+        ASS< sl::Arity<BLSig>::Value == sl::Length<BLSig>::Value >();
         ASS< 2 == sl::Length<BL2>::Value >();
         ASS< tmp::SameType< int, sl::At<1,BL2>::Type >::Value >();
         ASS< !tmp::SameType< int, sl::At<0,BL2>::Type >::Value >();

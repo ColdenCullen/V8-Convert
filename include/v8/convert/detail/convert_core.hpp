@@ -1820,10 +1820,11 @@ namespace v8 { namespace convert {
         */
         static ReturnType Call( v8::Arguments const & argv )
         {
+            enum { Arity = sl::Arity< STL >::Value };
             // TODO: refactor CtorForwarderProxy to not take an arity,
             // but use CtorForwarderProxy<Sig> instead. The current impl
             // pre-dates some of our templates-related advances.
-            typedef Detail::CtorForwarderProxy<STL::Arity> Proxy;
+            typedef Detail::CtorForwarderProxy<Arity> Proxy;
             return Proxy::template Call<Sig>( argv );
         }
     };
