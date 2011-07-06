@@ -288,10 +288,6 @@ cv::JSSocket::~JSSocket()
 
 void cv::JSSocket::close()
 {
-    // FIXME: if we are a unix _server_ (listen()er) socket then we
-    // created the socket file and need to remove it.
-    // Reminder to self: we can use SO_ACCEPTCONN (see socket(7))
-    // to figure this out or we can set a flag when listen() is called.
     if( this->fd >= 0 )
     {
         DBGOUT << "JSSocket@"<<(void const *)this<<"->close()\n";
