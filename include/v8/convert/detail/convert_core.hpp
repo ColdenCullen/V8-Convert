@@ -547,6 +547,10 @@ namespace v8 { namespace convert {
             return h;
         }
     };
+    template <typename T>
+    struct JSToNative<v8::Handle<T> const &> : JSToNative< v8::Handle<T> > {};
+    template <typename T>
+    struct JSToNative<v8::Handle<T> &> : JSToNative< v8::Handle<T> > {};
 
     /** Specialization which passes on v8 local Handles as-is. */
     template <typename T>
@@ -558,6 +562,11 @@ namespace v8 { namespace convert {
             return h;
         }
     };
+    template <typename T>
+    struct JSToNative<v8::Local<T> const &> : JSToNative< v8::Local<T> > {};
+    template <typename T>
+    struct JSToNative<v8::Local<T> &> : JSToNative< v8::Local<T> > {};
+
 #if !defined(DOXYGEN)
     namespace Detail
     {
