@@ -304,13 +304,14 @@ template <bool IsUsingUnlock>
 void test_using_locker()
 {
     CERR << "Callback "<<(IsUsingUnlock?"with":"without")
-        << " Unlocker support. "
-        << (IsUsingUnlock ? "Briefly" : "NOT") << " locking v8...\n";
-    // If something is broken in our locking setup then the following will likely assert in v8:
-    v8::Locker lock();
-    cv::StringBuffer msg;
-    msg << "We're back...\n";
-    CERR << msg;
+        << " v8::convert's Unlocker support. "
+        << "Briefly locking v8... "
+        << "If something is broken in our locking setup then the "
+        << "following will likely assert in v8...\n";
+    {
+        v8::Locker const lock();
+    }
+    CERR << "We're back...\n";
 }
 
 namespace v8 { namespace convert {
