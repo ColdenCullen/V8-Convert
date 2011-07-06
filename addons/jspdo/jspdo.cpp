@@ -1,13 +1,21 @@
 /************************************************************************
-This file contains the v8 bindings for the cpdo db abstraction layer
-(http://fossil.wanderinghorse.net/repos/cpdo/).
+This file contains v8 bindings for the cpdo db abstraction layer
+(http://fossil.wanderinghorse.net/repos/cpdo/). We call it JSPDO.
+
+This file gives a fairly complete demonstration of what v8::convert's
+class/function/method-binding mechanisms can do. In particular, it 
+demonstrates that we can bind 3rd-party C++ classes (in this case 
+from cpdo) which were not designed specifically for v8, and can 
+often do so without subclassing or modifying those classes.
 
 License: this code is released into the Public Domain by its author,
 Stephan Beal (http://wanderinghorse.net/home/stephan/). HOWEVER, if
 you enable the MySQL driver (by compiling with
 -DCPDO_ENABLE_MYSQL5=ATrueValue) then you must inherit the GPL license
-used by MySQL (if any).
- ************************************************************************/
+used by MySQL (if any). Linking against sqlite3 does not impose any
+specific licensing restrictions on the client (not even a "do no evil"
+clause).
+************************************************************************/
 #if defined(NDEBUG)
 #  undef NDEBUG
 #endif
@@ -1096,19 +1104,18 @@ namespace v8 { namespace convert {
             ////////////////////////////////////////////////////////////////////////
             // cpdo::statement bindings...
 #define CATCHER cv::InCaCatcher_std
-#define M2I cv::MethodToInvocationCallback
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObjectCallback )
                 ("step", CATCHER< cv::ToInCa<ST, bool (),&ST::step>::Call >::Call)
                 ("stepArray", CATCHER< Statement_stepArray >::Call)
                 ("stepObject", CATCHER< Statement_stepObject >::Call)
                 ("columnName", CATCHER< cv::ToInCa<ST, char const * (uint16_t),&ST::col_name>::Call >::Call )
-                ("columnType", CATCHER< M2I<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call ) // ToInCa<> fails here?
+                ("columnType", CATCHER< ToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type>::Call >::Call )
                 ("get", CATCHER<Statement_get>::Call )
                 ("bind", CATCHER<Statement_bind>::Call)
                 ("reset", CATCHER< cv::ToInCa<ST, void (void),&ST::reset>::Call >::Call)
                 ("toString", CATCHER<Statement_toString>::Call )
-                ("paramIndex", M2I<ST, uint16_t (char const *),&ST::param_index> /* doesn't throw */ )
+                ("paramIndex", ToInCa<ST, uint16_t (char const *),&ST::param_index>::Call /* doesn't throw */ )
                 ("paramName", CATCHER<cv::ToInCa<ST, char const *(uint16_t),&ST::param_name>::Call >::Call )
                 ;
 
@@ -1152,7 +1159,6 @@ namespace v8 { namespace convert {
                  )
                 ("toString", CATCHER<JSPDO_toString>::Call)
                 ;
-#undef M2I
 #undef CATCHER
             
             typedef cv::MemberPropertyBinder<DRV> PB;
