@@ -495,8 +495,8 @@ namespace v8 { namespace convert {
                 return v8::ThrowException(v8::Exception::Error(v8::String::New("Include() callback is missing its native V8Shell object.")));
             }
             V8Shell * self = static_cast<V8Shell *>( v8::External::Cast(*jvself)->Value() );
-            ArgCaster<char const *> ac;
-            return self->ExecuteFile( ac.ToNative(argv[0]) );
+            v8::String::Utf8Value fn(argv[0]);
+            return hsc.Close(self->ExecuteFile( *fn ));
         }
     
     public:
