@@ -123,27 +123,34 @@ namespace v8 { namespace convert {
             return h.IsEmpty() ? false : h->IsUndefined();
         }
     };
-    
+
+#if !defined(DOXYGEN)    
     namespace Detail {
         /**
+            ValuePredicateConcept impl which returns retrue if
+            Getter returns true for the given value.
+        
             Getter must be a pointer to one of the v8::Value::IsXXX()
             functions. This functor returns true if the passed-in handle is
             not empty and it's IsXXX() function returns true.
         */
         template <bool (v8::Value::*Getter)() const>
-        struct ValIs_X
+        struct ValIs_X : ValuePredicateConcept
         {
             inline bool operator()( v8::Handle<v8::Value> const & v ) const
             {
                 return v.IsEmpty() ? false : ((*v)->*Getter)();
             }  
         };
-    }
 
-
-    namespace Detail {
+        /**
+            A ValuePredicateConcept impl which returns true only if 
+            the given handle is-a number and the number is in the 
+            inclusive range std::numeric_limits<NumT>::min .. 
+            max().
+        */
         template <typename NumT>
-        struct ValIs_NumberStrictRange
+        struct ValIs_NumberStrictRange : ValuePredicateConcept
         {
             typedef NumT Type;
             inline bool operator()( v8::Handle<v8::Value> const & h ) const
@@ -157,6 +164,10 @@ namespace v8 { namespace convert {
                 }
             }
         };
+        /** Special-case specialization which returns true if the given
+            handle is-a Number (without checking the range, which is 
+            not necessary for this specific type in this context.
+        */
         template <>
         struct ValIs_NumberStrictRange<double>
         {
@@ -167,6 +178,7 @@ namespace v8 { namespace convert {
             }
         };
     }
+#endif // DOXYGEN
 
     struct ValIs_Array :  Detail::ValIs_X<&v8::Value::IsArray> {};
     struct ValIs_Object : Detail::ValIs_X<&v8::Value::IsObject> {};
@@ -176,7 +188,7 @@ namespace v8 { namespace convert {
     struct ValIs_False : Detail::ValIs_X<&v8::Value::IsFalse> {};
     struct ValIs_Function : Detail::ValIs_X<&v8::Value::IsFunction> {};
     struct ValIs_Int32 : Detail::ValIs_X<&v8::Value::IsInt32> {};
-    struct ValIs_UInt32 : Detail::ValIs_X<&v8::Value::IsUint32> {};
+    struct ValIs_UInt32 : Detail::ValIs_X<&v8::Value::IsUint32 /* Note the "UInt" vs "Uint" descrepancy. i consider Uint to be wrong.*/ > {};
     struct ValIs_Null : Detail::ValIs_X<&v8::Value::IsNull> {};
     struct ValIs_Undefined : Detail::ValIs_X<&v8::Value::IsUndefined> {};
     struct ValIs_Number : Detail::ValIs_X<&v8::Value::IsNumber> {};
@@ -296,6 +308,7 @@ namespace v8 { namespace convert {
     template <unsigned short Index, typename T>
     struct ArgAt_IsA : ArgAt_Is< Index, ValIs<T> > {};
 
+#if !defined(DOXYGEN)   
     namespace Detail {
         /**
             Functor which proxies the v8::Value "is-a" functions.
@@ -318,6 +331,7 @@ namespace v8 { namespace convert {
             }  
         };
     }
+#endif // DOXYGEN
     template <unsigned short Index>
     struct ArgAt_IsArray : Detail::ArgAt_IsX<Index, &v8::Value::IsArray> {};
 
