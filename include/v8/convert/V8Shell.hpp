@@ -399,7 +399,7 @@ namespace v8 { namespace convert {
             v8::HandleScope scope;
             v8::Local<v8::String> const & s( v8::String::New( source.c_str(), static_cast<int>(source.size()) ) );
             v8::Local<v8::String> const & n( v8::String::New( name.c_str(), static_cast<int>(name.size()) ) );
-            return this->ExecuteString( s, n, reportExceptions, resultGoesTo );
+            return scope.Close(this->ExecuteString( s, n, reportExceptions, resultGoesTo ));
         }
 
         /**
