@@ -65,6 +65,7 @@ all: $(conv_gen_h)
 
 V8_LDFLAGS := -L$(V8_PREFIX)/lib -lv8_g
 
+ConvertDemo.o: ConvertDemo.cpp
 demo.BIN.OBJECTS := demo.o ConvertDemo.o
 demo.BIN.LDFLAGS := $(V8_LDFLAGS)
 $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
