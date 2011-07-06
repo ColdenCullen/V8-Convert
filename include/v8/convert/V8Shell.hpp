@@ -1,6 +1,16 @@
 #if !defined(V8_CONVERT_V8Shell_HPP_INCLUDED)
 #define V8_CONVERT_V8Shell_HPP_INCLUDED
+/** @file V8Shell.hpp
 
+    This file contains the v8::convert::V8Shell class, a convenience
+    wrapper for bootstrapping integration of v8 into arbitrary
+    client applications.
+
+    Dependencies: v8 and the STL.
+
+    License: released into the Public Domain by its author,
+    Stephan Beal (http://wanderinghorse.net/home/stephan/).
+*/
 #include <cstdio>
 #include <string>
 #include <vector>
