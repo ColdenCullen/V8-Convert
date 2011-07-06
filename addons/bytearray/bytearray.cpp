@@ -322,7 +322,7 @@ void JSByteArray::append( JSByteArray const & other )
 }
 
 
-void JSByteArray::append( v8::Handle<v8::Value> val )
+void JSByteArray::append( v8::Handle<v8::Value> const & val )
 {
     if( val->IsString() )
     {
@@ -427,9 +427,9 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         .Set( "toString", cv::ConstMethodToInvocationCallback<N, std::string (),&N::toString> )
         .Set( "destroy", CW::DestroyObjectCallback )
         .Set( "stringValue", cv::ConstMethodToInvocationCallback<N, std::string (),&N::stringValue> )
-        .Set( "append", cv::MethodToInvocationCallback<N, void (v8::Handle<v8::Value>), &N::append> )
-        .Set( "gzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gzipTo> )
-        .Set( "gunzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gunzipTo> )
+        .Set( "append", cv::MethodToInvocationCallback<N, void (v8::Handle<v8::Value> const &), &N::append> )
+        //.Set( "gzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gzipTo> )
+        //.Set( "gunzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gunzipTo> )
         .Set( "gzip", cv::ConstMethodToInvocationCallback<N, v8::Handle<v8::Value> (), &N::gzip> )
         .Set( "gunzip", cv::ConstMethodToInvocationCallback<N, v8::Handle<v8::Value> (), &N::gunzip> )
         ;

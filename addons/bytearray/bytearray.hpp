@@ -134,7 +134,7 @@ namespace v8 { namespace convert {
             A ByteArray is of course appended in the expected manner.
             
         */
-        void append( v8::Handle<v8::Value> val );
+        void append( v8::Handle<v8::Value> const & val );
 
         //     std::string asString() const;
         //     std::string asString( unsigned int fromOffset ) const;
@@ -151,6 +151,10 @@ namespace v8 { namespace convert {
            returns v8::Null() if gzipping fails, or a handle to a new
            JSByteArray object on success. The new object contains the
            compressed data.
+           
+           The new object is owned by v8 and is theoretically not subject
+           to garbage collection until the returned handle (and all subsequent
+           references to it) goes out of scope.
         */
         v8::Handle<v8::Value> gzip() const;
         /**
