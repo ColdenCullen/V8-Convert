@@ -1,3 +1,4 @@
+load('../test-common.js');
 load('echo-config.inc.js');
 
 function echoServer()
@@ -24,6 +25,7 @@ function echoServer()
             port = echo.port;
         }
         var port = 
+        assertThrows( function() {s.bind("",0);}, 'bind() throws for empty address.');
         rc = s.bind( host, echo.port );
         print( "s.bind("+host+(port ? (":"+port) : '')+") rc = "+rc);
         rc = s.setTimeout( 3 );

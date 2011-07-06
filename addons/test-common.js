@@ -78,11 +78,16 @@ function assertneq(got,expect,msg)
         
 }
 
-function assertThrows( func ) {
+/**
+    Calls func(). If it throws, the assertion passes, else
+    it fails. If msg is provided it is used as the assertion message,
+    else some default message is used.
+*/
+function assertThrows( func, msg ) {
     var ex = undefined;
+    msg = msg || "Got expected exception:";
     try { func(); }
     catch(e) { ex = e; }
-    assert( !!ex, "Got expected exception: "+ex );
+    assert( !!ex, msg + ' '+ex );
     if(0) printStackTrace();
 }
-
