@@ -1018,15 +1018,15 @@ namespace v8 { namespace convert {
     template <typename T, bool TypeSafe = true>
     struct JSToNative_ClassCreator :
         tmp::IfElse< TypeSafe,
-            JSToNative_ObjectWithInternalFields<T,
-                                            ClassCreator_InternalFields<T>::Count,
-                                            ClassCreator_InternalFields<T>::NativeIndex,
-                                            ClassCreator_SearchPrototypeForThis<T>::Value
-                                            >,
             JSToNative_ObjectWithInternalFieldsTypeSafe<T,
                                             ClassCreator_TypeID<T>::Value,
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::TypeIDIndex,
+                                            ClassCreator_InternalFields<T>::NativeIndex,
+                                            ClassCreator_SearchPrototypeForThis<T>::Value
+                                            >,
+            JSToNative_ObjectWithInternalFields<T,
+                                            ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::NativeIndex,
                                             ClassCreator_SearchPrototypeForThis<T>::Value
                                             >
