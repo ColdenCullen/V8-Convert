@@ -198,7 +198,7 @@ namespace v8 { namespace convert {
 #define TOCSTR(X) (*X ? *X : "<exception string conversion failed!>")
             const char* excCstr = TOCSTR(excUtf);
             v8::Handle<v8::Message> const & message( try_catch->Message() );
-            StringBuffer os;
+            std::ostringstream os;
             os << "V8Shell Exception Reporter: ";
             if (message.IsEmpty())
             {
@@ -210,11 +210,11 @@ namespace v8 { namespace convert {
             {
                 // output (filename):(line number): (message)...
                 int linenum = message->GetLineNumber();
-                os << message->GetScriptResourceName() << ':'
+                os << *v8::String::Utf8Value(message->GetScriptResourceName()) << ':'
                    << linenum << ": "
                    << excCstr << '\n';
                 // output source code line...
-                os << message->GetSourceLine() << '\n';
+                os << *v8::String::AsciiValue(message->GetSourceLine()) << '\n';
                 // output decoration pointing to error location...
                 int start = message->GetStartColumn();
                 for (int i = 0; i < start; i++) {
@@ -226,8 +226,7 @@ namespace v8 { namespace convert {
                 }
                 os << '\n';
             }
-            std::string const & str( os.Content() );
-            os.Clear();
+            std::string const & str( os.str() );
             this->reporter( str.c_str() );
 #undef TOCSTR
         }
@@ -456,12 +455,10 @@ namespace v8 { namespace convert {
             {
                 // FIXME: throw a v8 exception and report it via our reporter.
                 // Nevermind: the result is useless b/c the exception has no proper vm stack/state info here...
-                StringBuffer msg;
+                std::ostringstream msg;
                 msg << "Could not open file ["<<filename<<"].";
-                
-                //v8::Handle<v8::Value> const & rc( v8::ThrowException(msg.toError()) );
-                //if( reportExceptions ) this->ReportException(reportExceptions);
-                return v8::ThrowException(msg.toError());
+                std::string const & str( msg.str() );
+                return v8::ThrowException(v8::Exception::Error(v8::String::New(str.c_str(), static_cast<int/*grrrr!*/>(str.size()))));
             }
             return this->ExecuteStream( inf, filename, reportExceptions, resultGoesTo );
         }
