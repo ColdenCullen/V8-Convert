@@ -23,10 +23,12 @@ include ../../config.make # see that file for certain configuration options.
 # If needed, append the CPPFLAGS to point to where <v8/convert/*.hpp> can
 # be found.
 BA.DIR := ../bytearray
-bytearray.hpp:
+$(BA.DIR)/bytearray.hpp $(BA.DIR)/bytearray.cpp:
+bytearray.hpp: $(BA.DIR)/bytearray.hpp 
 	cp $(BA.DIR)/$@ .
-bytearray.cpp: bytearray.hpp
+bytearray.cpp: $(BA.DIR)/bytearray.cpp bytearray.hpp
 	cp $(BA.DIR)/$@ .
+bytearray.o: bytearray.cpp
 CLEAN_FILES += bytearray.cpp bytearray.hpp
 bytearray.o socket.o: bytearray.cpp
 libv8socket.LIB.OBJECTS := socket.o bytearray.o

@@ -75,9 +75,10 @@ endif
 # Build shared library and link it against the underlying db libs
 # (so client binaries won't have to)...
 BA.DIR := ../bytearray
-bytearray.hpp:
+$(BA.DIR)/bytearray.hpp $(BA.DIR)/bytearray.cpp:
+bytearray.hpp: $(BA.DIR)/bytearray.hpp 
 	cp $(BA.DIR)/$@ .
-bytearray.cpp: bytearray.hpp
+bytearray.cpp: $(BA.DIR)/bytearray.cpp bytearray.hpp
 	cp $(BA.DIR)/$@ .
 bytearray.o: bytearray.cpp
 CLEAN_FILES += bytearray.cpp bytearray.hpp
