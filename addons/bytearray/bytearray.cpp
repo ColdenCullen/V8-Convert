@@ -42,10 +42,10 @@ using cv::JSByteArray;
 
 namespace v8 { namespace convert {
 
-    //! In bytearray_z.cpp
-    int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level = 3 );
-    //! In bytearray_z.cpp    
-    int GUnzipJSByteArray( JSByteArray const & src, JSByteArray & dest );
+    //! Internal impl of JSByteArray::gzipTo().
+    static int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level = 3 );
+    //! Internal impl of JSByteArray::gunzipTo().
+    static int GUnzipJSByteArray( JSByteArray const & src, JSByteArray & dest );
 
     
     JSByteArray * ClassCreator_Factory<JSByteArray>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
@@ -424,20 +424,21 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     }
     typedef cv::MemberPropertyBinder<N> SPB;
     cw
-        .Set( "toString", cv::ConstMethodToInvocationCallback<N, std::string (),&N::toString> )
-        .Set( "destroy", CW::DestroyObjectCallback )
-        .Set( "stringValue", cv::ConstMethodToInvocationCallback<N, std::string (),&N::stringValue> )
-        .Set( "append", cv::MethodToInvocationCallback<N, void (v8::Handle<v8::Value> const &), &N::append> )
-        //.Set( "gzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gzipTo> )
-        //.Set( "gunzipTo", cv::ConstMethodToInvocationCallback<N, int (N &), &N::gunzipTo> )
-        .Set( "gzip", cv::ConstMethodToInvocationCallback<N, v8::Handle<v8::Value> (), &N::gzip> )
-        .Set( "gunzip", cv::ConstMethodToInvocationCallback<N, v8::Handle<v8::Value> (), &N::gunzip> )
+        ( "destroy", CW::DestroyObjectCallback )
+        ( "append", cv::ToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
+        ( "stringValue", cv::ConstMethodToInCa<N, std::string (),&N::stringValue>::Call )
+        ( "toString", cv::ConstMethodToInCa<N, std::string (),&N::toString>::Call )
+        // i don't like these next two...
+        //( "gzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gzipTo>::Call )
+        //( "gunzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gunzipTo>::Call )
+        ( "gzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gzip>::Call )
+        ( "gunzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),
                         SPB::ConstMethodToAccessorGetter<uint32_t(),&N::length>,
                         SPB::MethodToAccessorSetter<uint32_t (uint32_t), &N::length> );
-#if 0
+#if 0 // don't do this b/c the cost of the conversion (on each access) is deceptively high (O(N) time and memory, N=bytearray length)
     proto->SetAccessor( JSTR("stringValue"),
                         SPB::ConstMethodToAccessorGetter<std::string(),&N::stringValue>,
                         SPB::AccessorSetterThrow );
@@ -451,7 +452,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
                                                             );
     v8::Handle<v8::Function> ctor = cw.CtorFunction();
     
-    ctor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInvocationCallback< void (bool), setEnableDestructorDebug>) );
+    ctor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
     cw.AddClassTo( BA_JS_CLASS_NAME, dest );
     //CERR <<"Binding done.\n";
     return;
