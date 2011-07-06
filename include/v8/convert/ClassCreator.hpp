@@ -880,6 +880,12 @@ namespace v8 { namespace convert {
             this->protoTmpl->Set(v8::String::New(name), CastToJS<ValueT>(val));
             return *this;
         }
+        //! Not quite sure why i need this overload, but i do.
+        inline ClassCreator & Set( char const * name, v8::InvocationCallback val )
+        {
+            this->protoTmpl->Set(v8::String::New(name), CastToJS(val));
+            return *this;
+        }
         /**
            Equivalent to Set().
         */
@@ -1029,7 +1035,7 @@ namespace v8 { namespace convert {
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::NativeIndex,
                                             ClassCreator_SearchPrototypeForThis<T>::Value
-                                            >
+                                            >            
         >::Type
     {
     };
