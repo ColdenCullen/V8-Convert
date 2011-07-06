@@ -28,7 +28,14 @@ function echoClient()
         print('s.hostname =',s.hostname);
         rc = s.setTimeout( 10 );
         print("s.setTimeout() rc =",rc);
-
+        var host, port;
+        if( echo.socketFamily===Socket.AF_UNIX) {
+            host = echo.socketPath;
+            port = 0;
+        } else {
+            host = echo.host;
+            port = echo.port;
+        }
         var msg;
         
         if(0) msg = ["GET / HTTP/1.1",
@@ -36,11 +43,11 @@ function echoClient()
                    ].join(echo.crnl)+echo.crnl+echo.crnl;
         else msg = 'Äöü';
                    
-        if( Socket.SOCK_STREAM == s.type )
+        if( (Socket.SOCK_STREAM == s.type) )
         {
             var bufs = [];
             print("Running in stream mode...");
-            rc = s.connect( echo.host, echo.port );
+            rc = s.connect( host, port );
             print('s.connect() rc =',rc);
             print('s.peerInfo: '+JSON.stringify(s.peerInfo));
             rc = s.write( msg );
@@ -53,7 +60,7 @@ function echoClient()
         }
         else if( Socket.SOCK_DGRAM == s.type )
         {
-            rc = s.sendTo( echo.host, echo.port, msg, msg.length );
+            rc = s.sendTo( host, port, msg, msg.length );
             print('s.sendTo() rc =',rc);
         }
         else

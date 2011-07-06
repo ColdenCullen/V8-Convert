@@ -20,7 +20,7 @@ by Ondrej Zara
 #include <v8/convert/convert.hpp>
 #include <v8/convert/ClassCreator.hpp>
 #include <v8/convert/properties.hpp>
-
+#include <cstdio> // remove()
 #include "socket.hpp"
 #include "bytearray.hpp"
 
@@ -275,6 +275,7 @@ void cv::JSSocket::init(int family, int type, int proto, int socketFD )
 cv::JSSocket::JSSocket(int family, int type, int proto, int socketFD )
     : fd(-1), family(0), proto(0),type(0),
       hitTimeout(false),
+      pipeName(),
       jsSelf()
 {
     this->init( family, type, proto, socketFD );
@@ -296,7 +297,14 @@ void cv::JSSocket::close()
         DBGOUT << "JSSocket@"<<(void const *)this<<"->close()\n";
         ::shutdown( this->fd, 2 );
         CloseSocket( this->fd );
+        if( (AF_UNIX == this->family) && !this->pipeName.empty() )
+        {
+            std::remove( this->pipeName.c_str() );
+            this->pipeName.clear();
+        }
         this->fd = -1;
+        
+        
     }
 }
 
@@ -308,8 +316,8 @@ int cv::JSSocket::bind( char const * where, int port )
         return -1;
     }
     sock_addr_t addr;
-    memset( &addr, 0, sizeof( sock_addr_t ) );
-    socklen_t len = 0;
+    socklen_t len = sizeof(sock_addr_t);
+    memset( &addr, 0, len );
     int rc = 0;
     {
         v8::Unlocker const unl;
@@ -340,7 +348,10 @@ int cv::JSSocket::bind( char const * where, int port )
             v8::Unlocker const unl;
             CSignalSentry const sigSentry;
             rc = ::bind( this->fd, (sockaddr *)&addr, len );
-            //CERR << "bind() rc="<<rc<<'\n';
+            if( (0 == rc) && (AF_UNIX == this->family) )
+            {
+                this->pipeName = ((struct sockaddr_un*) &addr)->sun_path;
+            }
         }
         if( 0 != rc )
         {
@@ -437,8 +448,8 @@ v8::Handle<v8::Value> cv::JSSocket::addressToName( char const * addy, int family
     char hn[NI_MAXHOST+1];
     memset( hn, 0, sizeof(hn) );
     sock_addr_t addr;
-    socklen_t len = 0;
-    memset( &addr, 0, sizeof(sock_addr_t) );
+    socklen_t len = sizeof(sock_addr_t);
+    memset( &addr, 0, len );
     //struct addrinfo hints; memset(&hints, 0, sizeof(hints));
     int rc = 0;
     {
@@ -482,8 +493,8 @@ int cv::JSSocket::connect( char const * where, int port )
     }
     // FIXME: consolidate the duplicate code here and in bind():
     sock_addr_t addr;
-    memset( &addr, 0, sizeof(sock_addr_t) );
-    socklen_t len = 0;
+    socklen_t len = sizeof(sock_addr_t);
+    memset( &addr, 0, len );
     int rc = 0;
     {
         v8::Unlocker unl;

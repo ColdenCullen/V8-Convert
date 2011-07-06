@@ -86,6 +86,13 @@
 #include "v8/convert/ClassCreator.hpp"
 namespace v8 { namespace convert {
 
+class JSSocket;
+template <>
+struct NativeToJS< JSSocket >;
+template <>
+struct ClassCreator_Factory<JSSocket>;
+
+
 /**
    A thin wrapper around socket() and friends, providing
    a C++/JS binding for the v8-juice framework.
@@ -100,12 +107,17 @@ private:
     int proto;
     int type;
     bool hitTimeout;
-public:
+    /* We only set pipeName for AF_UNIX server sockets so we can remove()
+        the pipe file when closing the server.
+    */
+    std::string pipeName;
+    friend class NativeToJS< JSSocket >;
+    friend class ClassCreator_Factory<JSSocket>;
     /** JS-side 'this' object. Set by ClassCreator_WeakWrap<JSSocket>::Wrap()
-        and used by NativeToJS<JSSocket>. Please don't touch this from client code!
+        and used by NativeToJS<JSSocket>.
     */
     v8::Handle<v8::Object> jsSelf;
-    
+
 private:
     void init(int family, int type, int proto, int socketFD );
 public:
@@ -386,7 +398,6 @@ public:
     int setTimeoutMs( unsigned int ms );
 
 }/*JSSocket*/;
-
     
 template <>
 struct ClassCreator_Factory<JSSocket>
