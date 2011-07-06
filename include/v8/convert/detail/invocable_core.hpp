@@ -947,11 +947,11 @@ namespace Detail {
         typedef FunctionSignature<Sig> SignatureType;
         typedef ArgsToFunctionForwarder< SignatureType::Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( Arguments const & argv )
+        static ReturnType CallNative( v8::Arguments const & argv )
         {
             return (ReturnType)Proxy::CallNative( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
@@ -966,11 +966,11 @@ namespace Detail {
         typedef FunctionSignature<Sig> SignatureType;
         typedef ArgsToFunctionForwarderVoid< SignatureType::Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( Arguments const & argv )
+        static ReturnType CallNative( v8::Arguments const & argv )
         {
             return (ReturnType)Proxy::CallNative( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
@@ -988,19 +988,19 @@ namespace Detail {
         typedef MethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToMethodForwarder< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T & self, Arguments const & argv )
+        static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
             return Proxy::CallNative( self, Func, argv );
         }
-        static ReturnType CallNative( Arguments const & argv )
+        static ReturnType CallNative( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( T & self, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, v8::Arguments const & argv )
         {
             return Proxy::Call( self, Func, argv );
         }
@@ -1017,19 +1017,19 @@ namespace Detail {
         typedef MethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToMethodForwarderVoid< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T & self, Arguments const & argv )
+        static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
             return Proxy::CallNative( self, Func, argv );
         }
-        static ReturnType CallNative( Arguments const & argv )
+        static ReturnType CallNative( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( T & self, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T & self, v8::Arguments const & argv )
         {
             return Proxy::Call( self, Func, argv );
         }
@@ -1046,19 +1046,19 @@ namespace Detail {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToConstMethodForwarder< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, Arguments const & argv )
+        static ReturnType CallNative( T const & self, v8::Arguments const & argv )
         {
             return Proxy::CallNative( self, Func, argv );
         }
-        static ReturnType CallNative( Arguments const & argv )
+        static ReturnType CallNative( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, v8::Arguments const & argv )
         {
             return Proxy::Call( self, Func, argv );
         }
@@ -1074,19 +1074,19 @@ namespace Detail {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToConstMethodForwarderVoid< T, SignatureType::Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, Arguments const & argv )
+        static ReturnType CallNative( T const & self, v8::Arguments const & argv )
         {
             return Proxy::CallNative( self, Func, argv );
         }
-        static ReturnType CallNative( Arguments const & argv )
+        static ReturnType CallNative( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( Arguments const & argv )
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Proxy::Call( Func, argv );
         }
-        static v8::Handle<v8::Value> Call( T const & self, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, v8::Arguments const & argv )
         {
             return Proxy::Call( self, Func, argv );
         }
