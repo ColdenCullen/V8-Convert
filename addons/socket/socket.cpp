@@ -319,6 +319,7 @@ int cv::JSSocket::bind( char const * where, int port )
     int rc = 0;
     {
         CSignalSentry const sigSentry;
+        v8::Unlocker const unl();
         rc = create_addr( where, port, this->family, &addr, &len );
     }
     cv::StringBuffer msg;
@@ -330,6 +331,7 @@ int cv::JSSocket::bind( char const * where, int port )
         {
             std::string const & ips = cv::JSToStdString(ip);
             CSignalSentry const sigSentry;
+            v8::Unlocker const unl();
             rc = create_addr( ips.c_str(), port, this->family, &addr, &len );
         }
         if( 0 != rc )
@@ -450,6 +452,7 @@ v8::Handle<v8::Value> cv::JSSocket::addressToName( char const * addy, int family
     int rc = 0;
     {
         CSignalSentry const sigSentry;
+        v8::Unlocker const unl();
         rc = create_addr( addy, 0, family, &addr, &len );
     }
     if( 0 != rc )
@@ -493,6 +496,7 @@ int cv::JSSocket::connect( char const * where, int port )
     int rc = 0;
     {
         CSignalSentry sig;
+        v8::Unlocker const unl();
         rc = create_addr(where, port, this->family, &addr, &len);
     }
     if( 0 != rc )
@@ -500,7 +504,8 @@ int cv::JSSocket::connect( char const * where, int port )
         v8::Handle<v8::Value> ip = nameToAddress( where );
         if( ! ip.IsEmpty() )
         {
-            std::string const ips = cv::JSToStdString(ip);
+            std::string const & ips( cv::JSToStdString(ip) );
+            v8::Unlocker const unl();
             rc = create_addr( ips.c_str(), port, this->family, &addr, &len );
         }
         if( 0 != rc )
@@ -759,13 +764,19 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
     sock_addr_t addr;
     memset( &addr, 0, sizeof( sock_addr_t ) );
     socklen_t alen = 0;
-    int rc = create_addr(where.c_str(), port, so->family, &addr, &alen);
+    int rc = 0;
+    {
+        v8::Unlocker const unl();
+        CSignalSentry sig;
+        rc = create_addr(where.c_str(), port, so->family, &addr, &alen);
+    }
     if( 0 != rc )
     {   // Connect using address failed. Try using a hostname...
         v8::Handle<v8::Value> ip = cv::JSSocket::nameToAddress( where.c_str() );
         if( ! ip.IsEmpty() )
         {
             where = cv::JSToStdString(ip);
+            v8::Unlocker const unl();
             rc = create_addr( where.c_str(), port, so->family, &addr, &alen );
         }
         if( 0 != rc )
