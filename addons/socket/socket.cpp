@@ -53,6 +53,8 @@ static void signal_ignore(int)
 }
 #endif
 
+template <> char const * cv::TypeName<cv::JSSocket>::Value = "Socket";
+
 namespace {
     /**
        A sentry type to set a no-op signal handler for certain signals
@@ -316,7 +318,6 @@ int cv::JSSocket::bind( char const * where, int port )
     memset( &addr, 0, len );
     int rc = 0;
     {
-        v8::Unlocker const unl;
         CSignalSentry const sigSentry;
         rc = create_addr( where, port, this->family, &addr, &len );
     }
@@ -328,7 +329,6 @@ int cv::JSSocket::bind( char const * where, int port )
         if( ! ip.IsEmpty() )
         {
             std::string const & ips = cv::JSToStdString(ip);
-            v8::Unlocker const unl;
             CSignalSentry const sigSentry;
             rc = create_addr( ips.c_str(), port, this->family, &addr, &len );
         }
@@ -449,7 +449,6 @@ v8::Handle<v8::Value> cv::JSSocket::addressToName( char const * addy, int family
     //struct addrinfo hints; memset(&hints, 0, sizeof(hints));
     int rc = 0;
     {
-        v8::Unlocker unl;
         CSignalSentry const sigSentry;
         rc = create_addr( addy, 0, family, &addr, &len );
     }
@@ -493,7 +492,7 @@ int cv::JSSocket::connect( char const * where, int port )
     memset( &addr, 0, len );
     int rc = 0;
     {
-        v8::Unlocker unl;
+        CSignalSentry sig;
         rc = create_addr(where, port, this->family, &addr, &len);
     }
     if( 0 != rc )
@@ -502,7 +501,6 @@ int cv::JSSocket::connect( char const * where, int port )
         if( ! ip.IsEmpty() )
         {
             std::string const ips = cv::JSToStdString(ip);
-            v8::Unlocker unl;
             rc = create_addr( ips.c_str(), port, this->family, &addr, &len );
         }
         if( 0 != rc )
@@ -761,19 +759,14 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
     sock_addr_t addr;
     memset( &addr, 0, sizeof( sock_addr_t ) );
     socklen_t alen = 0;
-    int rc = 0;
-    {
-        v8::Unlocker unl;
-        rc = ::create_addr(where.c_str(), port, so->family, &addr, &alen);
-    }
+    int rc = create_addr(where.c_str(), port, so->family, &addr, &alen);
     if( 0 != rc )
     {   // Connect using address failed. Try using a hostname...
         v8::Handle<v8::Value> ip = cv::JSSocket::nameToAddress( where.c_str() );
         if( ! ip.IsEmpty() )
         {
             where = cv::JSToStdString(ip);
-            v8::Unlocker unl;
-            rc = ::create_addr( where.c_str(), port, so->family, &addr, &alen );
+            rc = create_addr( where.c_str(), port, so->family, &addr, &alen );
         }
         if( 0 != rc )
         {
@@ -920,16 +913,18 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
         v8::Unlocker unl;
         CSignalSentry const sigSentry;
         DBGOUT << "read("<<n<<", "<<binary<<")...\n";
+#if 1
         if(SOCK_DGRAM == this->type)
         { // UNTESTED!
-            socklen_t rdlen = len;
-            rc = ::recvfrom(this->fd, &vec[0], n, 0, (sockaddr *) &addr, &rdlen);
-            // FIXME: ensure that rdlen<=len.
+#endif
+            rc = ::recvfrom(this->fd, &vec[0], n, 0, (sockaddr *) &addr, &len);
+#if 1
         }
         else
         {
             rc = ::read(this->fd, &vec[0], n);
         }
+#endif
         DBGOUT << "read("<<n<<", "<<binary<<") == "<<rc<<"\n";
     }
     if( 0 == rc ) /*EOF*/ return v8::Undefined();
@@ -949,11 +944,13 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
     }
     else
     {
+#if 0
         if( (unsigned int) rc < n )
         {
             // dammit... we cannot distinguish timeout from EOF here....
             // this->hitTimeout = true;
         }
+#endif
         if(SOCK_DGRAM == this->type)
         {
             // i'm not quite sure what this is for. It's from the original implementation.

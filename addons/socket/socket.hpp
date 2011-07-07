@@ -271,16 +271,17 @@ public:
 
        Special return values:
 
-       - (val===null) means reading was interrupted
-       by a timeout and no bytes were read before the
-       timeout expired.
+       - (val===null) means reading was interrupted by a timeout and 
+       no bytes were read before the timeout expired (is that really 
+       true???), or another low-level signal interrupted the read 
+       (e.g. SIGINT).
 
        - (val===undefined) EOF.
 
-       If binary is true then the returned value is a ByteArray
-       object. If binary is false then the data is returned as a
-       string (which will fail with undefined behaviour if the string
-       is not encoded in a way which v8 requires (UTF-8)).
+       If binary is true then the returned value is a ByteArray 
+       object. If binary is false then the data is returned as a 
+       string (which has Undefined Behaviour if the string is not 
+       encoded in a way which v8 requires (UTF-8)).
        
        When the length of the returned data is less than n, it
        could mean any of:
@@ -288,10 +289,14 @@ public:
        - Timeout was reached after reading some bytes.
 
        - EOF
+       
+       - In non-binary mode, the length of the string can be shorter
+       than the number of bytes (UTF-8, remember?).
 
-       There is unfortunately currently no way to distinguish.
-       We may need to add an error id property to the class so
-       that clients can tell the difference.
+       There is unfortunately currently no way to 100% reliably 
+       distinguish between the first two. i don't know of a way to 
+       distinguish when a partial read is partial because of a 
+       timeout (there probably is one, though).
        
        BIG FAT HAIRY WARNING:
        

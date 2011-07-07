@@ -49,7 +49,7 @@ function echoServer()
                 function doit(sock) {
                     var buf = new Socket.ByteArray();
                     var x;
-                    var bufsz = 1024;
+                    var bufsz = 10;
                     var len;
                     while( undefined !== (x = sock.read(bufsz,true)) ) {
                         len = 0;
@@ -57,9 +57,13 @@ function echoServer()
                             len = x.length;
                             buf.append(x);
                             x.destroy();
+                            print("Read in "+len+" bytes.");
                         }
-                        if( sock.timeoutReached ) throw new Error("Timeout hit while reading request.");
+                        //else { print("x = "+x); }
+                        //if( sock.timeoutReached ) throw new Error("Timeout hit while reading request.");
+                        if( null === x ) throw new Error("Timeout hit while reading request.");
                         else if(len < bufsz) break /* assume EOF */;
+                        //else if(!len) break /* assume EOF */;
                         // else keep reading.
                     }
                     print("Writing back "+buf.length+" bytes to the client:\n"+buf+'\n'+buf.stringValue());

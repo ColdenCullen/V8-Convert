@@ -11,14 +11,14 @@ function echoClient()
     var s, c, n;
     
     function readAll(sock, bufsz, binary, callback) {
-        var x, len;
-        v
+        var x;//, len;
         while( x = sock.read(bufsz,binary) ) {
-            len = x.length;
+            //len = x.length;
             callback(x);
-            if(len < bufsz) break /* assume EOF, though this is not correct for UTF8 in non-binary mode */;
+            //if(len < bufsz) break /* assume EOF, though this is not correct for UTF8 in non-binary mode */;
         }
-        if( sock.timeoutReached ) throw new Error("Timeout reached while reading.");
+        if( undefined !== x ) throw new Error("Reading ended before EOF.");
+        //if( null === x /*sock.timeoutReached*/ ) throw new Error("Timeout reached or interrupted while reading.");
     }
     try
     {
@@ -42,6 +42,8 @@ function echoClient()
                    "Host: "+echo.host
                    ].join(echo.crnl)+echo.crnl+echo.crnl;
         else msg = 'Äöü';
+        var obj = { msg:msg };
+        msg = JSON.stringify(obj,0,4);
                    
         if( (Socket.SOCK_STREAM == s.type) )
         {
@@ -52,8 +54,11 @@ function echoClient()
             print('s.peerInfo: '+JSON.stringify(s.peerInfo));
             rc = s.write( msg );
             print( "s.write() rc =",rc);
-            // ACHTUNG: this code is NOT safe vis-a-vis utf8 because we can end
-            // a read block in the middle of a multi-byte character!
+            if(0) {
+                //var eof = new Socket.ByteArray("bye");
+                s.write("bye");
+                //eof.destroy();
+            }
             var buf = new Socket.ByteArray();
             readAll(s, 20, true, function(x) { print("Read in: "+x); buf.append(x); x.destroy(); });
             print("Read in "+buf.length+" bytes:\n"+buf.stringValue());
