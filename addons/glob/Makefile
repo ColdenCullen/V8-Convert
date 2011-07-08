@@ -23,7 +23,8 @@ include ../../config.make # see that file for certain configuration options.
 # If needed, append the CPPFLAGS to point to where <v8/convert/*.hpp> can
 # be found.
 
-libv8glob.LIB.OBJECTS := jsglob.o whglob.o
+THE_OBJS := jsglob.o whglob.o
+libv8glob.LIB.OBJECTS := $(THE_OBJS)
 libv8glob.DLL.OBJECTS := $(libv8glob.LIB.OBJECTS)
 libv8glob.DLL: $(libv8glob.LIB.OBJECTS)
 $(eval $(call ShakeNMake.CALL.RULES.LIBS,libv8glob))
@@ -35,7 +36,8 @@ all: $(libv8glob.DLL)
 
 ########################################################################
 # shell app...
-SHELL_LDFLAGS := $(LDFLAGS_V8) jsglob.o whglob.o
+shell: $(THE_OBJS)
+SHELL_LDFLAGS := $(LDFLAGS_V8) $(THE_OBJS)
 SHELL_BINDINGS_HEADER := jsglob.hpp
 SHELL_BINDINGS_FUNC := v8::convert::SetupGlobBindings
 include ../shell-common.make

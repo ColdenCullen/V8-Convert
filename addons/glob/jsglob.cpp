@@ -40,7 +40,7 @@ bool glob_matches_like( char const * pattern, char const * str, bool caseSensiti
 }
 bool glob_matches_like( char const * pattern, char const * str )
 {
-    return glob_matches_like( pattern, str, true );
+    return glob_matches_like( pattern, str, false );
 }
 
 void v8::convert::SetupGlobBindings( v8::Handle<v8::Object> dest )
