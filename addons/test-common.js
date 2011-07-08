@@ -24,7 +24,7 @@ function assert(cond,msg)
         throw new Error(msg);
     }
     else {
-        print("Assertion OK: "+msg);
+        print("Assertion OK: "+(msg || 'undescribed assertion'));
     }
 }
 
