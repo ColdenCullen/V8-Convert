@@ -27,7 +27,7 @@
 #  define V8_CONVERT_HAS_LONG_LONG 0
 #endif
 #include "TypeList.hpp"
-#include "signature_core.hpp" /* only need for the Signature used by the generated code. */
+#include "signature_core.hpp" /* only needed for the Signature used by the generated code. */
 
 namespace v8 { namespace convert {
 
@@ -55,7 +55,7 @@ namespace v8 { namespace convert {
         */
         typedef NHT NativeHandle;
 
-        // MAYBE to do: add this function to get a pointer to the object, e.g.
+        // MAYBE to do: add a function to get a pointer to the object, e.g.
         // for dereferencing smart pointers. So far it's not been necessary.
         // static NativeHandle Pointer( NativeHandle x ) { return x; }
     };
@@ -132,17 +132,11 @@ namespace v8 { namespace convert {
     template <typename NT>
     struct NativeToJS
     {
-	//! Must be specialized.
-	template <typename X>
-	v8::Handle<v8::Value> operator()( X const & ) const
-#if defined(JUICE_STATIC_ASSERT)
-        {
-            JUICE_STATIC_ASSERT(false,NativeToJS_T_MustBeSpecialized);
-            return v8::Undefined();
-        }
-#else
-        ;
-#endif
+        //! Must be specialized.
+        template <typename X>
+        v8::Handle<v8::Value> operator()( X const & ) const;
+    private:
+        typedef tmp::Assertion<false> NativeToJSMustBeSpecialized;
     };
 
     /**
@@ -190,8 +184,8 @@ namespace v8 { namespace convert {
     template <typename NT>
     struct NativeToJS<NT &>
     {
-	typedef typename TypeInfo<NT>::Type & ArgType;
-	v8::Handle<v8::Value> operator()( ArgType n ) const
+        typedef typename TypeInfo<NT>::Type & ArgType;
+        v8::Handle<v8::Value> operator()( ArgType n ) const
         {
             typedef NativeToJS< typename TypeInfo<NT>::NativeHandle > Cast;
             return Cast()( &n );
@@ -203,151 +197,138 @@ namespace v8 { namespace convert {
     template <>
     struct NativeToJS<void>
     {
-	/**
-	   Returns Undefined().
-	*/
+        /**
+           Returns v8::Undefined().
+        */
         template <typename Ignored>
         v8::Handle<v8::Value> operator()(Ignored const &) const
-	{
-	    return ::v8::Undefined();
-	}
+        {
+            return ::v8::Undefined();
+        }
     };
 #endif
 
 #if !defined(DOXYGEN)
-    /**
-       Base implementation for "small" integer conversions (<=32
-       bits).
-    */
-    template <typename IntegerT>
-    struct NativeToJS_int_small
-    {
-	v8::Handle<v8::Value> operator()( IntegerT v ) const
-	{
-	    return Integer::New( static_cast<int32_t>(v) );
-	}
-    };
-    /**
-       Base implementation for "small" unsigned integer conversions
-       (<=32 bits).
-    */
-    template <typename IntegerT>
-    struct NativeToJS_uint_small
-    {
-	v8::Handle<v8::Value> operator()( IntegerT v ) const
-	{
-	    return Integer::NewFromUnsigned( static_cast<uint32_t>(v) );
-	}
-    };
+    namespace Detail {
+        /**
+           Base implementation for "small" integer conversions (<=32
+           bits).
+        */
+        template <typename IntegerT>
+        struct NativeToJS_int_small
+        {
+            v8::Handle<v8::Value> operator()( IntegerT v ) const
+            {
+                return Integer::New( static_cast<int32_t>(v) );
+            }
+        };
+        /**
+           Base implementation for "small" unsigned integer conversions
+           (<=32 bits).
+        */
+        template <typename IntegerT>
+        struct NativeToJS_uint_small
+        {
+            v8::Handle<v8::Value> operator()( IntegerT v ) const
+            {
+                return Integer::NewFromUnsigned( static_cast<uint32_t>(v) );
+            }
+        };
+    }
 #endif // if !defined(DOXYGEN)
 
     template <>
-    struct NativeToJS<int16_t> : NativeToJS_int_small<int16_t> {};
+    struct NativeToJS<int16_t> : Detail::NativeToJS_int_small<int16_t> {};
 
     template <>
-    struct NativeToJS<uint16_t> : NativeToJS_uint_small<uint16_t> {};
+    struct NativeToJS<uint16_t> : Detail::NativeToJS_uint_small<uint16_t> {};
 
     template <>
-    struct NativeToJS<int32_t> : NativeToJS_int_small<int32_t> {};
+    struct NativeToJS<int32_t> : Detail::NativeToJS_int_small<int32_t> {};
 
     template <>
-    struct NativeToJS<uint32_t> : NativeToJS_uint_small<uint32_t> {};
+    struct NativeToJS<uint32_t> : Detail::NativeToJS_uint_small<uint32_t> {};
 
 #if !defined(DOXYGEN)
-    /**
-       Base implementation for "big" numeric conversions (>32 bits).
-    */
-    template <typename IntegerT>
-    struct NativeToJS_int_big
-    {
-	v8::Handle<v8::Value> operator()( IntegerT v ) const
-	{
-	    return Number::New( static_cast<double>(v) );
-	}
-    };
+    namespace Detail {
+        /**
+           Base implementation for "big" numeric conversions (>32 bits).
+        */
+        template <typename IntegerT>
+        struct NativeToJS_int_big
+        {
+            /** Returns v as a double value. */
+            v8::Handle<v8::Value> operator()( IntegerT v ) const
+            {
+                return Number::New( static_cast<double>(v) );
+            }
+        };
+    }
 #endif // if !defined(DOXYGEN)
 
     template <>
-    struct NativeToJS<int64_t> : NativeToJS_int_big<int64_t> {};
+    struct NativeToJS<int64_t> : Detail::NativeToJS_int_big<int64_t> {};
 
     template <>
-    struct NativeToJS<uint64_t> : NativeToJS_int_big<uint64_t> {};
+    struct NativeToJS<uint64_t> : Detail::NativeToJS_int_big<uint64_t> {};
 
     template <>
     struct NativeToJS<double>
     {
-	v8::Handle<v8::Value> operator()( double v ) const
-	{
-	    return Number::New( v );
-	}
+        v8::Handle<v8::Value> operator()( double v ) const
+        {
+            return Number::New( v );
+        }
     };
 
     template <>
     struct NativeToJS<bool>
     {
-	v8::Handle<v8::Value> operator()( bool v ) const
-	{
-	    return Boolean::New( v );
-	}
+        v8::Handle<v8::Value> operator()( bool v ) const
+        {
+            return Boolean::New( v );
+        }
     };
 
     template <typename T>
     struct NativeToJS< ::v8::Handle<T> >
     {
-	typedef ::v8::Handle<T> handle_type;
-	v8::Handle<v8::Value> operator()( handle_type & li ) const
-	{
-	    return li;
-	}
+        typedef ::v8::Handle<T> handle_type;
+        v8::Handle<v8::Value> operator()( handle_type const & li ) const
+        {
+            return li;
+        }
     };
 
     template <typename T>
     struct NativeToJS< ::v8::Local<T> >
     {
 	typedef ::v8::Local<T> handle_type;
-	v8::Handle<v8::Value> operator()( handle_type const & li ) const
-	{
-	    return li;
+        v8::Handle<v8::Value> operator()( handle_type const & li ) const
+        {
+            return li;
 	}
     };
 
     template <typename T>
     struct NativeToJS< ::v8::Persistent<T> >
     {
-	typedef ::v8::Persistent<T> handle_type;
-	v8::Handle<v8::Value> operator()( handle_type const & li ) const
-	{
-	    return li;
-	}
+        typedef ::v8::Persistent<T> handle_type;
+        v8::Handle<v8::Value> operator()( handle_type const & li ) const
+        {
+            return li;
+        }
     };
 
     template <>
     struct NativeToJS< ::v8::InvocationCallback >
     {
-	v8::Handle<v8::Value> operator()( ::v8::InvocationCallback f ) const
-	{
-	    return ::v8::FunctionTemplate::New(f)->GetFunction();
-	}
+        v8::Handle<v8::Value> operator()( ::v8::InvocationCallback const f ) const
+        {
+            return ::v8::FunctionTemplate::New(f)->GetFunction();
+        }
     };
 
-
-    // 	template <>
-    // 	struct NativeToJS< ::v8::Function >
-    // 	{
-    // 	    v8::Handle<v8::Value> operator()( ::v8::Function const & li ) const
-    // 	    {
-    // 		return Handle<Function>(li);
-    // 	    }
-    // 	};
-
-    template <>
-    struct NativeToJS< v8::Handle<v8::Value> >
-    {
-	v8::Handle<v8::Value> operator()( v8::Handle<v8::Value> const & v ) const
-	{
-	    return v;
-	}
-    };
 
     template <>
     struct NativeToJS<std::string>
@@ -436,15 +417,16 @@ namespace v8 { namespace convert {
         /** Calls v8::ThrowException(v8::Exception::Error(ex.what())) and returns the
             results of that call (maybe an empty handle???).
             
-            This function not only converts the value but also throws the JS
-            exception. This is largely for historical reasons, before i learned
-            about v8::Exception::Error() and friends. Lots of code now
+            This function not only converts the value but also 
+            triggers a JS-side exception. This is largely for 
+            historical reasons, before i learned about 
+            v8::Exception::Error() and friends. Lots of code now 
             relies on that behaviour, so it won't be changed.
         */
         v8::Handle<v8::Value> operator()( std::exception const & ex ) const
         {
             char const * msg = ex.what();
-            return v8::ThrowException(v8::Exception::Error(String::New( msg ? msg : "unknown std::exception!" ) ));
+            return v8::ThrowException(v8::Exception::Error(String::New( msg ? msg : "unspecified std::exception" ) ));
             /** ^^^ String::New() internally calls strlen(), which hates it when string==0. */
         }
     };
@@ -639,10 +621,10 @@ namespace v8 { namespace convert {
             If h is-a External then this return its value, else it
             return 0.
             
-            We could arguably check if it is an object and has internal fields,
-            and return the first one, but i think that would be going to
-            far considering how arguably the v8-to-(void *) conversion
-            is in the first place.
+            We could arguably check if it is an object and has 
+            internal fields, and return the first one, but i think 
+            that would be going too far considering how arguably the 
+            v8-to-(void *) conversion is in the first place.
         */
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
@@ -662,10 +644,10 @@ namespace v8 { namespace convert {
             If h is-a External then this return its value, else it
             return 0.
             
-            We could arguably check if it is an object and has internal fields,
-            and return the first one, but i think that would be going to
-            far considering how arguably the v8-to-(void *) conversion
-            is in the first place.
+            We could arguably check if it is an object and has 
+            internal fields, and return the first one, but i think 
+            that would be going to far considering how arguably the 
+            v8-to-(void *) conversion is in the first place.
         */
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
@@ -1090,7 +1072,7 @@ namespace v8 { namespace convert {
     struct NativeToJS< tmp::IfElse< tmp::SameType<unsigned long int,uint64_t>::Value,
                                     Detail::UselessConversionType<unsigned long>,
                                     unsigned long >::Type >
-    : NativeToJS_int_big<unsigned long int>
+    : Detail::NativeToJS_int_big<unsigned long int>
     {
     };
 
@@ -1123,7 +1105,7 @@ namespace v8 { namespace convert {
     struct NativeToJS< tmp::IfElse< tmp::SameType<long,int64_t>::Value,
                                     Detail::UselessConversionType<long>,
                                     long >::Type >
-    : NativeToJS_int_big<int64_t>
+    : Detail::NativeToJS_int_big<int64_t>
     {
     };
 
@@ -1164,7 +1146,7 @@ namespace v8 { namespace convert {
     struct NativeToJS< tmp::IfElse< tmp::SameType<long long int,int64_t>::Value,
                                     Detail::UselessConversionType<long long>,
                                     long long int >::Type >
-    : NativeToJS_int_big<int64_t>
+    : Detail::NativeToJS_int_big<int64_t>
     {
     };
 #endif

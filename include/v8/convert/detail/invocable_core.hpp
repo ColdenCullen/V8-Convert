@@ -1594,7 +1594,7 @@ struct InCaOverloader : Callable
        exception when called, its error string indicating the argument
        count mismatch.
 
-       Implementats the InvocationCallback interface.
+       Implements the InvocationCallback interface.
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & args )
     {
@@ -1610,9 +1610,9 @@ struct InCaOverloader : Callable
    and translates any native ExceptionT exceptions thrown by that
    function into JS exceptions.
 
-   ExceptionT must be an exception type which is thrown by copy
-   (e.g. STL-style) as opposed to by pointer (MFC-style).
-   
+   ExceptionT must be an exception type which is thrown by const 
+   reference (e.g. STL-style) as opposed to by pointer (MFC-style).
+
    SigGetMsg must be a function-signature-style argument describing
    a method within ExceptionT which can be used to fetch the message
    reported by the exception. It must meet these requirements:
@@ -1636,7 +1636,7 @@ struct InCaOverloader : Callable
    message in the generated JS exception is unspecified (because we
    have no generic way to get such a message). If a client needs to
    catch multiple exception types, enable propagation and chain the
-   callbacks together. In such a case, the outer-most (first) callback
+   callbacks together. In such a case, the outer-most (last) callback
    in the chain should not propagate unknown exceptions (to avoid
    killing v8).
 
@@ -1687,31 +1687,7 @@ struct InCaOverloader : Callable
    // behaviour for runtime_error and std::exception (its base class)
    // will be identical here, though they actually have different
    // code.
-
    @endcode
-
-   Whether or not the various v8::convert-generated functions 
-   bindings propagate exceptions or turn them into JS exceptions 
-   depends on various template paramters throughout the framework. 
-   MissingThisException is handled internally (converted to JS) when 
-   it is thrown via v8-originated callbacks and is is propagated when 
-   certain lower-level calls are made (presumably from client code). 
-   Other exceptions _might_ be caught/converted internally, depending
-   on the aforementioned template parameters.
-
-   Note that the InvocationCallbacks created by most of the
-   v8::convert API adds (non-propagating) exception catching for
-   std::exception to the generated wrappers. Thus this type is not
-   terribly useful with them. It is, however, useful when one wants to
-   implement an InvocationCallback such that it can throw, but wants
-   to make sure that the exceptions to not pass back into v8 when JS
-   is calling the InvocationCallback (as propagating exceptions
-   through v8 is fatal to v8).
-
-   TODO: consider removing the default-imposed exception handling
-   created by most forwarders/wrappers in favour of this
-   approach. This way is more flexible and arguably "more correct",
-   but adds a burder to users who want exception catching built in.
 */
 template < typename ExceptionT,
            typename SigGetMsg,
@@ -1894,21 +1870,20 @@ namespace Detail
    // Overload 3 variants of a member function:
    namespace cv = v8::convert;
    typedef cv::Signature< void (
-            cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
-            cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
-            cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>
+            cv::MethodToInCa<BoundNative, void (), &BoundNative::overload0>,
+            cv::MethodToInCa<BoundNative, void (int), &BoundNative::overload1>,
+            cv::MethodToInCa<BoundNative, void (int,int), &BoundNative::overload2>
         )> OverloadList;
    typedef cv::InCaOverloadList< OverloadList > MyOverloads;
    v8::InvocationCallback cb = MyOverloads::Call;     
    @endcode
-   
+
    Note that only one line of that code is evaluated at runtime - the rest
    is all done at compile-time.
 */
 template < typename FwdList >
 struct InCaOverloadList : Callable
 {
-    // arguable: static const Arity = -1;
     /**
        Tries to dispatch argv to one of the bound functions defined
        in FwdList, based on the number of arguments in argv and
