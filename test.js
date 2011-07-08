@@ -29,6 +29,10 @@ function test1()
     { // if these fail they'll probably cause an assertion in v8...
         BoundNative.testLocker();
         BoundNative.testLockerNoUnlocking()
+        if( 'sleep' in BoundNative ) {
+            print("Sleeping very briefly...");
+            BoundNative.sleep(1);
+        }
     }
 
     var f = new BoundNative(42);
@@ -192,7 +196,7 @@ function testMyType() {
     (new MyType("hi")).destroy();
     (new MyType(1,2.3)).destroy();
     (new MyType(1,2,3,4,5)).destroy();
-    print("If you got this far, ctor the overloader it worked.");
+    print("If you got this far, the ctor overloader worked.");
 }
 
 if(0) {

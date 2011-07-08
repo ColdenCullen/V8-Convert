@@ -7,10 +7,7 @@
 #include "v8/convert/arguments.hpp"
 #endif
 
-#define TRY_UNLOCKED_FUNCTIONS 1
-#if TRY_UNLOCKED_FUNCTIONS
 #include <unistd.h> // only for sleep() in some test code
-#endif
 
 char const * cv::TypeName< BoundNative >::Value = "BoundNative";
 char const * cv::TypeName< BoundSubNative >::Value = "BoundSubNative";
@@ -333,7 +330,7 @@ namespace v8 { namespace convert {
                 ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
-#if 1 // converting natives to JS requires more lower-level plumbing...
+#if 1 // converting natives to JS requires more lower-level plumbing than converting from JS to native...
                  ("nativeReturn",
                  cv::ToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)
                  ("nativeReturnConst",
@@ -397,12 +394,11 @@ namespace v8 { namespace convert {
                 void (int), &BoundNative::setInt
                 >("theIntNC", proto);
 
-#if TRY_UNLOCKED_FUNCTIONS
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
             ctor->Set(JSTR("sleep"),
                     cv::CastToJS(cv::FunctionToInCa< unsigned int (unsigned int), ::sleep, true>::Call)
             );
-#endif
+
             ctor->Set(JSTR("testLocker"),
                 cv::CastToJS(cv::ToInCa<void, void (), test_using_locker<true>, true >::Call)
             );
@@ -669,7 +665,6 @@ namespace { // testing ground for some compile-time assertions...
 } // namespace
 
 
-#undef TRY_UNLOCKED_FUNCTIONS
 #undef CERR
 #undef JSTR
 #undef TRY_ARGS_CODE
