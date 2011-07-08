@@ -23,40 +23,46 @@
 #include <v8.h>
 
 namespace v8 { namespace convert {
+    namespace Detail {
+        template <bool UseLocker>
+        struct V8MaybeLocker
+        {
+            private:
+                v8::Locker lock;
+            public:
+                V8MaybeLocker() : lock() {}
+        };
+        template <>
+        struct V8MaybeLocker<false>
+        {
+        };
+    }
     /**
-        This class implements a very basic shell for v8. Its template
-        type is ignored - it is only a class template so that we 
-        can avoid potential linking problems with large non-template 
-        classes in this header-only library.
-        
+        This class implements a very basic shell for v8.
+ 
+         
         These objects are basically thin wrappers around the 
         bootstrap code necessary for getting v8 running in an 
         application. They are intended to be stack-created in main() 
         (or equivalent) and used as a front-end for passing JS code 
         into v8 for execution.
-        
+
         Because library-level JS code activated via this class 
         _might_ use v8::Unlocker to unlock the VM while C-level 
         routines are running, each instance of this class includes a 
-        v8::Locker instance. (If it did not, clients would be 
-        required to add one or accept crashes when called code uses 
-        v8::Unlocker.)
+        v8::Locker instance if UseLocker is true. (If it did not, 
+        clients would be required to add one or accept crashes when 
+        called code uses v8::Unlocker.) Only set UseLocker to false 
+        if you _know_ that _no_ JS code run through this API will 
+        end up trying to unlock v8. (If you're using this class 
+        together with the v8::convert function binding API then you 
+        are almost certainly using v8::Unlocker without realizing it.)
 
-        Potential TODO: if ContextType is not void, assume it is
-        a ClassCreator-wrapped native type and use an instance of it
-        for the global object. We might need to split this into a
-        common base type if we do that and specialize the void
-        specialization to not do the init stuff. However, timing/ordering
-        appears to be problematic at this level, because we would need
-        the class binding to create the global object template, which
-        goes against the current internals somewhat.
-        
-
-        Maintenance reminder: try to keep this class free of
-        dependencies on other library-level code so that we
-        can re-use it arbitrary v8 clients.
+        Maintenance reminder: keep this class free of dependencies 
+        on other library-level code so that we can re-use it 
+        arbitrary v8 clients.
     */
-    template <typename ContextType = void>
+    template <bool UseLocker = true>
     class V8Shell
     {
     public:
@@ -71,7 +77,7 @@ namespace v8 { namespace convert {
         typedef void (*ErrorMessageReporter)( char const * msg );
     private:
         // The declaration order of the v8-related objects is important!
-        v8::Locker locker;
+        Detail::V8MaybeLocker<UseLocker> locker;
         v8::HandleScope hscope;
         //v8::Handle<v8::ObjectTemplate> globt;
         v8::Handle<v8::Context> context;
