@@ -29,10 +29,6 @@ function test1()
     { // if these fail they'll probably cause an assertion in v8...
         BoundNative.testLocker();
         BoundNative.testLockerNoUnlocking()
-        if( 'sleep' in BoundNative ) {
-            print("Sleeping very briefly...");
-            BoundNative.sleep(1);
-        }
     }
 
     var f = new BoundNative(42);
@@ -152,7 +148,7 @@ function test4()
     for( i = 0; !BoundNative.prototype.runGC() && (i<max); ++i )
     {
         print("Waiting on GC to finish...");
-        sleep(1);
+        BoundNative.sleep(1);
     }
     if( max == i )
     {
@@ -203,7 +199,10 @@ if(0) {
     /**
        Interesting: if we have a native handle in the global object
        then v8 is never GC'ing it, even if we dispose the context
-       and run a V8::IdleNotification() loop. Hmmm.
+       and run a V8::IdleNotification() loop. Hmmm. The problem
+       would appear to be that the var we create keeps it alive,
+       and that only destroying that var (e.g. assigning null to it)
+       will will (theoretically) allow it to be released.
      */
     var originalBoundObject = new BoundNative();
     print("Created object which we hope to see cleaned up at app exit: "+originalBoundObject);
@@ -212,7 +211,7 @@ if(0) {
 test1();
 test2();
 test3();
-if( ('sleep' in this) && ('function' === typeof sleep) ) {
+if( ('sleep' in BoundNative) && ('function' === typeof BoundNative.sleep) ) {
     test4();
     testUnlockedFunctions();
 }
