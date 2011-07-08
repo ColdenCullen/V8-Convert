@@ -60,7 +60,7 @@ namespace v8 { namespace convert {
 
         Maintenance reminder: keep this class free of dependencies 
         on other library-level code so that we can re-use it 
-        arbitrary v8 clients.
+        in arbitrary v8 clients.
     */
     template <bool UseLocker = true>
     class V8Shell
