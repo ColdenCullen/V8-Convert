@@ -748,7 +748,7 @@ v8::Handle<v8::Value> cv::JSSocket::sendTo( v8::Arguments const & argv )
 {
     if( (argv.Length()<3) || (argv.Length()>4) )
     {
-        return Toss("write() requires 3-4 arguments!");
+        return Toss("sendTo() requires 3-4 arguments!");
     }
     JSSocket * so = cv::CastFromJS<JSSocket>( argv.This() );
     if( ! so )
