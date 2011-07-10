@@ -19,9 +19,6 @@ EOF
 shift
 
 ValueHandle="v8::Handle<v8::Value>"
-tmplsig="typename WrappedType, typename RV, "
-ttlist="WrappedType, RV,"
-tmplsigV="typename WrappedType, void, "
 aTDecl="" # typename A0, typename A1,...
 aTParam="" # A0, A1 ...
 castCalls="" # CastFromJS<A0>(argv[0]), ...
@@ -38,9 +35,6 @@ function makeLists()
     for (( at = 0; at < count; at = at + 1)); do
     #echo "at=$at"
 	local AT="A${at}"
-	tmplsig="${tmplsig} typename ${AT},"
-	ttlist="${ttlist} ${AT},"
-	tmplsigV="${tmplsigV} ${AT},"
 	aTDecl="${aTDecl} typename ${AT}"
 	aTParam="${aTParam} ${AT}"
 	callArgs="${callArgs}${AT}"
@@ -60,10 +54,6 @@ function makeLists()
 	}
     done
     #tmplsig="${tmplsig} RV (WrappedType::*Func)(${aTParam})";
-    funcSig="(WrappedType::*Func)(${aTParam}) "
-    tmplsig="typename WrappedType, typename RV, ${aTDecl}, RV ${funcSig}";
-    tmplsigV="typename WrappedType, ${aTDecl}, void ${funcSig}";
-    tmplspecV="WrappedType, void, ${aTParam}, void ${funcSig}"
     castOps="${castTypedefs} ${castInits}"
 }
 
@@ -197,7 +187,6 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(*func)( ${castCalls} );
         }
@@ -332,13 +321,6 @@ function makeArgsToMethodForwarder()
 ##########################################################
 # here we go...
 makeLists
-false && {
-    echo funcSig=${funcSig}
-    echo tmplsig=${tmplsig}
-    echo tmplsigV=${tmplsigV}
-    echo tmplspecV=${tmplspecV}
-}
-
 
 for command in $@; do
 case $command in
