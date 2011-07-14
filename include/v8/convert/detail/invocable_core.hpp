@@ -14,7 +14,6 @@ conversion.
 
 #include "convert_core.hpp"
 #include "signature_core.hpp"
-#include "TypeList.hpp"
 
 namespace v8 { namespace convert {
 
