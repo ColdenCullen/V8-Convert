@@ -32,22 +32,18 @@
    make sure that the shell does not strip the double-quotes required
    by this code.
 
-    If built without those macros then the shell will still work but 
-    will not contain any client-custom bindings. See 
-    v8::convert::V8Shell::SetupDefaultBindings() for the list of 
-    features added to the JS engine. In addition to those, this 
-    shell provides a JS-side gc() function which is a proxy for 
-    v8::V8::IdleNotification().
+   If built without those macros then the shell will still work but will not
+   contain any client-custom bindings. See
+   v8::convert::V8Shell::SetupDefaultBindings() for the list of features
+   added to the JS engine. In addition to those, this shell provides a
+   JS-side gc() function which is a proxy for v8::V8::IdleNotification().
 */
-#if defined(NDEBUG)
-#  undef NDEBUG  // force assert() to work
-#endif
 
 #include <cassert>
 #include <iostream>
 
 #ifndef CERR
-#define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
+#define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << " : " 
 #endif
 
 #ifndef COUT
@@ -58,14 +54,6 @@
 #include "v8/convert/v8-convert.hpp"
 #include "v8/convert/V8Shell.hpp"
 namespace cv = ::v8::convert;
-
-#if !defined(_WIN32)
-#  include <unistd.h> /* only for sleep() */
-#  define do_sleep ::sleep
-#else
-#  include <windows.h> /* only for Sleep() */
-#  define do_sleep(N) ::Sleep((N)*1000)
-#endif
 
 #if defined(INCLUDE_SHELL_BINDINGS)
 #  include INCLUDE_SHELL_BINDINGS
@@ -107,16 +95,6 @@ static int v8_main(int argc, char const * const * argv)
     {
         CERR << "A non-std::exception native exception was thrown! Srsly.\n";
         return 4;
-    }
-    if(0)
-    {
-        CERR << "Trying to force GC... This will likely take 5-10 seconds...\n";
-        while( !v8::V8::IdleNotification() )
-        {
-            CERR << "sleeping briefly before trying again...\n";
-            do_sleep(1);
-        }
-        CERR << "v8 says GC is done.\n";
     }
     return 0;
 }
