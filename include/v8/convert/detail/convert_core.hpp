@@ -26,8 +26,9 @@
 /* long long in C++ requires C++0x or compiler extensions. */
 #  define V8_CONVERT_HAS_LONG_LONG 0
 #endif
-#include "TypeList.hpp"
+
 #include "signature_core.hpp" /* only needed for the Signature used by the generated code. */
+#include "tmp.hpp"
 
 namespace v8 { namespace convert {
 
@@ -1847,7 +1848,7 @@ namespace v8 { namespace convert {
            several a bound native constructors, depending on on the
            argument count.
         
-           List MUST be a tmp::TypeList< ... > containing ONLY
+           List MUST be a Signature< ... > containing ONLY
            CtorFowarder types (or compatible).
         */
         template <typename T,typename List>

@@ -1051,7 +1051,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 #if 0
     typedef cv::InCaOverloader<2, Read2::Call, cv::InCaOverloader<1,Read1::Call>::Call > OloadRead;
 #else
-    typedef cv::InCaOverloadList< tmp::TypeList<Read2, Read1> > OloadRead;
+    typedef cv::InCaOverloadList< Signature<void (Read2, Read1)> > OloadRead;
 #endif
     cc.Set("read", OloadRead::Call);
 
@@ -1060,7 +1060,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 #if 0
     typedef cv::InCaOverloader<1, Listen1::Call, cv::InCaOverloader<0,Listen0::Call>::Call > OloadListen;
 #else
-    typedef cv::InCaOverloadList< tmp::TypeList<Listen0, Listen1> > OloadListen;
+    typedef cv::InCaOverloadList< Signature<void (Listen0, Listen1)> > OloadListen;
 #endif
 
     cc.Set("listen", OloadListen::Call);

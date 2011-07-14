@@ -13,6 +13,9 @@ namespace v8 { namespace convert {
 */
 namespace tmp {
 
+    struct NilType {};
+    typedef NilType nil;
+    
 
     /**
        An utmost most-basic compile-time assertion template.
@@ -78,6 +81,12 @@ namespace tmp {
     struct IsConst<T const &> : IsConst<T const> {};
     template <typename T>
     struct IsConst<T const *> : IsConst<T const> {};
+
+
+    template <typename T>
+    struct IsNil : SameType<T,NilType> {};
+
+
 
 }}} // namespaces
 #endif // CODE_GOOGLE_COM_P_V8_CONVERT_TMP_HPP_INCLUDED

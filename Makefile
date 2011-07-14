@@ -73,25 +73,6 @@ demo.o: $(sig_gen_h)
 
 all: $(demo.BIN)
 
-
-########################################################################
-# Defines a target for creating TypeList_$(1).hpp
-TYPELIST_GENR := $(TOP_SRCDIR_REL)/maketypelist.pl
-define GEN_TYPELIST
-# $1 = count
-$(INCDIR_DETAIL)/TypeList_$(1).hpp: $(MAKEFILE_DEPS_LIST)
-	@echo "Creating $$@"; \
-		echo "#if !defined(DOXYGEN)" > $$@; \
-		perl $$(TYPELIST_GENR) $(1) >> $$@ || exit $$$$?; \
-		echo "#endif // if !defined(DOXYGEN)" >> $$@;
-gen: $(INCDIR_DETAIL)/TypeList_$(1).hpp
-endef
-
-$(eval $(call GEN_TYPELIST,05))
-$(eval $(call GEN_TYPELIST,10))
-$(eval $(call GEN_TYPELIST,15))
-
-
 ########################################################################
 # shell app...
 SHELL.DIR := addons/shell-skel

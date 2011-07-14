@@ -196,6 +196,20 @@ namespace sl {
     */
     template <typename SigT>
     struct IsInCaLike : tmp::BoolVal< -1 == Arity<SigT>::Value > {};
+
+    
+}
+
+namespace tmp {
+    /**
+       A metatemplate who's Type member resolves to IF if Cond is
+       true, or ELSE if Cond is false. Its Value member evaluates
+       to 1 or 0, accordingly.
+    */
+    template <bool Cond, typename IF, typename ELSE>
+    struct IfElse : sl::At< Cond ? 0 : 1, Signature<void (IF,ELSE)> >
+    {
+    };
 }
 
 //! Highly arguably specialization.

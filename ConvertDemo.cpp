@@ -141,10 +141,9 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     
     // Group the rules into a PredicatedInCaOverloader "container".
     typedef PredicatedInCaOverloader<
-    tmp::TypeList<
-    //Signature<void( // also works
+    Signature<void( // also works
         PredIsaFunction, PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
-    //)
+    )
     > > ByTypeOverloads;
     
     // Create a parent rule which only checks ByTypeOverloads if called
@@ -163,8 +162,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     // Now create the "top-most" callback, which performs the above-defined
     // dispatching at runtime:
     typedef PredicatedInCaOverloader<
-        //tmp::TypeList<
-        Signature<void( // also works
+        Signature<void(
             Group1, Group2, GroupN
         )
         > > AllOverloads;
@@ -267,20 +265,20 @@ namespace v8 { namespace convert {
                 return;
             }
 
-            typedef cv::tmp::TypeList<
+            typedef cv::Signature<void (
                 cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
                 cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
                 //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
                 cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>,
                 cv::MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
-            > OverloadList;
+            )> OverloadList;
             typedef cv::InCaOverloadList< OverloadList > OverloadInCas;
 
             if(1) // just an experiment
             {
                 typedef Signature<void (int,double)> AL2;
                 assert( 2 == sl::Arity<AL2>::Value );
-                assert( 2 == tmp::LengthOf<AL2>::Value );
+                assert( 2 == sl::Length<AL2>::Value );
                 assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
                 assert( (tmp::SameType< int, sl::At<0,AL2>::Type >::Value) );
                 assert( (tmp::SameType< double, sl::At<1,AL2>::Type >::Value) );
@@ -293,8 +291,8 @@ namespace v8 { namespace convert {
                 
                 typedef Signature< int (BoundNative::*)(char const *) const > BNPutsC;
                 typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
-                assert( 1 == tmp::LengthOf<BNPutsC>::Value );
-                assert( 1 == tmp::LengthOf<BNPuts>::Value );
+                assert( 1 == sl::Length<BNPutsC>::Value );
+                assert( 1 == sl::Length<BNPuts>::Value );
                 assert( 0 != (tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value) );
             }
 #define CATCHER cv::InCaCatcher_std
@@ -549,11 +547,11 @@ namespace { // testing ground for some compile-time assertions...
         //ASS<( (tmp::SameType< char const *, cv::sl::At<0,FacSig>::Type >) );
         //ASS<( (tmp::IsConst<cv::sl::At< 0, FacSig >::Type>::Value) )>();
 
-        typedef cv::tmp::TypeList< int, double, char const * > CanUnlock;
-        typedef cv::tmp::TypeList< int, v8::Handle<v8::Value>, double > CannotUnlock;
-        typedef cv::tmp::TypeList< v8::Handle<v8::Value>, double, int > CannotUnlock2;
-        ASS< 3 == cv::tmp::LengthOf< CannotUnlock >::Value >();
-        ASS< 3 == cv::tmp::LengthOf< CannotUnlock2 >::Value >();
+        typedef cv::Signature< void (int, double, char const *) > CanUnlock;
+        typedef cv::Signature< void (int, v8::Handle<v8::Value>, double) > CannotUnlock;
+        typedef cv::Signature< void (v8::Handle<v8::Value>, double, int) > CannotUnlock2;
+        ASS< 3 == cv::sl::Length< CannotUnlock >::Value >();
+        ASS< 3 == cv::sl::Length< CannotUnlock2 >::Value >();
         ASS< cv::IsUnlockable<void>::Value >();
         ASS< cv::IsUnlockable<double>::Value>();
         ASS< cv::IsUnlockable<int>::Value>();
@@ -586,12 +584,12 @@ namespace { // testing ground for some compile-time assertions...
         ASS< cv::InCaLikeMethod<BoundNative, int, &BoundNative::invoInt>::Arity < 0 >();
         ASS< cv::InCaLikeConstMethod<BoundNative, int, &BoundNative::invoIntConst>::Arity < 0 >();
         
-        typedef cv::tmp::TypeList<char, double, int> TList1;
-        ASS< (0 == cv::tmp::IndexOf<char, TList1>::Value) >();
-        ASS< (1 == cv::tmp::IndexOf<double, TList1>::Value) >();
-        ASS< (2 == cv::tmp::IndexOf<int, TList1>::Value) >();
-        ASS< (0 > cv::tmp::IndexOf<uint32_t, TList1>::Value) >();
-        ASS< (0 > cv::tmp::IndexOf<uint32_t, cv::tmp::TypeList<> >::Value) >();
+        typedef cv::Signature<void (char, double, int)> TList1;
+        ASS< (0 == cv::sl::Index<char, TList1>::Value) >();
+        ASS< (1 == cv::sl::Index<double, TList1>::Value) >();
+        ASS< (2 == cv::sl::Index<int, TList1>::Value) >();
+        ASS< (0 > cv::sl::Index<uint32_t, TList1>::Value) >();
+        ASS< (0 > cv::sl::Index<uint32_t, cv::Signature<void ()> >::Value) >();
 #undef SIU
 #undef ASS
     }
