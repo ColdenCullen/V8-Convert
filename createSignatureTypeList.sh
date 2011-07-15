@@ -22,9 +22,8 @@ template <typename RV>
 struct Signature< RV () >
 {
     typedef RV ReturnType;
-    enum { Arity = 0, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
-    //typedef RV (FunctionType)();
     typedef RV (*FunctionType)();
     typedef tmp::NilType Head;
     typedef Head Tail;
@@ -67,7 +66,7 @@ template <$tparam>
 struct Signature< RV (${targs}) >
 {
     typedef RV ReturnType;
-    enum { Arity = ${i}, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(${targs});
     typedef ${head} Head;

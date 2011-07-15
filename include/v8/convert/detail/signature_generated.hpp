@@ -5,9 +5,8 @@ template <typename RV>
 struct Signature< RV () >
 {
     typedef RV ReturnType;
-    enum { Arity = 0, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
-    //typedef RV (FunctionType)();
     typedef RV (*FunctionType)();
     typedef tmp::NilType Head;
     typedef Head Tail;
@@ -25,7 +24,7 @@ template <typename RV, typename A1>
 struct Signature< RV (A1) >
 {
     typedef RV ReturnType;
-    enum { Arity = 1, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1);
     typedef A1 Head;
@@ -63,7 +62,7 @@ template <typename RV, typename A1, typename A2>
 struct Signature< RV (A1, A2) >
 {
     typedef RV ReturnType;
-    enum { Arity = 2, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2);
     typedef A1 Head;
@@ -101,7 +100,7 @@ template <typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (A1, A2, A3) >
 {
     typedef RV ReturnType;
-    enum { Arity = 3, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3);
     typedef A1 Head;
@@ -139,7 +138,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (A1, A2, A3, A4) >
 {
     typedef RV ReturnType;
-    enum { Arity = 4, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4);
     typedef A1 Head;
@@ -177,7 +176,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5) >
 {
     typedef RV ReturnType;
-    enum { Arity = 5, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5);
     typedef A1 Head;
@@ -215,7 +214,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6) >
 {
     typedef RV ReturnType;
-    enum { Arity = 6, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6);
     typedef A1 Head;
@@ -253,7 +252,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7) >
 {
     typedef RV ReturnType;
-    enum { Arity = 7, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7);
     typedef A1 Head;
@@ -291,7 +290,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8) >
 {
     typedef RV ReturnType;
-    enum { Arity = 8, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8);
     typedef A1 Head;
@@ -329,7 +328,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) >
 {
     typedef RV ReturnType;
-    enum { Arity = 9, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     typedef A1 Head;
@@ -367,7 +366,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
 {
     typedef RV ReturnType;
-    enum { Arity = 10, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     typedef A1 Head;

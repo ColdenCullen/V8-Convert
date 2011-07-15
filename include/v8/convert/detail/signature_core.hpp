@@ -168,12 +168,10 @@ namespace sl {
     
     
     /**
-        A metatype whos Value member evaluates to the number of arguments
-        in the given typelist, but evaluates to -1 if the only argument
-        is (v8::Arguments const &).
-
-        Note that this calculates the length, as opposed to querying
-        SigT::Arity (which i would like to get rid of).
+        A metatype which calculates the number of arguments in the given
+        typelist, but evaluates to -1 if SigT's only argument is
+        (v8::Arguments const &), as such function signatures are considered
+        to be n-arity.
     */
     template <typename SigT>
     struct Arity
@@ -227,7 +225,7 @@ struct Signature<RV (v8::Arguments const &)>
 {
     typedef RV ReturnType;
     //typedef RV (Fingerprint)(v8::Arguments const &);
-    enum { Arity = -1, IsConst = 0 };
+    enum { IsConst = 0 };
     typedef void Context;
     typedef v8::Arguments const & Head;
     typedef Signature<RV ()> Tail;
