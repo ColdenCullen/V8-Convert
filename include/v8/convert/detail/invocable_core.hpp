@@ -2128,64 +2128,6 @@ struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8
 {
 };
 
-/**
-    Don't use this yet - it's an experiment.
-*/
-template <typename ArgPred, typename InCaT>
-struct PredicatedInCa : InCaT
-{
-    bool operator()( v8::Arguments const & argv ) const
-    {
-        return ArgPred()( argv );
-    }
-};
-
-/**
-    Don't use this yet - it's an experiment.
-*/
-template <typename TList>
-struct PredicatedInCaOverloader;
-
-#if !defined(DOXYGEN)
-namespace Detail
-{
-    template <typename ListType>
-    struct PredicatedInCaOverloader : Callable
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            typedef typename ListType::Head Head;
-            typedef typename ListType::Tail Tail;
-            if( Head()( argv ) )
-            {
-                return Head::Call( argv );
-            }
-            else
-            {
-                return PredicatedInCaOverloader<Tail>::Call(argv);
-            }
-        }
-    };
-    template <>
-    struct PredicatedInCaOverloader< tmp::NilType > : Callable
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            return cv::Toss(cv::StringBuffer()<<"No predicates in the "
-                            << "argument dispatcher matched the given "
-                            << "arguments (arg count="<<argv.Length()
-                            << ").");
-        }
-    };
-}
-#endif // DOXYGEN
-
-/**
-    Don't use this yet - it's an experiment.
-*/
-template <typename TList>
-struct PredicatedInCaOverloader : Detail::PredicatedInCaOverloader<TList>
-{};
 
 /**
     This class acts as a proxy for another InCa-compatible class,

@@ -71,7 +71,7 @@ namespace v8 { namespace convert {
 ValueHandle bogo_callback_arityN( v8::Arguments const & argv )
 {
     CERR << "Arg count="<<argv.Length()<<'\n';
-    return v8::Integer::New(42);
+    return v8::Integer::New(argv.Length());
 }
 int bogo_callback2( v8::Arguments const & argv );
 
@@ -119,10 +119,37 @@ int bogo_callback2( v8::Arguments const & argv )
     return 1;
 }
 
+char const * bogo_callback_fsf( v8::Handle<v8::Function> const & f1,
+                                    char const * str,
+                                    v8::Handle<v8::Function> const & f2 )
+{
+    CERR << "(Function, cstring, Function) overload.\n";
+    assert( ! f1.IsEmpty() );
+    assert( ! f2.IsEmpty() );
+    f1->Call( f1, 0, NULL );
+    CERR << str << '\n';
+    f2->Call( f2, 0, NULL );
+    return str;
+}
+
+v8::Handle<v8::Value> bogo_callback_fvf( v8::Handle<v8::Function> const & f1,
+                                    v8::Handle<v8::Value> const &v,
+                                    v8::Handle<v8::Function> const & f2 )
+{
+    CERR << "(Function, Value, Function) overload.\n";
+    assert( ! f1.IsEmpty() );
+    assert( ! v.IsEmpty() );
+    assert( ! f2.IsEmpty() );
+    f1->Call( f1, 0, NULL );
+    CERR << cv::JSToStdString(v) << '\n';
+    f2->Call( f2, 0, NULL );
+    return v;
+}
 
 ValueHandle bogo_callback( v8::Arguments const & argv )
 {
-    //CERR << "bogo_callback(). Arg count="<<argv.Length()<<'\n';
+    CERR << "bogo_callback(). Arg count="<<argv.Length()
+          << ". Dispatching based on predicate rules...\n";
     using namespace v8::convert;
 
     /**
@@ -138,43 +165,70 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     typedef PredicatedInCa< ArgAt_IsFunction<0>,
             FunctionToInCa<v8::Handle<v8::Value>  (v8::Handle<v8::Function> const &), bogo_callback_function>
     > PredIsaFunction;
-    
+   
     // Group the rules into a PredicatedInCaOverloader "container".
-    typedef PredicatedInCaOverloader<
-    Signature<void( // also works
+    typedef PredicatedInCaOverloader< CVV8_TYPELIST((
+        // The order IS significant for overloads which can evaluate ambiguously,
+        // e.g. Int16/Int32/Double.
         PredIsaFunction, PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
-    )
-    > > ByTypeOverloads;
+    ))> ByTypeOverloads;
     
     // Create a parent rule which only checks ByTypeOverloads if called
     // with 1 argument:
-    typedef PredicatedInCa< ArgPred_Length<1>, ByTypeOverloads > Group1;
+    typedef PredicatedInCa< Argv_Length<1>, ByTypeOverloads > Group1;
     
     // Set up some other logic paths...
     
     // For 2 arguments:
-    typedef PredicatedInCa< ArgPred_Length<2>, InCaLikeFunc<int,bogo_callback2> > Group2;
+    typedef PredicatedInCa< Argv_Length<2>, InCaLikeFunc<int,bogo_callback2> > Group2;
     
-    // For 3+
-    typedef PredicatedInCa< ArgPred_Length<3,-1>, InCa<bogo_callback_arityN> > GroupN;
+    // For 0 or 3-5 args
+    typedef PredicatedInCa<
+        Argv_Or< Argv_Length<0>, Argv_Length<3,5> >,
+        InCa<bogo_callback_arityN>
+    > GroupN;
 
+    // Special case for the weird (function, cstring, function) overload...
+    typedef Argv_AndN< CVV8_TYPELIST((
+            Argv_Length<3>,
+            ArgAt_IsFunction<0>,
+            ArgAt_IsString<1>,
+            ArgAt_IsFunction<2>
+        ))> MatchesFunc_String_Func;
+    typedef PredicatedInCa< MatchesFunc_String_Func,
+            FunctionToInCa< char const * (
+                                v8::Handle<v8::Function> const &,
+                                char const *,
+                                v8::Handle<v8::Function> const &),
+                            bogo_callback_fsf
+                        >
+    > PredFSF;
+
+    // Special case for the weird (function, Value, function) overload...
+    typedef Argv_AndN< CVV8_TYPELIST((
+            Argv_Length<3>,
+            ArgAt_IsFunction<0>,
+            ArgAt_IsFunction<2>
+        ))> MatchesFunc_Value_Func;
+    typedef PredicatedInCa< MatchesFunc_Value_Func,
+            FunctionToInCa< v8::Handle<v8::Value> (
+                                v8::Handle<v8::Function> const &,
+                                v8::Handle<v8::Value> const &,
+                                v8::Handle<v8::Function> const & ),
+                            bogo_callback_fvf
+                        >
+    > PredFVF;
 
     // Now create the "top-most" callback, which performs the above-defined
     // dispatching at runtime:
-    typedef PredicatedInCaOverloader<
-        Signature<void(
-            Group1, Group2, GroupN
-        )
-        > > AllOverloads;
+    typedef PredicatedInCaOverloader< CVV8_TYPELIST((
+            PredFSF, PredFVF, Group1, Group2, GroupN
+        )) > AllOverloads;
 
-    // This is the part we've been working towards: getting an InvocationCallback
-    // function:
-    v8::InvocationCallback const cb = AllOverloads::Call;
-    
-    // How easy was that?
-    
-    // Now dispatch it, executing the logic defined above:
-    return cb(argv);
+    // All of the above work is done at compile-time. Now we can
+    // do what we've been working towards all along: dispatching
+    // the call based on the logic provided above:
+    return AllOverloads::Call(argv);
 }
 
 

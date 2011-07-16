@@ -74,7 +74,7 @@ namespace v8 { namespace convert {
         following is legal:
         
         @code
-        T * t = CastFromJS<T const *>( aV8Handle );
+        T const * t = CastFromJS<T const *>( aV8Handle );
         @endcode
         
         Specializations are used for most data types, but this
@@ -115,8 +115,8 @@ namespace v8 { namespace convert {
             Returns true only if h is not empty and h->IsUndefined(). Note
             that an empty handle evaluates to false in this context because
             Undefined is a legal value whereas an empty handle is not.
-            (Though Undefined might not be semantically legal in any given
-            use case.)            
+            (Though Undefined might not be _semantically_ legal in any given
+            use case, it is legal to dereference such a handle.)
         */
         inline bool operator()( v8::Handle<v8::Value> const & h ) const
         {
@@ -132,7 +132,7 @@ namespace v8 { namespace convert {
         
             Getter must be a pointer to one of the v8::Value::IsXXX()
             functions. This functor returns true if the passed-in handle is
-            not empty and it's IsXXX() function returns true.
+            not empty and its IsXXX() function returns true.
         */
         template <bool (v8::Value::*Getter)() const>
         struct ValIs_X : ValuePredicateConcept
@@ -146,8 +146,8 @@ namespace v8 { namespace convert {
         /**
             A ValuePredicateConcept impl which returns true only if 
             the given handle is-a number and the number is in the 
-            inclusive range std::numeric_limits<NumT>::min .. 
-            max().
+            inclusive range (std::numeric_limits<NumT>::min .. 
+            max()).
         */
         template <typename NumT>
         struct ValIs_NumberStrictRange : ValuePredicateConcept
@@ -166,7 +166,7 @@ namespace v8 { namespace convert {
         };
         /** Special-case specialization which returns true if the given
             handle is-a Number (without checking the range, which is 
-            not necessary for this specific type in this context.
+            not necessary for this specific type in this context).
         */
         template <>
         struct ValIs_NumberStrictRange<double>
@@ -224,11 +224,11 @@ namespace v8 { namespace convert {
     template <typename T> struct ValIs< v8::Persistent<T> > : ValIs< T > {};
 
     /**
-        Marker class, for documentation purposes.
+        Marker class, mainly for documentation purposes.
         
         Classes matching this concept "evaluate" a v8::Arguments 
         object for validity without actually performing any 
-        "application logic." These are inended to be used as 
+        "application logic." These are intended to be used as 
         functors, primarily triggered via code paths selected by 
         template metaprograms.
         
@@ -257,9 +257,12 @@ namespace v8 { namespace convert {
         (Min==Max) to mean only that many arguments.
     */
     template <int Min_, int Max_ = Min_>
-    struct ArgPred_Length : ArgumentsPredicateConcept
+    struct Argv_Length : ArgumentsPredicateConcept
     {
+    private:
+        typedef char AssertMinIsPositive[ (Min_>=0) ? 1 : -1 ];
         enum { Min = Min_, Max = Max_ };
+    public:
         /**
             Returns true if av meets the argument count
             requirements defined by the Min and Max
@@ -378,76 +381,250 @@ namespace v8 { namespace convert {
     struct ArgAt_IsTrue : Detail::ArgAt_IsX<Index, &v8::Value::IsTrue> {};
 
 
+    /**
+        ArgumentsPredicateConcept functor which always returns true.
 
-#if 0 // i don't think i like this stuff...
-    template <typename T>
-    struct ValCanBe : ValuePredicateConcept
+        This currently has only one obscure use: as the predicate given to a
+        PredicatedInCa in conjunction with an N-arity callback, used as a
+        catch-all fallback as the last item in a list of PredicatedInCas
+        passed to PredicatedInCaOverloader. (Got that?)
+    */
+    struct Argv_True : ArgumentsPredicateConcept
     {
-        inline bool operator()( v8::Handle<v8::Value> const & v ) const
+        /**
+            Always returns true.
+        */
+        bool operator()( v8::Arguments const & ) const
         {
-            return NULL != CastFromJS<T const *>(v);
+            return true;
         }
     };
-    template <>
-    struct ValCanBe<void>
+
+    /**
+        An ArgumentsPredicateConcept implementation which takes
+        two ArgumentsPredicate functors as template parameters
+        and combines them using an AND operation.
+
+        See Argv_AndN if you just want to combine more than two functors.
+        (Argv_AndN can also be used for two functors but is more verbose
+        than this form for that case.)
+    */
+    template <typename ArgPred1, typename ArgPred2>
+    struct Argv_And : ArgumentsPredicateConcept
     {
-        inline bool operator()( v8::Handle<v8::Value> const & v ) const
+        /**
+            Returns true only if ArgPred1()(args) and
+            ArgPred2()(args) both return true.
+        */
+        bool operator()( v8::Arguments const & args ) const
         {
-            return v.IsEmpty() || v->IsUndefined();
+            return ArgPred1()( args ) && ArgPred2()( args );
         }
     };
-    
-    template <typename T>
-    struct ValCanBe_AnyNonEmpty
+
+    /**
+        The "or" equivalent of Argv_And.
+
+        Use Argv_OrN for chaining more than two predicates.
+    */
+    template <typename ArgPred1, typename ArgPred2>
+    struct Argv_Or : ArgumentsPredicateConcept
     {
-        typedef T Type;
-        inline bool operator()( v8::Handle<v8::Value> const & h ) const
+        /**
+            Returns true only if one of ArgPred1()(args) or
+            ArgPred2()(args) return true.
+        */
+        bool operator()( v8::Arguments const & args ) const
         {
-            return !h.IsEmpty();
+            return ArgPred1()( args ) || ArgPred2()( args );
         }
     };
-    
-#if 0
-    struct ValCanBe_Number
+
+    /**
+        This ArgumentsPredicate implementation combines a list of
+        other ArgumentsPredicates using an AND operation on the combined
+        results of each functor.
+
+        PredList must be a type-list containing ArgumentsPredicate types.
+        This functor is a predicate which performs an AND operation on all
+        of the predicates in the type list.
+
+        See Argv_And if you just want to combine two functors
+        (it is more succinct for that case).
+
+        Example:
+
+        @code
+        // Predicate matching (function, ANYTHING, function) signature:
+        typedef Argv_AndN< Signature<void (
+            Argv_Length<3>,
+            ArgAt_IsFunction<0>,
+            ArgAt_IsFunction<2>
+        )> > PredFuncXFunc;
+        @endcode
+    */
+    template <typename PredList>
+    struct Argv_AndN : ArgumentsPredicateConcept
     {
-        inline bool operator()( v8::Handle<v8::Value> const & h ) const
+        /**
+            Returns true only if all predicates in PredList
+            return true when passed the args object.
+        */
+        bool operator()( v8::Arguments const & args ) const
         {
-            return ( h.IsEmpty() )
-                ? false
-                : h->IsNumber();
+            typedef typename PredList::Head P1;
+            typedef typename PredList::Tail Tail;
+            typedef Argv_AndN<Tail> P2;
+            return P1()( args ) && P2()(args);
         }
     };
-#endif
 
-    template <typename NumT>
-    struct ValCanBe_NumberStrictRange : ValIs_NumberStrictRange<NumT> {};
+    //! End-of-list specialization.
+    template <>
+    struct Argv_AndN<tmp::nil> : Argv_True {};
 
-    template <>
-    struct ValCanBe<bool> : ValCanBe_AnyNonEmpty<bool> {};
-    template <>
-    struct ValCanBe<int8_t> : ValCanBe_NumberStrictRange<int8_t> {};
-    template <>
-    struct ValCanBe<uint8_t> : ValCanBe_NumberStrictRange<uint8_t> {};
-    template <>
-    struct ValCanBe<int16_t> : ValCanBe_NumberStrictRange<int16_t> {};
-    template <>
-    struct ValCanBe<uint16_t> : ValCanBe_NumberStrictRange<uint16_t> {};
-    template <>
-    struct ValCanBe<int32_t> : ValCanBe_NumberStrictRange<int32_t> {};
-    template <>
-    struct ValCanBe<uint32_t> : ValCanBe_NumberStrictRange<uint32_t> {};
-    template <>
-    struct ValCanBe<int64_t> : ValCanBe_NumberStrictRange<int64_t> {};
-    template <>
-    struct ValCanBe<uint64_t> : ValCanBe_NumberStrictRange<uint64_t> {};
-    template <>
-    struct ValCanBe<double> : ValCanBe_NumberStrictRange<double> {};
-    template <>
-    struct ValCanBe<char const *> : ValCanBe_AnyNonEmpty<char const *> {};
-    template <>
-    struct ValCanBe<std::string> : ValCanBe_AnyNonEmpty<std::string> {};
+    /**
+        The "or" equivalent of Argv_AndN.
 
-#endif
+        When chaining only two predicates Argv_Or offers
+        a more succinct equivalent to this type.
+    */
+    template <typename PredList>
+    struct Argv_OrN : ArgumentsPredicateConcept
+    {
+        /**
+            Returns true only if one of the predicates in PredList
+            returns true when passed the args object.
+        */
+        bool operator()( v8::Arguments const & args ) const
+        {
+            typedef typename PredList::Head P1;
+            typedef typename PredList::Tail Tail;
+            typedef Argv_OrN<Tail> P2;
+            return P1()( args ) || P2()(args);
+        }
+    };
+
+    //! End-of-list specialization.
+    template <>
+    struct Argv_OrN<tmp::NilType> : ArgumentsPredicateConcept
+    {
+        /**
+            Always returns false.
+        */
+        bool operator()( v8::Arguments const & ) const
+        {
+            return false;
+        }
+    };
+
+
+    /**
+        PredicatedInCa combines an ArgumentsPredicateConcept functor
+        (ArgPred) with an InCa type, such that we can create lists
+        of functor/callback pairs for use in dispatching callbacks
+        based on the results of ArgumentPredicates.
+
+        InCaT must implement the Callable interface.
+
+        This type is primarily intended to be used together with
+        PredicatedInCaOverloader.
+
+        Reminder to self: this class is only in arguments.hpp, as opposed to
+        invocable_core.hpp, because i want (for pedantic
+        documentation-related reasons) this class to inherit
+        ArgumentsPredicateConcept, which invocable*.hpp does not know about.
+        We might want to move ArgumentsPredicateConcept and
+        ValuePredicateConcept into convert_core.hpp and move this class back
+        into invocable_core.hpp.
+    */
+    template <typename ArgPred, typename InCaT>
+    struct PredicatedInCa : Callable, ArgumentsPredicateConcept
+    {
+        /** Returns ArgPred()(argv). */
+        bool operator()( v8::Arguments const & argv ) const
+        {
+            return ArgPred()( argv );
+        }
+        /** Returns InCaT::Call(argv). */
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            return InCaT::Call(argv);
+        }
+    };
+
+    /**
+        This class creates an InvocationCallback which dispatches to one of an
+        arbitrarily large set of other InvocationCallbacks, as determined by
+        predicate rules.
+
+        PredList must be a type-list (e.g. Signature) of PredicatedInCa
+        implementations. See Call() for more details.
+
+        Basic example:
+
+        @code
+        // Overloads for 1-3 arguments:
+        typedef PredicatedInCa< Argv_Length<1>, ToInCa<...> > Cb1;
+        typedef PredicatedInCa< Argv_Length<2>, ToInCa<...> > Cb2;
+        typedef PredicatedInCa< Argv_Length<3>, ToInCa<...> > Cb3;
+        // Fallback impl for 0 or 4+ args:
+        typedef PredicatedInCa< Argv_True, InCa<my_invocation_callback> > CbN;
+        // Side note: this ^^^^^^^^^^^^^^ is the only known use for the
+        // Argv_True predicate.
+
+        // Combine them into one InvocationCallback:
+        typedef PredicatedInCaOverloader< CVV8_TYPELIST((
+            Cb1, Cb2, Cb3, CbN
+            // Note that "N-arity" callbacks MUST come last in the list
+            // because they will always match any arity count and therefore
+            // trump any overloads which follow them.
+        ))> AllOverloads;
+        v8::InvocationCallback cb = AllOverloads::Call;
+        @endcode
+    */
+    template <typename PredList>
+    struct PredicatedInCaOverloader : Callable
+    {
+        /**
+            For each PredicatedInCa (P) in PredList, if P()(argv)
+            returns true then P::Call(argv) is returned, else the next
+            predicate in the list is tried.
+
+            If no predicates match then a JS-side exception will be triggered.
+        */
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            typedef typename PredList::Head Head;
+            typedef typename PredList::Tail Tail;
+            if( Head()( argv ) )
+            {
+                return Head::Call( argv );
+            }
+            else
+            {
+                return PredicatedInCaOverloader<Tail>::Call(argv);
+            }
+        }
+    };
+
+    //! End-of-list specialization.
+    template <>
+    struct PredicatedInCaOverloader< tmp::NilType > : Callable
+    {
+        /**
+            Triggers a JS-side exception explaining (in English text) that no
+            overloads could be matched to the given arguments.
+        */
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            return Toss(StringBuffer()<<"No predicates in the "
+                        << "argument dispatcher matched the given "
+                        << "arguments (arg count="<<argv.Length()
+                        << ").");
+        }
+    };
+
 } }
 
 #endif

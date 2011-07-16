@@ -170,6 +170,9 @@ function testPredicateOverloads()
     print("Testing out the experimental predicate-based overloading...");
     var b = new BoundSubNative();
     try {
+        var rc;
+        rc = b.bogo();
+        asserteq( 0, rc );
         b.bogo(1 << 8);
         b.bogo(1 << 17);
         b.bogo((1<<31) * (1 << 10));
@@ -182,6 +185,22 @@ function testPredicateOverloads()
             // from here we will crash with endless recursion.
             print("JS-side callback function.");
         });
+        var msg;
+        msg = {a:1};
+        rc = b.bogo( function(){print("FVF: argv[0]()");},
+                     msg,
+                     function(){print("FVF: argv[2]()");});
+        asserteq( 'object', typeof rc );
+        asserteq(msg,rc);
+
+        msg = "(char const *)";
+        rc = b.bogo( function(){print("FSF: argv[0]()");},
+                     msg,
+                     function(){print("FSF: argv[2]()");});
+        asserteq( 'string', typeof rc );
+        asserteq(msg, rc );
+
+        assertThrows( function() { b.bogo(1,2,3,4,5,6); } );
     }
     finally { b.destroy(); }
 }
@@ -211,7 +230,7 @@ if(0) {
 test1();
 test2();
 test3();
-if( ('sleep' in BoundNative) && ('function' === typeof BoundNative.sleep) ) {
+if( 0 && ('sleep' in BoundNative) && ('function' === typeof BoundNative.sleep) ) {
     test4();
     testUnlockedFunctions();
 }
