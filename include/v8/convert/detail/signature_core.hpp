@@ -102,6 +102,20 @@ function/method signatures as full-fleged types.
 */
 template <typename Sig> struct Signature;
 
+/**
+    CVV8_TYPELIST is a (slightly) convenience form of
+    Signature for creating typelists where we do not care about the
+    "return type" part of the list.
+
+    It is used like this:
+
+    @code
+    typedef CVV8_TYPELIST(( int, double, char )) MyList;
+    @endcode
+
+    NOTE the doubled parenthesis!
+*/
+#define CVV8_TYPELIST(X) ::v8::convert::Signature< void X >
 
 /**
     The sl namespace exclusively holds template metafunctions for working
