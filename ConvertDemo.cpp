@@ -319,14 +319,14 @@ namespace v8 { namespace convert {
                 return;
             }
 
-            typedef cv::Signature<void (
+            typedef CVV8_TYPELIST((
                 cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
                 cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
                 //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
                 cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>,
                 cv::MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
-            )> OverloadList;
-            typedef cv::InCaOverloadList< OverloadList > OverloadInCas;
+            )) OverloadList;
+            typedef cv::ArityDispatchList< OverloadList > OverloadInCas;
 
             if(1) // just an experiment
             {

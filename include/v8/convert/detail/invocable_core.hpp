@@ -1593,20 +1593,25 @@ namespace Detail {
 
 /**
    A utility template to assist in the creation of InvocationCallbacks
-   overloadable based on the number of arguments passed to them at
-   runtime.
+   overloadable based on the number of arguments passed to them at runtime.
 
    See Call() for more details.
    
    Using this class almost always requires more code than
-   doing the equivalent with InCaOverload. The exception to that
+   doing the equivalent with ArityDispatch. The exception to that
    guideline is when we have only two overloads.
+
+   Note that the Fallback parameter has a default value, and that that
+   default value will cause a JS-side exception to be triggered if ICB is
+   called without Arity arguments. Binding a single function as an
+   "overload" this way is a simple way to ensure that the function can only
+   be called with the specified number of arguments.   
 */
 template < int Arity,
            v8::InvocationCallback ICB,
            v8::InvocationCallback Fallback = Detail::TossArgCountError<Arity>
 >
-struct InCaOverloader : Callable
+struct ArityDispatch : Callable
 {
     /**
        When called, if (Artity==-1) or if (Arity==args.Length()) then
@@ -1729,11 +1734,11 @@ struct InCaCatcher : Callable
         }
         catch( ExceptionT const & e2 )
         {
-            return Toss(CastToJS((e2.*Getter)())->ToString());
+            return Toss(CastToJS((e2.*Getter)()));
         }
         catch( ExceptionT const * e2 )
         {
-            return Toss(CastToJS((e2->*Getter)())->ToString());
+            return Toss(CastToJS((e2->*Getter)()));
         }
         catch(...)
         {
@@ -1791,83 +1796,6 @@ struct InCaCatcher_std :
 {};
 
 
-#if !defined(DOXYGEN)
-namespace Detail
-{
-    namespace cv = v8::convert;
-    namespace tmp = cv::tmp;
-    template <typename FWD>
-    struct ArityOverloaderOne : Callable
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            enum { Arity = sl::Arity< FWD >::Value };
-            if( (Arity<0) || (Arity == argv.Length()) )
-            {
-                return FWD::Call( argv );
-            }
-            else
-            {
-                cv::StringBuffer msg;
-                msg << "ArityOverloaderOne<>::Call(): "
-                    //<< argv.Callee()->GetName()
-                    << "called with "<<argv.Length()<<" arguments, "
-                    << "but requires "<<(int)Arity<<"!\n";
-                return v8::ThrowException(msg.toError());
-            }
-        }
-    };
-    /**
-       Internal dispatch end-of-list routine.
-    */
-    template <>
-    struct ArityOverloaderOne<tmp::NilType> : private Callable
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            return v8::ThrowException(v8::Exception::Error(v8::String::New("ArityOverloaderOne<> end-of-list specialization should not have been called!")));
-        }
-    };
-    /**
-       FwdList must be-a TypeList of classes with Call() and Arity members.
-    */
-    template <typename List>
-    struct ArityOverloaderList : Callable
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            typedef typename List::Head FWD;
-            typedef typename List::Tail Tail;
-            enum { Arity = sl::Arity< FWD >::Value };
-            if( (Arity == argv.Length()) || (Arity<0) )
-            {
-                return ArityOverloaderOne< FWD >::Call( argv );
-            }
-            {
-                return ArityOverloaderList< Tail >::Call(argv);
-            }
-            return v8::Undefined(); // can't get this far.
-        }
-    };
-
-    /**
-       End-of-list specialization.
-    */
-    template <>
-    struct ArityOverloaderList<tmp::NilType> : Callable
-    {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            cv::StringBuffer msg;
-            msg << "ArityOverloaderList<>::Call() there is no overload "
-                //<< argv.Callee()->GetName() // name is normally empty
-                << "taking "<<argv.Length()<<" arguments!\n";
-            return v8::ThrowException( msg.toError() );
-        }
-    };       
-} // namespace Detail
-#endif // DOXYGEN
-
 /**
    A helper class which allows us to dispatch to multiple
    overloaded native functions from JS, depending on the argument
@@ -1890,21 +1818,20 @@ namespace Detail
    
    @code
    // Overload 3 variants of a member function:
-   namespace cv = v8::convert;
-   typedef cv::Signature< void (
-            cv::MethodToInCa<BoundNative, void (), &BoundNative::overload0>,
-            cv::MethodToInCa<BoundNative, void (int), &BoundNative::overload1>,
-            cv::MethodToInCa<BoundNative, void (int,int), &BoundNative::overload2>
+   typedef Signature< void (
+            MethodToInCa<BoundNative, void (), &BoundNative::overload0>,
+            MethodToInCa<BoundNative, void (int), &BoundNative::overload1>,
+            MethodToInCa<BoundNative, void (int,int), &BoundNative::overload2>
         )> OverloadList;
-   typedef cv::InCaOverloadList< OverloadList > MyOverloads;
+   typedef ArityDispatchList< OverloadList > MyOverloads;
    v8::InvocationCallback cb = MyOverloads::Call;     
    @endcode
 
    Note that only one line of that code is evaluated at runtime - the rest
    is all done at compile-time.
 */
-template < typename FwdList >
-struct InCaOverloadList : Callable
+template <typename List>
+struct ArityDispatchList : Callable
 {
     /**
        Tries to dispatch argv to one of the bound functions defined
@@ -1915,10 +1842,35 @@ struct InCaOverloadList : Callable
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
-        typedef Detail::ArityOverloaderList<FwdList> X;
-        return X::Call( argv );
+        typedef typename List::Head FWD;
+        typedef typename List::Tail Tail;
+        enum { Arity = sl::Arity< FWD >::Value };
+        if( (Arity == argv.Length()) || (Arity<0) )
+        {
+            return FWD::Call( argv );
+        }
+        {
+            return ArityDispatchList< Tail >::Call(argv);
+        }
+        return v8::Undefined(); // can't get this far.
     }
 };
+
+/**
+   End-of-list specialization.
+*/
+template <>
+struct ArityDispatchList<tmp::NilType> : Callable
+{
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        StringBuffer msg;
+        msg << "ArityDispatchList<>::Call() there is no overload "
+            << "taking "<<argv.Length()<<" arguments!\n";
+        return v8::ThrowException( msg.toError() );
+    }
+};    
+
 
 #include "invocable_generated.hpp"
 
