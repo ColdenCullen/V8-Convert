@@ -97,7 +97,6 @@ template <typename T, $tparam>
 struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs}) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 EOF
     #echo $tparam

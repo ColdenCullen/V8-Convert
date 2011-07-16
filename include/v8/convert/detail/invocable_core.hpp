@@ -327,23 +327,46 @@ public:
     StringBuffer const & Buffer() const { return msg; }
 };
 
+   
+/**
+    This special-case convenience form of Toss() triggers a JS-side
+    exception containing an English-language message explaining that
+    CastFromJS<T>() failed, i.e. the native 'this' pointer for a bound
+    native T object could not be found. It uses TypeName<T>::Value as the
+    class' name.
+
+    This is primarily intended for use in two cases:
+
+    - Internally in the v8::convert binding mechanisms.
+
+    - In client code when binding non-member functions as JS-side methods of
+    native objects.
+
+    Returns the result of v8::ThrowException(...).
+
+    Example:
+
+    @code
+    v8::Handle<v8::Value> my_bound_func( v8::Arguments const & argv ) {
+        T * self = CastFromJS<T>( argv.This() );
+        if( ! self ) {
+            return TossMissingThis<T>();
+        }
+        ...
+    }
+    @endcode
+*/  
+template <typename T>
+v8::Handle<v8::Value> TossMissingThis()
+{
+    return Toss(StringBuffer()<<"CastFromJS<"<<TypeName<T>::Value<<">() returned NULL! Cannot find 'this' pointer!");
+}
 
 #if !defined(DOXYGEN)
 namespace Detail {
 /** Temporary internal macro. Undef'd at the end of this file. */
 #define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
             catch(...){ throw; } (void)0
-   
-    /**
-        Internal helper to create an exception when we require
-        a native (T*) pointer and don't find one. Returns the result
-        of v8::ThrowException(...).
-    */  
-    template <typename T>
-    v8::Handle<v8::Value> TossMissingThis()
-    {
-        return Toss(StringBuffer()<<"CastFromJS<"<<TypeName<T>::Value<<">() returned NULL! Cannot find 'this' pointer!");
-    }
 
     /**
         A MissingThisException type holding generic

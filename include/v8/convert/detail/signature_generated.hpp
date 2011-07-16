@@ -55,7 +55,6 @@ template <typename T, typename RV, typename A1>
 struct Signature< RV (T::*)(A1) const > : Signature<RV (A1) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 2 arg(s).
 template <typename RV, typename A1, typename A2>
@@ -93,7 +92,6 @@ template <typename T, typename RV, typename A1, typename A2>
 struct Signature< RV (T::*)(A1, A2) const > : Signature<RV (A1, A2) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 3 arg(s).
 template <typename RV, typename A1, typename A2, typename A3>
@@ -131,7 +129,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (T::*)(A1, A2, A3) const > : Signature<RV (A1, A2, A3) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 4 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4>
@@ -169,7 +166,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4) const > : Signature<RV (A1, A2, A3, A4) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 5 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5>
@@ -207,7 +203,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5) const > : Signature<RV (A1, A2, A3, A4, A5) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 6 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
@@ -245,7 +240,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) const > : Signature<RV (A1, A2, A3, A4, A5, A6) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 7 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
@@ -283,7 +277,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 8 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
@@ -321,7 +314,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 9 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
@@ -359,7 +351,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 //! Specialization for 10 arg(s).
 template <typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
@@ -397,7 +388,6 @@ template <typename T, typename RV, typename A1, typename A2, typename A3, typena
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const>
 {
     typedef T Context;
-    enum { IsConst = 1 };
 };
 template <typename RV,  typename A0 >
 struct FunctionSignature< RV ( A0) > : SignatureBase< RV ( A0) >

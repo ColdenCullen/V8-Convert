@@ -227,6 +227,12 @@ namespace v8 { namespace convert {
     class ClassCreator_Factory<MyType>
      : public ClassCreator_Factory_CtorArityDispatcher< MyType, MyType::Ctors >
     {};
+
+    // A JSToNative specialization which makes use of the plumbing
+    // installed by ClassCreator. This is required so that
+    // CastFromJS<MyType>() will work, as the JS/native binding process
+    // requires that we be able to convert (via CastFromJS()) a JS-side
+    // MyType object to a C++-side MyType object.
     template <>
     struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >
     {};
@@ -241,9 +247,14 @@ void bind_MyType( v8::Handle<v8::Object> dest )
 {
     typedef cv::ClassCreator<MyType> CC;
     CC & cc(CC::Instance());
+    if( cc.IsSealed() ) { // the binding was already initialized.
+        cc.AddClassTo( cv::TypeName<MyType>::Value, dest );
+        return;
+    }
+    // Else initialize the bindings...
     cc
         ("destroy", CC::DestroyObjectCallback)
-        .AddClassTo( "MyType", dest );
+        .AddClassTo( cv::TypeName<MyType>::Value, dest );
 }
 
 void test1(cv::Shell & shell)

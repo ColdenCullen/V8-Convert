@@ -647,7 +647,11 @@ namespace { // testing ground for some compile-time assertions...
         ASS< tmp::SameType< char, sl::At<2,BL4b>::Type >::Value >();
         ASS< tmp::SameType< v8::Arguments const &, v8::Arguments const & >::Value >();
         ASS< tmp::SameType< v8::Arguments const &, sl::At<3,BL4b>::Type >::Value >();
-        
+
+        ASS< Signature< int ( int, int ) const >::IsConst >();
+        ASS< ! Signature< int ( int, int ) >::IsConst >();
+        ASS< Signature< int (CtorFwdTest::*)( int, int ) const >::IsConst >();
+        ASS< ! Signature< int (CtorFwdTest::*)( int, int ) >::IsConst >();
         //ASS< tmp::SameType< SigList_At<SigList_Length<BL3>::Value,BL3>::Type, char >::Value >(); // must fail to compile
 #undef ASS
 #endif

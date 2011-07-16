@@ -1,6 +1,13 @@
 #if !defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
+
+#if !defined(_WIN32) && !defined(_WIN64)
+#  define V8_CONVERT_ENABLE_CONST_OVERLOADS 1
+#else
+#  define V8_CONVERT_ENABLE_CONST_OVERLOADS 0
+#endif
+
 namespace v8 { namespace convert {
 /** @file signature_core.hpp
 
@@ -259,7 +266,12 @@ struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arg
     
     e.g.
     
+    @code
     double (int, double)
+    int () const
+    int (T::*)(int) const
+    void (T::*)()
+    @endcode
 
     Since some refactoring on 20110624 we don't really
     need this class - we could use Signature directly.
@@ -273,6 +285,7 @@ struct SignatureBase : Signature<Sig>
     //enum { Arity = Signature<Sig>::Arity };
     //typedef Sig Signature;
     //typedef Sig FunctionType;
+    enum { IsConst = tmp::IsConst<Sig>::Value };
 };
 
 /** @class FunctionSignature
@@ -384,7 +397,7 @@ struct ConstMethodSignature< T, RV () > : SignatureBase< RV () >
 {
     typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (T::*FunctionType)() const;
-    enum { IsConst = 1 };
+    //enum { IsConst = 1 };
 };
 
 template <typename T, typename RV >
