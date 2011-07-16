@@ -210,7 +210,10 @@ struct MyType
         CERR << "MyType::~MyType() @ "<<this<<'\n';
     }
     
-    // Ctors we want to bind to v8 (there are several other ways to do this):
+    
+    // MyType constructors we want to bind to v8 (there are several other ways
+    // to do this): This does NOT need to be a member of this class: it can be
+    // defined anywhere which is convenient for the client.
     typedef cv::Signature<MyType (
         cv::CtorForwarder<MyType *()>,
         cv::CtorForwarder<MyType *(char const *)>,
@@ -218,11 +221,12 @@ struct MyType
         cv::CtorForwarder<MyType *( v8::Arguments const &)>
     )> Ctors;
 };
-
 //-----------------------------------
 // Policies used by cv::ClassCreator
 namespace v8 { namespace convert {
 
+    // The policy which tells ClassCreator how to instantiate and
+    // destroy native objects.
     template <>
     class ClassCreator_Factory<MyType>
      : public ClassCreator_Factory_CtorArityDispatcher< MyType, MyType::Ctors >
@@ -237,10 +241,13 @@ namespace v8 { namespace convert {
     struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >
     {};
     
-    // used in some error reporting:
+    // Optional: used mostly for error reporting purposes but can
+    // also be used to hold the class' JS-side name (which often differs
+    // from its native name).
     template <>
     char const * TypeName< MyType >::Value = "MyType";
 }}
+
 //-----------------------------------
 // Ultra-brief ClassCreator demo. See ConvertDemo.?pp for MUCH more.
 void bind_MyType( v8::Handle<v8::Object> dest )
