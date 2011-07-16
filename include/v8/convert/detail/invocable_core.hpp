@@ -1596,38 +1596,36 @@ namespace Detail {
    overloadable based on the number of arguments passed to them at runtime.
 
    See Call() for more details.
+
+   InCaT and Fallback must be Callable classes.
    
-   Using this class almost always requires more code than
-   doing the equivalent with ArityDispatch. The exception to that
-   guideline is when we have only two overloads.
+   Using this class almost always requires more code than doing the
+   equivalent with ArityDispatchList, the exception being when we have only
+   one or two overloads.
 
    Note that the Fallback parameter has a default value, and that that
-   default value will cause a JS-side exception to be triggered if ICB is
-   called without Arity arguments. Binding a single function as an
+   default value will cause a JS-side exception to be triggered if Call() is
+   called without exactly Arity arguments. Binding a single function this way
    "overload" this way is a simple way to ensure that the function can only
-   be called with the specified number of arguments.   
+   be called with the specified number of arguments.
 */
 template < int Arity,
-           v8::InvocationCallback ICB,
-           v8::InvocationCallback Fallback = Detail::TossArgCountError<Arity>
+           typename InCaT,
+           typename Fallback = InCa< Detail::TossArgCountError<Arity> >
 >
 struct ArityDispatch : Callable
 {
     /**
        When called, if (Artity==-1) or if (Arity==args.Length()) then
-       ICB(args) is returned, else Fallback(args) is returned.
-
-       The default Fallback implementation triggers a JS-side
-       exception when called, its error string indicating the argument
-       count mismatch.
+       InCaT::Call(args) is returned, else Fallback::Call(args) is returned.
 
        Implements the InvocationCallback interface.
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & args )
     {
         return ( (-1==Arity) || (Arity == args.Length()) )
-            ? ICB(args)
-            : Fallback(args);
+            ? InCaT::Call(args)
+            : Fallback::Call(args);
     }
 };
 
@@ -1719,13 +1717,18 @@ struct ArityDispatch : Callable
 template < typename ExceptionT,
            typename SigGetMsg,
            typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
-           // how to do something like this: ???
-           // template <class ET, class SGM> class SigT::FunctionType Getter,
            v8::InvocationCallback ICB,
            bool PropagateOtherExceptions = false
     >
 struct InCaCatcher : Callable
 {
+    /**
+        Returns ICB(args), converting any exceptions of type (ExceptionT
+        const &) or (ExceptionT const *) to JS exceptions. Other exception
+        types are handled as described in the class-level documentation.
+    
+        See the class-level docs for full details.
+    */
     static v8::Handle<v8::Value> Call( v8::Arguments const & args )
     {
         try

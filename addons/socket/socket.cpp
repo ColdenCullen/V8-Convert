@@ -1048,8 +1048,8 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
     typedef v8::Handle<v8::Value> ValH;
     typedef cv::MethodToInCa<N, ValH (unsigned int, bool), &N::read> Read2;
     typedef cv::MethodToInCa<N, ValH (unsigned int), &N::read> Read1;
-#if 0
-    typedef cv::InCaOverloader<2, Read2::Call, cv::InCaOverloader<1,Read1::Call>::Call > OloadRead;
+#if 1
+    typedef cv::ArityDispatch<2, Read2, cv::ArityDispatch<1,Read1> > OloadRead;
 #else
     typedef cv::ArityDispatchList< Signature<void (Read2, Read1)> > OloadRead;
 #endif
@@ -1057,8 +1057,8 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 
     typedef cv::MethodToInCa<N, int (), &N::listen, false> Listen0;
     typedef cv::MethodToInCa<N, int (int), &N::listen, false> Listen1;
-#if 0
-    typedef cv::ArityDispatch<1, Listen1::Call, cv::InCaOverloader<0,Listen0::Call>::Call > OloadListen;
+#if 1
+    typedef cv::ArityDispatch<1, Listen1, cv::ArityDispatch<0,Listen0> > OloadListen;
 #else
     typedef cv::ArityDispatchList< CVV8_TYPELIST((Listen0, Listen1)) > OloadListen;
 #endif
@@ -1067,7 +1067,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 
     typedef cv::MethodToInCa<N, int (unsigned int, unsigned int), &N::setTimeout > SetTimeout2;
     typedef cv::MethodToInCa<N, int (unsigned int), &N::setTimeoutSec > SetTimeout1;
-    typedef cv::ArityDispatch<2, SetTimeout2::Call, cv::ArityDispatch<1,SetTimeout1::Call>::Call > OloadSetTimeout;
+    typedef cv::ArityDispatch<2, SetTimeout2, cv::ArityDispatch<1,SetTimeout1> > OloadSetTimeout;
 #define F2I cv::FunctionToInvocationCallback
 #define M2I cv::MethodToInCa
 #define C2I cv::ConstMethodToInCa
@@ -1118,13 +1118,13 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 
     typedef cv::FunctionToInCa<ValH (char const *), &N::nameToAddress> N2A1;
     typedef cv::FunctionToInCa<ValH (char const *,int), &N::nameToAddress> N2A2;
-    typedef cv::ArityDispatch< 1, N2A1::Call, cv::ArityDispatch< 2, N2A2::Call >::Call > OloadN2A;
+    typedef cv::ArityDispatch< 1, N2A1, cv::ArityDispatch< 2, N2A2 > > OloadN2A;
     cb = OloadN2A::Call;
     F("nameToAddress");
 
     typedef cv::FunctionToInCa<ValH (char const *), &N::nameToAddress> A2N1;
     typedef cv::FunctionToInCa<ValH (char const *,int), &N::nameToAddress> A2N2;
-    typedef cv::ArityDispatch< 1, A2N1::Call, cv::ArityDispatch< 2, A2N2::Call >::Call > OloadA2N;
+    typedef cv::ArityDispatch< 1, A2N1, cv::ArityDispatch< 2, A2N2 > > OloadA2N;
     cb = OloadA2N::Call;
     F("addressToName");
 
