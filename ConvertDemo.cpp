@@ -166,8 +166,8 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
             FunctionToInCa<v8::Handle<v8::Value>  (v8::Handle<v8::Function> const &), bogo_callback_function>
     > PredIsaFunction;
 
-    // Group the rules into a PredicatedInCaOverloader "container".
-    typedef PredicatedInCaOverloader< CVV8_TYPELIST((
+    // Group the rules into a PredicatedInCaDispatcher "container".
+    typedef PredicatedInCaDispatcher< CVV8_TYPELIST((
         // The order IS significant for overloads which can evaluate ambiguously,
         // e.g. Int16/Int32/Double.
         PredIsaFunction, PredIsaArray, PredIsaObject, PredIsaInt16, PredIsaInt32, PredIsaDouble
@@ -221,7 +221,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 
     // Now create the "top-most" callback, which performs the above-defined
     // dispatching at runtime:
-    typedef PredicatedInCaOverloader< CVV8_TYPELIST((
+    typedef PredicatedInCaDispatcher< CVV8_TYPELIST((
             PredFSF, PredFVF, Group1, Group2, GroupN
         )) > AllOverloads;
 

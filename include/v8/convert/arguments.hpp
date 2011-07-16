@@ -387,7 +387,7 @@ namespace v8 { namespace convert {
         This currently has only one obscure use: as the predicate given to a
         PredicatedInCa in conjunction with an N-arity callback, used as a
         catch-all fallback as the last item in a list of PredicatedInCas
-        passed to PredicatedInCaOverloader. (Got that?)
+        passed to PredicatedInCaDispatcher. (Got that?)
     */
     struct Argv_True : ArgumentsPredicateConcept
     {
@@ -528,7 +528,7 @@ namespace v8 { namespace convert {
         InCaT must implement the Callable interface.
 
         This type is primarily intended to be used together with
-        PredicatedInCaOverloader.
+        PredicatedInCaDispatcher.
 
         Reminder to self: this class is only in arguments.hpp, as opposed to
         invocable_core.hpp, because i want (for pedantic
@@ -574,7 +574,7 @@ namespace v8 { namespace convert {
         // Argv_True predicate.
 
         // Combine them into one InvocationCallback:
-        typedef PredicatedInCaOverloader< CVV8_TYPELIST((
+        typedef PredicatedInCaDispatcher< CVV8_TYPELIST((
             Cb1, Cb2, Cb3, CbN
             // Note that "N-arity" callbacks MUST come last in the list
             // because they will always match any arity count and therefore
@@ -584,7 +584,7 @@ namespace v8 { namespace convert {
         @endcode
     */
     template <typename PredList>
-    struct PredicatedInCaOverloader : Callable
+    struct PredicatedInCaDispatcher : Callable
     {
         /**
             For each PredicatedInCa (P) in PredList, if P()(argv)
@@ -603,14 +603,14 @@ namespace v8 { namespace convert {
             }
             else
             {
-                return PredicatedInCaOverloader<Tail>::Call(argv);
+                return PredicatedInCaDispatcher<Tail>::Call(argv);
             }
         }
     };
 
     //! End-of-list specialization.
     template <>
-    struct PredicatedInCaOverloader< tmp::NilType > : Callable
+    struct PredicatedInCaDispatcher< tmp::NilType > : Callable
     {
         /**
             Triggers a JS-side exception explaining (in English text) that no
