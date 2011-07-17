@@ -41,7 +41,6 @@ using cv::JSByteArray;
 #define BA_JS_CLASS_NAME "ByteArray"
 
 namespace v8 { namespace convert {
-    template <>
     char const * TypeName<JSByteArray>::Value = "ByteArray";
 
     //! Internal impl of JSByteArray::gzipTo().

@@ -224,6 +224,14 @@ struct MyType
 //-----------------------------------
 // Policies used by cv::ClassCreator
 namespace v8 { namespace convert {
+    // Optional: used mostly for error reporting purposes but can
+    // also be used to hold the class' JS-side name (which often differs
+    // from its native name).
+    // If used, it should be declared (and optionally defined) before other
+    // ClassCreator policies.
+    template <>
+    char const * TypeName< MyType >::Value = "MyType";
+
 
     // The policy which tells ClassCreator how to instantiate and
     // destroy native objects.
@@ -241,11 +249,7 @@ namespace v8 { namespace convert {
     struct JSToNative< MyType > : JSToNative_ClassCreator< MyType >
     {};
     
-    // Optional: used mostly for error reporting purposes but can
-    // also be used to hold the class' JS-side name (which often differs
-    // from its native name).
-    template <>
-    char const * TypeName< MyType >::Value = "MyType";
+
 }}
 
 //-----------------------------------

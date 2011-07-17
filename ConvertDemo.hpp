@@ -277,19 +277,48 @@ struct BoundSubNative : public BoundNative
    to customize the ClassCreator bindings for a particular class.
 */
 namespace v8 { namespace convert {
-#if 1
+
+    //! Optional: used by some error reporting code.
+    template <>
+    struct TypeName< BoundNative >
+    {
+        static char const * Value;
+    };
+    //! Optional: used by some error reporting code.
+    template <>
+    struct TypeName< BoundSubNative >
+    {
+        static char const * Value;
+    };
+
+    /**
+        This is required by subclasses for certain constellations of internal
+        fields/type-safety options. It is always optional for base classes,
+        since the default implementation is reasonable for non-subclassing
+        cases.
+    */
+    template <>
+    struct ClassCreator_TypeID<BoundSubNative> : ClassCreator_TypeID<BoundNative>
+    {};
+
     /**
        Optional: customize internal field layout for the JS class.
 
        When subclassing bound types from other bound types, all must
        have the same layout (and possibly the same base internal type ID)
        or native object lookups won't work properly. To do this, wrapped
-       subclasses should implement their ClassCreator_InternalFields from the
+       subclasses should subclass their ClassCreator_InternalFields from the
        parent class' ClassCreator_InternalFields.
     */
     template <>
     struct ClassCreator_InternalFields<BoundNative>
-        : ClassCreator_InternalFields_Base<BoundNative,3,1,2>
+        // Use default settings for additional type-safety at runtime:
+        //: ClassCreator_InternalFields_Base<BoundNative>
+        // Add a number of interal fields for your own use, optionally
+        // moving the TypeID and native object fields:
+        : ClassCreator_InternalFields_Base<BoundNative,8/*# of fields*/,4/*TypeID field*/,7/*native object field*/>
+        // Use a negative 2nd value to disable the extra type-safety checking:
+        //: ClassCreator_InternalFields_Base<BoundNative,1,-1,0>
     {
     };
     /**
@@ -297,27 +326,22 @@ namespace v8 { namespace convert {
        ClassCreator_InternalFields<BoundNative>.
        
        The BoundSubNative bound type requires the same internal field layout
-       as its parent class, and we do that like this. If we never
-       customize the field layout for our type then even subclasses
-       can use the default implementation of this policy (i.e. they
-       need not explicitly specialize it).
+       as its parent class, and we do that by subclassing the parent class'
+       InternalFields policy. If we never customize the field layout for our
+       type then even subclasses can use the default implementation of this
+       policy (i.e. they need not explicitly specialize it).
     */
     template <>
     struct ClassCreator_InternalFields<BoundSubNative>
         : ClassCreator_InternalFields<BoundNative>
     {
     };
-#endif
 
     /**
       This policy class is required unless you just want to bind to 
       the default constructor. It creates native objects for the 
       underlying binding code.
-      
-      TODO: use ClassCreator_Factory_CtorArityDispatcher once i add the 
-      layer (or two?) of indirection i need to add NativeToJSMap support
-      at this level.      
-     */
+    */
     template <>
     class ClassCreator_Factory<BoundNative>
     {
@@ -335,6 +359,23 @@ namespace v8 { namespace convert {
         static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv );
         static void Delete( ReturnType obj );
     };
+
+    /**
+        Normally optional, but must be set to true if JS code should be
+        allowed to subclass the bound type. If subclassing will never
+        be used, you can potentially optimize out a few operations by
+        subclassing Opt_Bool<false> here.
+
+        Note that the default setting of this policy is true (search
+        prototypes).        
+    */
+    template <>
+    struct ClassCreator_SearchPrototypeForThis<BoundNative> : Opt_Bool<true>
+    {};
+    template <>
+    struct ClassCreator_SearchPrototypeForThis<BoundSubNative> : ClassCreator_SearchPrototypeForThis<BoundNative>
+    {};
+
     /**
        Optional: enable function calls to BoundNative() to work like a
        constructor call. Without this, calling BoundNative() without
@@ -343,6 +384,11 @@ namespace v8 { namespace convert {
     template <>
     struct ClassCreator_AllowCtorWithoutNew<BoundNative> : Opt_Bool<true>
     {};
+
+    /**
+        Unlike some other policies, the AllowCtorWithoutNew policy for
+        subclasses _may_ differ from their parent class.
+    */
     template <>
     struct ClassCreator_AllowCtorWithoutNew<BoundSubNative>
         : ClassCreator_AllowCtorWithoutNew<BoundNative>
@@ -352,11 +398,15 @@ namespace v8 { namespace convert {
        Required specialization so that the conversion API can derive
        the native 'this' object from v8::Arguments::This() and from
        function arguments of our bound type.
+
+       This implementation works by using the plumbing installed
+       by ClassCreator.
     */
     template <>
     struct JSToNative<BoundNative>
         : JSToNative_ClassCreator<BoundNative>
     {};
+
     /**
         Native-to-JS conversion. This conversion is only possible when
         we explicitly add support to the class-binding code to add
@@ -382,24 +432,17 @@ namespace v8 { namespace convert {
     struct JSToNative<BoundSubNative>
         : JSToNative_ClassCreator<BoundSubNative>
     {};
+
+    /**
+       Optional: Install native-to-js conversion for BoundSubNative. See
+       NativeToJSMap<BoundNative> for more details. If client C++ code will
+       not directly reference the subtype by name, but instead only uses the
+       base type(s), this specialization is not needed.
+    */
     template <>
     struct NativeToJS<BoundSubNative>
         :  NativeToJSMap<BoundSubNative>::NativeToJSImpl
     {};
 
-    //! Optional: used by some error reporting code.
-    template <>
-    struct TypeName< BoundNative >
-    {
-        static char const * Value;
-    };
-    //! Optional: used by some error reporting code.
-    template <>
-    struct TypeName< BoundSubNative >
-    {
-        static char const * Value;
-    };
 
-} }
-
-
+}}

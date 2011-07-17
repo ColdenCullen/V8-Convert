@@ -53,6 +53,7 @@ namespace {
 }
 namespace cv = v8::convert;
 namespace jspdo {
+
 #if 0
     /**
         Not yet used, but something to consider so that we can finalize any
@@ -77,14 +78,23 @@ namespace jspdo {
 }
 
 namespace v8 { namespace convert {
+    template <>
+    char const * TypeName<cpdo::driver>::Value = "JSPDO";
+    template <>
+    char const * TypeName<cpdo::statement>::Value = "Statement";
+
     // Various ClassCreator policy classes specialized for the native types
     // we are binding...
 
+#if 1
     template <>
     struct ClassCreator_InternalFields<cpdo::statement>
-        : ClassCreator_InternalFields_Base<cpdo::statement,2,0>
-    {
-    };
+        : ClassCreator_InternalFields_Base<cpdo::statement,1,-1,0>
+    {};
+#endif
+    template <>
+    struct ClassCreator_SearchPrototypeForThis<cpdo::statement> : Opt_Bool<false>
+    {};
 
     template <>
     class ClassCreator_Factory<cpdo::driver>
@@ -209,8 +219,8 @@ namespace v8 { namespace convert {
     private:
         static cpdo::driver const * getDriverForStmt( void const * self, v8::Handle<v8::Object> const & jsSelf )
         {
-            assert( 2 == jsSelf->InternalFieldCount() );
-            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(1) );
+            typedef ClassCreator_InternalFields<cpdo::statement> CCI;
+            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(CCI::NativeIndex) );
             cpdo::driver const * drv = cv::CastFromJS<cpdo::driver>( db );
             if( 0 && !drv )
             { // this happens when... not exactly sure...
@@ -264,10 +274,9 @@ namespace v8 { namespace convert {
         v8::Handle<v8::String> const & sql(argv[1]->ToString());
         v8::String::Utf8Value const u8v(sql);
         cpdo::statement * rc = drv->prepare( *u8v );
-        assert( jsSelf->InternalFieldCount() == 2 );
-        jsSelf->SetInternalField(1,jdrv);
+        typedef ClassCreator_InternalFields<cpdo::statement> CCI;
+        jsSelf->SetInternalField(CCI::NativeIndex,jdrv);
         jsSelf->Set(JSTR("sql"),sql);
-
         if( jspdo::IsDebugEnabled() )
         {
             CERR << "Created cpdo::statement@"<<(void const *)rc<<'\n';
@@ -500,7 +509,7 @@ static v8::Handle<v8::Value> Statement_get( cpdo::statement * st,
           v8::Handle<v8::Object> baObj( BAC::Instance().NewInstance( 0, NULL ) );
           if( baObj.IsEmpty() ) return v8::Undefined() /* assume exception is propagating. */;
           cv::JSByteArray * ba = cv::CastFromJS<cv::JSByteArray>(baObj);
-          assert( 0 != ba );
+          if( ! ba ) return cv::Toss("Allocation of ByteArray failed.");
           ba->append( blob, slen );
           return baObj;
       }

@@ -165,6 +165,11 @@ namespace v8 { namespace convert {
        chain. This can decrease the speed of JS-to-this operations and
        is necessary only if bound types will be subclassed (either from
        other bound native types or from JS classes).
+
+       The default value is true for the sake of usability. If JS-side
+       subclassing will never be used, you can potentially optimize out a
+       few lookup operations by creating the specialization by subclassing
+       Opt_Bool<false>.
     */
     template <typename T>
     struct ClassCreator_SearchPrototypeForThis : Opt_Bool<true>
@@ -173,20 +178,43 @@ namespace v8 { namespace convert {
     namespace Detail {
     
         template <typename T>
-        struct ClassCreator_TypeID_Unnamed
+        struct TypeID_Default
+        {
+            /* i'm getting link errors if set TheID=0 inline. */
+            static int const TheID;
+            static void const * Value;
+            
+        };
+        template <typename T>
+        int const TypeID_Default<T>::TheID = 0;
+        template <typename T>
+        void const * TypeID_Default<T>::Value = &TypeID_Default<T>::TheID /* Reminder: NULL leads to errors. */;
+#if 0
+        template <typename T>
+        struct TypeNameToTypeID
         {
             static void const * Value;
         };
         template <typename T>
-        void const * ClassCreator_TypeID_Unnamed<T>::Value = "Specialize ClassCreator_TypeID<T> to set the type's name/id.";
+        void const * TypeNameToTypeID<T>::Value = TypeName<T>::Value;
+#endif
     }
+
     /**
         A convenience base type for concrete ClassCreator_TypeID implementations.
+
+        The ID parameter is an opaque type ID value. Its value may legally
+        be the same non-NULL value for any and all types because the
+        framework uses the address of Value, as opposed Value's contents, for
+        comparison purposes.
+
+        The default ID value is unspecified and guaranteed to be unique to T.
     */
-    template <typename T, void const * & Name>
+    template <typename T, void const * & ID = Detail::TypeID_Default<T>::Value >
     struct ClassCreator_TypeID_Base
     {
         typedef T Type;
+        /** The ID template parameter. */
         static void const *Value;
     };
     template <typename T, void const * & Name>
@@ -199,22 +227,39 @@ namespace v8 { namespace convert {
         (type THAT 10 times fast) to provide a lightweight
         (but highly effective) type check when extracting
         natives from v8 (as void pointers). The default
-        implementation is fine for all cases i can think of,
-        i can concieve of one or two uses for specializations
-        (e.g. storing the JS-side name of the class as the type ID).
+        implementation is fine for all cases i can think of, but i can
+        concieve of one or two uses for specializations (e.g. storing the
+        JS-side name of the class as the type ID).
         
-        The type id must be unique per type. If multiple types share
-        the same type ID, the type-safety check can be bypassed,
-        _potentially_ leading to an illegal static_cast() and subsequent
-        mis-use of the pointer. i stress the word "potentially" because
-        to get that condition one would have to (A) abuse the object
-        via the C++ API (which doesn't happen via the binding process,
-        and you're probably also not going to do it) or (B) write some 
-        script code to confuse two bound native types about who is really
-        who when a particular member is called.
+        The type id must be unique per type except that subtypes may
+        (depending on various other binding options) may need use the same
+        value as the parent type. If multiple types share the same type ID,
+        the type-safety check can be bypassed, _potentially_ leading to an
+        illegal static_cast() and subsequent mis-use of the pointer. i
+        stress the word "potentially" because to get that condition one
+        would have to (A) abuse the object via the C++ API (which doesn't
+        happen via the binding process, and you're probably also not going
+        to do it) or (B) write some script code to confuse two bound native
+        types about who is really who when a particular member is called.
+
+        In the case of subclassed bound types, the
+        ClassCreator_TypeID<SubClass> impl should subclass
+        ClassCreator_TypeID<ParentClass>. Whether or not this is _required_
+        for proper functionality depends at least in part on whether
+        (ClassCreator_InternalFields<ParentType>::TypeIDIndex>=0). If it is
+        negative, subclasses do not need to explicitly define this policy
+        because the type ID won't be used for purposes of validating a JS-held
+        pointer's native type.
+
+        TODO: see if we can consolidate this type with TypeName<>. The problem
+        at the moment is that JSToNative_ObjectWithInternalFieldsTypeSafe
+        takes a (void const * &) and TypeName::Value is a (char const *), which
+        won't convert to (void const *) in the context of template parameters.
     */
     template <typename T>
-    struct ClassCreator_TypeID : ClassCreator_TypeID_Base<T, Detail::ClassCreator_TypeID_Unnamed<T>::Value>
+    struct ClassCreator_TypeID
+        : ClassCreator_TypeID_Base<T,
+                                   Detail::TypeID_Default<T>::Value>
     {
     };
 
@@ -228,17 +273,19 @@ namespace v8 { namespace convert {
        If any of the following conditions are met then
        a compile-time assertion is triggered:
 
-       - (HowMany<2)
-       
-       - TypeIndex or ObjectIndex are less than 0 or equal-greater HowMany.
-       
+       - (ObjectIndex<0)
+
+       - (ObjectIndex>=HowMany)
+
+       - (TypeIndex>=HowMany).
+
        - (TypeIndex == ObjectIndex)
-       
-       
-       FIXME: allow TypeIndex<0 to indicate that no TypeID field 
-       should be stored (and fix ClassCreator to not store the 
-       TypeID field in that case). In this case, HowMany==1 would be 
-       legal.       
+
+        TypeIndex may be negative, which indicates to ClassCreator that the
+        binding should not store type ID information. However, if it is
+        negative then T must not be used together with
+        JSToNative_ObjectWithInternalFieldsTypeSafe - doing so will trigger
+        a compile-time assertion.
     */
     template <typename T, int HowMany = 2, int TypeIndex = 0, int ObjectIndex = 1>
     struct ClassCreator_InternalFields_Base
@@ -267,12 +314,10 @@ namespace v8 { namespace convert {
         static const int TypeIDIndex = TypeIndex;
     private:
         typedef char AssertFields[
-            (HowMany>1)
+            (HowMany > TypeIndex)
+            && (HowMany > ObjectIndex)
             && (TypeIndex != ObjectIndex)
-            && (HowMany >= ObjectIndex)
-            && (HowMany >= TypeIndex)
             && (ObjectIndex >= 0)
-            && (TypeIndex >= 0)
             ? 1 : -1];
     };
 
@@ -593,7 +638,7 @@ namespace v8 { namespace convert {
         {
             // FIXME: make this iterative instead of recursive.
             if( !nh || jo.IsEmpty() ) return v8::Handle<v8::Object>();
-            typedef TypeInfo<T> TI;
+            //typedef TypeInfo<T> TI;
             typedef T * NH;
             void const * ext = (jo->InternalFieldCount() == InternalFields::Count)
                 ? jo->GetPointerFromInternalField(InternalFields::NativeIndex)
@@ -682,13 +727,19 @@ namespace v8 { namespace convert {
                 else
                 {
                     nholder->SetInternalField( InternalFields::NativeIndex, Null() );
-                    nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
+                    if( 0 <= InternalFields::TypeIDIndex )
+                    {
+                        nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
+                    }
                     Factory::Delete(native);
                 }
 #else
                 WeakWrap::Unwrap( nholder, native );
                 nholder->SetInternalField( InternalFields::NativeIndex, Null() );
-                nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
+                if( 0 <= InternalFields::TypeIDIndex )
+                {
+                    nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
+                }
                 Factory::Delete(native);
 #endif
             }
@@ -759,7 +810,10 @@ namespace v8 { namespace convert {
                 }
                 WeakWrap::Wrap( self, nobj );
                 self.MakeWeak( nobj, weak_dtor );
-                self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
+                if( 0 <= InternalFields::TypeIDIndex )
+                {
+                    self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
+                }
                 self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
                     /* We do this after the call to Wrap() just in case the Wrap() impl
                        accidentally writes to this field. In that case we end up
@@ -1012,7 +1066,7 @@ namespace v8 { namespace convert {
        specializing it, it must come before this JSToNative
        implementation is instantiated.
        
-       If TypeSafe is true (the default) then this type is a proxy for
+       If TypeSafe is true then this type is a proxy for
        JSToNative_ObjectWithInternalFieldsTypeSafe, else it is a proxy
        for JSToNative_ObjectWithInternalFields. Note that
        ClassCreator is hard-wired to implant/deplant type id information,
@@ -1021,7 +1075,7 @@ namespace v8 { namespace convert {
        still set up bits for the check, so disabling this does not save
        that one v8::Object internal field needed for the type identifier.
     */
-    template <typename T, bool TypeSafe = true>
+    template <typename T, bool TypeSafe = ClassCreator_InternalFields<T>::TypeIDIndex >= 0 >
     struct JSToNative_ClassCreator :
         tmp::IfElse< TypeSafe,
             JSToNative_ObjectWithInternalFieldsTypeSafe<T,

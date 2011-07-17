@@ -175,6 +175,12 @@ namespace v8 { namespace convert {
     };
 
     template <>
+    struct TypeName< JSByteArray >
+    {
+        static char const * Value;
+    };
+
+    template <>
     class ClassCreator_Factory<JSByteArray>
     {
     public:

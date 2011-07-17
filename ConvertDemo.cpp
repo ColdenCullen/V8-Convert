@@ -190,12 +190,11 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 
     // Special case for the weird (Function, cstring, Function) overload...
     typedef Argv_AndN< CVV8_TYPELIST((
-            Argv_Length<3>,
             ArgAt_IsFunction<0>,
             ArgAt_IsString<1>,
             ArgAt_IsFunction<2>
-        ))> MatchesFunc_String_Func;
-    typedef PredicatedInCa< MatchesFunc_String_Func,
+        ))> Is_Func_String_Func;
+    typedef PredicatedInCa< Is_Func_String_Func,
             FunctionToInCa< char const * (
                                 v8::Handle<v8::Function> const &,
                                 char const *,
@@ -206,11 +205,11 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 
     // Special case for the weird (Function, Value, Function) overload...
     typedef Argv_AndN< CVV8_TYPELIST((
-            Argv_Length<3>,
-            ArgAt_IsFunction<0>,
-            ArgAt_IsFunction<2>
-        ))> MatchesFunc_Value_Func;
-    typedef PredicatedInCa< MatchesFunc_Value_Func,
+        Argv_Length<3>,
+        ArgAt_IsFunction<0>,
+        ArgAt_IsFunction<2>
+    ))> Is_Func_Value_Func;
+    typedef PredicatedInCa< Is_Func_Value_Func,
             FunctionToInCa< v8::Handle<v8::Value> (
                                 v8::Handle<v8::Function> const &,
                                 v8::Handle<v8::Value> const &,
@@ -219,15 +218,31 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
                         >
     > PredFVF;
 
+    /*
+        Reminder to self: i would like to restructure the two "funky" 3-arg
+        overloads to a structure which looks like:
+
+         (argc==3 && (Is_Func_String_Func || Is_Func_Value_Func))
+
+        Because that's a tad bit more efficient.
+
+        But the overloading mechanism cannot backtrack, so we then would
+        shadow the other 3-arg overload(s).
+
+        We could certainly handle back-tracking by modeling the dispatcher
+        to be more like a PEG parser, where the atomic tokens are the
+        Arguments entries and the actions are the InvocationCallbacks.
+    */
+
     // Now create the "top-most" callback, which performs the above-defined
     // dispatching at runtime:
     typedef PredicatedInCaDispatcher< CVV8_TYPELIST((
             PredFSF, PredFVF, Group1, Group2, GroupN
-        )) > AllOverloads;
+    ))> AllOverloads;
 
     // Everything up to here is done at compile-time, by the way.
     // Now we can do what we've been working towards all along:
-    // getting the dispatcher callback:
+    // dispatching the callback:
     return AllOverloads::Call(argv);
 }
 
@@ -252,10 +267,9 @@ ValueHandle BoundNative_toString( v8::Arguments const & argv )
           print('s='+s); // <---- HERE
       }
 
-      That happens because CastFromJS<BoundNative>()
+      That happens, i think, because CastFromJS<BoundNative>()
       does not recognize BoundSubNative objects. Why not? To be honest, i'm
       not certain.
-      
     */
     BoundNative * f = cv::CastFromJS<BoundNative>(argv.This());
     return cv::StringBuffer() << "[object BoundNative@"<<f<<"]";
