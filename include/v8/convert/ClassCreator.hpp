@@ -774,7 +774,7 @@ namespace v8 { namespace convert {
                 WeakWrap::Unwrap( self, nobj );
                 if( nobj ) Factory::Delete( nobj );
                 self.Clear();
-                return CastToJS(ex);
+                return Toss(CastToJS(ex));
             }
             catch(...)
             {

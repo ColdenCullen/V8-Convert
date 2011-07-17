@@ -773,11 +773,11 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
     }
     catch(std::exception const & ex)
     {
-        return cv::CastToJS(ex);
+        return cv::Toss(cv::CastToJS(ex));
     }
     catch(...)
     {
-        return v8::ThrowException(v8::Exception::Error(JSTR("columnNames accessor threw an unknown native exception!")));
+        return cv::Toss("columnNames accessor threw an unknown native exception!");
     }
         
 }
@@ -823,11 +823,11 @@ static v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > p
     }
     catch(std::exception const & ex)
     {
-        return cv::CastToJS(ex);
+        return cv::Toss(cv::CastToJS(ex));
     }
     catch(...)
     {
-        return v8::ThrowException(v8::Exception::Error(JSTR("columnTypes accessor threw an unknown native exception!")));
+        return cv::Toss("columnTypes accessor threw an unknown native exception!");
     }
         
 }
@@ -872,11 +872,11 @@ static v8::Handle<v8::Value> Statement_getParamNames( v8::Local< v8::String > pr
     }
     catch(std::exception const & ex)
     {
-        return cv::CastToJS(ex);
+        return cv::Toss(cv::CastToJS(ex));
     }
     catch(...)
     {
-        return v8::ThrowException(v8::Exception::Error(JSTR("paramNames accessor threw an unknown native exception!")));
+        return cv::Toss("paramNames accessor threw an unknown native exception!");
     }
         
 }
@@ -910,7 +910,7 @@ v8::Handle<v8::Value> JSPDO_prepare( v8::Arguments const & argv )
     }
     catch(std::exception const &ex)
     {
-        return cv::CastToJS(ex);
+        return cv::Toss(cv::CastToJS(ex));
     }
 }
 

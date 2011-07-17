@@ -415,19 +415,31 @@ namespace v8 { namespace convert {
     template <>
     struct NativeToJS<std::exception>
     {
-        /** Calls v8::ThrowException(v8::Exception::Error(ex.what())) and returns the
-            results of that call (maybe an empty handle???).
+        /** Returns v8::Exception::Error(ex.what()).
             
-            This function not only converts the value but also 
-            triggers a JS-side exception. This is largely for 
-            historical reasons, before i learned about 
-            v8::Exception::Error() and friends. Lots of code now 
-            relies on that behaviour, so it won't be changed.
+            ACHTUNG: on 20110717 this function was changed to NOT trigger a
+            JS exception. Prior versions triggered a JS exception, but that
+            was done due to a misunderstanding on my part (i didn't know v8
+            provided a way to create Error objects without throwing). This
+            change is semantically incompatible with older code which uses
+            this conversion.
+
+            OLD way of doing it (don't do this!):
+
+            @code
+            catch( std::exception const & ex ) { return CastToJS(ex); }
+            @endcode
+
+            The equivalent is now:
+
+            @code
+            catch( std::exception const & ex ) { return Toss(CastToJS(ex)); }
+            @endcode
         */
         v8::Handle<v8::Value> operator()( std::exception const & ex ) const
         {
             char const * msg = ex.what();
-            return v8::ThrowException(v8::Exception::Error(String::New( msg ? msg : "unspecified std::exception" ) ));
+            return v8::Exception::Error(v8::String::New( msg ? msg : "unspecified std::exception" ));
             /** ^^^ String::New() internally calls strlen(), which hates it when string==0. */
         }
     };
@@ -1584,11 +1596,34 @@ namespace v8 { namespace convert {
     }
 
     /**
+        Eqivalent to v8::ThrowException(err). Note that if err is not an
+        Error object, the JS side will not get an Error object. e.g. if err
+        is-a String then the JS side will see the error as a string.
+
+        The reason this does not convert err to an Error is because the v8
+        API provides no way for us to know if err is already an Error object.
+        This function is primarily intended to be passed the results of
+        CastToJS(std::exception), which generates Error objects.
+    */
+    static inline v8::Handle<v8::Value> Toss( v8::Handle<v8::Value> const & err )
+    {
+        return v8::ThrowException(err);
+    }
+
+    /**
         Efficiency overload.
     */
     static inline v8::Handle<v8::Value> Toss( StringBuffer const & msg )
     {
         return v8::ThrowException(msg.toError());
+    }
+    /**
+        Like Toss(Handle<Value>), but converts err to a string and creates an
+        Error object, which is then thrown.
+    */
+    static inline v8::Handle<v8::Value> TossAsError( v8::Handle<v8::Value> const & err )
+    {
+        return Toss(v8::Exception::Error(err->ToString()));
     }
 
     /**
