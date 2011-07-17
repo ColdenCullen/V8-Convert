@@ -164,12 +164,12 @@ namespace v8 { namespace convert { namespace time {
                     //if( t <= 100 /*arbitrary!*/ ) break;// highly arguable
                     errno = 0;
                     rc = ::usleep( t );
-#                   if USE_SIGNALS
+#    if USE_SIGNALS
                     if( EINTR == errno )
                     {
                         return v8::ThrowException(v8::Exception::Error(v8::String::New("Sleep time was interruped by a C signal.")));
                     }
-#                   endif // USE_SIGNALS
+#    endif // USE_SIGNALS
                     if( t == left ) break;
                 }
 #else // assume usleep() can handle values >= 1 second...
@@ -177,12 +177,12 @@ namespace v8 { namespace convert { namespace time {
                 SU const ul;
                 errno = 0;
                 rc = ::usleep( static_cast<uint32_t>(st) * DelayMult );
-#               if USE_SIGNALS
+#    if USE_SIGNALS
                 if( EINTR == errno )
                 {
                     return v8::ThrowException(v8::Exception::Error(v8::String::New("Sleep time was interruped by a C signal.")));
                 }
-#               endif // USE_SIGNALS
+#    endif // USE_SIGNALS
 #endif /* USLEEP_TOO_BEAUCOUP */
 #undef USLEEP_TOO_BEAUCOUP
             }
