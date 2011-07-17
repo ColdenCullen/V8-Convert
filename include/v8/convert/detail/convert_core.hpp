@@ -1819,7 +1819,7 @@ namespace v8 { namespace convert {
        typedef CtorForwarder<MyType *(v8::Arguments const &)> CFAny;
        @endcode
        
-       @see CtorForwarderDispatcher
+       @see CtorArityDispatcher
     */
     template <typename Sig>
     struct CtorForwarder : Signature<Sig>
@@ -1827,7 +1827,7 @@ namespace v8 { namespace convert {
         typedef Signature<Sig> STL;
         typedef typename STL::ReturnType ReturnType;
         /**
-            If argv.Length() is at least Arity or Arity is less than 0,
+            If (argv.Length()>=Arity) or Arity is less than 0,
             then the constructor is called with Arity arguments
             (if it >=0) or with 1 v8::Arguments parameter (for Arity<0).
             
@@ -1923,6 +1923,7 @@ namespace v8 { namespace convert {
             }
         };
     }
+#endif // !DOXYGEN
     
     /**
         Proxies a list of constructors from v8::Arguments.
@@ -1956,7 +1957,7 @@ namespace v8 { namespace convert {
         CtorList::ReturnType.
     */
     template <typename CtorList>
-    struct CtorForwarderDispatcher
+    struct CtorArityDispatcher
     {
         typedef typename CtorList::ReturnType RT;
         typedef typename TypeInfo<RT>::NativeHandle NativeHandle;
@@ -1967,7 +1968,6 @@ namespace v8 { namespace convert {
             return Proxy::Call( argv );
         }
     };
-#endif // !DOXYGEN
 
 } } // namespaces
 

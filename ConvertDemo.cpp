@@ -44,7 +44,7 @@ namespace v8 { namespace convert {
     
     BoundNative * ClassCreator_Factory<BoundNative>::Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
     {
-        typedef cv::CtorForwarderDispatcher<BoundNativeCtors> Proxy;
+        typedef cv::CtorArityDispatcher<BoundNativeCtors> Proxy;
         BoundNative * b = Proxy::Call( argv );
         if( b ) BMap::Insert( jsSelf, b );
         return b;
@@ -211,7 +211,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
         ArgAt_IsFunction<2>
     ))> Is_Func_Value_Func;
     typedef PredicatedInCa< Is_Func_Value_Func,
-            FunctionToInCa< v8::Handle<v8::Value> (
+                            FunctionToInCa< v8::Handle<v8::Value> (
                                 v8::Handle<v8::Function> const &,
                                 v8::Handle<v8::Value> const &,
                                 v8::Handle<v8::Function> const & ),
@@ -574,7 +574,7 @@ namespace { // testing ground for some compile-time assertions...
         ctor = C2::Call;
         //ctor = C0Sub::Ctor;
         typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
-        typedef cv::CtorForwarderDispatcher<CtorList> CDispatch;
+        typedef cv::CtorArityDispatcher<CtorList> CDispatch;
         typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
         FacT fac;
         fac = CDispatch::Call;

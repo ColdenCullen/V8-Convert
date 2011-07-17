@@ -1143,14 +1143,14 @@ namespace v8 { namespace convert {
         TypeInfo<T>::NativeHandle Call( v8::Arguments const & );
         @endcode
 
-        Normally CtorProxy would be CtorForwarder CtorForwarderDispatcher,
+        Normally CtorProxy would be CtorForwarder or CtorArityDispatcher,
         but any interface-compatible type will do.
 
         It must return a new object instance on success. On error it
         may return NULL and "should" throw a native exception explaining
         the problem. The exception will be caught by ClassCreator and
         transformed into a JS-side exception.
-        
+
         If CtorProxy::Call() succeeds (returns non-NULL and does not throw)
         then NativeToJSMap<T> is used to create a native-to-JS mapping.
         To make use of this, the client should do the following:
@@ -1221,7 +1221,7 @@ namespace v8 { namespace convert {
             ClassCreator_Factory_CtorArityDispatcher<CFT, CtorList> {};
         @endcode
         
-        TODO: see if this work:
+        TODO: see if this works: returning a derived type from the forwarder:
         
         @code
         typedef cv::CtorForwarder<SomeSubType *(int,int)> C2;
@@ -1235,7 +1235,7 @@ namespace v8 { namespace convert {
         typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
         {
-            typedef CtorForwarderDispatcher<CtorForwarderList> Proxy;
+            typedef CtorArityDispatcher<CtorForwarderList> Proxy;
             return Proxy::Call( argv );
         }
     };
