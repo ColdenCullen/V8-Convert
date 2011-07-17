@@ -2,10 +2,25 @@
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
 
-#if !defined(_WIN32) && !defined(_WIN64)
-#  define V8_CONVERT_ENABLE_CONST_OVERLOADS 1
-#else
-#  define V8_CONVERT_ENABLE_CONST_OVERLOADS 0
+/** @def V8_CONVERT_ENABLE_CONST_OVERLOADS
+
+If V8_CONVERT_ENABLE_CONST_OVERLOADS is defined to a false value
+then certain templates are not generated, or are generated slightly
+differently. The intention is to try to support MSVC, which reportedly
+cannot distinguish specializations between Template<T> and Template<T const>.
+That said, i this code pretty much relies on proper distinction of
+constness.
+
+Originally, ConstMethodSignature (and its various derivates) was split
+from MethodSignature to support MSVC, but i have since given up on making
+too much effort to coddle to it.
+*/
+#if !defined(V8_CONVERT_ENABLE_CONST_OVERLOADS)
+#  if defined(_WIN32) && defined(_WIN64)
+#    define V8_CONVERT_ENABLE_CONST_OVERLOADS 0
+#  else
+#    define V8_CONVERT_ENABLE_CONST_OVERLOADS 1
+#  endif
 #endif
 
 namespace v8 { namespace convert {
@@ -102,7 +117,8 @@ function/method signatures as full-fleged types.
 */
 template <typename Sig> struct Signature;
 
-/**
+/** @def CVV8_TYPELIST
+
     CVV8_TYPELIST is a (slightly) convenience form of
     Signature for creating typelists where we do not care about the
     "return type" part of the list.
@@ -113,13 +129,15 @@ template <typename Sig> struct Signature;
     typedef CVV8_TYPELIST(( int, double, char )) MyList;
     @endcode
 
-    NOTE the doubled parenthesis!
+    NOTE the doubled parenthesis! Some members of the API which take a
+    type-list require a Signature-compatible typelist because they need the
+    ReturnValue and/or Context parts.
 */
 #define CVV8_TYPELIST(X) ::v8::convert::Signature< void X >
 
 /**
     The sl namespace exclusively holds template metafunctions for working
-    with Signature typelists.
+    with Signature-style typelists.
 */
 namespace sl {
 
@@ -167,6 +185,8 @@ namespace sl {
         given Signature's argument list. Evaluates to -1 if T is not 
         contained in the argument list. Signature::ReturnType and 
         Signature::Context are not evaluated.
+
+        Clients _must not_ pass a value for the 3rd template parameter.
     */
     template < typename T, typename ListT, unsigned short Internal = 0 >
     struct Index : tmp::IntVal< tmp::SameType<T, typename ListT::Head>::Value
@@ -231,43 +251,11 @@ namespace tmp {
     };
 }
 
+#if 0
 //! Highly arguably specialization.
-template <typename RV> struct Signature< Signature<RV> > : Signature<RV> {};
+template <typename Sig> struct Signature< Signature<Sig> > : Signature<Sig> {};
+#endif
 
-/**
-    Specialization to give "InvacationCallback-like" functions
-    an Arity value of -1.
-
-    Reminder: we can get rid of this if we factory out the Arity definition
-    and use sl::Arity instead. (IsConst might be problematic, though.)
-*/
-template <typename RV>
-struct Signature<RV (v8::Arguments const &)>
-{
-    typedef RV ReturnType;
-    //typedef RV (Fingerprint)(v8::Arguments const &);
-    enum { IsConst = 0 };
-    typedef void Context;
-    typedef v8::Arguments const & Head;
-    typedef Signature<RV ()> Tail;
-};
-
-template <typename RV>
-struct Signature<RV (*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
-{};
-
-template <typename T, typename RV>
-struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
-{
-    typedef T Context;
-};
-
-template <typename T, typename RV>
-struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
-{
-    typedef T Context;
-    enum { IsConst = 1 };
-};
 
 
 /**
@@ -299,8 +287,57 @@ struct SignatureBase : Signature<Sig>
     //enum { Arity = Signature<Sig>::Arity };
     //typedef Sig Signature;
     //typedef Sig FunctionType;
-    enum { IsConst = tmp::IsConst<Sig>::Value };
+    // doesn't appear to work how i want:
+    // enum { IsConst = tmp::IsConst<Sig>::Value };
+    //static const bool IsConst = tmp::IsConst<Sig>::Value;
 };
+/**
+    Specialization to give "InvacationCallback-like" functions
+    an Arity value of -1.
+
+    Reminder: we can get rid of this if we factory out the Arity definition
+    and use sl::Arity instead. (IsConst might be problematic, though.)
+*/
+template <typename RV>
+struct Signature<RV (v8::Arguments const &)>
+{
+    typedef RV ReturnType;
+    static const bool IsConst = false;
+    typedef RV (*FunctionType)(v8::Arguments const &);
+    typedef void Context;
+    typedef v8::Arguments const & Head;
+    typedef Signature<RV ()> Tail;
+};
+
+template <typename RV>
+struct Signature<RV (*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
+{};
+
+template <typename T, typename RV>
+struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments const &)>
+{
+    typedef T Context;
+    typedef RV (Context::*FunctionType)(v8::Arguments const &);
+};
+
+#if V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if 0
+template <typename RV>
+struct Signature<RV (v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
+{
+};
+#endif
+
+template <typename T, typename RV>
+struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
+{
+    typedef T Context;
+    typedef RV (Context::*FunctionType)(v8::Arguments const &) const;
+    static const bool IsConst = true;   
+};
+#endif
+
+
 
 /** @class FunctionSignature
    Base (unimplemented) signature for FunctionSignature
@@ -325,7 +362,7 @@ struct SignatureBase : Signature<Sig>
    
 */
 template <typename FunctionSig>
-struct FunctionSignature;
+struct FunctionSignature : Signature< FunctionSig > {};
 
 /** @class MethodSignature
    Base (unimplemented) signature for MethodSignature
@@ -349,6 +386,18 @@ struct FunctionSignature;
    typedef MethodSignature< MyType, double (int,int) > TwoArgsReturnsDouble;
    @endcode
 
+   Reminders to self:
+
+   i would really like this class to simply subclass Signature<Sig> and we
+   would add in a couple typedefs we need. This would cut the specializations
+   we generate. However, i don't know how to make this work. The problems
+   include:
+
+   a) without generating lots of specializations of
+   tmp::IsConst<FunctionSignatures>, i don't know how to tell if Sig is const.
+
+   b) i can't "refactor" Signature<Sig>::FunctionType to the proper type
+   at this level.
 */
 template <typename T, typename Sig>
 struct MethodSignature;
@@ -383,22 +432,11 @@ struct ConstMethodSignature;
 //template <typename T, typename Sig>
 //struct ConstMethodSignature<const T,Sig> : ConstMethodSignature<T,Sig> {};
 
-template <typename RV >
-struct FunctionSignature< RV () > : SignatureBase< RV () >
-{
-    typedef RV (*FunctionType)();
-};
-
-template <typename RV >
-struct FunctionSignature< RV (*)() > : FunctionSignature< RV () >
-{
-};
-
 template <typename T, typename RV >
 struct MethodSignature< T, RV () > : SignatureBase< RV () >
 {
     typedef typename tmp::PlainType<T>::Type Context;
-    typedef RV (T::*FunctionType)();
+    typedef RV (Context::*FunctionType)();
 };
 
 template <typename T, typename RV >
@@ -406,26 +444,39 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 {
 };
 
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () > : SignatureBase< RV () >
+struct MethodSignature< T, RV () const > : SignatureBase< RV () const >
 {
     typedef typename tmp::PlainType<T>::Type Context;
-    typedef RV (T::*FunctionType)() const;
-    //enum { IsConst = 1 };
+    typedef RV (Context::*FunctionType)() const;
+    enum { IsConst = 1 };
 };
 
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () const > : ConstMethodSignature<T, RV () >
+struct MethodSignature< T, RV (T::*)() const > : MethodSignature<T, RV () const>
+{
+};
+#endif
+
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () >
 {
     typedef typename tmp::PlainType<T>::Type Context;
-    typedef RV (T::*FunctionType)() const;
+    typedef RV (Context::*FunctionType)() const;
+    enum { IsConst = 1 };
 };
-
-
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
+struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV () const>
 {
 };
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+// reminder: roles of const/non-const overloads are reversed for ConstMethodSignature
+template <typename T, typename RV >
+struct ConstMethodSignature< T, RV () > : ConstMethodSignature<T, RV () const >
+{
+};
+#endif
 
 
 /**
@@ -441,10 +492,6 @@ struct FunctionPtr : FunctionSignature<Sig>
        This type's full "signature" type.
     */
     typedef FunctionSignature<Sig> SignatureType;
-    /**
-       The return type of FuncPtr.
-    */
-    typedef typename SignatureType::ReturnType ReturnType;
     /**
        The data type of FuncPtr.
      */
@@ -465,7 +512,6 @@ template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionTyp
 struct MethodPtr : MethodSignature<T,Sig>
 {
     typedef MethodSignature<T,Sig> SignatureType;
-    typedef typename SignatureType::ReturnType ReturnType;
     typedef typename SignatureType::FunctionType FunctionType;
     static const FunctionType Function;
 };
@@ -480,7 +526,6 @@ template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::Functi
 struct ConstMethodPtr : ConstMethodSignature<T,Sig>
 {
     typedef ConstMethodSignature<T,Sig> SignatureType;
-    typedef typename SignatureType::ReturnType ReturnType;
     typedef typename SignatureType::FunctionType FunctionType;
     static const FunctionType Function;
 };
@@ -489,5 +534,6 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
 
 #include "signature_generated.hpp"
 }} // namespaces
+#undef V8_CONVERT_ENABLE_CONST_OVERLOADS
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED */

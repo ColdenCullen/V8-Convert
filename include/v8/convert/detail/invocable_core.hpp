@@ -922,12 +922,12 @@ namespace Detail {
 
 */
 template <typename Sig,
-        bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value
+        bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
 struct ArgsToFunctionForwarder : Callable
 {
 private:
-    typedef typename tmp::IfElse< tmp::SameType<void ,typename FunctionSignature<Sig>::ReturnType>::Value,
+    typedef typename tmp::IfElse< tmp::SameType<void ,typename Signature<Sig>::ReturnType>::Value,
                                 Detail::ArgsToFunctionForwarderVoid< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
                                 Detail::ArgsToFunctionForwarder< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
         >::Type

@@ -358,7 +358,21 @@ namespace v8 { namespace convert {
                 typedef Signature< FPPuts::FunctionType > ALPuts;
                 assert( 1 == sl::Arity<ALPuts>::Value );
                 
-                typedef Signature< int (BoundNative::*)(char const *) const > BNPutsC;
+                typedef
+                    Signature< int (BoundNative::*)(char const *) const >
+                    BNPutsC;
+                typedef
+                    MethodSignature< BoundNative, int (BoundNative::*)(char const *) const >
+                    BNPutsC2;
+                typedef
+                    ConstMethodSignature< BoundNative, int (char const *) >
+                    BNPutsC3;
+                using cv::tmp::Assertion;
+                Assertion<true> ass;
+                ass = Assertion<BNPutsC::IsConst>();
+                ass = Assertion<BNPutsC2::IsConst>();
+                ass = Assertion<BNPutsC3::IsConst>();
+                
                 typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
                 assert( 1 == sl::Length<BNPutsC>::Value );
                 assert( 1 == sl::Length<BNPuts>::Value );
@@ -391,6 +405,8 @@ namespace v8 { namespace convert {
                  CATCHER< cv::ToInCa<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef>::Call >::Call)
                 ("nativeParamConstRef",
                  CATCHER< cv::ToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef>::Call >::Call)
+                 // Hopefully someday:
+                 //CATCHER< cv::MethodToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef>::Call >::Call)
                 ("cstr",
                  //cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
                  cv::ToInCa< void, char const * (char const *), cstring_test>::Call)
@@ -402,10 +418,14 @@ namespace v8 { namespace convert {
                  cv::ToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)
                  ("nativeReturnConst",
                  cv::ToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst, true>::Call)
+                 // Hopefully someday:
+                 // cv::MethodToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst>::Call)
                  ("nativeReturnRef",
                  CATCHER< cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>::Call >::Call)
                  ("nativeReturnConstRef",
                  CATCHER< cv::ToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef, true>::Call >::Call)
+                 // Hopefully someday:
+                 //CATCHER< cv::MethodToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef>::Call >::Call)
 #endif
                 ;
 #undef CATCHER
@@ -606,14 +626,13 @@ namespace { // testing ground for some compile-time assertions...
         //typedef cv::FunctionSignature<FacT> FacSig;
         typedef cv::FunctionSignature< CtorFwdTest * ( v8::Arguments const &  argv )> FacSig;
         ASS<( sl::Arity<FacSig>::Value < 0 )>();
-        //ASS<( (tmp::SameType< v8::Arguments const &, cv::sl::At< 0, cv::Signature<CtorFwdTest * ( v8::Arguments const &  argv )> >::Type>::Value))>();
-        //ASS<( (tmp::SameType< v8::Arguments const &, cv::sl::At< 0, FacSig >::Type>::Value))>();
+        ASS<( (tmp::IsConst<cv::sl::At< 0, FacSig >::Type>::Value) )>();
+        ASS<( (tmp::SameType< v8::Arguments const &, cv::sl::At< 0, cv::Signature<CtorFwdTest * ( v8::Arguments const &  argv )> >::Type>::Value))>();
+        ASS<( (tmp::SameType< v8::Arguments const &, cv::sl::At< 0, FacSig >::Type>::Value))>();
         typedef cv::sl::At< 0, cv::FunctionSignature<int (int)> >::Type A0;
         ASS<( (tmp::SameType< int, A0>::Value))>();
         typedef cv::sl::At< 0, cv::ToInCa<void, int (char const *),::puts> >::Type A1;
         ASS<( (tmp::SameType< char const *, A1>::Value))>();
-        //ASS<( (tmp::SameType< char const *, cv::sl::At<0,FacSig>::Type >) );
-        //ASS<( (tmp::IsConst<cv::sl::At< 0, FacSig >::Type>::Value) )>();
 
         typedef cv::Signature< void (int, double, char const *) > CanUnlock;
         typedef cv::Signature< void (int, v8::Handle<v8::Value>, double) > CannotUnlock;
@@ -625,10 +644,12 @@ namespace { // testing ground for some compile-time assertions...
         ASS< cv::IsUnlockable<int>::Value>();
         ASS< !cv::IsUnlockable< v8::Handle<v8::Value> >::Value >();
         ASS< !cv::IsUnlockable< v8::Arguments >::Value >();
-        //assert( (cv::tmp::Assertion<!cv::TypeListIsUnlockable<CannotUnlock>::Value>::Value) );
         ASS<cv::TypeListIsUnlockable<CanUnlock>::Value>();
         ASS<!cv::TypeListIsUnlockable<CannotUnlock2>::Value>();
         ASS<!cv::TypeListIsUnlockable<CannotUnlock>::Value>();
+        typedef cv::Signature< void (v8::Handle<v8::Value>::*)(int) > CtxSig;
+        ASS<!cv::SignatureIsUnlockable<CtxSig>::Value>();
+        ASS<cv::TypeListIsUnlockable<CtxSig>::Value>();
 #define SIU cv::SignatureIsUnlockable
         ASS< SIU< cv::Signature<int (int, double, char)> >::Value >();
         ASS< !SIU< cv::Signature<int (v8::Arguments)> >::Value >();
@@ -721,6 +742,9 @@ namespace { // testing ground for some compile-time assertions...
         ASS< Signature< int (CtorFwdTest::*)( int, int ) const >::IsConst >();
         ASS< ! Signature< int (CtorFwdTest::*)( int, int ) >::IsConst >();
         //ASS< tmp::SameType< SigList_At<SigList_Length<BL3>::Value,BL3>::Type, char >::Value >(); // must fail to compile
+
+        // damn. ASS< tmp::IsConst< int (void) const >::Value >();
+        ASS< !tmp::IsConst< int (void) >::Value >();
 #undef ASS
 #endif
     }

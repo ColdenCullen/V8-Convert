@@ -31,11 +31,29 @@ struct Signature< RV () >
 template <typename RV>
 struct Signature< RV (*)() > : Signature<RV ()>
 {};
+
+template <typename T, typename RV>
+struct Signature< RV (T::*)() > : Signature<RV ()>
+{
+    typedef T Context;
+    typedef RV (T::*FunctionType)();
+};
+
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+
 template <typename RV>
 struct Signature< RV () const > : Signature<RV ()>
 {
     enum { IsConst = 1 };
 };
+template <typename T, typename RV>
+struct Signature< RV (T::*)() const > : Signature<RV () const>
+{
+    typedef T Context;
+    typedef RV (T::*FunctionType)() const;
+};
+
+#endif /* V8_CONVERT_ENABLE_CONST_OVERLOADS */
 EOF
 from=$((from + 1))
 fi
@@ -66,7 +84,7 @@ template <$tparam>
 struct Signature< RV (${targs}) >
 {
     typedef RV ReturnType;
-    enum { IsConst = 0 };
+    static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(${targs});
     typedef ${head} Head;
@@ -75,21 +93,23 @@ struct Signature< RV (${targs}) >
 
 //! Specialization for ${i} arg(s).
 template <$tparam>
-struct Signature< RV (${targs}) const > : Signature<RV (${targs})>
-{
-    enum { IsConst = 1 };
-};
-
-//! Specialization for ${i} arg(s).
-template <$tparam>
 struct Signature< RV (*)(${targs}) > : Signature<RV (${targs})>
 {};
 
-//! Specialization for T methods taking ${i} arg(s).
+//! Specialization for T non-const methods taking ${i} arg(s).
 template <typename T, $tparam>
 struct Signature< RV (T::*)(${targs}) > : Signature<RV (${targs})>
 {
     typedef T Context;
+    typedef RV (T::*FunctionType)(${targs});
+};
+
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+//! Specialization for ${i} arg(s).
+template <$tparam>
+struct Signature< RV (${targs}) const > : Signature<RV (${targs})>
+{
+    static const bool IsConst = true;
 };
 
 //! Specialization for T const methods taking ${i} arg(s).
@@ -97,7 +117,9 @@ template <typename T, $tparam>
 struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs}) const>
 {
     typedef T Context;
+    typedef RV (T::*FunctionType)(${targs}) const;
 };
+#endif /*V8_CONVERT_ENABLE_CONST_OVERLOADS*/
 EOF
     #echo $tparam
     #echo $targs

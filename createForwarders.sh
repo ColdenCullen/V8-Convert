@@ -13,12 +13,12 @@ Commands:
   ArgsToMethodForwarder
   ArgsToFunctionForwarder
 EOF
-    echo "Generates specializations for operations taking exactly NUMBER argumnents."
+    echo "Generates specializations for operations taking exactly NUMBER arguments."
     exit 1
 }
 shift
 
-ValueHandle="v8::Handle<v8::Value>"
+ValHnd="v8::Handle<v8::Value>"
 aTDecl="" # typename A0, typename A1,...
 aTParam="" # A0, A1 ...
 castCalls="" # CastFromJS<A0>(argv[0]), ...
@@ -104,11 +104,11 @@ EOF
 # Create FunctionSignature<> and friends...
 function makeFunctionSignature()
 {
+    return # this code is no longer needed
     mycat <<EOF
 template <typename RV, ${aTDecl} >
 struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
 {
-    typedef RV (*FunctionType)(${aTParam});
 };
 
 template <typename RV, ${aTDecl} >
@@ -123,19 +123,33 @@ EOF
 # Create MethodSignature<> and friends...
 function makeMethodSignature()
 {
+    #return
     mycat <<EOF
-
 template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
+struct MethodSignature< T, RV (${aTParam}) > : Signature< RV (T::*)(${aTParam}) >
 {
-    typedef T ClassType;
-    typedef RV (T::*FunctionType)(${aTParam});
 };
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T, RV (*)(${aTParam}) > : MethodSignature< T, RV (${aTParam}) >
+{
+};
+
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (T::*)(${aTParam}) > :
     MethodSignature< T, RV (${aTParam}) >
 {};
 
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T, RV (${aTParam}) const > : Signature< RV (T::*)(${aTParam}) const >
+{
+    enum { IsConst = 1 };
+};
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T, RV (T::*)(${aTParam}) const > :
+    MethodSignature< T, RV (${aTParam}) const >
+{};
+#endif /*V8_CONVERT_ENABLE_CONST_OVERLOADS*/
 
 EOF
 }
@@ -145,24 +159,33 @@ EOF
 # TODO: move this into makeMethodSignature.
 function makeConstMethodSignature()
 {
+# reminder: role of const overloading is reversed for ConstMethodSignature.
     mycat <<EOF
 template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
+struct ConstMethodSignature< T, RV (${aTParam}) const > :
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+    Signature< RV (T::*)(${aTParam}) const > {};
+#else
+    Signature< RV (T::*)(${aTParam}) >
 {
-    typedef T ClassType;
+    //enum { IsConst = 1 };
+    static const bool IsConst = true;
     typedef RV (T::*FunctionType)(${aTParam}) const;
 };
+#endif
 
+#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) const > :
-    ConstMethodSignature< T, RV (${aTParam}) >
-{};
-
+struct ConstMethodSignature< T, RV (${aTParam}) > : ConstMethodSignature< T, RV (${aTParam}) const >
+{
+};
+#endif
 
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (T::*)(${aTParam}) const > :
-    ConstMethodSignature< T, RV (${aTParam}) >
+    ConstMethodSignature< T, RV (${aTParam}) const >
 {};
+
 EOF
 
 }
@@ -179,18 +202,18 @@ namespace Detail {
     struct ArgsToFunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(*func)( ${castCalls} );
         }
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
             return CastToJS( CallNative( func, argv ) );
         }
@@ -200,18 +223,18 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == ${count} ? 1 : -1];
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(*func)( ${castCalls} );
         }
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
             CallNative( func, argv );
             return v8::Undefined();
@@ -240,6 +263,7 @@ namespace Detail {
     struct ${class}<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
+        typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T ${constness} & self, FunctionType func, Arguments const & argv )
@@ -247,11 +271,10 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)( ${castCalls} );
         }
-        static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        static ${ValHnd} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -262,7 +285,7 @@ namespace Detail {
             if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative(func, argv) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -273,6 +296,7 @@ namespace Detail {
     struct ${class}Void<T, ${count},Sig, UnlockV8> : ${parent}<T,Sig>
     {
         typedef ${parent}<T,Sig> SignatureType;
+        typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T ${constness} & self, FunctionType func, Arguments const & argv )
@@ -283,7 +307,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)( ${castCalls} );
         }
-        static ${ValueHandle} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        static ${ValHnd} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
         {
             try
             {
@@ -298,7 +322,7 @@ namespace Detail {
             if( ! self ) throw MissingThisExceptionT<T>();
             return (ReturnType)CallNative(*self, func, argv);
         }
-        static ${ValueHandle} Call( FunctionType func, v8::Arguments const & argv )
+        static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -325,7 +349,11 @@ makeLists
 for command in $@; do
 case $command in
     *Signature|ArgsTo*Forwarder|CtorForwarder)
-	make${command}
+	make${command} || {
+        rc=$?
+        echo "make${command} failed with rc $rc" 1>&2
+        exit $rc
+    }
 	;;
     *)
 	echo "Unhandled command: ${command}"

@@ -5,11 +5,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<1,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 1 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
              typedef ArgCaster<A0> AC0;
@@ -29,11 +29,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<1,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 1 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
              typedef ArgCaster<A0> AC0;
@@ -55,6 +55,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -65,7 +66,6 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0 );
         }
@@ -91,6 +91,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -135,6 +136,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -145,7 +147,6 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0 );
         }
@@ -171,6 +172,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -215,11 +217,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<2,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 2 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		
@@ -242,11 +244,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<2,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 2 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		
@@ -271,6 +273,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -284,7 +287,6 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1 );
         }
@@ -310,6 +312,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -357,6 +360,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -370,7 +374,6 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1 );
         }
@@ -396,6 +399,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -443,11 +447,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<3,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 3 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -473,11 +477,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<3,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 3 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -505,6 +509,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -521,7 +526,6 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
         }
@@ -547,6 +551,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -597,6 +602,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -613,7 +619,6 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
         }
@@ -639,6 +644,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -689,11 +695,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<4,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 4 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -722,11 +728,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<4,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 4 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -757,6 +763,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -776,7 +783,6 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
         }
@@ -802,6 +808,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -855,6 +862,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -874,7 +882,6 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
         }
@@ -900,6 +907,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -953,11 +961,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<5,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 5 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -989,11 +997,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<5,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 5 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1027,6 +1035,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1049,7 +1058,6 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
@@ -1075,6 +1083,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1131,6 +1140,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -1153,7 +1163,6 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
@@ -1179,6 +1188,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -1235,11 +1245,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<6,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 6 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1274,11 +1284,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<6,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 6 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1315,6 +1325,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1340,7 +1351,6 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
@@ -1366,6 +1376,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1425,6 +1436,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -1450,7 +1462,6 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
@@ -1476,6 +1487,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -1535,11 +1547,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<7,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 7 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1577,11 +1589,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<7,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 7 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1621,6 +1633,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1649,7 +1662,6 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
@@ -1675,6 +1687,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1737,6 +1750,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -1765,7 +1779,6 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
@@ -1791,6 +1804,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -1853,11 +1867,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<8,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 8 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1898,11 +1912,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<8,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 8 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1945,6 +1959,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -1976,7 +1991,6 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
@@ -2002,6 +2016,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -2067,6 +2082,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -2098,7 +2114,6 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
@@ -2124,6 +2139,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -2189,11 +2205,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<9,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 9 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2237,11 +2253,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<9,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 9 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2287,6 +2303,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -2321,7 +2338,6 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
@@ -2347,6 +2363,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -2415,6 +2432,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -2449,7 +2467,6 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
@@ -2475,6 +2492,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -2543,11 +2561,11 @@ namespace Detail {
     struct ArgsToFunctionForwarder<10,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 10 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2594,11 +2612,11 @@ namespace Detail {
     struct ArgsToFunctionForwarderVoid<10,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
+        typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            typedef char AssertArity[ sl::Arity<SignatureType>::Value == 10 ? 1 : -1];
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2647,6 +2665,7 @@ namespace Detail {
     struct ArgsToMethodForwarder<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -2684,7 +2703,6 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
@@ -2710,6 +2728,7 @@ namespace Detail {
     struct ArgsToMethodForwarderVoid<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
@@ -2781,6 +2800,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarder<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
@@ -2818,7 +2838,6 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            typedef typename SignatureType::ReturnType RV;
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
@@ -2844,6 +2863,7 @@ namespace Detail {
     struct ArgsToConstMethodForwarderVoid<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
+        typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
