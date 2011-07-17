@@ -190,6 +190,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 
     // Special case for the weird (Function, cstring, Function) overload...
     typedef Argv_AndN< CVV8_TYPELIST((
+            Argv_Length<3>,
             ArgAt_IsFunction<0>,
             ArgAt_IsString<1>,
             ArgAt_IsFunction<2>
