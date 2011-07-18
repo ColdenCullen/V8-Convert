@@ -1607,7 +1607,7 @@ namespace Detail {
 
    Note that the Fallback parameter has a default value, and that that
    default value will cause a JS-side exception to be triggered if Call() is
-   called without exactly Arity arguments. Binding a single function this way
+   called without exactly Arity arguments. Binding a single function
    "overload" this way is a simple way to ensure that the function can only
    be called with the specified number of arguments.
 */
@@ -1653,9 +1653,9 @@ struct ArityDispatch : Callable
    ICB must be a v8::InvocationCallback. When this function is called
    by v8, it will pass on the call to ICB and catch exceptions.
 
-   Exceptions of type ExceptionT which are thrown by ICB get
-   translated into a JS exception with an error message fetched using
-   ExceptionT::Getter().
+   Exceptions of type (ExceptionT const &) and (ExceptionT const *) which
+   are thrown by ICB get translated into a JS exception with an error
+   message fetched using ExceptionT::Getter().
 
    If PropagateOtherExceptions is true then exception of types other
    than ExceptionT are re-thrown (which can be fatal to v8, so be
@@ -1666,7 +1666,6 @@ struct ArityDispatch : Callable
    callbacks together. In such a case, the outer-most (last) callback
    in the chain should not propagate unknown exceptions (to avoid
    killing v8).
-
 
    This type can be used to implement "chaining" of exception
    catching, such that we can use the InCaCatcher
@@ -1739,6 +1738,11 @@ struct InCaCatcher : Callable
         }
         catch( ExceptionT const & e2 )
         {
+            /* reminder to self:  we now have the unusual corner case that
+            if Getter() returns a v8::Handle<v8::Value> it will be thrown
+            as-is instead of wrapped in an Error object. See the Toss()
+            docs for why that is so.
+            */
             return Toss(CastToJS((e2.*Getter)()));
         }
         catch( ExceptionT const * e2 )
@@ -1823,11 +1827,11 @@ struct InCaCatcher_std :
    
    @code
    // Overload 3 variants of a member function:
-   typedef Signature< void (
+   typedef Signature< CVV8_TYPELIST((
             MethodToInCa<BoundNative, void (), &BoundNative::overload0>,
             MethodToInCa<BoundNative, void (int), &BoundNative::overload1>,
             MethodToInCa<BoundNative, void (int,int), &BoundNative::overload2>
-        )> OverloadList;
+        ))> OverloadList;
    typedef ArityDispatchList< OverloadList > MyOverloads;
    v8::InvocationCallback cb = MyOverloads::Call;     
    @endcode
@@ -1835,7 +1839,7 @@ struct InCaCatcher_std :
    Note that only one line of that code is evaluated at runtime - the rest
    is all done at compile-time.
 */
-template <typename List>
+template <typename FwdList>
 struct ArityDispatchList : Callable
 {
     /**
@@ -1847,17 +1851,12 @@ struct ArityDispatchList : Callable
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
-        typedef typename List::Head FWD;
-        typedef typename List::Tail Tail;
+        typedef typename FwdList::Head FWD;
+        typedef typename FwdList::Tail Tail;
         enum { Arity = sl::Arity< FWD >::Value };
-        if( (Arity == argv.Length()) || (Arity<0) )
-        {
-            return FWD::Call( argv );
-        }
-        {
-            return ArityDispatchList< Tail >::Call(argv);
-        }
-        return v8::Undefined(); // can't get this far.
+        return ( (Arity == argv.Length()) || (Arity<0) )
+            ? FWD::Call( argv )
+            : ArityDispatchList< Tail >::Call(argv);
     }
 };
 
@@ -1872,12 +1871,9 @@ struct ArityDispatchList<tmp::NilType> : Callable
         StringBuffer msg;
         msg << "ArityDispatchList<>::Call() there is no overload "
             << "taking "<<argv.Length()<<" arguments!\n";
-        return v8::ThrowException( msg.toError() );
+        return Toss( msg.toError() );
     }
 };    
-
-
-#include "invocable_generated.hpp"
 
 #if !defined(DOXYGEN)
 namespace Detail {
@@ -1948,9 +1944,10 @@ namespace Detail {
         };
     };
 
-    /** Internal helper for ToInCaVoid impl.
-        We need both true and false specializations here to avoid an ambiguity
-        with (T,Sig,true) resp. (T,Sig,false).
+    /**
+        Internal helper for ToInCaVoid impl. We need identical true and
+        false specializations here to avoid an ambiguity with
+        ToInCaSigSelectorVoid<T,Sig,true> resp. <T,Sig,false>.
     */
     template <typename Sig>
     struct ToInCaSigSelectorVoid<void,Sig,true> : ToInCaSigSelectorVoid<void,Sig,false> {};
@@ -2094,8 +2091,8 @@ struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8
     function which implements the v8::InvocationCallback interface).
     
     InitFunctor must be default-constructable and have an operator()
-    taking no args and returning any type which can be ignored (i.e.
-    not dynamically-allocated resources).
+    (preferably const) taking no args and returning any type which can be
+    ignored (i.e. not dynamically-allocated resources).
 */
 template <typename InCaT, typename InitFunctor>
 struct OneTimeInitInCa : Callable
@@ -2132,7 +2129,9 @@ struct OneTimeInitInCa : Callable
     }
 };
 
-} // namespaces
+
+#include "invocable_generated.hpp"
+} // namespace
 
 #undef HANDLE_PROPAGATE_EXCEPTION
 
