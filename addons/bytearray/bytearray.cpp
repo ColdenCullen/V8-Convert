@@ -19,8 +19,8 @@ by Ondrej Zara
 #endif
 
 #include "bytearray.hpp"
-#include <v8/convert/convert.hpp>
-#include <v8/convert/properties.hpp>
+#include <cvv8/convert.hpp>
+#include <cvv8/properties.hpp>
 
 #include <sstream>
 #include <vector>

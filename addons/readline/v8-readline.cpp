@@ -13,7 +13,7 @@
 #include "Readline.hpp"
 #include "v8-readline.hpp"
 #include <string>
-#include "v8/convert/convert.hpp"
+#include "cvv8/convert.hpp"
 
 namespace cvv8 {
     using namespace v8;

@@ -2,7 +2,7 @@
 #define V8_CONVERT_BYTEARRAY_H_INCLUDED
 #include <v8.h>
 
-#include <v8/convert/ClassCreator.hpp>
+#include <cvv8/ClassCreator.hpp>
 namespace cvv8 {
 
     class JSByteArray

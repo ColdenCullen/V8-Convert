@@ -83,7 +83,7 @@
 #endif
 
 #include <v8.h>
-#include "v8/convert/ClassCreator.hpp"
+#include "cvv8/ClassCreator.hpp"
 namespace cvv8 {
 
 class JSSocket;

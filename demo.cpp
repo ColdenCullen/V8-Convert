@@ -21,8 +21,8 @@
 
 #include <iostream>
 
-#include "v8/convert/v8-convert.hpp"
-#include "v8/convert/V8Shell.hpp"
+#include "cvv8/v8-convert.hpp"
+#include "cvv8/V8Shell.hpp"
 namespace cv = cvv8;
 //typedef v8::Handle<v8::Value> ValueHandle;
 #define ValueHandle v8::Handle<v8::Value>

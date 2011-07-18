@@ -17,9 +17,9 @@ by Ondrej Zara
 #define _POSIX_C_SOURCE 200112L
 #endif
 
-#include <v8/convert/convert.hpp>
-#include <v8/convert/ClassCreator.hpp>
-#include <v8/convert/properties.hpp>
+#include <cvv8/convert.hpp>
+#include <cvv8/ClassCreator.hpp>
+#include <cvv8/properties.hpp>
 #include <cstdio> // remove()
 #include "socket.hpp"
 #include "bytearray.hpp"

@@ -15,7 +15,7 @@ V8_PREFIX := $(HOME)
 CPPFLAGS += -I$(V8_PREFIX)/include
 
 TMPL_GENERATOR_COUNT := 10# max number of arguments generate template specializations can handle
-INCDIR_DETAIL := $(TOP_INCDIR)/v8/convert/detail
+INCDIR_DETAIL := $(TOP_INCDIR)/cvv8/detail
 sig_gen_h := $(INCDIR_DETAIL)/signature_generated.hpp
 invo_gen_h := $(INCDIR_DETAIL)/invocable_generated.hpp
 conv_gen_h := $(INCDIR_DETAIL)/convert_generated.hpp

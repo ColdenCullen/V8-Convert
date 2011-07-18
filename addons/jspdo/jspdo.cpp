@@ -23,8 +23,8 @@ clause).
 #include <cassert>
 #include "cpdo_amalgamation.hpp"
 
-#include "v8/convert/ClassCreator.hpp"
-#include "v8/convert/properties.hpp"
+#include "cvv8/ClassCreator.hpp"
+#include "cvv8/properties.hpp"
 
 #include "jspdo.hpp"
 #include "bytearray.hpp"

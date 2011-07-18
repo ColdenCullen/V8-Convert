@@ -14,8 +14,8 @@
   of the test code author, and do not necessarily reflect
   best practices.
 */
-#include "v8/convert/v8-convert.hpp"
-#include "v8/convert/NativeToJSMap.hpp"
+#include "cvv8/v8-convert.hpp"
+#include "cvv8/NativeToJSMap.hpp"
 #ifndef CERR
 #include <iostream> /* only for debuggering */
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" << __FUNCTION__<< "(): "

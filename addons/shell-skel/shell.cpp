@@ -51,8 +51,8 @@
 #endif
 
 
-#include "v8/convert/v8-convert.hpp"
-#include "v8/convert/V8Shell.hpp"
+#include "cvv8/v8-convert.hpp"
+#include "cvv8/V8Shell.hpp"
 namespace cv = cvv8;
 
 #if defined(INCLUDE_SHELL_BINDINGS)

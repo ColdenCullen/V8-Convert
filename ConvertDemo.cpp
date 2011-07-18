@@ -1,10 +1,10 @@
 #include "ConvertDemo.hpp"
-#include "v8/convert/ClassCreator.hpp"
-#include "v8/convert/properties.hpp"
+#include "cvv8/ClassCreator.hpp"
+#include "cvv8/properties.hpp"
 
 #define TRY_ARGS_CODE 1
 #if TRY_ARGS_CODE
-#include "v8/convert/arguments.hpp"
+#include "cvv8/arguments.hpp"
 #endif
 
 #include <unistd.h> // only for sleep() in some test code
