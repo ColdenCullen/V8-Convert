@@ -369,14 +369,18 @@ namespace cvv8 {
                     BNPutsC3;
                 using cv::tmp::Assertion;
                 Assertion<true> ass;
-                ass = Assertion<BNPutsC::IsConst>();
-                ass = Assertion<BNPutsC2::IsConst>();
-                ass = Assertion<BNPutsC3::IsConst>();
-                
+#define ASS ass = Assertion
+                ASS<BNPutsC::IsConst>();
+                ASS<BNPutsC2::IsConst>();
+                ASS<BNPutsC3::IsConst>();
+
                 typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
-                assert( 1 == sl::Length<BNPutsC>::Value );
-                assert( 1 == sl::Length<BNPuts>::Value );
-                assert( 0 != (tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value) );
+                ASS< 1 == sl::Length<BNPutsC>::Value >();
+                ASS< 1 == sl::Length<BNPuts>::Value >();
+                ASS< !BNPuts::IsConst >();
+                ASS< tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value >();
+                ASS< 0 == sl::Index< char const *, BNPuts >::Value >();
+#undef ASS
             }
 #define CATCHER cv::InCaCatcher_std
 #define F2I cv::FunctionToInvocationCallback
@@ -544,7 +548,7 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
          cv::ToInCaVoid<void, int (char const *),::puts>::Call)
         ;
 
-    typedef cv::ClassCreator<BoundNative> CCFoo;
+    //typedef cv::ClassCreator<BoundNative> CCFoo;
     //cc.CtorTemplate()->Inherit( CCFoo::Instance().CtorTemplate() );
     cc.Inherit<BoundNative>();
 
@@ -688,7 +692,6 @@ namespace { // testing ground for some compile-time assertions...
         using namespace cvv8;
         using namespace cvv8::tmp;
 
-#if 1 // just some experimentation...
         typedef void (RawSignature)(int, double, char);
         typedef Signature< RawSignature > BLSig;
         typedef Signature< void (char, int) > BL2;
@@ -745,8 +748,24 @@ namespace { // testing ground for some compile-time assertions...
 
         // damn. ASS< tmp::IsConst< int (void) const >::Value >();
         ASS< !tmp::IsConst< int (void) >::Value >();
+
+        ASS< sl::IsFunction< BLA1 >::Value >();
+        ASS< !sl::IsMethod< BLA1 >::Value >();
+
+        {
+            typedef Signature< void (v8::Arguments::*)(int,double) > BogoMethod;
+            ASS< !sl::IsFunction< BogoMethod >::Value >();
+            ASS< sl::IsMethod< BogoMethod >::Value >();
+            ASS< sl::IsNonConstMethod< BogoMethod >::Value >();
+            ASS< !sl::IsConstMethod< BogoMethod >::Value >();
+
+            typedef Signature< void (v8::Arguments::*)(int,double) const > BogoConstMethod;
+            ASS< !sl::IsFunction< BogoConstMethod >::Value >();
+            ASS< sl::IsMethod< BogoConstMethod >::Value >();
+            ASS< !sl::IsNonConstMethod< BogoConstMethod >::Value >();
+            ASS< sl::IsConstMethod< BogoConstMethod >::Value >();
+        }
 #undef ASS
-#endif
     }
 
 #if TRY_ARGS_CODE

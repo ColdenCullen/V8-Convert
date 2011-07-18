@@ -71,12 +71,14 @@ function/method signatures as full-fleged types.
     // algorithms. That's on my to-fix list, but only if it's not too problematic.
     @endcode
 
-    The IsConst part is a bit of an ugly hack. It originates from the design
-    decision that we separate const/non-const templates because MSVC
-    reportedly cannot differentiate templates when the difference is only in
-    const. i have since (almost) given up the policy of coddling to MSVC, so
-    the IsConst bit might go away at some point (if i can get it back out
-    without rewriting everything).
+    The IsConst part is a bit of an ugly hack, and is mildly unsettling but
+    i needed it to implement ToInCa (i couldn't figure out how to figure
+    that out with templates). It originates from the design decision that we
+    separate const/non-const templates because MSVC reportedly cannot
+    differentiate templates when the difference is only in const. i have
+    since (almost) given up the policy of coddling to MSVC, so the IsConst
+    bit might go away at some point (if i can get it back out without
+    rewriting everything).
 
     It is intended to be used like this:
     
@@ -89,9 +91,6 @@ function/method signatures as full-fleged types.
     assert( 1 == sl::Index< double, Sig >::Value) );
     assert( !sl::Contains< int, Sig >::Value) ); // Sig::ReturnType doesn't count here!!!
     @endcode
-
-    The IsConst bit is mildly unsettling but i needed it to implement ToInCa
-    (i couldn't figure out how to figure that out with templates).
     
     Note that the length of the typelist does not include the return value
     type nor (for member methods) the containing class (the Context typedef).
@@ -125,7 +124,8 @@ template <typename Sig> struct Signature;
 */
 #define CVV8_TYPELIST(X) ::cvv8::Signature< void X >
 
-/**
+/** \namespace cvv8::sl
+
     The sl namespace exclusively holds template metafunctions for working
     with Signature-style typelists.
 */
@@ -224,7 +224,34 @@ namespace sl {
     template <typename SigT>
     struct IsInCaLike : tmp::BoolVal< -1 == Arity<SigT>::Value > {};
 
-    
+    /**
+        A metafunction which has a true Value if the Signature type SigT
+        represents a non-member function.
+    */
+    template <typename SigT>
+    struct IsFunction : tmp::BoolVal< tmp::SameType<void, typename SigT::Context>::Value > {};
+
+    /**
+        A metafunction which has a true Value if the Signature type SigT
+        represents a member function (const or not).
+    */
+    template <typename SigT>
+    struct IsMethod : tmp::BoolVal< !tmp::SameType<void, typename SigT::Context>::Value > {};
+
+    /**
+        A metafunction which has a true Value if the Signature type SigT
+        represents a non-const member function.
+    */
+    template <typename SigT>
+    struct IsNonConstMethod : tmp::BoolVal< !SigT::IsConst && IsMethod<SigT>::Value > {};
+
+    /**
+        A metafunction which has a true Value if the Signature type SigT
+        represents a const member function.
+    */
+    template <typename SigT>
+    struct IsConstMethod : tmp::BoolVal< SigT::IsConst && IsMethod<SigT>::Value > {};
+
 }
 
 namespace tmp {

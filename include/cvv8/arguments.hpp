@@ -1,5 +1,3 @@
-// EXPERIMENTAL CODE. Don't use!
-// Don't rely on any interfaces in this file until this notice goes away!
 #if !defined(V8_CONVERT_ARGUMENTS_HPP_INCLUDED)
 #define V8_CONVERT_ARGUMENTS_HPP_INCLUDED
 #include "convert.hpp"

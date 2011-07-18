@@ -1,7 +1,8 @@
 #if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED 1
 
-/** @mainpage cvv8 API
+// Doxygen REFUSES to use this block as namespace docs: @namespace cvv8
+/** @mainpage cvv8 libv8-convert (cvv8)
 
 The cvv8 namespace (formerly v8::convert) houses APIs for handling the
 following:
@@ -46,24 +47,25 @@ include:
 
 Converting types:
 
-- v8::convert::CastToJS()
-- v8::convert::CastFromJS()
+- cvv8::CastToJS()
+- cvv8::CastFromJS()
 
 Implementing custom conversions:
 
-- v8::convert::NativeToJS
-- v8::convert::JSToNative
+- cvv8::NativeToJS
+- cvv8::JSToNative
 
 Converting functions to v8::InvocationCallback:
 
-- v8::convert::FunctionToInCa
-- v8::convert::MethodToInCa
-- v8::convert::ConstMethodToInCa
-- v8::convert::ToInCa
+- cvv8::FunctionToInCa
+- cvv8::MethodToInCa
+- cvv8::ConstMethodToInCa
+- cvv8::ToInCa
 
 Other utilities:
 
-- CtorForwarder and CtorForwarderDispatcher
+- cvv8::CtorForwarder and cvv8::CtorArityDispatcher
+- cvv8::ClassCreator
 - The tmp and sl namespaces hold template metaprogramming bits.
 
 Most of the code in this library are internal template specializations
@@ -77,7 +79,8 @@ obvious, exist only for template type resolution reasons, or
 are strictly internal are not necessarily documented.
 
 */
-namespace cvv8 {}
+namespace cvv8 {
+}
 
 #include "convert.hpp"
 #include "invocable.hpp"

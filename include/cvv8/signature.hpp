@@ -1,5 +1,11 @@
 #if !defined(WANDERINGHORSE_NET_SIGNATURE_HPP_INCLUDED)
 #define WANDERINGHORSE_NET_SIGNATURE_HPP_INCLUDED 1
+
+
+namespace cvv8 {
+#include "detail/signature_core.hpp"
+#include "detail/signature_generated.hpp"
+}
 /** LICENSE
 
     This software's source code, including accompanying documentation and
@@ -61,10 +67,4 @@
     primary public source code repository.)
 
 */
-
-namespace cvv8 {
-#include "detail/signature_core.hpp"
-#include "detail/signature_generated.hpp"
-}
-
 #endif /* WANDERINGHORSE_NET_SIGNATURE_HPP_INCLUDED */
