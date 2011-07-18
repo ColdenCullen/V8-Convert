@@ -397,6 +397,16 @@ namespace cvv8 {
             return true;
         }
     };
+    struct Argv_False : ArgumentsPredicateConcept
+    {
+        /**
+            Always returns false.
+        */
+        bool operator()( v8::Arguments const & ) const
+        {
+            return false;
+        }
+    };
 
     /**
         An ArgumentsPredicateConcept implementation which takes
@@ -470,7 +480,10 @@ namespace cvv8 {
         */
         bool operator()( v8::Arguments const & args ) const
         {
-            typedef typename PredList::Head P1;
+            typedef typename PredList::Head Head;
+            typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
+                                            Argv_True,
+                                            Head>::Type P1;
             typedef typename PredList::Tail Tail;
             typedef Argv_AndN<Tail> P2;
             return P1()( args ) && P2()(args);
@@ -594,15 +607,13 @@ namespace cvv8 {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             typedef typename PredList::Head Head;
+            typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
+                                            Argv_False,
+                                            Head>::Type Ftor;
             typedef typename PredList::Tail Tail;
-            if( Head()( argv ) )
-            {
-                return Head::Call( argv );
-            }
-            else
-            {
-                return PredicatedInCaDispatcher<Tail>::Call(argv);
-            }
+            return ( Ftor()( argv ) )
+                ? Detail::ListCallHelper<Head>::Call( argv )
+                : PredicatedInCaDispatcher<Tail>::Call(argv);
         }
     };
 

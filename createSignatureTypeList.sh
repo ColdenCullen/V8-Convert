@@ -69,11 +69,15 @@ while [[ $i -le $to ]]; do
     head="${targs%%,*}"
     tail="${targs#*,}"
     if [[ "$tail" = "$head" ]]; then # happens on 1-arity form
-        #if [[ $i -eq 0 ]]; then
+        # reminder to self: whether or not Sig<x (y)>::Tail should be NilType
+        # or Sig<x ()> is basically a philosophical question, i think. i find
+        # the latter more asthetic but it does cause minor problems in some
+        # particular type-list-using algorithms.
+        if [[ $i -eq 0 ]]; then
             tail="tmp::NilType"
-        #else
-        #    tail="Signature< RV () >"
-        #fi
+        else
+            tail="Signature< RV () >"
+        fi
     else
         tail="Signature<RV (${tail})>"
     fi

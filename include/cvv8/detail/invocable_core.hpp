@@ -1758,25 +1758,24 @@ struct InCaCatcher : Callable
 };
 
 /**
-   Convenience form of InCaCatcher which catches
-   std::exception and uses their what() method to
-   fetch the error message.
+   Convenience form of InCaCatcher which catches std::exception objects and
+   uses their what() method to fetch the error message.
    
-   The ConcreteException parameter may be std::exception (the 
-   default) or (in theory) any publically derived subclass.
-   When using a non-default value, one can chain exception catchers
-   to catch most-derived types first.
+   The ConcreteException parameter may be std::exception (the default) or
+   any publically derived subclass of std::exception. When using a
+   non-default value, one can chain exception catchers to catch most-derived
+   types first.
    
-   PropagateOtherExceptions defaults to false if ConcreteException is
-   std::exception (exactly, not a subtype), else it defaults to 
-   true. The reasoning is: when chaining these handlers we need to 
-   catch the most-derived first. Those handlers need to propagate 
-   other exceptions so that we can catch the lesser-derived ones (or 
-   those from completely different hierarchies) in subsequent 
-   catchers. The final catcher "should" (arguably) swallow unknown 
-   exceptions, converting them to JS exceptions with an unspecified 
-   message string (propagating them is technically legal but will 
-   most likely crash v8).
+   PropagateOtherExceptions determines whether _other_ exception types are
+   propagated or not. It defaults to false if ConcreteException is
+   std::exception (exactly, not a subtype), else it defaults to true. The
+   reasoning is: when chaining these handlers we need to catch the
+   most-derived first. Those handlers need to propagate other exceptions so
+   that we can catch the lesser-derived ones (or those from completely
+   different hierarchies) in subsequent catchers. The final catcher "should"
+   (arguably) swallow unknown exceptions, converting them to JS exceptions
+   with an unspecified message string (propagating them is technically legal
+   but will most likely crash v8).
 
    Here is an example of chaining:
 
@@ -1789,7 +1788,9 @@ struct InCaCatcher : Callable
    @endcode
    
    In the above example any exceptions would be processed in the order:
-   logic_error, runtime_error, bad_cast, std::exception, anything else.
+   logic_error, runtime_error, bad_cast, std::exception, anything else. Notice
+   that we took advantage of the PropagateOtherExceptions default value for all
+   cases to get the propagation behaviour we want.
 */
 template <v8::InvocationCallback ICB,
         typename ConcreteException = std::exception,
@@ -1804,6 +1805,31 @@ struct InCaCatcher_std :
                 >
 {};
 
+namespace Detail {
+    /**
+        An internal level of indirection for ArityDispatcher.
+    */
+    template <typename CallableT>
+    struct ListCallHelper : Callable
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            return CallableT::Call(argv);
+        }
+    };
+    //! End-of-list specialization.
+    template <>
+    struct ListCallHelper<tmp::NilType> : Callable
+    {
+        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        {
+            StringBuffer msg;
+            msg << "Found no overload taking "
+                <<argv.Length()<<" arguments!\n";
+            return Toss( msg.toError() );
+        }
+    };
+}
 
 /**
    A helper class which allows us to dispatch to multiple
@@ -1854,9 +1880,9 @@ struct ArityDispatchList : Callable
         typedef typename FwdList::Head FWD;
         typedef typename FwdList::Tail Tail;
         enum { Arity = sl::Arity< FWD >::Value };
-        return ( (Arity == argv.Length()) || (Arity<0) )
-            ? FWD::Call( argv )
-            : ArityDispatchList< Tail >::Call(argv);
+        return ( (-1 == Arity) || (Arity == argv.Length()) )
+            ? Detail::ListCallHelper<FWD>::Call(argv)
+            : ArityDispatchList<Tail>::Call(argv);
     }
 };
 
@@ -1864,15 +1890,8 @@ struct ArityDispatchList : Callable
    End-of-list specialization.
 */
 template <>
-struct ArityDispatchList<tmp::NilType> : Callable
+struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
 {
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-    {
-        StringBuffer msg;
-        msg << "ArityDispatchList<>::Call() there is no overload "
-            << "taking "<<argv.Length()<<" arguments!\n";
-        return Toss( msg.toError() );
-    }
 };    
 
 #if !defined(DOXYGEN)
