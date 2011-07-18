@@ -80,3 +80,4 @@ SHELL_LDFLAGS := ConvertDemo.o
 SHELL_BINDINGS_HEADER := ConvertDemo.hpp
 SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
 include addons/shell-common.make
+$(SHELL.LOCAL.O): ConvertDemo.o demo.o
