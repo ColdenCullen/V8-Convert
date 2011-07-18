@@ -1068,7 +1068,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
     typedef cv::MethodToInCa<N, int (unsigned int, unsigned int), &N::setTimeout > SetTimeout2;
     typedef cv::MethodToInCa<N, int (unsigned int), &N::setTimeoutSec > SetTimeout1;
     typedef cv::ArityDispatch<2, SetTimeout2, cv::ArityDispatch<1,SetTimeout1> > OloadSetTimeout;
-#define F2I cv::FunctionToInvocationCallback
+#define F2I cv::FunctionToInCa
 #define M2I cv::MethodToInCa
 #define C2I cv::ConstMethodToInCa
     
@@ -1079,8 +1079,8 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
         ( "toString", C2I<N, std::string (),&N::toString>::Call )
         ( "bind", M2I<N,int (char const *,int),&N::bind,false>::Call )
         ( "connect", M2I<N,int (char const *, int), &N::connect, false>::Call )
-        ( "nameToAddress", F2I< ValH (const char *), N::nameToAddress> )
-        ( "addressToName", F2I< ValH (const char *), N::addressToName> )
+        ( "nameToAddress", F2I< ValH (const char *), N::nameToAddress>::Call )
+        ( "addressToName", F2I< ValH (const char *), N::addressToName>::Call )
         ( "write", cv::JSSocket::writeN )
         // is this useful? .Set( "sendTo", cv::JSSocket::sendTo )
         ( socket_strings.fieldPeer, false )
@@ -1113,7 +1113,7 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
 #define JF v8::FunctionTemplate::New(cb)->GetFunction()
 #define F(X) ctor->Set( JSTR(X), JF )
 
-    cb = F2I< int (char const *), &N::getProtoByName >;
+    cb = F2I< int (char const *), &N::getProtoByName >::Call;
     F("getProtoByName");
 
     typedef cv::FunctionToInCa<ValH (char const *), &N::nameToAddress> N2A1;
