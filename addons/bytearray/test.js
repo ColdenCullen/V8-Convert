@@ -44,9 +44,8 @@ function testGZip()
     var i;
     for( i = 0; i < 10; ++i ) ba.append("Line #"+i+"\n");
     var origString = ba.stringValue();
-    var z = new ByteArray();
-    var rc = ba.gzipTo(z);
-    print("gzipTo() rc = "+rc);
+    var z = ba.gzip(z);
+    assert( z instanceof ByteArray );
     print("ba.length="+ba.length+", z.length="+z.length);
     assertneq( ba.length, z.length );
     print("First few bytes of z:");
@@ -55,16 +54,15 @@ function testGZip()
         li.push( z[i] );
     }
     print( JSON.stringify(li) );
-    var u = new ByteArray();
-    rc = z.gunzipTo(u);
-    print("Unzip rc="+rc+", u.length="+u.length);
+    var u = z.gunzip();
+    assert( z instanceof ByteArray );
+    print("Unzipped; u.length="+u.length);
     asserteq( ba.length, u.length );
     print("Unzipped data:\n"+u.stringValue());
     var z2 = ba.gzip();
     asserteq( z2.length, z.length );
     u.destroy();
     z.destroy();
-
     u = z2.gunzip();
     z2.destroy;
     asserteq( ba.length, u.length );
