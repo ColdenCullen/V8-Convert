@@ -1285,66 +1285,6 @@ template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::Functi
 struct ConstMethodToInCaVoid : Detail::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8>
 {};
 
-
-/** @deprecated Use FunctionToInCa::Call() instead.
-
-   A v8::InvocationCallback implementation which forwards the arguments from argv
-   to the template-specified function. If Func returns void then the return
-   value will be v8::Undefined().
-
-   Example usage:
-
-   @code
-   v8::InvocationCallback cb = FunctionToInvocationCallback<int (char const *), ::puts>;
-   @endcode
-*/
-template <typename Sig,
-          typename FunctionSignature<Sig>::FunctionType Func>
-v8::Handle<v8::Value> FunctionToInvocationCallback( v8::Arguments const & argv )
-{
-    return FunctionToInCa<Sig,Func>::Call(argv);
-}
-
-/** @deprecated Use MethodToInCa::Call() instead.
-
-   A v8::InvocationCallback implementation which forwards the arguments from argv
-   to the template-specified member of "a" T object. This function uses
-   CastFromJS<T>( argv.This() ) to fetch the native 'this' object, and will
-   fail (with a JS-side exception) if that conversion fails.
-
-   If Func returns void then the return value will be v8::Undefined().
-
-   Example usage:
-
-   @code
-   v8::InvocationCallback cb = MethodToInvocationCallback<MyType, int (double), &MyType::doSomething >;
-   @endcode
-
-*/
-template <typename T,typename Sig,
-          typename MethodSignature<T,Sig>::FunctionType Func>
-v8::Handle<v8::Value> MethodToInvocationCallback( v8::Arguments const & argv )
-{
-    return MethodToInCa<T,Sig,Func>::Call(argv);
-}
-
-
-/** @deprecated Use ConstMethodToInCa::Call() instead.
-
-   Identical to MethodToInvocationCallback(), but is for const member functions.
-
-   @code
-   v8::InvocationCallback cb = ConstMethodToInvocationCallback<MyType, int (double), &MyType::doSomethingConst >;
-   @endcode
-
-*/
-template <typename T,typename Sig,
-          typename ConstMethodSignature<T,Sig>::FunctionType Func>
-v8::Handle<v8::Value> ConstMethodToInvocationCallback( v8::Arguments const & argv )
-{
-    return ConstMethodToInCa<T,Sig,Func>::Call(argv);
-}
-
 /**
    Identicial to ArgsToFunctionForwarder, but works on non-const
    member methods of type T.

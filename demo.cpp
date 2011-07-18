@@ -98,12 +98,12 @@ ValueHandle test1_callback( v8::Arguments const & argv )
 
     v8::InvocationCallback cb;
     CERR << "Calling doNothing():\n";
-    cb = cv::FunctionToInvocationCallback< void (), doNothing >;
+    cb = cv::FunctionToInCa< void (), doNothing >::Call;
     cb(argv);
 
   
     CERR << "Calling doSomething():\n";
-    cb = cv::FunctionToInvocationCallback< int (int), doSomething >;
+    cb = cv::FunctionToInCa< int (int), doSomething >::Call;
     cb(argv);
     BoundNative & foo = *fooPtr;
     CERR << "Calling foo.doFoo2():\n";

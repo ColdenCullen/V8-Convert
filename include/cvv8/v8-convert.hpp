@@ -2,7 +2,7 @@
 #define CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED 1
 
 // Doxygen REFUSES to use this block as namespace docs: @namespace cvv8
-/** @mainpage cvv8 libv8-convert (cvv8)
+/** @mainpage libv8-convert (cvv8)
 
 The cvv8 namespace (formerly v8::convert) houses APIs for handling the
 following:

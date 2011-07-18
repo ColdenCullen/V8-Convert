@@ -383,7 +383,6 @@ namespace cvv8 {
 #undef ASS
             }
 #define CATCHER cv::InCaCatcher_std
-#define F2I cv::FunctionToInvocationCallback
             ////////////////////////////////////////////////////////////
             // Bind some member functions...
             cc("cputs",
@@ -395,7 +394,7 @@ namespace cvv8 {
                 ("doFoo2",
                  cv::ToInCa<BoundNative,double (int,double),&BoundNative::doFoo2>::Call)
                 ("toString",
-                 F2I<ValueHandle (v8::Arguments const &),BoundNative_toString>)
+                 cv::FunctionToInCa<ValueHandle (v8::Arguments const &),BoundNative_toString>::Call)
                 ("puts",
                  cv::ToInCa<BoundNative,void (char const *) const,&BoundNative::puts>::Call)
                 ("doFooConst",
