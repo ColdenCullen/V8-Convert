@@ -37,6 +37,11 @@ ValueHandle sampleCallback( v8::Arguments const & argv )
     return v8::Undefined();
 }
 
+void throwStdString()
+{
+    throw std::string("std::string thrown as an exception.");
+}
+
 namespace cvv8 {
     // A helper to support converting from BoundNative to its JS handle.
     typedef NativeToJSMap<BoundNative> BMap;
@@ -416,6 +421,12 @@ namespace cvv8 {
                 ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
+                ("throwStdString",
+                    cv::InCaCatcher<std::string,
+                        char const * () const,
+                        &std::string::c_str,
+                        FunctionToInCa< void (), throwStdString >::Call
+                    >::Call)
 #if 1 // converting natives to JS requires more lower-level plumbing than converting from JS to native...
                  ("nativeReturn",
                  cv::ToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)

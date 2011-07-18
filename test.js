@@ -41,7 +41,7 @@ function test1()
     f.doFooConst();
     f.nativeParam(f);
     f.runGC();
-
+    assertThrows( function() { f.throwStdString(); } );
     
 
     f.overloaded();
