@@ -682,6 +682,11 @@ namespace { // testing ground for some compile-time assertions...
         ASS< (2 == cv::sl::Index<int, TList1>::Value) >();
         ASS< (0 > cv::sl::Index<uint32_t, TList1>::Value) >();
         ASS< (0 > cv::sl::Index<uint32_t, cv::Signature<void ()> >::Value) >();
+
+        typedef cv::FunctionToInCa<int (char const *),::puts> PutsInCa;
+        ASS< 1 == sl::Arity< PutsInCa >::Value >();
+        ASS< 1 == sl::Arity< cv::Signature<PutsInCa::FunctionType> >::Value >();
+        ASS< -1 == sl::Arity< cv::Signature<v8::InvocationCallback> >::Value >();
 #undef SIU
 #undef ASS
     }
