@@ -3,7 +3,7 @@
 #include <v8.h>
 
 #include <v8/convert/ClassCreator.hpp>
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     class JSByteArray
     {
@@ -194,5 +194,5 @@ namespace v8 { namespace convert {
     {};
 
     
-}} // namespaces
+} // namespaces
 #endif /* V8_CONVERT_BYTEARRAY_H_INCLUDED */

@@ -34,7 +34,7 @@
 
    If built without those macros then the shell will still work but will not
    contain any client-custom bindings. See
-   v8::convert::V8Shell::SetupDefaultBindings() for the list of features
+   cvv8::V8Shell::SetupDefaultBindings() for the list of features
    added to the JS engine. In addition to those, this shell provides a
    JS-side gc() function which is a proxy for v8::V8::IdleNotification().
 */
@@ -53,7 +53,7 @@
 
 #include "v8/convert/v8-convert.hpp"
 #include "v8/convert/V8Shell.hpp"
-namespace cv = ::v8::convert;
+namespace cv = cvv8;
 
 #if defined(INCLUDE_SHELL_BINDINGS)
 #  include INCLUDE_SHELL_BINDINGS

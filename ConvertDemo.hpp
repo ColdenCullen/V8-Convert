@@ -1,5 +1,5 @@
 /**
-   Test/demo code for the v8::convert API.
+   Test/demo code for the cvv8 API.
    
 */
 #if defined(NDEBUG)
@@ -21,7 +21,7 @@
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" << __FUNCTION__<< "(): "
 #endif
 #define JSTR(X) v8::String::New(X)
-namespace cv = v8::convert;
+namespace cv = cvv8;
 //typedef v8::Handle<v8::Value> ValueHandle;
 #define ValueHandle v8::Handle<v8::Value>
 
@@ -244,7 +244,7 @@ struct BoundSubNative : public BoundNative
      */
     v8::Handle<v8::Value> toString() const
     {
-        return v8::convert::StringBuffer() << "[object BoundSubNative@"<<(void const *)this<<"]";
+        return cv::StringBuffer() << "[object BoundSubNative@"<<(void const *)this<<"]";
     }
     
     struct NonBoundType
@@ -276,7 +276,7 @@ struct BoundSubNative : public BoundNative
    ConvertDemo.cpp. It mostly shows how to use ClassCreator<> policies
    to customize the ClassCreator bindings for a particular class.
 */
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     //! Optional: used by some error reporting code.
     template <>
@@ -444,5 +444,4 @@ namespace v8 { namespace convert {
         :  NativeToJSMap<BoundSubNative>::NativeToJSImpl
     {};
 
-
-}}
+}

@@ -64,7 +64,7 @@
 
 #include "invocable.hpp"
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     /**
        This class contains static methods which can be used to bind
@@ -92,7 +92,7 @@ namespace v8 { namespace convert {
            CastToJS<PropertyType>() must be legal.
         */
         template <typename PropertyType, PropertyType const * SharedVar>
-        static v8::Handle<v8::Value> AccessorGetterStaticVar(v8::Local<v8::String> property, const AccessorInfo &info)
+        static v8::Handle<v8::Value> AccessorGetterStaticVar(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             return CastToJS<PropertyType>( *SharedVar );
         }
@@ -190,7 +190,7 @@ namespace v8 { namespace convert {
            exception.
         */
         template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> FunctionToAccesorGetter( Local< String > property, const AccessorInfo & info )
+        static v8::Handle<v8::Value> FunctionToAccesorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             try
             {
@@ -524,14 +524,14 @@ namespace v8 { namespace convert {
            defaults).
         */
         template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> MethodToAccessorGetter( Local< String > property, const AccessorInfo & info )
+        static v8::Handle<v8::Value> MethodToAccessorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
                                                     << property << "' could not access native This object!" );
             try
             {
-                return convert::CastToJS( (self->*Getter)() );
+                return CastToJS( (self->*Getter)() );
             }
             catch( std::exception const & ex )
             {
@@ -539,8 +539,10 @@ namespace v8 { namespace convert {
             }
             catch( ... )
             {
-                return ::v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                             << property << "' threw an unknown native exception type!");
+                return Toss( (StringBuffer() << "Native member property getter '"
+                             << property
+                             << "' threw an unknown native exception type!"
+                             ).toError() );
             }
         }
 
@@ -551,11 +553,11 @@ namespace v8 { namespace convert {
         static v8::Handle<v8::Value> ConstMethodToAccessorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             NativeHandle const self = CastFromJS<NativeHandle>( info.This() );
-            if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                                    << property << "' could not access native This object!" );
+            if( ! self ) return Toss( (StringBuffer() << "Native member property getter '"
+                                       << property << "' could not access native This object!").toError() );
             try
             {
-                return convert::CastToJS( (self->*Getter)() );
+                return CastToJS( (self->*Getter)() );
             }
             catch( std::exception const & ex )
             {
@@ -563,8 +565,11 @@ namespace v8 { namespace convert {
             }
             catch( ... )
             {
-                return ::v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                             << property << "' threw an unknown native exception type!");
+                return Toss( (StringBuffer()
+                             << "Native member property getter '"
+                             << property
+                             << "' threw an unknown native exception type!"
+                             ).toError());
             }
         }
 
@@ -685,6 +690,6 @@ namespace v8 { namespace convert {
 
     };
 
-}} // namespaces
+} // namespaces
 
 #endif /* CODE_GOOGLE_COM_P_V8_CONVERT_PROPERTIES_HPP_INCLUDED */

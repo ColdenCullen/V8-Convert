@@ -64,7 +64,7 @@
 
 #include <v8.h>
 
-namespace v8 { namespace convert {
+namespace cvv8 {
     class JSPDO {
     private:
         JSPDO();
@@ -85,7 +85,7 @@ namespace v8 { namespace convert {
     problem with JSToNative and friends. But... i could forward-declare those
     types, i guess, instead of #includ'ing them...
 */
-}}
+}
 
 
 #endif

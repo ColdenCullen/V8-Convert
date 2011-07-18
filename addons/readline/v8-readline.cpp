@@ -15,9 +15,8 @@
 #include <string>
 #include "v8/convert/convert.hpp"
 
-namespace v8 { namespace convert {
+namespace cvv8 {
     using namespace v8;
-    using namespace v8::convert;
     namespace rl = ::readlinecpp;
 #define JS_WRAPPER(FN) /*static*/ Handle< Value > FN( const Arguments & argv )
 #define ASSERTARGS(FUNCNAME,COND) const int argc = argv.Length();       \
@@ -81,4 +80,4 @@ namespace v8 { namespace convert {
     }
 
     
-} } // namespaces
+} // namespace

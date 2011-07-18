@@ -34,9 +34,7 @@ get a more custom-fit/efficient solution.
 
 #include "jssprintf.hpp"
 
-namespace v8 {
-namespace convert {
-
+namespace cvv8 {
 
 typedef long double LONGDOUBLE_TYPE;
 
@@ -758,7 +756,7 @@ static long spech_sqlstring3( whprintf_appender pf,
    31 Oct 2008 by Stephan Beal: refactored the et_info lookup to be
    constant-time instead of linear.
 */
-::v8::Handle< ::v8::Value > sprintf( int argc, Handle<Value> argv[] )
+v8::Handle< v8::Value > sprintf( int argc, v8::Handle<v8::Value> argv[] )
 {
     using namespace ::v8;
     //HandleScope sentry; // causes segfaults for me!
@@ -1337,11 +1335,11 @@ do{				       \
 #undef CSTR
 } /* End of function sprintf(). Whew. */
 
-::v8::Handle< ::v8::Value > sprintf( ::v8::Arguments const & argv )
+v8::Handle< ::v8::Value > sprintf( v8::Arguments const & argv )
 {
-    typedef Handle<Value> HV;
+    typedef v8::Handle<v8::Value> HV;
     const int argc = argv.Length();
-    std::vector< HV > vec( static_cast<size_t>(argc), Null() );
+    std::vector< HV > vec( static_cast<size_t>(argc), v8::Null() );
     for( int i = 0; i < argc; ++i )
     {
         vec[i] = argv[i];
@@ -1361,8 +1359,8 @@ do{				       \
 
 void SetupJSPrintf( v8::Handle<v8::Object> dest )
 {
-    dest->Set(String::New("sprintf"), FunctionTemplate::New(sprintf)->GetFunction() );
+    dest->Set(v8::String::New("sprintf"), v8::FunctionTemplate::New(sprintf)->GetFunction() );
 }
 
 
-}} // namespaces
+} // namespace

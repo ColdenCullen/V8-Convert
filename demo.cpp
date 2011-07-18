@@ -23,7 +23,7 @@
 
 #include "v8/convert/v8-convert.hpp"
 #include "v8/convert/V8Shell.hpp"
-namespace cv = ::v8::convert;
+namespace cv = cvv8;
 //typedef v8::Handle<v8::Value> ValueHandle;
 #define ValueHandle v8::Handle<v8::Value>
 
@@ -223,7 +223,7 @@ struct MyType
 };
 //-----------------------------------
 // Policies used by cv::ClassCreator
-namespace v8 { namespace convert {
+namespace cvv8 {
     // Optional: used mostly for error reporting purposes but can
     // also be used to hold the class' JS-side name (which often differs
     // from its native name).
@@ -250,7 +250,7 @@ namespace v8 { namespace convert {
     {};
     
 
-}}
+}
 
 //-----------------------------------
 // Ultra-brief ClassCreator demo. See ConvertDemo.?pp for MUCH more.

@@ -38,5 +38,5 @@ all: $(libv8bytearray.DLL)
 # shell app...
 SHELL_LDFLAGS := $(LDFLAGS_V8) -L. -lv8bytearray
 SHELL_BINDINGS_HEADER := bytearray.hpp
-SHELL_BINDINGS_FUNC := v8::convert::JSByteArray::SetupBindings
+SHELL_BINDINGS_FUNC := cvv8::JSByteArray::SetupBindings
 include ../shell-common.make

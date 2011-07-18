@@ -5,7 +5,7 @@
 #include "convert.hpp"
 #include <limits>
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     /**
         A functor which fetches an argument by index.
@@ -625,6 +625,6 @@ namespace v8 { namespace convert {
         }
     };
 
-} }
+}
 
 #endif

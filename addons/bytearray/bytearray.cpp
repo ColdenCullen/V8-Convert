@@ -33,14 +33,14 @@ by Ondrej Zara
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << " : "
 #endif
 
-namespace cv = v8::convert;
+namespace cv = cvv8;
 #define JSTR(X) v8::String::New(X)
 using cv::JSByteArray;
 
 
 #define BA_JS_CLASS_NAME "ByteArray"
 
-namespace v8 { namespace convert {
+namespace cvv8 {
     char const * TypeName<JSByteArray>::Value = "ByteArray";
 
     //! Internal impl of JSByteArray::gzipTo().
@@ -77,7 +77,7 @@ namespace v8 { namespace convert {
         delete obj;
     }
     
-} } // v8::convert
+} // cvv8
 
 
 namespace {
@@ -459,7 +459,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     return;
 }
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level )
     {
@@ -636,8 +636,8 @@ namespace v8 { namespace convert {
             return (ret == Z_STREAM_END) ? Z_OK : Z_DATA_ERROR;
         }
     }
-    
-}}
+
+}// namespace
 #undef DBGOUT
 #undef JSTR
 #undef BA_JS_CLASS_NAME

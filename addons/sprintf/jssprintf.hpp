@@ -2,7 +2,7 @@
 #define V8_CONVERT_SPRINTF_H_INCLUDED
 #include <v8.h>
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     /**
         Installs the sprintf() function in the given object.
@@ -26,5 +26,5 @@ namespace v8 { namespace convert {
         disabled in this implementation.        
     */
     v8::Handle< v8::Value > sprintf( ::v8::Arguments const & argv );
-}}
+}
 #endif

@@ -2,7 +2,7 @@
 #define V8_CONVERT_BYTEARRAY_H_INCLUDED
 #include <v8.h>
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     class Readline
     {
@@ -10,5 +10,5 @@ namespace v8 { namespace convert {
         static void SetupBindings( v8::Handle<v8::Object> dest );
     };
     
-}} // namespaces
+} // namespaces
 #endif /* V8_CONVERT_BYTEARRAY_H_INCLUDED */

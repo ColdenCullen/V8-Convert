@@ -62,9 +62,9 @@
 
 */
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 #include "detail/signature_core.hpp"
 #include "detail/signature_generated.hpp"
-}}
+}
 
 #endif /* WANDERINGHORSE_NET_SIGNATURE_HPP_INCLUDED */

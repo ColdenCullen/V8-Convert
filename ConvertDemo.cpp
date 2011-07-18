@@ -37,7 +37,7 @@ ValueHandle sampleCallback( v8::Arguments const & argv )
     return v8::Undefined();
 }
 
-namespace v8 { namespace convert {
+namespace cvv8 {
     // A helper to support converting from BoundNative to its JS handle.
     typedef NativeToJSMap<BoundNative> BMap;
     typedef NativeToJSMap<BoundSubNative> BSubMap;
@@ -66,7 +66,7 @@ namespace v8 { namespace convert {
         delete obj;
     }
 
-} }
+}
 
 v8::Handle<v8::Value> bogo_callback_arityN( v8::Arguments const & argv )
 {
@@ -150,7 +150,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
 {
     CERR << "Arg count="<<argv.Length()
           << ". Dispatching based on predicate rules...\n";
-    using namespace v8::convert;
+    using namespace cvv8;
 
     /**
         Create some logic (via a Predicate template) to use in 
@@ -302,7 +302,7 @@ template <bool IsUsingUnlock>
 void test_using_locker()
 {
     CERR << "Callback "<<(IsUsingUnlock?"with":"without")
-        << " v8::convert's Unlocker support. "
+        << " cvv8's Unlocker support. "
         << "Briefly locking v8... "
         << "If something is broken in our locking setup then the "
         << "following will likely assert in v8...\n";
@@ -312,7 +312,7 @@ void test_using_locker()
     CERR << "We're back...\n";
 }
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
 
 
@@ -512,7 +512,7 @@ namespace v8 { namespace convert {
             CERR << "Finished binding BoundNative.\n";
         }
     };
-} }
+}
 
 void BoundNative::SetupBindings( v8::Handle<v8::Object> const & dest )
 {
@@ -685,8 +685,8 @@ namespace { // testing ground for some compile-time assertions...
 
     void test_new_typelist()
     {
-        using namespace v8::convert;
-        using namespace v8::convert::tmp;
+        using namespace cvv8;
+        using namespace cvv8::tmp;
 
 #if 1 // just some experimentation...
         typedef void (RawSignature)(int, double, char);
@@ -752,7 +752,7 @@ namespace { // testing ground for some compile-time assertions...
 #if TRY_ARGS_CODE
     void test_args_code()
     {
-        using namespace v8::convert;
+        using namespace cvv8;
         typedef ArgAt<0> AA0;
     }
 #endif

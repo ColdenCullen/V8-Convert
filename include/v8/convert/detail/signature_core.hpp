@@ -23,7 +23,7 @@ too much effort to coddle to it.
 #  endif
 #endif
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 /** @file signature_core.hpp
 
 This file houses the core-most templates related to handling
@@ -123,7 +123,7 @@ template <typename Sig> struct Signature;
     type-list require a Signature-compatible typelist because they need the
     ReturnValue and/or Context parts.
 */
-#define CVV8_TYPELIST(X) ::v8::convert::Signature< void X >
+#define CVV8_TYPELIST(X) ::cvv8::Signature< void X >
 
 /**
     The sl namespace exclusively holds template metafunctions for working
@@ -486,7 +486,7 @@ template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::Functi
 typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
 
 #include "signature_generated.hpp"
-}} // namespaces
+} // namespaces
 #undef V8_CONVERT_ENABLE_CONST_OVERLOADS
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED */

@@ -19,5 +19,5 @@ all: $(libv8time.DLL)
 # shell app...
 SHELL_LDFLAGS := $(LDFLAGS_V8) -L. -lv8time
 SHELL_BINDINGS_HEADER := time.hpp
-SHELL_BINDINGS_FUNC := v8::convert::time::SetupBindings
+SHELL_BINDINGS_FUNC := cvv8::time::SetupBindings
 include ../shell-common.make

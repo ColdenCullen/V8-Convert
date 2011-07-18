@@ -1,7 +1,7 @@
 #ifndef CODE_GOOGLE_COM_P_V8_CONVERT_TMP_HPP_INCLUDED
 #define CODE_GOOGLE_COM_P_V8_CONVERT_TMP_HPP_INCLUDED
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 /**
    The tmp namespace contains code related to template 
    metaprogramming, a-la Alexandrescu's Loki library or Boost MPL.
@@ -88,5 +88,5 @@ namespace tmp {
 
 
 
-}}} // namespaces
+}} // namespaces
 #endif // CODE_GOOGLE_COM_P_V8_CONVERT_TMP_HPP_INCLUDED

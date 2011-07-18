@@ -22,7 +22,7 @@
 
 #include <v8.h>
 
-namespace v8 { namespace convert {
+namespace cvv8 {
     namespace Detail {
         template <bool UseLocker>
         struct V8MaybeLocker
@@ -112,7 +112,7 @@ namespace v8 { namespace convert {
             be used, e.g., to redirect std::cout to a libcurses window.
         */
         template <std::ostream * OS>
-        static Handle<Value> PrintToStdOstream( Arguments const & argv )
+        static v8::Handle<v8::Value> PrintToStdOstream( v8::Arguments const & argv )
         {
             v8::HandleScope hscope;
             int const argc = argv.Length();
@@ -265,7 +265,7 @@ namespace v8 { namespace convert {
         */
         V8Shell & operator()( char const * name, v8::InvocationCallback const f )
         {
-            return this->operator()( name, FunctionTemplate::New(f) );
+            return this->operator()( name, v8::FunctionTemplate::New(f) );
         }
 
         /**
@@ -618,5 +618,5 @@ namespace v8 { namespace convert {
     */
     typedef V8Shell<> Shell;
 
-}}
+}
 #endif /* V8_CONVERT_V8Shell_HPP_INCLUDED */

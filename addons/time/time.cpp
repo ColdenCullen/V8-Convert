@@ -22,7 +22,7 @@
 #if USE_SIGNALS
 #include <signal.h>
 #endif
-namespace v8 { namespace convert { namespace time {
+namespace cvv8 { namespace time {
     namespace Detail
     {
         /**
@@ -234,6 +234,6 @@ namespace v8 { namespace convert { namespace time {
 #undef SET        
     }
 
-}}} // namespaces
+}} // namespaces
 
 #undef USE_SIGNALS

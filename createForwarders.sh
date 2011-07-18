@@ -77,7 +77,7 @@ struct CtorForwarderProxy<${count}> // todo: subclass Signature<Sig>
 {
     enum { Arity = ${count} };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -266,7 +266,7 @@ namespace Detail {
         typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T ${constness} & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T ${constness} & self, FunctionType func, v8::Arguments const & argv )
         {
             ${sigTypeDecls}
             ${castTypedefs}
@@ -274,7 +274,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)( ${castCalls} );
         }
-        static ${ValHnd} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        static ${ValHnd} Call( T ${constness} & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -299,7 +299,7 @@ namespace Detail {
         typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T ${constness} & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T ${constness} & self, FunctionType func, v8::Arguments const & argv )
         {
             ${sigTypeDecls}
             ${castTypedefs}
@@ -307,7 +307,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)( ${castCalls} );
         }
-        static ${ValHnd} Call( T ${constness} & self, FunctionType func, Arguments const & argv )
+        static ${ValHnd} Call( T ${constness} & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {

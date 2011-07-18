@@ -36,7 +36,7 @@ by Ondrej Zara
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
 #define DBGOUT if(cv::JSSocket::enableDebug) CERR
 #define JSTR(X) v8::String::New(X)
-namespace cv = v8::convert;
+namespace cv = cvv8;
 bool cv::JSSocket::enableDebug = false;
 
 
@@ -697,7 +697,7 @@ int cv::JSSocket::setTimeoutMs( unsigned int ms )
 
 ////////////////////////////////////////////////////////////////////////
 // Set up our ClassCreator policies...
-namespace v8 { namespace convert {
+namespace cvv8 {
     
     v8::Handle<v8::Value> NativeToJS< JSSocket >::operator()( JSSocket * x ) const
     {
@@ -730,7 +730,7 @@ namespace v8 { namespace convert {
         delete obj;
     }
 
-}} // v8::convert
+} // v8::convert
 
 /************************************************************************
    Down here is where the runtime setup parts of the bindings take place...
@@ -1013,7 +1013,7 @@ cv::JSSocket * cv::JSSocket::accept()
         Toss(msg.toError());
         return NULL;
     }
-    typedef v8::convert::ClassCreator<JSSocket> CC;
+    typedef cv::ClassCreator<JSSocket> CC;
     v8::Handle<v8::Value> argv[] =
         {
         cv::CastToJS( this->family ),

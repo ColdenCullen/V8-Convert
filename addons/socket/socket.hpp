@@ -84,7 +84,7 @@
 
 #include <v8.h>
 #include "v8/convert/ClassCreator.hpp"
-namespace v8 { namespace convert {
+namespace cvv8 {
 
 class JSSocket;
 template <>
@@ -426,6 +426,6 @@ template <>
 struct ClassCreator_SetupBindings<JSSocket> : ClassCreator_SetupBindings_ClientFunc<JSSocket,&JSSocket::SetupBindings>
 {};
 
-} }
+}
 
 #endif

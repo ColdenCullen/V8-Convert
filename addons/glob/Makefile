@@ -39,5 +39,5 @@ all: $(libv8glob.DLL)
 shell: $(THE_OBJS)
 SHELL_LDFLAGS := $(LDFLAGS_V8) $(THE_OBJS)
 SHELL_BINDINGS_HEADER := jsglob.hpp
-SHELL_BINDINGS_FUNC := v8::convert::SetupGlobBindings
+SHELL_BINDINGS_FUNC := cvv8::SetupGlobBindings
 include ../shell-common.make

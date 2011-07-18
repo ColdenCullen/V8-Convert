@@ -2,7 +2,7 @@
 #define V8_CONVERT_NATIVE_JS_MAPPER_HPP_INCLUDED
 
 #include "detail/convert_core.hpp"
-namespace v8 { namespace convert {
+namespace cvv8 {
     /**
        A helper class to assist in the "two-way-binding" of
        natives to JS objects. This class holds native-to-JS
@@ -100,7 +100,7 @@ namespace v8 { namespace convert {
         */
         static v8::Handle<v8::Object> GetJSObject( void const * key )
         {
-            if( ! key ) return Handle<Object>();
+            if( ! key ) return v8::Handle<v8::Object>();
             typename OneOfUsT::const_iterator it = Map().find(key);
             if( Map().end() == it ) return v8::Handle<v8::Object>();
             else return (*it).second.second;
@@ -132,6 +132,6 @@ namespace v8 { namespace convert {
         };
     };
 
-}} // namespaces
+} // namespaces
 
 #endif /* include guard */

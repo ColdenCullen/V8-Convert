@@ -15,7 +15,7 @@ conversion.
 #include "convert_core.hpp"
 #include "signature_core.hpp"
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
 /**
     A marker class, primarily for documentation purposes.
@@ -46,10 +46,10 @@ struct FunctionSignature< RV (v8::Arguments const &) > : Signature<RV (v8::Argum
    Arity value of -1.
 */
 template <typename T, typename RV >
-struct MethodSignature< T, RV (Arguments const &) > : Signature< RV (v8::Arguments const &) >
+struct MethodSignature< T, RV (v8::Arguments const &) > : Signature< RV (v8::Arguments const &) >
 {
     typedef T Type;
-    typedef RV (T::*FunctionType)(Arguments const &);
+    typedef RV (T::*FunctionType)(v8::Arguments const &);
 };
 
 /**
@@ -58,10 +58,10 @@ struct MethodSignature< T, RV (Arguments const &) > : Signature< RV (v8::Argumen
    of -1.
 */
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (Arguments const &) > : Signature< RV (v8::Arguments const &) >
+struct ConstMethodSignature< T, RV (v8::Arguments const &) > : Signature< RV (v8::Arguments const &) >
 {
     typedef T Type;
-    typedef RV (T::*FunctionType)(Arguments const &) const;
+    typedef RV (T::*FunctionType)(v8::Arguments const &) const;
 };
 
 /**
@@ -337,7 +337,7 @@ public:
 
     This is primarily intended for use in two cases:
 
-    - Internally in the v8::convert binding mechanisms.
+    - Internally in the cvv8 binding mechanisms.
 
     - In client code when binding non-member functions as JS-side methods of
     native objects.
@@ -396,7 +396,7 @@ namespace Detail {
     signature's types) cannot obey the locking rules.
 */
 #define ASSERT_UNLOCK_SANITY_CHECK typedef char AssertCanEnableUnlock[ \
-    !UnlockV8 ? 1 : (cv::SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
+    !UnlockV8 ? 1 : (SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
     ]
 
     /*
@@ -405,7 +405,7 @@ namespace Detail {
     */
 
     template <int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::Signature<Sig> >::Value >
+            bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value >
     struct ArgsToFunctionForwarder;
     
     template <int Arity, typename RV, bool UnlockV8>
@@ -416,14 +416,14 @@ namespace Detail {
         typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             return (RV) func(argv);
         }
 
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return cv::CastToJS( CallNative( func, argv ) );
+            return CastToJS( CallNative( func, argv ) );
         }
 
         ASSERT_UNLOCKV8_IS_FALSE;
@@ -442,12 +442,12 @@ namespace Detail {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ReturnType CallNative( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             V8Unlocker<UnlockV8> unlocker;
             return func();
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             return CastToJS( CallNative( func, argv ) );
         }
@@ -465,7 +465,7 @@ namespace Detail {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef Sig FunctionType;
-        static ReturnType CallNative( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)func()
@@ -475,7 +475,7 @@ namespace Detail {
                return of a void expression without the cast.
             */;
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             CallNative( func, argv );
             return v8::Undefined();
@@ -492,12 +492,12 @@ namespace Detail {
         typedef FunctionSignature<RV (v8::Arguments const &)> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)func(argv);
         }
-        static v8::Handle<v8::Value> Call( FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
             CallNative( func, argv );
             return v8::Undefined();
@@ -507,10 +507,10 @@ namespace Detail {
     };
 
     /**
-        Internal impl for v8::convert::ArgsToConstMethodForwarder.
+        Internal impl for cvv8::ArgsToConstMethodForwarder.
     */
     template <typename T, int Arity_, typename Sig,
-             bool UnlockV8 = cv::SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
+             bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
      >
     struct ArgsToMethodForwarder;
 
@@ -598,7 +598,7 @@ namespace Detail {
     {};
 
     template <typename T, int Arity_, typename Sig,
-        bool UnlockV8 = cv::SignatureIsUnlockable< cv::MethodSignature<T, Sig> >::Value
+        bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
     >
     struct ArgsToMethodForwarderVoid;
 
@@ -689,10 +689,10 @@ namespace Detail {
     {};
     
     /**
-        Internal impl for v8::convert::ArgsToConstMethodForwarder.
+        Internal impl for cvv8::ArgsToConstMethodForwarder.
     */
     template <typename T, int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
+            bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
     struct ArgsToConstMethodForwarder;
 
@@ -713,7 +713,7 @@ namespace Detail {
         {
             try
             {
-                return cv::CastToJS( CallNative( self, func, argv ) );
+                return CastToJS( CallNative( self, func, argv ) );
             }
             HANDLE_PROPAGATE_EXCEPTION;
         }
@@ -750,7 +750,7 @@ namespace Detail {
         {
             try
             {
-                return cv::CastToJS( CallNative( self, func, argv ) );
+                return CastToJS( CallNative( self, func, argv ) );
             }
             HANDLE_PROPAGATE_EXCEPTION;
         }
@@ -777,7 +777,7 @@ namespace Detail {
     {};
 
     template <typename T, int Arity_, typename Sig,
-            bool UnlockV8 = cv::SignatureIsUnlockable< cv::ConstMethodSignature<T, Sig> >::Value
+            bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
     struct ArgsToConstMethodForwarderVoid;
 
@@ -962,6 +962,9 @@ public:
 
 #if !defined(DOXYGEN)
 namespace Detail {
+    // FIXME: rename all of the Detail classes to NOT have the same name
+    // as non-Detail classes. The current names have caused difficult-to
+    // find mis-resolutions on occassion.
 
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
@@ -1440,7 +1443,7 @@ public:
 */
 template <typename Sig>
 inline typename FunctionSignature<Sig>::ReturnType
-forwardFunction( Sig func, Arguments const & argv )
+forwardFunction( Sig func, v8::Arguments const & argv )
 {
     typedef FunctionSignature<Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
@@ -1464,7 +1467,7 @@ forwardMethod( T & self,
                Sig func,
                /* if i do: typename MethodSignature<T,Sig>::FunctionType
                   then this template is never selected. */
-               Arguments const & argv )
+               v8::Arguments const & argv )
 {
     typedef MethodSignature<T,Sig> MSIG;
     typedef typename MSIG::ReturnType RV;
@@ -1582,11 +1585,10 @@ namespace Detail {
     template <int ExpectingArity>
     v8::Handle<v8::Value> TossArgCountError( v8::Arguments const & args )
     {
-        using v8::convert::StringBuffer;
-        return v8::ThrowException(v8::Exception::Error(StringBuffer()
-                                                       <<"Incorrect argument count ("<<args.Length()
-                                                       <<") for function - expecting "
-                                                       <<ExpectingArity<<" arguments."));
+        return Toss((StringBuffer()
+                   <<"Incorrect argument count ("<<args.Length()
+                   <<") for function - expecting "
+                   <<ExpectingArity<<" arguments.").toError());
     }
 }
 #endif
@@ -1716,7 +1718,7 @@ struct ArityDispatch : Callable
 */
 template < typename ExceptionT,
            typename SigGetMsg,
-           typename v8::convert::ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+           typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
            v8::InvocationCallback ICB,
            bool PropagateOtherExceptions = false
     >
@@ -1776,9 +1778,9 @@ struct InCaCatcher : Callable
 
    @code
     typedef InCaCatcher_std< MyThrowingCallback, std::logic_error > LECatch;
-    typedef cv::InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
-    typedef cv::InCaCatcher_std< RECatch::Call, std::bad_cast > BCCatch;
-    typedef cv::InCaCatcher_std< BCCatch::Call > BaseCatch;
+    typedef InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
+    typedef InCaCatcher_std< RECatch::Call, std::bad_cast > BCCatch;
+    typedef InCaCatcher_std< BCCatch::Call > BaseCatch;
     v8::InvocationCallback cb = BaseCatch::Call;
    @endcode
    
@@ -1879,14 +1881,12 @@ struct ArityDispatchList<tmp::NilType> : Callable
 
 #if !defined(DOXYGEN)
 namespace Detail {
-    namespace cv = v8::convert;
-
     //! Internal helper for ToInCa impl.
-    template <typename T, typename Sig, bool IsConst = cv::Signature<Sig>::IsConst >
-    struct ToInCaSigSelector : cv::ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool IsConst = Signature<Sig>::IsConst >
+    struct ToInCaSigSelector : ConstMethodSignature<T,Sig>
     {
-        template < typename cv::ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cv::ConstMethodToInCa<T, Sig, Func, UnlockV8 >
+        template < typename ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cvv8::ConstMethodToInCa<T, Sig, Func, UnlockV8 >
         {
         };
     };
@@ -1895,18 +1895,18 @@ namespace Detail {
     template <typename T, typename Sig>
     struct ToInCaSigSelector<T,Sig,false> : MethodSignature<T,Sig>
     {
-        template < typename cv::MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cv::MethodToInCa<T, Sig, Func, UnlockV8 >
+        template < typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cvv8::MethodToInCa<T, Sig, Func, UnlockV8 >
         {
         };
     };
     
     //! Internal helper for ToInCa impl.
     template <typename Sig>
-    struct ToInCaSigSelector<void,Sig,false> : cv::FunctionSignature<Sig>
+    struct ToInCaSigSelector<void,Sig,false> : FunctionSignature<Sig>
     {
-        template < typename cv::FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cv::FunctionToInCa<Sig, Func, UnlockV8 >
+        template < typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cvv8::FunctionToInCa<Sig, Func, UnlockV8 >
         {
         };
     };
@@ -1919,11 +1919,11 @@ namespace Detail {
     struct ToInCaSigSelector<void,Sig,true> : ToInCaSigSelector<void,Sig,false> {};
 
     //! Internal helper for ToInCaVoid impl.
-    template <typename T, typename Sig, bool IsConst = cv::Signature<Sig>::IsConst >
-    struct ToInCaSigSelectorVoid : cv::ConstMethodSignature<T,Sig>
+    template <typename T, typename Sig, bool IsConst = Signature<Sig>::IsConst >
+    struct ToInCaSigSelectorVoid : ConstMethodSignature<T,Sig>
     {
-        template < typename cv::ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cv::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8 >
+        template < typename ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cvv8::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8 >
         {
         };
     };
@@ -1932,18 +1932,18 @@ namespace Detail {
     template <typename T, typename Sig>
     struct ToInCaSigSelectorVoid<T,Sig,false> : MethodSignature<T,Sig>
     {
-        template < typename cv::MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cv::MethodToInCaVoid<T, Sig, Func, UnlockV8 >
+        template < typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cvv8::MethodToInCaVoid<T, Sig, Func, UnlockV8 >
         {
         };
     };
 
     //! Internal helper for ToInCaVoid impl.
     template <typename Sig>
-    struct ToInCaSigSelectorVoid<void,Sig,false> : cv::FunctionSignature<Sig>
+    struct ToInCaSigSelectorVoid<void,Sig,false> : FunctionSignature<Sig>
     {
-        template < typename cv::FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cv::FunctionToInCaVoid<Sig, Func, UnlockV8 >
+        template < typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
+        struct Base : cvv8::FunctionToInCaVoid<Sig, Func, UnlockV8 >
         {
         };
     };
@@ -2002,7 +2002,7 @@ template <typename T, typename Sig,
         typename Detail::ToInCaSigSelector<T,Sig>::FunctionType Func,
         bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
         >
-struct ToInCa : Detail::ToInCaSigSelector<T,Sig>::template Base<Func,UnlockV8>
+struct ToInCa : Detail::ToInCaSigSelector<T,Sig, Signature<Sig>::IsConst >::template Base<Func,UnlockV8>
 {
 };
 
@@ -2132,7 +2132,7 @@ struct OneTimeInitInCa : Callable
     }
 };
 
-}} // namespaces
+} // namespaces
 
 #undef HANDLE_PROPAGATE_EXCEPTION
 

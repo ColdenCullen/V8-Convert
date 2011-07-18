@@ -24,5 +24,5 @@ all: $(libv8readline.DLL)
 # shell app...
 SHELL_LDFLAGS := -L. -lv8readline
 SHELL_BINDINGS_HEADER := v8-readline.hpp
-SHELL_BINDINGS_FUNC := v8::convert::Readline::SetupBindings
+SHELL_BINDINGS_FUNC := cvv8::Readline::SetupBindings
 include ../shell-common.make

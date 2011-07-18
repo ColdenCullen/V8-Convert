@@ -51,7 +51,7 @@ namespace {
         enableDestructorDebug = b;
     }
 }
-namespace cv = v8::convert;
+namespace cv = cvv8;
 namespace jspdo {
 
 #if 0
@@ -77,7 +77,7 @@ namespace jspdo {
 #endif
 }
 
-namespace v8 { namespace convert {
+namespace cvv8 {
     template <>
     char const * TypeName<cpdo::driver>::Value = "JSPDO";
     template <>
@@ -128,7 +128,7 @@ namespace v8 { namespace convert {
     template <>
     struct NativeToJS<cpdo_data_type> : NativeToJS<int32_t> {};
 
-} }
+}
 namespace jspdo {
 #if 0
     JSPDO::~JSPDO()
@@ -205,7 +205,7 @@ namespace jspdo {
     static bool IsDebugEnabled();
 }
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
 
     /**
@@ -361,7 +361,7 @@ namespace v8 { namespace convert {
         
         delete drv;
     }
-}}
+}
 
 namespace jspdo {
     bool IsDebugEnabled()
@@ -1074,7 +1074,7 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
     }
 }
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     template <>
     struct ClassCreator_SetupBindings<cpdo::driver>
@@ -1247,7 +1247,7 @@ namespace v8 { namespace convert {
         }
     };
 
-} }
+}
 
 
 /**

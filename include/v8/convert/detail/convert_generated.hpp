@@ -6,7 +6,7 @@ struct CtorForwarderProxy<1> // todo: subclass Signature<Sig>
 {
     enum { Arity = 1 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -33,7 +33,7 @@ struct CtorForwarderProxy<2> // todo: subclass Signature<Sig>
 {
     enum { Arity = 2 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -63,7 +63,7 @@ struct CtorForwarderProxy<3> // todo: subclass Signature<Sig>
 {
     enum { Arity = 3 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -96,7 +96,7 @@ struct CtorForwarderProxy<4> // todo: subclass Signature<Sig>
 {
     enum { Arity = 4 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -132,7 +132,7 @@ struct CtorForwarderProxy<5> // todo: subclass Signature<Sig>
 {
     enum { Arity = 5 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -171,7 +171,7 @@ struct CtorForwarderProxy<6> // todo: subclass Signature<Sig>
 {
     enum { Arity = 6 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -213,7 +213,7 @@ struct CtorForwarderProxy<7> // todo: subclass Signature<Sig>
 {
     enum { Arity = 7 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -258,7 +258,7 @@ struct CtorForwarderProxy<8> // todo: subclass Signature<Sig>
 {
     enum { Arity = 8 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -306,7 +306,7 @@ struct CtorForwarderProxy<9> // todo: subclass Signature<Sig>
 {
     enum { Arity = 9 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -357,7 +357,7 @@ struct CtorForwarderProxy<10> // todo: subclass Signature<Sig>
 {
     enum { Arity = 10 };
     template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( ::v8::Arguments const & argv )
+    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {

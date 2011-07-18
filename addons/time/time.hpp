@@ -2,7 +2,7 @@
 #define V8_CONVERT_TIME_HPP_INCLUDED
 #include <v8.h>
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 /**
     The 'time' namespace holds functions related to the passage of
     time, namely sleep(2)-like routines. Even though these are
@@ -83,5 +83,5 @@ namespace time {
     */
     v8::Handle<v8::Value> uwait(const v8::Arguments & argv);
 
-}}} // namespaces
+}} // namespaces
 #endif /* V8_CONVERT_TIME_HPP_INCLUDED */

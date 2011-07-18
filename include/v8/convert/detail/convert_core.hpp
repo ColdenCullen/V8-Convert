@@ -22,15 +22,15 @@
 #include <stdexcept>
 #include <sstream>
 
-#if !defined(V8_CONVERT_HAS_LONG_LONG)
+#if !defined(CVV8_CONFIG_HAS_LONG_LONG)
 /* long long in C++ requires C++0x or compiler extensions. */
-#  define V8_CONVERT_HAS_LONG_LONG 0
+#  define CVV8_CONFIG_HAS_LONG_LONG 0
 #endif
 
 #include "signature_core.hpp" /* only needed for the Signature used by the generated code. */
 #include "tmp.hpp"
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 
 
     /**
@@ -220,7 +220,7 @@ namespace v8 { namespace convert {
         {
             v8::Handle<v8::Value> operator()( IntegerT v ) const
             {
-                return Integer::New( static_cast<int32_t>(v) );
+                return v8::Integer::New( static_cast<int32_t>(v) );
             }
         };
         /**
@@ -232,7 +232,7 @@ namespace v8 { namespace convert {
         {
             v8::Handle<v8::Value> operator()( IntegerT v ) const
             {
-                return Integer::NewFromUnsigned( static_cast<uint32_t>(v) );
+                return v8::Integer::NewFromUnsigned( static_cast<uint32_t>(v) );
             }
         };
     }
@@ -261,7 +261,7 @@ namespace v8 { namespace convert {
             /** Returns v as a double value. */
             v8::Handle<v8::Value> operator()( IntegerT v ) const
             {
-                return Number::New( static_cast<double>(v) );
+                return v8::Number::New( static_cast<double>(v) );
             }
         };
     }
@@ -278,7 +278,7 @@ namespace v8 { namespace convert {
     {
         v8::Handle<v8::Value> operator()( double v ) const
         {
-            return Number::New( v );
+            return v8::Number::New( v );
         }
     };
 
@@ -287,7 +287,7 @@ namespace v8 { namespace convert {
     {
         v8::Handle<v8::Value> operator()( bool v ) const
         {
-            return Boolean::New( v );
+            return v8::Boolean::New( v );
         }
     };
 
@@ -642,7 +642,7 @@ namespace v8 { namespace convert {
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
             if( h.IsEmpty() || ! h->IsExternal() ) return 0;
-            return External::Cast(*h)->Value();
+            return v8::External::Cast(*h)->Value();
         }
     };
     /**
@@ -665,7 +665,7 @@ namespace v8 { namespace convert {
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
             if( h.IsEmpty() || ! h->IsExternal() ) return 0;
-            return External::Cast(*h)->Value();
+            return v8::External::Cast(*h)->Value();
         }
     };
 
@@ -794,7 +794,7 @@ namespace v8 { namespace convert {
         then they should do:
 
         @code
-        // in the v8::convert namespace:
+        // in the cvv8 namespace:
         template <>
         struct JSToNative<MyType> :
           JSToNative_ObjectWithInternalFieldsTypeSafe<MyType,MyTypeID...>
@@ -1133,7 +1133,7 @@ namespace v8 { namespace convert {
     {
     };
 
-#if V8_CONVERT_HAS_LONG_LONG
+#if CVV8_CONFIG_HAS_LONG_LONG
     /**
        See the equivalent JSToNative kludge for unsigned long.
 
@@ -1241,7 +1241,7 @@ namespace v8 { namespace convert {
         template <typename T>
         ObjectPropSetter & operator()( int32_t ndx, T const & v )
         {
-            return this->operator()( Integer::New(ndx), v );
+            return this->operator()( v8::Integer::New(ndx), v );
         }
 
         /**
@@ -1250,7 +1250,7 @@ namespace v8 { namespace convert {
         template <typename T>
         ObjectPropSetter & operator()( char const * key, T const & v )
         {
-            return this->operator()( String::New(key), v );
+            return this->operator()( v8::String::New(key), v );
         }
 
         /**
@@ -1278,7 +1278,7 @@ namespace v8 { namespace convert {
         /**
            Returns this object's JS object.
         */
-        Handle< ::v8::Object > Object() const
+        v8::Handle< v8::Object > Object() const
         {
             return this->target;
         }
@@ -1297,10 +1297,10 @@ namespace v8 { namespace convert {
 	    IT it = li.begin();
 	    const size_t sz = li.size();
 #if 1
-	    Handle<Array> rv( Array::New( static_cast<int>(sz) ) );
+	    v8::Handle<v8::Array> rv( v8::Array::New( static_cast<int>(sz) ) );
 	    for( int i = 0; li.end() != it; ++it, ++i )
 	    {
-		rv->Set( Integer::New(i), CastToJS( *it ) );
+		rv->Set( v8::Integer::New(i), CastToJS( *it ) );
 	    }
 	    return rv;
 #else
@@ -1335,7 +1335,7 @@ namespace v8 { namespace convert {
         {
             typedef typename MapT::const_iterator IT;
             IT it( li.begin() );
-            Handle<Object> rv( Object::New() );
+            v8::Handle<v8::Object> rv( v8::Object::New() );
             for( int i = 0; li.end() != it; ++it, ++i )
             {
                 rv->Set( CastToJS( (*it).first ), CastToJS( (*it).second ) );
@@ -1384,11 +1384,11 @@ namespace v8 { namespace convert {
             typedef ValueType VALT;
             ListT li;
             if( jv.IsEmpty() || ! jv->IsArray() ) return li;
-            Handle<Array> ar( Array::Cast(*jv) );
+            v8::Handle<v8::Array> ar( v8::Array::Cast(*jv) );
             uint32_t ndx = 0;
             for( ; ar->Has(ndx); ++ndx )
             {
-                li.push_back( CastFromJS<VALT>( ar->Get(Integer::New(ndx)) ) );
+                li.push_back( CastFromJS<VALT>( ar->Get(v8::Integer::New(ndx)) ) );
             }
             return li;
         }
@@ -1850,8 +1850,6 @@ namespace v8 { namespace convert {
 #if !defined(DOXYGEN)
     namespace Detail
     {
-        namespace cv = v8::convert;
-        namespace tmp = cv::tmp;
 
         /**
            Internal dispatch routine. CTOR _must_ be a CtorForwarder implementation,
@@ -1860,7 +1858,7 @@ namespace v8 { namespace convert {
         template <typename T,typename CTOR>
         struct CtorFwdDispatch
         {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
             static NativeHandle Call( v8::Arguments const &  argv )
             {
                 return CTOR::Call( argv );
@@ -1872,8 +1870,8 @@ namespace v8 { namespace convert {
         template <typename T>
         struct CtorFwdDispatch<T,tmp::NilType>
         {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Call( Arguments const &  argv )
+            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+            static NativeHandle Call( v8::Arguments const &  argv )
             {
                 return 0;
             }
@@ -1889,12 +1887,12 @@ namespace v8 { namespace convert {
         template <typename T,typename List>
         struct CtorFwdDispatchList
         {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
             /**
                Tries to dispatch Arguments to one of the constructors
                in the List type, based on the argument count.
              */
-            static NativeHandle Call( Arguments const &  argv )
+            static NativeHandle Call( v8::Arguments const &  argv )
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
@@ -1912,11 +1910,11 @@ namespace v8 { namespace convert {
         template <typename T>
         struct CtorFwdDispatchList<T,tmp::NilType>
         {
-            typedef typename cv::TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
             /** Writes an error message to errmsg and returns 0. */
-            static NativeHandle Call( Arguments const &  argv )
+            static NativeHandle Call( v8::Arguments const &  argv )
             {
-                cv::StringBuffer msg;
+                StringBuffer msg;
                 msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
                 throw std::range_error(msg.Content().c_str());
                 return 0;
@@ -1969,11 +1967,11 @@ namespace v8 { namespace convert {
         }
     };
 
-} } // namespaces
+} // namespaces
 
 
-namespace v8 { namespace convert {
+namespace cvv8 {
 #include "convert_generated.hpp"
-}}
+}
 
 #endif /* CODE_GOOGLE_COM_P_V8_CONVERT_CORE_HPP_INCLUDED */

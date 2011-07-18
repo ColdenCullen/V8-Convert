@@ -128,7 +128,7 @@ SHELL_LDFLAGS := $(LDFLAGS_JSPDO)
 #  SHELL_LDFLAGS += -static $(LDFLAGS_DRIVERS)
 #endif
 SHELL_BINDINGS_HEADER := jspdo.hpp
-SHELL_BINDINGS_FUNC := v8::convert::JSPDO::SetupBindings
+SHELL_BINDINGS_FUNC := cvv8::JSPDO::SetupBindings
 SHELL_DEPS := $(libjspdo.DLL) $(libjspdo.LIB)
 SHELL.NAME := jspdo
 include ../shell-common.make

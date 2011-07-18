@@ -67,7 +67,7 @@
 #include "convert.hpp"
 //#include <iostream> // only for debuggering
 #include "NativeToJSMap.hpp"
-namespace v8 { namespace convert {
+namespace cvv8 {
 
     /**
        Policy template used by ClassCreator<T> for
@@ -983,7 +983,7 @@ namespace v8 { namespace convert {
            (which _might_ have been re-allocated to a different
            object, even of a different type, in the mean time).
         */
-        static bool DestroyObject( Handle<Object> const & jo )
+        static bool DestroyObject( v8::Handle<v8::Object> const & jo )
         {
             T * t = CastFromJS<T>(jo);
             if( ! t ) return false;
@@ -1180,7 +1180,7 @@ namespace v8 { namespace convert {
             If CtorProxy::Call(argv) succeeds, N2JMap::Insert(jself, theNative)
             is called. The result of CtorProxy::Call() is returned.
         */
-        static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv )
         {
             NativeHandle n = CtorProxy::Call( argv );
             if( n ) N2JMap::Insert( jself, n );
@@ -1233,13 +1233,13 @@ namespace v8 { namespace convert {
     public:
         typedef typename TypeInfo<T>::Type Type;
         typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-        static NativeHandle Create( v8::Persistent<v8::Object> jself, Arguments const &  argv )
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv )
         {
             typedef CtorArityDispatcher<CtorForwarderList> Proxy;
             return Proxy::Call( argv );
         }
     };
 
-}}// namespaces
+}// namespaces
 
 #endif /* CODE_GOOGLE_COM_P_V8_CONVERT_CLASS_CREATOR_HPP_INCLUDED */

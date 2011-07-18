@@ -58,7 +58,7 @@ namespace Detail {
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -69,7 +69,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -94,7 +94,7 @@ namespace Detail {
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -105,7 +105,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -139,7 +139,7 @@ namespace Detail {
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -150,7 +150,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -175,7 +175,7 @@ namespace Detail {
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
@@ -186,7 +186,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -276,7 +276,7 @@ namespace Detail {
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -290,7 +290,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -315,7 +315,7 @@ namespace Detail {
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -329,7 +329,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -363,7 +363,7 @@ namespace Detail {
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -377,7 +377,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -402,7 +402,7 @@ namespace Detail {
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -416,7 +416,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -512,7 +512,7 @@ namespace Detail {
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -529,7 +529,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -554,7 +554,7 @@ namespace Detail {
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -571,7 +571,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -605,7 +605,7 @@ namespace Detail {
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -622,7 +622,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -647,7 +647,7 @@ namespace Detail {
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -664,7 +664,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -766,7 +766,7 @@ namespace Detail {
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -786,7 +786,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -811,7 +811,7 @@ namespace Detail {
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -831,7 +831,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -865,7 +865,7 @@ namespace Detail {
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -885,7 +885,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -910,7 +910,7 @@ namespace Detail {
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -930,7 +930,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1038,7 +1038,7 @@ namespace Detail {
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1061,7 +1061,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -1086,7 +1086,7 @@ namespace Detail {
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1109,7 +1109,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1143,7 +1143,7 @@ namespace Detail {
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1166,7 +1166,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -1191,7 +1191,7 @@ namespace Detail {
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1214,7 +1214,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1328,7 +1328,7 @@ namespace Detail {
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1354,7 +1354,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -1379,7 +1379,7 @@ namespace Detail {
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1405,7 +1405,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1439,7 +1439,7 @@ namespace Detail {
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1465,7 +1465,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -1490,7 +1490,7 @@ namespace Detail {
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1516,7 +1516,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1636,7 +1636,7 @@ namespace Detail {
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1665,7 +1665,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -1690,7 +1690,7 @@ namespace Detail {
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1719,7 +1719,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1753,7 +1753,7 @@ namespace Detail {
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1782,7 +1782,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -1807,7 +1807,7 @@ namespace Detail {
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1836,7 +1836,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -1962,7 +1962,7 @@ namespace Detail {
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -1994,7 +1994,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -2019,7 +2019,7 @@ namespace Detail {
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2051,7 +2051,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -2085,7 +2085,7 @@ namespace Detail {
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2117,7 +2117,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -2142,7 +2142,7 @@ namespace Detail {
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2174,7 +2174,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -2306,7 +2306,7 @@ namespace Detail {
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2341,7 +2341,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -2366,7 +2366,7 @@ namespace Detail {
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2401,7 +2401,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -2435,7 +2435,7 @@ namespace Detail {
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2470,7 +2470,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -2495,7 +2495,7 @@ namespace Detail {
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2530,7 +2530,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -2668,7 +2668,7 @@ namespace Detail {
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2706,7 +2706,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -2731,7 +2731,7 @@ namespace Detail {
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T  & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2769,7 +2769,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
-        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {
@@ -2803,7 +2803,7 @@ namespace Detail {
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2841,7 +2841,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try { return CastToJS( CallNative( self, func, argv ) ); }
             HANDLE_PROPAGATE_EXCEPTION;
@@ -2866,7 +2866,7 @@ namespace Detail {
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
@@ -2904,7 +2904,7 @@ namespace Detail {
             V8Unlocker<UnlockV8> const unlocker();
             return (ReturnType)(self.*func)(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
         }
-        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, Arguments const & argv )
+        static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
         {
             try
             {

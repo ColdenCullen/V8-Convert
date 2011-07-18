@@ -1,9 +1,10 @@
 #if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_P_V8_CONVERT_V8_CONVERT_HPP_INCLUDED 1
 
-/** @mainpage v8::convert API
+/** @mainpage cvv8 API
 
-The v8::convert namespace houses APIs for handling the following:
+The cvv8 namespace (formerly v8::convert) houses APIs for handling the
+following:
 
 - Converting between v8 Value handles and "native types" using generic
 interface. This allows us to write generic algorithms which convert
@@ -76,6 +77,8 @@ obvious, exist only for template type resolution reasons, or
 are strictly internal are not necessarily documented.
 
 */
+namespace cvv8 {}
+
 #include "convert.hpp"
 #include "invocable.hpp"
 #include "arguments.hpp"

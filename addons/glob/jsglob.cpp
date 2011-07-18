@@ -43,18 +43,17 @@ bool glob_matches_like( char const * pattern, char const * str )
     return glob_matches_like( pattern, str, false );
 }
 
-void v8::convert::SetupGlobBindings( v8::Handle<v8::Object> dest )
+void cvv8::SetupGlobBindings( v8::Handle<v8::Object> dest )
 {
-namespace cv = v8::convert;
 #define JSTR(X) v8::String::New(X)
-#define SETF(K) dest->Set(JSTR(K), cv::CastToJS(cb))
-    InvocationCallback cb;
-    cb = cv::FunctionToInCa<bool (char const *, char const *), glob_matches >::Call;
+#define SETF(K) dest->Set(JSTR(K), CastToJS(cb))
+    v8::InvocationCallback cb;
+    cb = FunctionToInCa<bool (char const *, char const *), glob_matches >::Call;
     SETF("matchesGlob");
-    typedef cv::FunctionToInCa<bool (char const *, char const *, bool), glob_matches_like > GML3;
-    typedef cv::FunctionToInCa<bool (char const *, char const *), glob_matches_like > GML2;
-    typedef cv::InCaOverloader< 2, GML2::Call > OML2;
-    typedef cv::InCaOverloader< 3, GML3::Call, OML2::Call > OML3;
+    typedef FunctionToInCa<bool (char const *, char const *, bool), glob_matches_like > GML3;
+    typedef FunctionToInCa<bool (char const *, char const *), glob_matches_like > GML2;
+    typedef ArityDispatch< 2, GML2 > OML2;
+    typedef ArityDispatch< 3, GML3, OML2 > OML3;
     cb = OML3::Call;
     SETF("matchesLike");
 #undef SETF
