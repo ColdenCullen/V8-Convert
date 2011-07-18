@@ -54,46 +54,36 @@ function/method signatures as full-fleged types.
     a "type list", and several algorithms in the sl namespace are available
     for fetching type information from a Signature type. This is an
     "extended" typelist, however, because it also remembers the return type
-    optionally the class containing a member function described by the
+    and optionally the class containing a member function described by the
     signature (neither of those are counted as part of the list, but are
     accessible separately).
 
-    Require interface for specializations:
+    Required interface for specializations:
 
     @code
     typedef functionReturnType ReturnType;
-    enum { Arity = FunctionArity, IsConst = True_Only_for_Const_Methods };
+    enum { IsConst = True_Only_for_Const_Methods };
     typedef T Context; // void for non-member functions, non-cvp T for all T members
     typedef firstArgType Head; // head type of type-list.
     typedef Signature< RV (...)> Tail; // tail of type-list. (...)==arg types 2..N.
     // When Arity==1 or 0, Tail must be tmp::NilType. In theory, for Arity==1
     // Tail should be Signature<RV()>, but this interferes with some typelist
-    // algorithms.
+    // algorithms. That's on my to-fix list, but only if it's not too problematic.
     @endcode
 
     The IsConst part is a bit of an ugly hack. It originates from the design
     decision that we separate const/non-const templates because MSVC
     reportedly cannot differentiate templates when the difference is only in
-    const. i have since given up the policy of coddling to MSVC, so the
-    IsConst bit might go away at some point (if i can get it back out
+    const. i have since (almost) given up the policy of coddling to MSVC, so
+    the IsConst bit might go away at some point (if i can get it back out
     without rewriting everything).
-
-    Reminder to self: we no longer really need the Arity member (we can
-    calculate it at compile-time) but lots of code uses it for legacy
-    reasons and it saves a small bit if typing (keyboard typing, not C++
-    typing). It's on the to-refactor list, though.
-
-    The Arity value -1 is reserved for use with functions taking 
-    exactly one v8::Arguments object (which makes them N-arity). 
-    Other negative numbers may be used later on for other 
-    special-case purposes.
 
     It is intended to be used like this:
     
     @code
     typedef Signature< int (char const *, double) > Sig;
-    assert( Sig::Arity == 2 );
-    assert( sl::Length<Sig>::Value == Sig::Arity )
+    assert( 2 == sl::Arity<Sig>::Value );
+    assert( 2 == sl::Length<Sig>::Value )
     assert( (tmp::SameType< char const *, sl::At<0,Sig>::Type >::Value) );
     assert( (tmp::SameType< double, sl::At<1,Sig>::Type >::Value) );
     assert( 1 == sl::Index< double, Sig >::Value) );
@@ -103,9 +93,9 @@ function/method signatures as full-fleged types.
     The IsConst bit is mildly unsettling but i needed it to implement ToInCa
     (i couldn't figure out how to figure that out with templates).
     
-    Note that the length of the typelist does not include the return
-    value type.
-   
+    Note that the length of the typelist does not include the return value
+    type nor (for member methods) the containing class (the Context typedef).
+
     Functions taking one (v8::Arguments const &) argument and 
     returning any type are considered to be 
     "InvocationCallback-like" and are treated specially. They have 
@@ -153,7 +143,6 @@ namespace sl {
     //! End-of-list specialization.
     template <>
     struct Length<tmp::nil> : tmp::IntVal<0> {};
-
     /**
         Metafunction whose Type member evaluates to the type of the
         I'th argument type in the given Signature. Fails to compile
@@ -171,7 +160,6 @@ namespace sl {
     {
          typedef typename ListT::Head Type;
     };
-
     /**
         End-of-list specialization. i don't think we need this, actually.
     */
@@ -256,41 +244,6 @@ namespace tmp {
 template <typename Sig> struct Signature< Signature<Sig> > : Signature<Sig> {};
 #endif
 
-
-
-/**
-   Base type for FunctionSignature, MethodSignature,
-   and ConstMethodSignature.
-
-    Sig must be a function-style parameter list in the form:
-    
-    ReturnType (args types...)
-    
-    e.g.
-    
-    @code
-    double (int, double)
-    int () const
-    int (T::*)(int) const
-    void (T::*)()
-    @endcode
-
-    Since some refactoring on 20110624 we don't really
-    need this class - we could use Signature directly.
-    However, i might later want to add another class-level detail
-    or two which don't belong in that interface. We'll see.
-*/
-template <typename Sig>
-struct SignatureBase : Signature<Sig>
-{
-    //typedef typename Signature<Sig>::ReturnType ReturnType;
-    //enum { Arity = Signature<Sig>::Arity };
-    //typedef Sig Signature;
-    //typedef Sig FunctionType;
-    // doesn't appear to work how i want:
-    // enum { IsConst = tmp::IsConst<Sig>::Value };
-    //static const bool IsConst = tmp::IsConst<Sig>::Value;
-};
 /**
     Specialization to give "InvacationCallback-like" functions
     an Arity value of -1.
@@ -433,7 +386,7 @@ struct ConstMethodSignature;
 //struct ConstMethodSignature<const T,Sig> : ConstMethodSignature<T,Sig> {};
 
 template <typename T, typename RV >
-struct MethodSignature< T, RV () > : SignatureBase< RV () >
+struct MethodSignature< T, RV () > : Signature< RV () >
 {
     typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (Context::*FunctionType)();
@@ -446,7 +399,7 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 
 #if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV >
-struct MethodSignature< T, RV () const > : SignatureBase< RV () const >
+struct MethodSignature< T, RV () const > : Signature< RV () const >
 {
     typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (Context::*FunctionType)() const;
@@ -460,7 +413,7 @@ struct MethodSignature< T, RV (T::*)() const > : MethodSignature<T, RV () const>
 #endif
 
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () const > : SignatureBase< RV () >
+struct ConstMethodSignature< T, RV () const > : Signature< RV () >
 {
     typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (Context::*FunctionType)() const;

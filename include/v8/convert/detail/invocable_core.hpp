@@ -35,7 +35,7 @@ struct Callable
    (differing only in their return type) with an Arity value of -1.
 */
 template <typename RV>
-struct FunctionSignature< RV (v8::Arguments const &) > : SignatureBase<RV (v8::Arguments const &)>
+struct FunctionSignature< RV (v8::Arguments const &) > : Signature<RV (v8::Arguments const &)>
 {
     typedef RV (*FunctionType)(v8::Arguments const &);
 };
@@ -46,7 +46,7 @@ struct FunctionSignature< RV (v8::Arguments const &) > : SignatureBase<RV (v8::A
    Arity value of -1.
 */
 template <typename T, typename RV >
-struct MethodSignature< T, RV (Arguments const &) > : SignatureBase< RV (v8::Arguments const &) >
+struct MethodSignature< T, RV (Arguments const &) > : Signature< RV (v8::Arguments const &) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(Arguments const &);
@@ -58,7 +58,7 @@ struct MethodSignature< T, RV (Arguments const &) > : SignatureBase< RV (v8::Arg
    of -1.
 */
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (Arguments const &) > : SignatureBase< RV (v8::Arguments const &) >
+struct ConstMethodSignature< T, RV (Arguments const &) > : Signature< RV (v8::Arguments const &) >
 {
     typedef T Type;
     typedef RV (T::*FunctionType)(Arguments const &) const;
