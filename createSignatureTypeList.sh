@@ -1,6 +1,15 @@
 #!/bin/bash
 ########################################################################
 # A quick hack to generate Signature templates.
+# Usage:
+#  $0 to
+#  $0 from to
+#
+# The first form is equivalent to: $0 0 to
+#
+# Generates Signature<> specializations taking $from .. $to arguments.
+# e.g. ($0 3) creates specializations taking 0..3 arguments.
+########################################################################
 
 from=${1-0}
 to=$2
@@ -14,8 +23,7 @@ tparam='typename RV'
 targs=''
 
 if [[ 0 = $from ]]; then
-#template <typename Sig> struct Signature;
-
+from=$((from + 1))
 cat <<EOF
 
 template <typename RV>
@@ -55,8 +63,9 @@ struct Signature< RV (T::*)() const > : Signature<RV () const>
 
 #endif /* V8_CONVERT_ENABLE_CONST_OVERLOADS */
 EOF
-from=$((from + 1))
-fi
+
+fi # $from==0
+
 i=$from
 while [[ $i -le $to ]]; do
     tparam="${tparam}, typename A${i}"
