@@ -11,7 +11,9 @@
 ########################################################################
 include config.make # see that file for certain configuration options.
 
-V8_PREFIX := $(HOME)
+# Set V8_PREFIX to the top-most dir of your v8 installation, e.g. /usr/local
+# We assume that $(V8_PREFIX)/include is where the v8 headers live.
+V8_PREFIX ?= $(HOME)
 CPPFLAGS += -I$(V8_PREFIX)/include
 
 TMPL_GENERATOR_COUNT := 10# max number of arguments generated template specializations can handle
@@ -41,34 +43,22 @@ gen: $(sig_gen_h)
 all: $(sig_gen_h)
 $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	@echo "Creating $@ for templates taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
-	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
-	echo "#if !defined(DOXYGEN)" >> $@; \
-	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
-		bash $(TMPL_GENERATOR) $$i \
-			FunctionForwarder \
-			MethodForwarder \
-			CallForwarder \
-		  || exit $$?; \
-		i=$$((i + 1)); \
-	done >> $@
-	@echo "#endif // if !defined(DOXYGEN)" >> $@;
+	{ \
+		echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */"; \
+		echo "#if !defined(DOXYGEN)"; \
+		i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
+			bash $(TMPL_GENERATOR) $$i \
+				FunctionForwarder \
+				MethodForwarder \
+				CallForwarder \
+				CtorForwarder \
+			|| exit $$?; \
+			i=$$((i + 1)); \
+		done; \
+		echo "#endif // if !defined(DOXYGEN)"; \
+	} > $@;
 gen: $(invo_gen_h)
 all: $(invo_gen_h)
-
-# FIXME: move this code into $(invo_gen_h)
-$(conv_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
-	@echo "Creating $@ for templates taking 1 to $(TMPL_GENERATOR_COUNT) arguments..."; \
-	echo "/* AUTO-GENERATED CODE! EDIT AT YOUR OWN RISK! */" > $@; \
-	echo "#if !defined(DOXYGEN)" >> $@; \
-	i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
-		bash $(TMPL_GENERATOR) $$i \
-			CtorForwarder \
-		  || exit $$?; \
-		i=$$((i + 1)); \
-	done >> $@
-	@echo "#endif // if !defined(DOXYGEN)" >> $@;
-gen: $(conv_gen_h)
-all: $(conv_gen_h)
 
 V8_LDFLAGS := -L$(V8_PREFIX)/lib -lv8_g
 

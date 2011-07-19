@@ -1970,8 +1970,4 @@ namespace cvv8 {
 } // namespaces
 
 
-namespace cvv8 {
-#include "convert_generated.hpp"
-}
-
 #endif /* CODE_GOOGLE_COM_P_V8_CONVERT_CORE_HPP_INCLUDED */
