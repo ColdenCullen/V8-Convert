@@ -8,7 +8,7 @@ all:
 ########################################################################
 # You can touch these:
 ########################################################################
-ShakeNMake.QUIET := 0# set to 1 to enable "quiet mode"
+ShakeNMake.QUIET := 1# set to 1 to enable "quiet mode"
 
 ########################################################################
 # Set ENABLE_DEBUG to 1 to enable whefs debugging information.

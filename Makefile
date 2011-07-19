@@ -11,11 +11,6 @@
 ########################################################################
 include config.make # see that file for certain configuration options.
 
-# Set V8_PREFIX to the top-most dir of your v8 installation, e.g. /usr/local
-# We assume that $(V8_PREFIX)/include is where the v8 headers live.
-V8_PREFIX ?= $(HOME)
-CPPFLAGS += -I$(V8_PREFIX)/include
-
 TMPL_GENERATOR_COUNT := 10# max number of arguments generated template specializations can handle
 TYPELIST_LENGTH := 15# max number of args for Signature<T(...)> typelist
 INCDIR_DETAIL := $(TOP_INCDIR)/cvv8/detail
@@ -60,11 +55,9 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 gen: $(invo_gen_h)
 all: $(invo_gen_h)
 
-V8_LDFLAGS := -L$(V8_PREFIX)/lib -lv8_g
-
 ConvertDemo.o: ConvertDemo.cpp
 demo.BIN.OBJECTS := demo.o ConvertDemo.o
-demo.BIN.LDFLAGS := $(V8_LDFLAGS)
+demo.BIN.LDFLAGS := $(LDFLAGS_V8)
 $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
 demo.o: $(sig_gen_h)
 
