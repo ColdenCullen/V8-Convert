@@ -1103,9 +1103,9 @@ namespace cvv8 {
             {
                 typedef cv::FunctionPtr< int(char const *), ::puts> FPPuts;
                 FPPuts::Function("Hi, world.");
-                typedef cv::InCaCatcher_std< Statement_stepArray, std::logic_error > LECatch;
-                typedef cv::InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
-                typedef cv::InCaCatcher_std< RECatch::Call > BaseCatch;
+                typedef cv::InCaCatcher_std< InCa<Statement_stepArray>, std::logic_error > LECatch;
+                typedef cv::InCaCatcher_std< LECatch, std::runtime_error > RECatch;
+                typedef cv::InCaCatcher_std< RECatch > BaseCatch;
                 v8::InvocationCallback cb;
                 cb = BaseCatch::Call;
             }
@@ -1115,17 +1115,17 @@ namespace cvv8 {
 #define CATCHER cv::InCaCatcher_std
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObjectCallback )
-                ("step", CATCHER< cv::ToInCa<ST, bool (),&ST::step>::Call >::Call)
-                ("stepArray", CATCHER< Statement_stepArray >::Call)
-                ("stepObject", CATCHER< Statement_stepObject >::Call)
-                ("columnName", CATCHER< cv::ToInCa<ST, char const * (uint16_t),&ST::col_name>::Call >::Call )
-                ("columnType", CATCHER< ToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type>::Call >::Call )
-                ("get", CATCHER<Statement_get>::Call )
-                ("bind", CATCHER<Statement_bind>::Call)
-                ("reset", CATCHER< cv::ToInCa<ST, void (void),&ST::reset>::Call >::Call)
-                ("toString", CATCHER<Statement_toString>::Call )
+                ("step", CATCHER< cv::ToInCa<ST, bool (),&ST::step> >::Call)
+                ("stepArray", CATCHER< InCa<Statement_stepArray> >::Call)
+                ("stepObject", CATCHER< InCa<Statement_stepObject> >::Call)
+                ("columnName", CATCHER< cv::ToInCa<ST, char const * (uint16_t),&ST::col_name> >::Call )
+                ("columnType", CATCHER< ToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
+                ("get", CATCHER< InCa<Statement_get> >::Call )
+                ("bind", CATCHER< InCa<Statement_bind> >::Call)
+                ("reset", CATCHER< cv::ToInCa<ST, void (void),&ST::reset> >::Call)
+                ("toString", CATCHER< InCa<Statement_toString> >::Call )
                 ("paramIndex", ToInCa<ST, uint16_t (char const *),&ST::param_index>::Call /* doesn't throw */ )
-                ("paramName", CATCHER<cv::ToInCa<ST, char const *(uint16_t),&ST::param_name>::Call >::Call )
+                ("paramName", CATCHER<cv::ToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
             typedef cv::MemberPropertyBinder<ST> SPB;
@@ -1156,17 +1156,17 @@ namespace cvv8 {
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
             wdrv("close", WDRV::DestroyObjectCallback )
-                ("begin", CATCHER< cv::ToInCa<DRV,void (),&DRV::begin>::Call >::Call )
-                ("commit", CATCHER< cv::ToInCa<DRV,void (),&DRV::commit>::Call >::Call )
-                ("rollback", CATCHER< cv::ToInCa<DRV,void (),&DRV::rollback>::Call >::Call)
-                ("exec", CATCHER< cv::ToInCa<DRV,void (std::string const &),&DRV::exec>::Call >::Call)
-                ("prepare", CATCHER< JSPDO_prepare >::Call )
-                ("exec", CATCHER<JSPDO_exec>::Call )
+                ("begin", CATCHER< cv::ToInCa<DRV,void (),&DRV::begin> >::Call )
+                ("commit", CATCHER< cv::ToInCa<DRV,void (),&DRV::commit> >::Call )
+                ("rollback", CATCHER< cv::ToInCa<DRV,void (),&DRV::rollback> >::Call)
+                ("exec", CATCHER< cv::ToInCa<DRV,void (std::string const &),&DRV::exec> >::Call)
+                ("prepare", CATCHER< InCa<JSPDO_prepare> >::Call )
+                ("exec", CATCHER< InCa<JSPDO_exec> >::Call )
                 ("lastInsertId",
-                 CATCHER<JSPDO_lastInsertId>::Call
+                 CATCHER< InCa<JSPDO_lastInsertId> >::Call
                  //LastInsId::Call
                  )
-                ("toString", CATCHER<JSPDO_toString>::Call)
+                ("toString", CATCHER< InCa<JSPDO_toString> >::Call)
                 ;
 #undef CATCHER
             

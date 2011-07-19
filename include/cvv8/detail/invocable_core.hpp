@@ -1658,7 +1658,8 @@ struct ArityDispatch : Callable
 template < typename ExceptionT,
            typename SigGetMsg,
            typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
-           v8::InvocationCallback ICB,
+           typename InCaT,
+           //v8::InvocationCallback ICB,
            bool PropagateOtherExceptions = false
     >
 struct InCaCatcher : Callable
@@ -1674,7 +1675,7 @@ struct InCaCatcher : Callable
     {
         try
         {
-            return ICB( args );
+            return InCaT::Call( args );
         }
         catch( ExceptionT const & e2 )
         {
@@ -1732,7 +1733,9 @@ struct InCaCatcher : Callable
    that we took advantage of the PropagateOtherExceptions default value for all
    cases to get the propagation behaviour we want.
 */
-template <v8::InvocationCallback ICB,
+template <
+        //v8::InvocationCallback ICB,
+        typename InCaT,
         typename ConcreteException = std::exception,
         bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
 >
@@ -1740,7 +1743,7 @@ struct InCaCatcher_std :
     InCaCatcher<ConcreteException,
                 char const * (),
                 &ConcreteException::what,
-                ICB,
+                InCaT,
                 PropagateOtherExceptions
                 >
 {};

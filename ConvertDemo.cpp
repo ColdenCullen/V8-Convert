@@ -410,11 +410,11 @@ namespace cvv8 {
                 ("nativeParam",
                  cv::ToInCa<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>::Call)
                 ("nativeParamRef",
-                 CATCHER< cv::ToInCa<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef>::Call >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef> >::Call)
                 ("nativeParamConstRef",
-                 CATCHER< cv::ToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef>::Call >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef> >::Call)
                  // Hopefully someday:
-                 //CATCHER< cv::MethodToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef>::Call >::Call)
+                 //CATCHER< cv::MethodToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef> >::Call)
                 ("cstr",
                  //cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
                  cv::ToInCa< void, char const * (char const *), cstring_test>::Call)
@@ -425,7 +425,7 @@ namespace cvv8 {
                     cv::InCaCatcher<std::string,
                         char const * () const,
                         &std::string::c_str,
-                        FunctionToInCa< void (), throwStdString >::Call
+                        FunctionToInCa< void (), throwStdString >
                     >::Call)
 #if 1 // converting natives to JS requires more lower-level plumbing than converting from JS to native...
                  ("nativeReturn",
@@ -435,11 +435,11 @@ namespace cvv8 {
                  // Hopefully someday:
                  // cv::MethodToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst>::Call)
                  ("nativeReturnRef",
-                 CATCHER< cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>::Call >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true> >::Call)
                  ("nativeReturnConstRef",
-                 CATCHER< cv::ToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef, true>::Call >::Call)
+                 CATCHER< cv::ToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef, true> >::Call)
                  // Hopefully someday:
-                 //CATCHER< cv::MethodToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef>::Call >::Call)
+                 //CATCHER< cv::MethodToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef> >::Call)
 #endif
                 ;
 #undef CATCHER
