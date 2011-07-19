@@ -1590,8 +1590,8 @@ struct ArityDispatch : Callable
 
    Getter must be a pointer to a function matching that signature.
 
-   ICB must be a v8::InvocationCallback. When this function is called
-   by v8, it will pass on the call to ICB and catch exceptions.
+   InCaT must be a Callable type. When Call() is called by v8, it will pass
+   on the call to InCaT::Call() and catch exceptions as described below.
 
    Exceptions of type (ExceptionT const &) and (ExceptionT const *) which
    are thrown by ICB get translated into a JS exception with an error
@@ -1627,25 +1627,15 @@ struct ArityDispatch : Callable
       MyExceptionType,
       std::string (),
       &MyExceptionType::getMessage,
-      MyCallbackWhichThrows, // the "real" InvocationCallback
-      true // make sure propagation is turned on!
+      InCa<MyCallbackWhichThrows>, // the "real" InvocationCallback
+      true // make sure propagation is turned on so chaining can work!
       > Catch_MyEx;
 
   // std::runtime_error:
-  typedef InCaCatcher<
-      std::runtime_error,
-      char const * (),
-      &std::runtime_error::what,
-      Catch_MyEx::Catch, // next Callback in the chain
-      true // make sure propagation is turned on!
-      > Catch_RTE;
+  typedef InCaCatcher_std< Catch_MyEx, std::runtime_error > Catch_RTE;
 
    // std::exception:
-   typedef InCaCatcher_std<
-       Catch_RTE::Call,
-       false // Often we want no propagation at the top-most level,
-             // to avoid killing v8.
-       > MyCatcher;
+   typedef InCaCatcher_std< Catch_RTE > MyCatcher;
 
    // Now MyCatcher::Call is-a InvocationCallback which will handle
    // MyExceptionType, std::runtime_error, and std::exception via
@@ -1659,7 +1649,6 @@ template < typename ExceptionT,
            typename SigGetMsg,
            typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
            typename InCaT,
-           //v8::InvocationCallback ICB,
            bool PropagateOtherExceptions = false
     >
 struct InCaCatcher : Callable
@@ -1681,8 +1670,10 @@ struct InCaCatcher : Callable
         {
             /* reminder to self:  we now have the unusual corner case that
             if Getter() returns a v8::Handle<v8::Value> it will be thrown
-            as-is instead of wrapped in an Error object. See the Toss()
-            docs for why that is so.
+            as-is instead of wrapped in an Error object. See the Toss() docs
+            for why that is so. We could use tmp::SameType to alternately
+            call TossAsError(), but i'm too tired and i honestly don't ever
+            expect any exception type to return v8 handles.
             */
             return Toss(CastToJS((e2.*Getter)()));
         }
@@ -1721,10 +1712,10 @@ struct InCaCatcher : Callable
    Here is an example of chaining:
 
    @code
-    typedef InCaCatcher_std< MyThrowingCallback, std::logic_error > LECatch;
-    typedef InCaCatcher_std< LECatch::Call, std::runtime_error > RECatch;
-    typedef InCaCatcher_std< RECatch::Call, std::bad_cast > BCCatch;
-    typedef InCaCatcher_std< BCCatch::Call > BaseCatch;
+    typedef InCaCatcher_std< InCa<MyThrowingCallback>, std::logic_error > LECatch;
+    typedef InCaCatcher_std< LECatch, std::runtime_error > RECatch;
+    typedef InCaCatcher_std< RECatch, std::bad_cast > BCCatch;
+    typedef InCaCatcher_std< BCCatch > BaseCatch;
     v8::InvocationCallback cb = BaseCatch::Call;
    @endcode
    
@@ -1734,7 +1725,6 @@ struct InCaCatcher : Callable
    cases to get the propagation behaviour we want.
 */
 template <
-        //v8::InvocationCallback ICB,
         typename InCaT,
         typename ConcreteException = std::exception,
         bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
