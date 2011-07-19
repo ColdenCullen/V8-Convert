@@ -18,14 +18,15 @@ conversion.
 namespace cvv8 {
 
 /**
-    A marker class, primarily for documentation purposes.
+    A concept class, primarily for documentation purposes.
 */
-struct Callable
+struct InCa
 {
     /**
-        Matches the v8::InvocationCallback interface. All function 
-        bindings created by this framework use this function as 
-        their class-level InvocationCallback interface.
+        Matches the v8::InvocationCallback interface. All function bindings
+        created by this framework use Call() as their class-level
+        InvocationCallback interface. Some bindings provide additional
+        overloads as well.
     */
     static v8::Handle<v8::Value> Call( v8::Arguments const & );
 };
@@ -924,7 +925,7 @@ namespace Detail {
 template <typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
-struct ArgsToFunctionForwarder : Callable
+struct ArgsToFunctionForwarder : InCa
 {
 private:
     typedef typename tmp::IfElse< tmp::SameType<void ,typename Signature<Sig>::ReturnType>::Value,
@@ -969,7 +970,7 @@ namespace Detail {
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionToInCa : FunctionPtr<Sig,Func>, Callable
+    struct FunctionToInCa : FunctionPtr<Sig,Func>, InCa
     {
         
         typedef FunctionSignature<Sig> SignatureType;
@@ -989,7 +990,7 @@ namespace Detail {
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionToInCaVoid : FunctionPtr<Sig,Func>, Callable
+    struct FunctionToInCaVoid : FunctionPtr<Sig,Func>, InCa
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef ArgsToFunctionForwarderVoid< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
@@ -1011,7 +1012,7 @@ namespace Detail {
               typename MethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
               >
-    struct MethodToInCa : MethodPtr<T,Sig, Func>, Callable
+    struct MethodToInCa : MethodPtr<T,Sig, Func>, InCa
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
@@ -1040,7 +1041,7 @@ namespace Detail {
               typename MethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value
               >
-    struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, Callable
+    struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, InCa
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
@@ -1069,7 +1070,7 @@ namespace Detail {
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
               >
-    struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>, Callable
+    struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>, InCa
     {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToConstMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
@@ -1097,7 +1098,7 @@ namespace Detail {
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
               >
-    struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>, Callable
+    struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>, InCa
     {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
         typedef ArgsToConstMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
@@ -1539,7 +1540,7 @@ namespace Detail {
 
    See Call() for more details.
 
-   InCaT and Fallback must be Callable classes.
+   InCaT and Fallback must be InCa classes.
    
    Using this class almost always requires more code than doing the
    equivalent with ArityDispatchList, the exception being when we have only
@@ -1555,7 +1556,7 @@ template < int Arity,
            typename InCaT,
            typename Fallback = InCaToInCa< Detail::TossArgCountError<Arity> >
 >
-struct ArityDispatch : Callable
+struct ArityDispatch : InCa
 {
     /**
        When called, if (Artity==-1) or if (Arity==args.Length()) then
@@ -1590,7 +1591,7 @@ struct ArityDispatch : Callable
 
    Getter must be a pointer to a function matching that signature.
 
-   InCaT must be a Callable type. When Call() is called by v8, it will pass
+   InCaT must be a InCa type. When Call() is called by v8, it will pass
    on the call to InCaT::Call() and catch exceptions as described below.
 
    Exceptions of type (ExceptionT const &) and (ExceptionT const *) which
@@ -1651,7 +1652,7 @@ template < typename ExceptionT,
            typename InCaT,
            bool PropagateOtherExceptions = false
     >
-struct InCaCatcher : Callable
+struct InCaCatcher : InCa
 {
     /**
         Returns ICB(args), converting any exceptions of type (ExceptionT
@@ -1742,17 +1743,17 @@ namespace Detail {
     /**
         An internal level of indirection for ArityDispatcher.
     */
-    template <typename CallableT>
-    struct ListCallHelper : Callable
+    template <typename InCaT>
+    struct ListCallHelper : InCa
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
-            return CallableT::Call(argv);
+            return InCaT::Call(argv);
         }
     };
     //! End-of-list specialization.
     template <>
-    struct ListCallHelper<tmp::NilType> : Callable
+    struct ListCallHelper<tmp::NilType> : InCa
     {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -1799,7 +1800,7 @@ namespace Detail {
    is all done at compile-time.
 */
 template <typename FwdList>
-struct ArityDispatchList : Callable
+struct ArityDispatchList : InCa
 {
     /**
        Tries to dispatch argv to one of the bound functions defined
@@ -2047,7 +2048,7 @@ struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8
     ignored (i.e. not dynamically-allocated resources).
 */
 template <typename InCaT, typename InitFunctor>
-struct OneTimeInitInCa : Callable
+struct OneTimeInitInCa : InCa
 {
     /**
         The first time this function is called it runs 

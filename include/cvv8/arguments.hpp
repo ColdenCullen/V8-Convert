@@ -536,7 +536,7 @@ namespace cvv8 {
         of functor/callback pairs for use in dispatching callbacks
         based on the results of ArgumentPredicates.
 
-        InCaT must implement the Callable interface.
+        InCaT must implement the InCa interface.
 
         This type is primarily intended to be used together with
         PredicatedInCaDispatcher.
@@ -550,7 +550,7 @@ namespace cvv8 {
         into invocable_core.hpp.
     */
     template <typename ArgPred, typename InCaT>
-    struct PredicatedInCa : Callable, ArgumentsPredicateConcept
+    struct PredicatedInCa : InCa, ArgumentsPredicateConcept
     {
         /** Returns ArgPred()(argv). */
         bool operator()( v8::Arguments const & argv ) const
@@ -595,7 +595,7 @@ namespace cvv8 {
         @endcode
     */
     template <typename PredList>
-    struct PredicatedInCaDispatcher : Callable
+    struct PredicatedInCaDispatcher : InCa
     {
         /**
             For each PredicatedInCa (P) in PredList, if P()(argv)
@@ -619,7 +619,7 @@ namespace cvv8 {
 
     //! End-of-list specialization.
     template <>
-    struct PredicatedInCaDispatcher< tmp::NilType > : Callable
+    struct PredicatedInCaDispatcher< tmp::NilType > : InCa
     {
         /**
             Triggers a JS-side exception explaining (in English text) that no
