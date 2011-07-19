@@ -115,7 +115,8 @@ else
   $(info MySQL is enabled, so we are NOT building a static library.)
 endif
 
-OBJS_NEEDING_DB_CPPFLAGS := cpdo_amalgamation.o jspdo.o
+OBJS_NEEDING_DB_CPPFLAGS := cpdo_amalgamation.o
+# jspdo.o
 $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3)
 $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5)
 
