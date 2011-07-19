@@ -190,7 +190,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     // For 0 or 3-5 args
     typedef PredicatedInCa<
         Argv_Or< Argv_Length<0>, Argv_Length<3,5> >,
-        InCa<bogo_callback_arityN>
+        InCaToInCa<bogo_callback_arityN>
     > GroupN;
 
     // Special case for the weird (Function, cstring, Function) overload...
@@ -342,7 +342,7 @@ namespace cvv8 {
             typedef CVV8_TYPELIST((
                 cv::MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
                 cv::MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
-                //cv::InCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
+                //cv::InCaToInCa< cv::MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
                 cv::MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>,
                 cv::MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
             )) OverloadList;

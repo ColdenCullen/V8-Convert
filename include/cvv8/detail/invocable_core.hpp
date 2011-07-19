@@ -1495,26 +1495,26 @@ forwardConstMethod(Sig func, v8::Arguments const & argv )
    templates this way, this class can fill that gap.
 */
 template <v8::InvocationCallback ICB>
-struct InCa : FunctionToInCa< v8::Handle<v8::Value> (v8::Arguments const &), ICB>
+struct InCaToInCa : FunctionToInCa< v8::Handle<v8::Value> (v8::Arguments const &), ICB>
 {
 };
 
 
 #if 1
 /**
-   "Converts" an InCa<ICB> instance to JS by treating it as an
+   "Converts" an InCaToInCa<ICB> instance to JS by treating it as an
    InvocationCallback function. This is primarily useful in
    conjunction with ClassCreator::Set() to add function bindings.
 */
 template <v8::InvocationCallback ICB>
-struct NativeToJS< InCa<ICB> >
+struct NativeToJS< InCaToInCa<ICB> >
 {
     /**
-       Returns a JS handle to InCa<ICB>::Call().
+       Returns a JS handle to InCaToInCa<ICB>::Call().
     */
-    v8::Handle<v8::Value> operator()( InCa<ICB> const & )
+    v8::Handle<v8::Value> operator()( InCaToInCa<ICB> const & )
     {
-        return v8::FunctionTemplate::New(InCa<ICB>::Call)->GetFunction();
+        return v8::FunctionTemplate::New(InCaToInCa<ICB>::Call)->GetFunction();
     }
 };
 #endif
@@ -1553,7 +1553,7 @@ namespace Detail {
 */
 template < int Arity,
            typename InCaT,
-           typename Fallback = InCa< Detail::TossArgCountError<Arity> >
+           typename Fallback = InCaToInCa< Detail::TossArgCountError<Arity> >
 >
 struct ArityDispatch : Callable
 {
@@ -1627,7 +1627,7 @@ struct ArityDispatch : Callable
       MyExceptionType,
       std::string (),
       &MyExceptionType::getMessage,
-      InCa<MyCallbackWhichThrows>, // the "real" InvocationCallback
+      InCaToInCa<MyCallbackWhichThrows>, // the "real" InvocationCallback
       true // make sure propagation is turned on so chaining can work!
       > Catch_MyEx;
 
@@ -1712,7 +1712,7 @@ struct InCaCatcher : Callable
    Here is an example of chaining:
 
    @code
-    typedef InCaCatcher_std< InCa<MyThrowingCallback>, std::logic_error > LECatch;
+    typedef InCaCatcher_std< InCaToInCa<MyThrowingCallback>, std::logic_error > LECatch;
     typedef InCaCatcher_std< LECatch, std::runtime_error > RECatch;
     typedef InCaCatcher_std< RECatch, std::bad_cast > BCCatch;
     typedef InCaCatcher_std< BCCatch > BaseCatch;
