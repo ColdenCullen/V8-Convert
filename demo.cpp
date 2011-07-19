@@ -131,9 +131,9 @@ ValueHandle test1_callback( v8::Arguments const & argv )
     cb(argv);
 
     CERR << "argv-forwarder (void):\n";
-    cv::ArgsToFunctionForwarder< void () >::Call( doNothing, argv );
+    cv::FunctionForwarder< void () >::Call( doNothing, argv );
     CERR << "argv-forwarder (int):\n";
-    cv::ArgsToFunctionForwarder< int (int) >::Call( doSomething, argv );
+    cv::FunctionForwarder< int (int) >::Call( doSomething, argv );
 
     CERR << "argv-forwarder (int) via forwardFunction():\n";
     cv::forwardFunction( doSomething, argv );
@@ -141,10 +141,10 @@ ValueHandle test1_callback( v8::Arguments const & argv )
     cv::forwardFunction( doNothing, argv );
 
     CERR << "argv-method-forwarder (void):\n";
-    cv::ArgsToMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFoo, argv );
+    cv::MethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFoo, argv );
 
      CERR << "argv-method-forwarder (int,double):\n";
-     cv::ArgsToMethodForwarder< BoundNative, double (int,double) >::Call( foo, &BoundNative::doFoo2, argv );
+     cv::MethodForwarder< BoundNative, double (int,double) >::Call( foo, &BoundNative::doFoo2, argv );
      CERR << "same thing using forwardMethod(T, MemFunc, Arguments):\n";
      cv::forwardMethod( foo, &BoundNative::doFoo2, argv );
      cv::forwardMethod( foo, &BoundNative::doFoo, argv );
@@ -161,7 +161,7 @@ ValueHandle test1_callback( v8::Arguments const & argv )
      catch(...) { throw; }
 
      CERR << "argv-const-method-forwarder (void):\n";
-     cv::ArgsToConstMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFooConst, argv );
+     cv::ConstMethodForwarder< BoundNative, void () >::Call( foo, &BoundNative::doFooConst, argv );
 
      CERR << "Calling forwardConstMethod(T, MemFunc, Arguments):\n";
      cv::forwardConstMethod( foo, &BoundNative::doFooConst, argv );

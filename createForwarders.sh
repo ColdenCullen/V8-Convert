@@ -10,8 +10,8 @@ Commands:
   FunctionSignature
   MethodSignature
   ConstMethodSignature
-  ArgsToMethodForwarder
-  ArgsToFunctionForwarder
+  MethodForwarder
+  FunctionForwarder
 EOF
     echo "Generates specializations for operations taking exactly NUMBER arguments."
     exit 1
@@ -192,14 +192,14 @@ EOF
 
 
 ########################################################################
-# Generates ArgsToFunctionForwarder<>
-function makeArgsToFunctionForwarder()
+# Generates FunctionForwarder<>
+function makeFunctionForwarder()
 {
 
 mycat <<EOF
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -220,7 +220,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -246,15 +246,15 @@ EOF
 }
 
 ########################################################################
-# Generates ArgsToMethodForwarder<>
-function makeArgsToMethodForwarder_impl()
+# Generates MethodForwarder<>
+function makeMethodForwarder_impl()
 {
-    local class=ArgsToMethodForwarder
+    local class=MethodForwarder
     local parent=MethodSignature
     local constness=""
     if [[ "x$1" = "xconst" ]]; then
         parent=ConstMethodSignature
-        class=ArgsToConstMethodForwarder
+        class=ConstMethodForwarder
         constness="const"
     fi
 mycat <<EOF
@@ -336,10 +336,10 @@ namespace Detail {
 EOF
 }
 
-function makeArgsToMethodForwarder()
+function makeMethodForwarder()
 {
-    makeArgsToMethodForwarder_impl
-    makeArgsToMethodForwarder_impl const
+    makeMethodForwarder_impl
+    makeMethodForwarder_impl const
 }
 
 ##########################################################
@@ -348,7 +348,7 @@ makeLists
 
 for command in $@; do
 case $command in
-    *Signature|ArgsTo*Forwarder|CtorForwarder)
+    *Signature|*Forwarder|CtorForwarder)
 	make${command} || {
         rc=$?
         echo "make${command} failed with rc $rc" 1>&2

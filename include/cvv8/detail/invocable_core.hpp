@@ -387,6 +387,10 @@ namespace Detail {
     Temporary internal macro to trigger a static assertion if unlocking
     support is requested but cannot be implemented for the given
     wrapper due to constraints on our use of v8 when it is unlocked.
+
+    This differs from ASSERT_UNLOCK_SANITY_CHECK in that this is intended
+    for use with functions which we _know_ (while coding, as opposed to
+    finding out at compile time) are not legally unlockable.
 */
 #define ASSERT_UNLOCKV8_IS_FALSE typedef char ThisSpecializationCannotUseV8Unlocker[!UnlockV8 ? 1 : -1]
 /**
@@ -401,16 +405,16 @@ namespace Detail {
     ]
 
     /*
-        FIXME: ArgsToFunctionForwarder doesn't really need the Arity
-        template parameter anymore.
+        FIXME: FunctionForwarder doesn't really need the Arity
+        template parameter anymore, i think. Or maybe it does.
     */
 
     template <int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value >
-    struct ArgsToFunctionForwarder;
+    struct FunctionForwarder;
     
     template <int Arity, typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
+    struct FunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -433,12 +437,12 @@ namespace Detail {
 
     //! Reminder to self: we really do need this specialization for some cases.
     template <int Arity, typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
-        : ArgsToFunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
+    struct FunctionForwarder<Arity,RV (*)(v8::Arguments const &), UnlockV8>
+        : FunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
     {};
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<0,Sig, UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
@@ -458,10 +462,10 @@ namespace Detail {
 
     template <int Arity_, typename Sig,
                 bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
-    struct ArgsToFunctionForwarderVoid;
+    struct FunctionForwarderVoid;
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
@@ -486,7 +490,7 @@ namespace Detail {
     };
     
     template <int Arity, typename RV, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8>
+    struct FunctionForwarderVoid<Arity,RV (v8::Arguments const &), UnlockV8>
         : FunctionSignature<RV (v8::Arguments const &)>
     {
     public:
@@ -508,16 +512,16 @@ namespace Detail {
     };
 
     /**
-        Internal impl for cvv8::ArgsToConstMethodForwarder.
+        Internal impl for cvv8::ConstMethodForwarder.
     */
     template <typename T, int Arity_, typename Sig,
              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
      >
-    struct ArgsToMethodForwarder;
+    struct MethodForwarder;
 
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 0, Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 0, Sig, UnlockV8> : MethodSignature<T,Sig>
     {
     public:
         typedef MethodSignature<T,Sig> SignatureType;
@@ -556,7 +560,7 @@ namespace Detail {
     };
 
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    struct MethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : MethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -594,17 +598,17 @@ namespace Detail {
     };
 
     template <typename T, typename RV, bool UnlockV8, int _Arity>
-    struct ArgsToMethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
-            ArgsToMethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
+    struct MethodForwarder<T,_Arity, RV (T::*)(v8::Arguments const &), UnlockV8> :
+            MethodForwarder<T, _Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
     template <typename T, int Arity_, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
     >
-    struct ArgsToMethodForwarderVoid;
+    struct MethodForwarderVoid;
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,0,Sig, UnlockV8>
+    struct MethodForwarderVoid<T,0,Sig, UnlockV8>
         : MethodSignature<T,Sig>
     {
     public:
@@ -644,7 +648,7 @@ namespace Detail {
     };
 
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
+    struct MethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
         : MethodSignature<T,RV (v8::Arguments const &)>
     {
     public:
@@ -685,20 +689,20 @@ namespace Detail {
     };
 
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
-        : ArgsToMethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
+    struct MethodForwarderVoid<T,Arity, RV (T::*)(v8::Arguments const &), UnlockV8>
+        : MethodForwarderVoid<T,Arity, RV (v8::Arguments const &), UnlockV8>
     {};
     
     /**
-        Internal impl for cvv8::ArgsToConstMethodForwarder.
+        Internal impl for cvv8::ConstMethodForwarder.
     */
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
-    struct ArgsToConstMethodForwarder;
+    struct ConstMethodForwarder;
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
@@ -735,7 +739,7 @@ namespace Detail {
     };
 
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    struct ConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -773,17 +777,17 @@ namespace Detail {
     };
 
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
-        : ArgsToConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    struct ConstMethodForwarder<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
+        : ConstMethodForwarder<T, Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
-    struct ArgsToConstMethodForwarderVoid;
+    struct ConstMethodForwarderVoid;
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
     public:
         typedef ConstMethodSignature<T,Sig> SignatureType;
@@ -824,7 +828,7 @@ namespace Detail {
     };
     
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    struct ConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
         : ConstMethodSignature<T, RV (v8::Arguments const &)>
     {
     public:
@@ -864,8 +868,8 @@ namespace Detail {
     };
 
     template <typename T, int Arity, typename RV, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
-    : ArgsToConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
+    struct ConstMethodForwarderVoid<T, Arity, RV (T::*)(v8::Arguments const &) const, UnlockV8>
+    : ConstMethodForwarderVoid<T, Arity, RV (v8::Arguments const &), UnlockV8>
     {};
 
 }
@@ -925,12 +929,12 @@ namespace Detail {
 template <typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
-struct ArgsToFunctionForwarder : InCa
+struct FunctionForwarder : InCa
 {
 private:
     typedef typename tmp::IfElse< tmp::SameType<void ,typename Signature<Sig>::ReturnType>::Value,
-                                Detail::ArgsToFunctionForwarderVoid< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
-                                Detail::ArgsToFunctionForwarder< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
+                                Detail::FunctionForwarderVoid< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                                Detail::FunctionForwarder< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
         >::Type
     ProxyType;
 public:
@@ -974,7 +978,7 @@ namespace Detail {
     {
         
         typedef FunctionSignature<Sig> SignatureType;
-        typedef ArgsToFunctionForwarder< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef FunctionForwarder< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( v8::Arguments const & argv )
         {
@@ -993,7 +997,7 @@ namespace Detail {
     struct FunctionToInCaVoid : FunctionPtr<Sig,Func>, InCa
     {
         typedef FunctionSignature<Sig> SignatureType;
-        typedef ArgsToFunctionForwarderVoid< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef FunctionForwarderVoid< sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( v8::Arguments const & argv )
         {
@@ -1015,7 +1019,7 @@ namespace Detail {
     struct MethodToInCa : MethodPtr<T,Sig, Func>, InCa
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef MethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1044,7 +1048,7 @@ namespace Detail {
     struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, InCa
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef MethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1073,7 +1077,7 @@ namespace Detail {
     struct ConstMethodToInCa : ConstMethodPtr<T,Sig, Func>, InCa
     {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToConstMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef ConstMethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, v8::Arguments const & argv )
         {
@@ -1101,7 +1105,7 @@ namespace Detail {
     struct ConstMethodToInCaVoid : ConstMethodPtr<T,Sig,Func>, InCa
     {
         typedef ConstMethodPtr<T, Sig, Func> SignatureType;
-        typedef ArgsToConstMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef ConstMethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, v8::Arguments const & argv )
         {
@@ -1137,7 +1141,7 @@ namespace Detail {
 
    If UnlockV8 is true then v8::Unlocker will be used to unlock v8 
    for the duration of the call to Func(). HOWEVER... see 
-   ArgsToFunctionForwarder for the details/caveats regarding that 
+   FunctionForwarder for the details/caveats regarding that 
    parameter.
    
        Example:
@@ -1199,7 +1203,7 @@ struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
    function signature for T. Func must be a pointer to a function with
    that signature.
    
-   See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
+   See FunctionForwarder for details about the UnlockV8 parameter.
    
     Example:
 
@@ -1244,7 +1248,7 @@ struct MethodToInCaVoid
 /**
    Functionally identical to MethodToInCa, but for const member functions.
    
-   See ArgsToFunctionForwarder for details about the UnlockV8 parameter.
+   See FunctionForwarder for details about the UnlockV8 parameter.
    
    Note that the Sig signature must be suffixed with a const qualifier!
    
@@ -1287,7 +1291,7 @@ struct ConstMethodToInCaVoid : Detail::ConstMethodToInCaVoid<T, Sig, Func, Unloc
 {};
 
 /**
-   Identicial to ArgsToFunctionForwarder, but works on non-const
+   Identicial to FunctionForwarder, but works on non-const
    member methods of type T.
 
    Sig must be a function-signature-like argument. e.g. <double
@@ -1295,13 +1299,13 @@ struct ConstMethodToInCaVoid : Detail::ConstMethodToInCaVoid<T, Sig, Func, Unloc
    functions matching that signature.
 */
 template <typename T, typename Sig, bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value>
-struct ArgsToMethodForwarder
+struct MethodForwarder
 {
 private:
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename MethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
-                 Detail::ArgsToMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
+                 Detail::MethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                 Detail::MethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
     >::Type
     Proxy;
 public:
@@ -1333,18 +1337,18 @@ public:
 
 
 /**
-   Identical to ArgsToMethodForwarder, but works on const member methods.
+   Identical to MethodForwarder, but works on const member methods.
 */
 template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
         >
-struct ArgsToConstMethodForwarder
+struct ConstMethodForwarder
 {
 private:
     typedef typename
     tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
-                 Detail::ArgsToConstMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
+                 Detail::ConstMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                 Detail::ConstMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
     >::Type
     Proxy;
 public:
@@ -1391,8 +1395,8 @@ forwardFunction( Sig func, v8::Arguments const & argv )
     enum { Arity = sl::Arity< Signature<Sig> >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-        Detail::ArgsToFunctionForwarderVoid< Arity, Sig >,
-        Detail::ArgsToFunctionForwarder< Arity, Sig >
+        Detail::FunctionForwarderVoid< Arity, Sig >,
+        Detail::FunctionForwarder< Arity, Sig >
         >::Type Proxy;
     return (RV)Proxy::CallNative( func, argv );
 }
@@ -1415,8 +1419,8 @@ forwardMethod( T & self,
     enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, Arity, Sig >,
-                 Detail::ArgsToMethodForwarder< T, Arity, Sig >
+                 Detail::MethodForwarderVoid< T, Arity, Sig >,
+                 Detail::MethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( self, func, argv );
 }
@@ -1437,8 +1441,8 @@ forwardMethod(Sig func, v8::Arguments const & argv )
     enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToMethodForwarderVoid< T, Arity, Sig >,
-                 Detail::ArgsToMethodForwarder< T, Arity, Sig >
+                 Detail::MethodForwarderVoid< T, Arity, Sig >,
+                 Detail::MethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( func, argv );
 }
@@ -1461,8 +1465,8 @@ forwardConstMethod( T const & self,
     enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, Arity, Sig >,
-                 Detail::ArgsToConstMethodForwarder< T, Arity, Sig >
+                 Detail::ConstMethodForwarderVoid< T, Arity, Sig >,
+                 Detail::ConstMethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( self, func, argv );
 }
@@ -1483,8 +1487,8 @@ forwardConstMethod(Sig func, v8::Arguments const & argv )
     enum { Arity = sl::Arity< MSIG >::Value };
     typedef typename
         tmp::IfElse< tmp::SameType<void ,RV>::Value,
-                 Detail::ArgsToConstMethodForwarderVoid< T, Arity, Sig >,
-                 Detail::ArgsToConstMethodForwarder< T, Arity, Sig >
+                 Detail::ConstMethodForwarderVoid< T, Arity, Sig >,
+                 Detail::ConstMethodForwarder< T, Arity, Sig >
     >::Type Proxy;
     return (RV)Proxy::CallNative( func, argv );
 }
@@ -1915,7 +1919,7 @@ namespace Detail {
 
     For non-member functions, T must be void.
 
-    See ArgsToFunctionForwarder for the meaning of the UnlockV8 parameter.
+    See FunctionForwarder for the meaning of the UnlockV8 parameter.
 
     Examples:
 

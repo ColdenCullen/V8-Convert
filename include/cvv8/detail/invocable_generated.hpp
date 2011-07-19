@@ -2,7 +2,7 @@
 #if !defined(DOXYGEN)
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<1,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<1,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -26,7 +26,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<1,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<1,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -52,7 +52,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -88,7 +88,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 1,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -133,7 +133,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -169,7 +169,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 1,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (1 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -214,7 +214,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<2,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<2,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -241,7 +241,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<2,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<2,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -270,7 +270,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -309,7 +309,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 2,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -357,7 +357,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -396,7 +396,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 2,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (2 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -444,7 +444,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<3,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<3,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -474,7 +474,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<3,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<3,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -506,7 +506,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -548,7 +548,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 3,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -599,7 +599,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -641,7 +641,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 3,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (3 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -692,7 +692,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<4,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<4,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -725,7 +725,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<4,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<4,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -760,7 +760,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -805,7 +805,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 4,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -859,7 +859,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -904,7 +904,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 4,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (4 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -958,7 +958,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<5,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<5,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -994,7 +994,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<5,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<5,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1032,7 +1032,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1080,7 +1080,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 5,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1137,7 +1137,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1185,7 +1185,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 5,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (5 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1242,7 +1242,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<6,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<6,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1281,7 +1281,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<6,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<6,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1322,7 +1322,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1373,7 +1373,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 6,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1433,7 +1433,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1484,7 +1484,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 6,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (6 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1544,7 +1544,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<7,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<7,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1586,7 +1586,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<7,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<7,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1630,7 +1630,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1684,7 +1684,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 7,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1747,7 +1747,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1801,7 +1801,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 7,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (7 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1864,7 +1864,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<8,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<8,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1909,7 +1909,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<8,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<8,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -1956,7 +1956,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2013,7 +2013,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 8,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2079,7 +2079,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2136,7 +2136,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 8,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (8 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2202,7 +2202,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<9,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<9,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2250,7 +2250,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<9,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<9,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2300,7 +2300,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2360,7 +2360,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 9,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2429,7 +2429,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2489,7 +2489,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 9,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (9 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2558,7 +2558,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarder<10,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarder<10,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2609,7 +2609,7 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct ArgsToFunctionForwarderVoid<10,Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<10,Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2662,7 +2662,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarder<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarder<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2725,7 +2725,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToMethodForwarderVoid<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
+    struct MethodForwarderVoid<T, 10,Sig, UnlockV8> : MethodSignature<T,Sig>
     {
         typedef MethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2797,7 +2797,7 @@ namespace Detail {
 }
 namespace Detail {
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarder<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarder<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -2860,7 +2860,7 @@ namespace Detail {
     };
 
     template <typename T, typename Sig, bool UnlockV8>
-    struct ArgsToConstMethodForwarderVoid<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
+    struct ConstMethodForwarderVoid<T, 10,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
     {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef char AssertArity[ (10 == sl::Arity<SignatureType>::Value) ? 1 : -1];
