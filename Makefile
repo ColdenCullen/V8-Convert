@@ -42,6 +42,7 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 		bash $(TMPL_GENERATOR) $$i \
 			FunctionForwarder \
 			MethodForwarder \
+			CallForwarder \
 		  || exit $$?; \
 		i=$$((i + 1)); \
 	done >> $@

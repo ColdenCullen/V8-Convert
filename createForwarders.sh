@@ -12,6 +12,7 @@ Commands:
   ConstMethodSignature
   MethodForwarder
   FunctionForwarder
+  CallForwarder
 EOF
     echo "Generates specializations for operations taking exactly NUMBER arguments."
     exit 1
@@ -21,6 +22,8 @@ shift
 ValHnd="v8::Handle<v8::Value>"
 aTDecl="" # typename A0, typename A1,...
 aTParam="" # A0, A1 ...
+aFDecl="" # A0 a0, A1 a1, ...
+aNToJSCalls="" # CastToJS(a0), CastToJS(a1)...
 castCalls="" # CastFromJS<A0>(argv[0]), ...
 castTypedefs="" # typedef ArgCaster<A#> AC#, ...
 castInits="" # AC# ac#; ...
@@ -37,6 +40,9 @@ function makeLists()
 	local AT="A${at}"
 	aTDecl="${aTDecl} typename ${AT}"
 	aTParam="${aTParam} ${AT}"
+    aFDecl="${aFDecl} ${AT} a${at}" # A0 a0, A1 a1, ...
+    aNToJSCalls="${aNToJSCalls} CastToJS(a${at})" # CastToJS(a0), CastToJS(a1)...
+
 	callArgs="${callArgs}${AT}"
         #sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
         sigTypeDecls="${sigTypeDecls}typedef typename sl::At< ${at}, Signature<Sig> >::Type ${AT};\n"
@@ -47,10 +53,12 @@ function makeLists()
         castInits="${castInits} AC${at} ac${at}; A${at} arg${at}(ac${at}.ToNative(argv[${at}]));\n"
         castCalls="${castCalls} arg${at}"
 	test $at -ne $((count-1)) && {
-	    aTDecl="${aTDecl}, "
-	    aTParam="${aTParam}, "
-	    castCalls="${castCalls}, "
-        callArgs="${callArgs}, "
+	    aTDecl="${aTDecl},"
+	    aTParam="${aTParam},"
+	    castCalls="${castCalls},"
+        callArgs="${callArgs},"
+        aFDecl="${aFDecl},"
+        aNToJSCalls="${aNToJSCalls},"
 	}
     done
     #tmplsig="${tmplsig} RV (WrappedType::*Func)(${aTParam})";
@@ -340,6 +348,38 @@ function makeMethodForwarder()
 {
     makeMethodForwarder_impl
     makeMethodForwarder_impl const
+}
+
+function makeCallForwarder()
+{
+mycat <<EOF
+//! Specialization for ${count}-arity calls.
+template <>
+struct CallForwarder<${count}>
+{
+    template <${aTDecl}>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Object> const & self,
+                                       v8::Handle<v8::Function> const & func,
+                                       ${aFDecl}
+                                     )
+    {
+        v8::Handle<v8::Value> args[] = {
+            ${aNToJSCalls}
+        };
+        return (self.IsEmpty() || func.IsEmpty())
+            ? Toss("Illegal argument: empty v8::Handle<>.")
+            : func->Call(self, sizeof(args)/sizeof(args[0]), args);
+    }
+    template <${aTDecl}>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                       ${aFDecl}
+                                     )
+    {
+        return Call( func, func, ${callArgs} );
+    }
+
+};
+EOF
 }
 
 ##########################################################

@@ -113,7 +113,8 @@ v8::Handle<v8::Value> bogo_callback_function( v8::Handle<v8::Function> const & f
 {
     CERR << "function overload.\n";
     assert( ! f.IsEmpty() );
-    return f->Call( f, 0, NULL );
+    return cv::CallForwarder<3>::Call( f, f, 3, 42.24, "hi" );
+    //return f->Call( f, 0, NULL );
 }
 
 int bogo_callback2( v8::Arguments const & argv )

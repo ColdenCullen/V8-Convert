@@ -52,7 +52,7 @@ struct CtorForwarderProxy<2> // todo: subclass Signature<Sig>
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            return new Type(  arg0,  arg1 );
+            return new Type(  arg0, arg1 );
         }
     }
 };
@@ -85,7 +85,7 @@ struct CtorForwarderProxy<3> // todo: subclass Signature<Sig>
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            return new Type(  arg0,  arg1,  arg2 );
+            return new Type(  arg0, arg1, arg2 );
         }
     }
 };
@@ -121,7 +121,7 @@ struct CtorForwarderProxy<4> // todo: subclass Signature<Sig>
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3 );
+            return new Type(  arg0, arg1, arg2, arg3 );
         }
     }
 };
@@ -160,7 +160,7 @@ struct CtorForwarderProxy<5> // todo: subclass Signature<Sig>
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4 );
+            return new Type(  arg0, arg1, arg2, arg3, arg4 );
         }
     }
 };
@@ -202,7 +202,7 @@ struct CtorForwarderProxy<6> // todo: subclass Signature<Sig>
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5 );
+            return new Type(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
     }
 };
@@ -247,7 +247,7 @@ struct CtorForwarderProxy<7> // todo: subclass Signature<Sig>
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6 );
+            return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
     }
 };
@@ -295,7 +295,7 @@ struct CtorForwarderProxy<8> // todo: subclass Signature<Sig>
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7 );
+            return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
     }
 };
@@ -346,7 +346,7 @@ struct CtorForwarderProxy<9> // todo: subclass Signature<Sig>
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8 );
+            return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
     }
 };
@@ -400,7 +400,7 @@ struct CtorForwarderProxy<10> // todo: subclass Signature<Sig>
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            return new Type(  arg0,  arg1,  arg2,  arg3,  arg4,  arg5,  arg6,  arg7,  arg8,  arg9 );
+            return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
     }
 };

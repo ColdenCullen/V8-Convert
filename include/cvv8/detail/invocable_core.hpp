@@ -925,22 +925,26 @@ namespace Detail {
     can, but (as described aboved) it can be fooled into thinking that
     unlocking is safe.
 
+    Reminder to self: we can implement this completely via inheritance of
+    the internal Proxy type, but i REALLY want the API docs out here at this
+    level instead of in the Detail namespace (which i filter out of doxygen
+    for the most part).
 */
 template <typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value
 >
-struct FunctionForwarder : InCa
+struct FunctionForwarder
 {
 private:
     typedef typename tmp::IfElse< tmp::SameType<void ,typename Signature<Sig>::ReturnType>::Value,
                                 Detail::FunctionForwarderVoid< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
                                 Detail::FunctionForwarder< sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
         >::Type
-    ProxyType;
+    Proxy;
 public:
-    typedef typename ProxyType::SignatureType SignatureType;
-    typedef typename ProxyType::ReturnType ReturnType;
-    typedef typename ProxyType::FunctionType FunctionType;
+    typedef typename Proxy::SignatureType SignatureType;
+    typedef typename Proxy::ReturnType ReturnType;
+    typedef typename Proxy::FunctionType FunctionType;
     /**
        Passes the given arguments to func(), converting them to the appropriate
        types. If argv.Length() is less than sl::Arity< SignatureType >::Value then
@@ -952,7 +956,7 @@ public:
     */
     static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
     {
-        return ProxyType::CallNative( func, argv );
+        return Proxy::CallNative( func, argv );
     }
     /**
         Equivalent to CastToJS( CallNative(func,argv) ) unless ReturnType
@@ -961,16 +965,69 @@ public:
     */
     static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
-        return ProxyType::Call( func, argv );
+        return Proxy::Call( func, argv );
     }
 };
 
+/**
+    CallForwarder basically does the opposite of FunctionForwarder: it
+    converts native arguments to JS and calls a JS function.
+
+    The default implementation is useless - it must be specialized
+    for each arity.
+*/
+template <int Arity>
+struct CallForwarder
+{
+    /**
+        Implementations must be templates taking Arity arguments in addition
+        to the first two. All argument types must legal for use with
+        CastToJS().
+    
+        If either self or func.IsEmpty() then a JS exception must be thrown,
+        else implementations must return func->Call(self, N, ARGS), where
+        ARGS is an array of v8::Handle<v8::Value> and N is the number of
+        items in that array (and, not coincidentally, is the same value as
+        Arity). The ARGS array must be populated by calling CastToJS(ARG_N)
+        for each argument, where ARG_N is the Nth argument.
+    */
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Object> const & self,
+                                       v8::Handle<v8::Function> const & func,
+                                       ... );
+    /**
+        Convenience form of Call() which must be equivalent to
+        Call(func,func,...).
+    */
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func, ... );
+};
+
+//! Specialization for 0-arity calls.
+template <>
+struct CallForwarder<0>
+{
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Object> const & self,
+                                       v8::Handle<v8::Function> const & func )
+    {
+        return (self.IsEmpty() || func.IsEmpty())
+            ? Toss("Illegal argument: empty v8::Handle<>.")
+            : func->Call(self, 0, NULL);
+    }
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func )
+    {
+        return Call( func, func );
+    }
+};
+
+
 #if !defined(DOXYGEN)
 namespace Detail {
-    // FIXME: rename all of the Detail classes to NOT have the same name
+    // FIXME (maybe): rename all of the Detail classes to NOT have the same name
     // as non-Detail classes. The current names have caused difficult-to
     // find mis-resolutions on occassion.
 
+    /**
+        Base internal implementation of cvv8::FunctionToInCa.
+    */
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
@@ -983,6 +1040,12 @@ namespace Detail {
         static ReturnType CallNative( v8::Arguments const & argv )
         {
             return (ReturnType)Proxy::CallNative( Func, argv );
+            /**
+                The (ReturnType) cast is effectively a no-op for all types
+                except void, where it is used to get around a limitation in
+                some compilers which does not allow us to explicitly return
+                foo() when foo() returns void.
+            */
         }
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
@@ -991,6 +1054,14 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
+    /** Almost identical to FunctionToInCa, but expressly does not
+        instantiate NativeToJS< Signature<Sig>::ReturnType >, meaning
+        that:
+
+        a) it can proxy functions which have non-convertible return types.
+
+        b) JS always gets the 'undefined' JS value as the return value.
+    */
     template <typename Sig,
               typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
@@ -1010,7 +1081,7 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
-
+    /** Method equivalent to FunctionToInCa. */
     template <typename T,
               typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func,
@@ -1040,6 +1111,7 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
+    /** Method equivalent to FunctionToInCaVoid. */
     template <typename T,
               typename Sig,
               typename MethodSignature<T,Sig>::FunctionType Func,
@@ -1069,6 +1141,7 @@ namespace Detail {
         ASSERT_UNLOCK_SANITY_CHECK;
     };
 
+    /** Const method equivalent to MethodToInCa. */
     template <typename T,
               typename Sig,
               typename ConstMethodSignature<T,Sig>::FunctionType Func,
@@ -1144,10 +1217,11 @@ namespace Detail {
    FunctionForwarder for the details/caveats regarding that 
    parameter.
    
-       Example:
+   Example:
+
     @code
     v8::InvocationCallback cb = 
-       FunctionToInCa< int (int), ::putchar>::Call;
+        FunctionToInCa< int (int), ::putchar>::Call;
     @endcode
 */
 template <typename Sig,
@@ -1162,12 +1236,12 @@ struct FunctionToInCa
 {};
 
 /**
-    A variant of FunctionToInCa which the property of not invoking
-    the conversion of the function's return type from native to JS
-    form. This is useful when such a conversion is not legal
-    because CastToJS() won't work on it or, more generally,
-    when you want the JS interface to always get the undefined
-    return value.
+    A variant of FunctionToInCa with the property of NOT invoking the
+    conversion of the function's return type from native to JS form. i.e. it
+    does not cause NativeToJS< Signature<Sig>::ReturnType > to be
+    instantiated. This is useful when such a conversion is not legal because
+    CastToJS() won't work on it or, more generally, when you want the JS
+    interface to always get the undefined return value.
     
     Call() always returns v8::Undefined(). CallNative(), however,
     returns the real return type specified by Sig (which may be void).

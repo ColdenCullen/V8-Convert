@@ -183,7 +183,7 @@ function testPredicateOverloads()
         b.bogo(function(){
             // reminder: if we call b.bogo(arguments.callee)
             // from here we will crash with endless recursion.
-            print("JS-side callback function.");
+            print("JS-side callback function. args from native world="+JSON.stringify(arguments));
         });
         var msg;
         msg = {a:1};
