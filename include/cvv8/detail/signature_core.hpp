@@ -2,24 +2,28 @@
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
 
-/** @def V8_CONVERT_ENABLE_CONST_OVERLOADS
+/** @def CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 
-If V8_CONVERT_ENABLE_CONST_OVERLOADS is defined to a false value
+If CVV8_CONFIG_ENABLE_CONST_OVERLOADS is defined to a false value
 then certain templates are not generated, or are generated slightly
 differently. The intention is to try to support MSVC, which reportedly
 cannot distinguish specializations between Template<T> and Template<T const>.
 That said, i this code pretty much relies on proper distinction of
 constness.
 
-Originally, ConstMethodSignature (and its various derivates) was split
-from MethodSignature to support MSVC, but i have since given up on making
-too much effort to coddle to it.
+Originally, ConstMethodSignature (and its various derivates) was split from
+MethodSignature to support MSVC, but i have since given up (in my soul, if
+not in the code) on making too much effort to coddle to it.
+
+By the way: the library is completely untested with
+CVV8_CONFIG_ENABLE_CONST_OVERLOADS=0.
+
 */
-#if !defined(V8_CONVERT_ENABLE_CONST_OVERLOADS)
-#  if defined(_WIN32) && defined(_WIN64)
-#    define V8_CONVERT_ENABLE_CONST_OVERLOADS 0
+#if !defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS)
+#  if defined(_MSC_VER)
+#    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
 #  else
-#    define V8_CONVERT_ENABLE_CONST_OVERLOADS 1
+#    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 1
 #  endif
 #endif
 
@@ -34,13 +38,15 @@ function/method signatures as full-fleged types.
 
 /** @class Signature
 
-    Base (unimplemented) template for holding 
-    function-signature-style argument lists in a type-rich manner. 
-    Most implementations are script-generated. All specializations 
-    implement a "type list" interface. The sl namespace contains 
-    several different compile-time algorithms (sometimes called 
-    template metafunctions) for querying the arity and types in a 
-    signature.
+    Base (unimplemented) template for holding function-signature-style
+    argument lists in a type-rich manner. Most implementations are
+    script-generated and accept up to some library-build-time-defined number
+    of types in their argument list (the interface guarantees at least 10
+    unless the client builds a custom copy with a smaller limit).
+
+    All specializations implement a "type list" interface. The sl namespace
+    contains several different compile-time algorithms (sometimes called
+    template metafunctions) for querying the arity and types in a signature.
     
     Sig must be a function-signature-style parameter list, e.g.:
     
@@ -66,9 +72,8 @@ function/method signatures as full-fleged types.
     typedef T Context; // void for non-member functions, non-cvp T for all T members
     typedef firstArgType Head; // head type of type-list.
     typedef Signature< RV (...)> Tail; // tail of type-list. (...)==arg types 2..N.
-    // When Arity==1 or 0, Tail must be tmp::NilType. In theory, for Arity==1
-    // Tail should be Signature<RV()>, but this interferes with some typelist
-    // algorithms. That's on my to-fix list, but only if it's not too problematic.
+    // When Arity==0, Head and Tail must both be tmp::NilType. For Arity==1
+    // Tail is Signature<RV()> but one could argue that it should be tmp::NilType.
     @endcode
 
     The IsConst part is a bit of an ugly hack, and is mildly unsettling but
@@ -89,7 +94,7 @@ function/method signatures as full-fleged types.
     assert( (tmp::SameType< char const *, sl::At<0,Sig>::Type >::Value) );
     assert( (tmp::SameType< double, sl::At<1,Sig>::Type >::Value) );
     assert( 1 == sl::Index< double, Sig >::Value) );
-    assert( !sl::Contains< int, Sig >::Value) ); // Sig::ReturnType doesn't count here!!!
+    assert( !sl::Contains< int, Sig >::Value) ); // Sig::ReturnType doesn't count here!
     @endcode
     
     Note that the length of the typelist does not include the return value
@@ -110,7 +115,7 @@ template <typename Sig> struct Signature;
 
     CVV8_TYPELIST is a (slightly) convenience form of
     Signature for creating typelists where we do not care about the
-    "return type" part of the list.
+    "return type" or "context" parts of the list.
 
     It is used like this:
 
@@ -118,11 +123,17 @@ template <typename Sig> struct Signature;
     typedef CVV8_TYPELIST(( int, double, char )) MyList;
     @endcode
 
-    NOTE the doubled parenthesis! Some members of the API which take a
-    type-list require a Signature-compatible typelist because they need the
-    ReturnValue and/or Context parts.
+    NOTE the doubled parenthesis!
+
+    Many members of the API which take a type-list require a
+    Signature-compatible typelist because they need the ReturnValue and/or
+    Context parts. CVV8_TYPELIST is intended for cases where niether the
+    ReturnValue nor Context are evaluated (both are void for CVV8_TYPELIST).
+
+    The maximum number of types the typelist can hold is limited
+    to some build-time configuration option.
 */
-#define CVV8_TYPELIST(X) ::cvv8::Signature< void X >
+#define CVV8_TYPELIST(X) ::cvv8::Signature< void (*)X >
 
 /** \namespace cvv8::sl
 
@@ -300,13 +311,11 @@ struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments
     typedef RV (Context::*FunctionType)(v8::Arguments const &);
 };
 
-#if V8_CONVERT_ENABLE_CONST_OVERLOADS
-#if 0
+#if CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 template <typename RV>
 struct Signature<RV (v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
 {
 };
-#endif
 
 template <typename T, typename RV>
 struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
@@ -405,6 +414,14 @@ struct MethodSignature;
    typedef ConstMethodSignature< MyType, double (int,int) > TwoArgsReturnsDouble;
    @endcode
 
+   If your compiler does not support distinguishing between specializations
+   which differ only in constness then the signatures shown above may require
+   a trailing 'const' qualifier, e.g.:
+
+   @code
+   typedef ConstMethodSignature< MyType, void () const > NoArgsReturnsVoid;
+   @endif
+
 */
 template <typename T, typename Sig>
 struct ConstMethodSignature;
@@ -424,7 +441,7 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 {
 };
 
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV >
 struct MethodSignature< T, RV () const > : Signature< RV () const >
 {
@@ -450,7 +467,7 @@ template <typename T, typename RV >
 struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV () const>
 {
 };
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 // reminder: roles of const/non-const overloads are reversed for ConstMethodSignature
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : ConstMethodSignature<T, RV () const >
@@ -514,6 +531,5 @@ typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,
 
 #include "signature_generated.hpp"
 } // namespaces
-#undef V8_CONVERT_ENABLE_CONST_OVERLOADS
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED */

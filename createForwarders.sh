@@ -38,12 +38,13 @@ function makeLists()
     for (( at = 0; at < count; at = at + 1)); do
     #echo "at=$at"
 	local AT="A${at}"
+    local arg="a${at}"
 	aTDecl="${aTDecl} typename ${AT}"
 	aTParam="${aTParam} ${AT}"
-    aFDecl="${aFDecl} ${AT} a${at}" # A0 a0, A1 a1, ...
-    aNToJSCalls="${aNToJSCalls} CastToJS(a${at})" # CastToJS(a0), CastToJS(a1)...
+    aFDecl="${aFDecl} ${AT} ${arg}" # A0 a0, A1 a1, ...
+    aNToJSCalls="${aNToJSCalls} CastToJS(${arg})" # CastToJS(a0), CastToJS(a1)...
 
-	callArgs="${callArgs}${AT}"
+	callArgs="${callArgs}${arg}"
         #sigTypeDecls="${sigTypeDecls}typedef typename SignatureType::ArgType${at} ${AT};"
         sigTypeDecls="${sigTypeDecls}typedef typename sl::At< ${at}, Signature<Sig> >::Type ${AT};\n"
 	#castCalls="${castCalls} CastFromJS< ${AT} >(argv[${at}])"
@@ -81,7 +82,7 @@ function makeCtorForwarder()
     mycat <<EOF
 namespace Detail {
 template <>
-struct CtorForwarderProxy<${count}> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<${count}>
 {
     enum { Arity = ${count} };
     template <typename Sig>
@@ -147,7 +148,7 @@ struct MethodSignature< T, RV (T::*)(${aTParam}) > :
     MethodSignature< T, RV (${aTParam}) >
 {};
 
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (${aTParam}) const > : Signature< RV (T::*)(${aTParam}) const >
 {
@@ -157,7 +158,7 @@ template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (T::*)(${aTParam}) const > :
     MethodSignature< T, RV (${aTParam}) const >
 {};
-#endif /*V8_CONVERT_ENABLE_CONST_OVERLOADS*/
+#endif /*CVV8_CONFIG_ENABLE_CONST_OVERLOADS*/
 
 EOF
 }
@@ -171,7 +172,7 @@ function makeConstMethodSignature()
     mycat <<EOF
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (${aTParam}) const > :
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
     Signature< RV (T::*)(${aTParam}) const > {};
 #else
     Signature< RV (T::*)(${aTParam}) >
@@ -182,7 +183,7 @@ struct ConstMethodSignature< T, RV (${aTParam}) const > :
 };
 #endif
 
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (${aTParam}) > : ConstMethodSignature< T, RV (${aTParam}) const >
 {

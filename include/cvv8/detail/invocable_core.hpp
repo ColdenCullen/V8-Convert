@@ -1865,11 +1865,14 @@ namespace Detail {
    
    @code
    // Overload 3 variants of a member function:
-   typedef Signature< CVV8_TYPELIST((
+   typedef CVV8_TYPELIST((
             MethodToInCa<BoundNative, void (), &BoundNative::overload0>,
             MethodToInCa<BoundNative, void (int), &BoundNative::overload1>,
             MethodToInCa<BoundNative, void (int,int), &BoundNative::overload2>
-        ))> OverloadList;
+            // Note that "N-arity" callbacks MUST come last in the list
+            // because they will always match any arity count and therefore
+            // trump any overloads which follow them.
+        )) OverloadList;
    typedef ArityDispatchList< OverloadList > MyOverloads;
    v8::InvocationCallback cb = MyOverloads::Call;     
    @endcode

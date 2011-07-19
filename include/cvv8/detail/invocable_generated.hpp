@@ -229,6 +229,14 @@ struct CallForwarder<1>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0
+                                     )
+    {
+        return Call( func, func, a0 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -477,6 +485,14 @@ struct CallForwarder<2>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1
+                                     )
+    {
+        return Call( func, func, a0,a1 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -743,6 +759,14 @@ struct CallForwarder<3>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2
+                                     )
+    {
+        return Call( func, func, a0,a1,a2 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -1027,6 +1051,14 @@ struct CallForwarder<4>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -1329,6 +1361,14 @@ struct CallForwarder<5>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3, typename A4>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3, A4 a4
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3,a4 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -1649,6 +1689,14 @@ struct CallForwarder<6>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3, typename A4, typename A5>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3,a4,a5 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -1987,6 +2035,14 @@ struct CallForwarder<7>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3,a4,a5,a6 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -2343,6 +2399,14 @@ struct CallForwarder<8>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3,a4,a5,a6,a7 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -2717,6 +2781,14 @@ struct CallForwarder<9>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3,a4,a5,a6,a7,a8 );
+    }
+
 };
 namespace Detail {
     template <typename Sig, bool UnlockV8>
@@ -3109,5 +3181,13 @@ struct CallForwarder<10>
             ? Toss("Illegal argument: empty v8::Handle<>.")
             : func->Call(self, sizeof(args)/sizeof(args[0]), args);
     }
+    template < typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
+    static v8::Handle<v8::Value> Call( v8::Handle<v8::Function> const & func,
+                                        A0 a0, A1 a1, A2 a2, A3 a3, A4 a4, A5 a5, A6 a6, A7 a7, A8 a8, A9 a9
+                                     )
+    {
+        return Call( func, func, a0,a1,a2,a3,a4,a5,a6,a7,a8,a9 );
+    }
+
 };
 #endif // if !defined(DOXYGEN)

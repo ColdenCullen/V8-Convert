@@ -55,7 +55,7 @@ namespace cvv8 {
     /**
         Marker class, for documentation purposes.
     */
-    struct ValuePredicateConcept
+    struct ValuePredicate
     {
         /**
             Must evaluate the handle and return true or false.
@@ -85,7 +85,7 @@ namespace cvv8 {
         to behave properly.        
     */
     template <typename T>
-    struct ValIs : ValuePredicateConcept
+    struct ValIs : ValuePredicate
     {
         typedef T Type;
         /**
@@ -96,10 +96,14 @@ namespace cvv8 {
             return NULL != CastFromJS<T const *>(v);
         }
     };
-    
+
+    //! Specialization to treat (T const) as T.
     template <typename T> struct ValIs<T const> : ValIs<T> {};
+    //! Specialization to treat (T const &) as T.
     template <typename T> struct ValIs<T const &> : ValIs<T> {};
+    //! Specialization to treat (T *) as T.
     template <typename T> struct ValIs<T *> : ValIs<T> {};
+    //! Specialization to treat (T const *) as T.
     template <typename T> struct ValIs<T const *> : ValIs<T> {};
 
     /**
@@ -125,7 +129,7 @@ namespace cvv8 {
 #if !defined(DOXYGEN)    
     namespace Detail {
         /**
-            ValuePredicateConcept impl which returns retrue if
+            ValuePredicate impl which returns retrue if
             Getter returns true for the given value.
         
             Getter must be a pointer to one of the v8::Value::IsXXX()
@@ -133,7 +137,7 @@ namespace cvv8 {
             not empty and its IsXXX() function returns true.
         */
         template <bool (v8::Value::*Getter)() const>
-        struct ValIs_X : ValuePredicateConcept
+        struct ValIs_X : ValuePredicate
         {
             inline bool operator()( v8::Handle<v8::Value> const & v ) const
             {
@@ -142,13 +146,13 @@ namespace cvv8 {
         };
 
         /**
-            A ValuePredicateConcept impl which returns true only if 
+            A ValuePredicate impl which returns true only if 
             the given handle is-a number and the number is in the 
             inclusive range (std::numeric_limits<NumT>::min .. 
             max()).
         */
         template <typename NumT>
-        struct ValIs_NumberStrictRange : ValuePredicateConcept
+        struct ValIs_NumberStrictRange : ValuePredicate
         {
             typedef NumT Type;
             inline bool operator()( v8::Handle<v8::Value> const & h ) const
@@ -167,7 +171,7 @@ namespace cvv8 {
             not necessary for this specific type in this context).
         */
         template <>
-        struct ValIs_NumberStrictRange<double>
+        struct ValIs_NumberStrictRange<double> : ValuePredicate
         {
             typedef double Type;
             inline bool operator()( v8::Handle<v8::Value> const & h ) const
@@ -178,47 +182,95 @@ namespace cvv8 {
     }
 #endif // DOXYGEN
 
+    /** A Value predicate which returns true if its argument is-a Array. */
     struct ValIs_Array :  Detail::ValIs_X<&v8::Value::IsArray> {};
+    /** A Value predicate which returns true if its argument is-a Object. */
     struct ValIs_Object : Detail::ValIs_X<&v8::Value::IsObject> {};
+    /** A Value predicate which returns true if its argument is-a Boolean. */
     struct ValIs_Boolean : Detail::ValIs_X<&v8::Value::IsBoolean> {};
+    /** A Value predicate which returns true if its argument is-a Date. */
     struct ValIs_Date : Detail::ValIs_X<&v8::Value::IsDate> {};
+    /** A Value predicate which returns true if its argument is-a External. */
     struct ValIs_External : Detail::ValIs_X<&v8::Value::IsExternal> {};
+    /** A Value predicate which returns true if its argument has a false value. */
     struct ValIs_False : Detail::ValIs_X<&v8::Value::IsFalse> {};
+    /** A Value predicate which returns true if its argument is-a Function. */
     struct ValIs_Function : Detail::ValIs_X<&v8::Value::IsFunction> {};
+    /** A Value predicate which returns true if its argument is-a In32. */
     struct ValIs_Int32 : Detail::ValIs_X<&v8::Value::IsInt32> {};
+    /** A Value predicate which returns true if its argument is-a UInt32. */
     struct ValIs_UInt32 : Detail::ValIs_X<&v8::Value::IsUint32 /* Note the "UInt" vs "Uint" descrepancy. i consider Uint to be wrong.*/ > {};
+    /** A Value predicate which returns true if its argument is Null (JS null, not C++ NULL). */
     struct ValIs_Null : Detail::ValIs_X<&v8::Value::IsNull> {};
+    /** A Value predicate which returns true if its argument has the special Undefined value. */
     struct ValIs_Undefined : Detail::ValIs_X<&v8::Value::IsUndefined> {};
+    /** A Value predicate which returns true if its argument is-a Number. */
     struct ValIs_Number : Detail::ValIs_X<&v8::Value::IsNumber> {};
+    /** A Value predicate which returns true if its argument is-a RegExp. */
     struct ValIs_RegExp : Detail::ValIs_X<&v8::Value::IsRegExp> {};
+    /** A Value predicate which returns true if its argument is-a String. */
     struct ValIs_String : Detail::ValIs_X<&v8::Value::IsString> {};
+    /** A Value predicate which returns true if its argument has a true value. */
     struct ValIs_True : Detail::ValIs_X<&v8::Value::IsTrue> {};
 
     // FIXME: reverse the parent relationships between e.g. ValIs<v8::Array> and ValIs_Array.
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an int8_t. */
     template <> struct ValIs<int8_t> : Detail::ValIs_NumberStrictRange<int8_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an uint8_t. */
     template <> struct ValIs<uint8_t> : Detail::ValIs_NumberStrictRange<uint8_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an int16_t. */
     template <> struct ValIs<int16_t> : Detail::ValIs_NumberStrictRange<int16_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an uint16_t. */
     template <> struct ValIs<uint16_t> : Detail::ValIs_NumberStrictRange<uint16_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an int32_t. */
     template <> struct ValIs<int32_t> : Detail::ValIs_NumberStrictRange<int32_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an uint32_t. */
     template <> struct ValIs<uint32_t> : Detail::ValIs_NumberStrictRange<uint32_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an int64_t. */
     template <> struct ValIs<int64_t> : Detail::ValIs_NumberStrictRange<int64_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in an uint64_t. */
     template <> struct ValIs<uint64_t> : Detail::ValIs_NumberStrictRange<uint64_t> {};
+    /** A Value predicate which returns true if its argument is-a Number value. */
     template <> struct ValIs<double> : ValIs_Number {};
+    //! Special-case specialization to treat C strings as JS strings.
     template <> struct ValIs<char const *> : ValIs_String {};
+    //! Special-case specialization to treat v8 strings as JS strings.
     template <> struct ValIs<std::string> : ValIs_String {};
+    //! A Value predicate which returns true if its argument is-a Array. */
     template <> struct ValIs<v8::Array> : ValIs_Array {};
+    //! A Value predicate which returns true if its argument is-a Object. */
     template <> struct ValIs<v8::Object> : ValIs_Object {};
+    //! A Value predicate which returns true if its argument is-a Boolean. */
     template <> struct ValIs<v8::Boolean> : ValIs_Boolean {};
+    //! A Value predicate which returns true if its argument is-a Date. */
     template <> struct ValIs<v8::Date> : ValIs_Date {};
+    //! A Value predicate which returns true if its argument is-a External. */
     template <> struct ValIs<v8::External> : ValIs_External {};
+    //! A Value predicate which returns true if its argument is-a Function. */
     template <> struct ValIs<v8::Function> : ValIs_Function {};
+    //! A Value predicate which returns true if its argument is-a Int32. */
     template <> struct ValIs<v8::Int32> : ValIs_Int32 {};
+    //! A Value predicate which returns true if its argument is-a UInt32. */
     template <> struct ValIs<v8::Uint32> : ValIs_UInt32 {};
+    //! A Value predicate which returns true if its argument is-a Number. */
     template <> struct ValIs<v8::Number> : ValIs_Number {};
+    //! A Value predicate which returns true if its argument is-a RegExp. */
     template <> struct ValIs<v8::RegExp> : ValIs_RegExp {};
+    //! A Value predicate which returns true if its argument is-a String. */
     template <> struct ValIs<v8::String> : ValIs_String {};
+    //! Specialization to treat Handle<T> as T. */
     template <typename T> struct ValIs< v8::Handle<T> > : ValIs< T > {};
+    //! Specialization to treat Local<T> as T. */
     template <typename T> struct ValIs< v8::Local<T> > : ValIs< T > {};
+    //! Specialization to treat Persistent<T> as T. */
     template <typename T> struct ValIs< v8::Persistent<T> > : ValIs< T > {};
 
     /**
@@ -238,7 +290,7 @@ namespace cvv8 {
         "are the arguments of the proper types?"), and not 
         higher-level application logic.
     */
-    struct ArgumentsPredicateConcept
+    struct ArgumentsPredicate
     {
         /**
             Must "evaluate" the arguments and return true or false. 
@@ -255,7 +307,7 @@ namespace cvv8 {
         (Min==Max) to mean only that many arguments.
     */
     template <int Min_, int Max_ = Min_>
-    struct Argv_Length : ArgumentsPredicateConcept
+    struct Argv_Length : ArgumentsPredicate
     {
     private:
         typedef char AssertMinIsPositive[ (Min_>=0) ? 1 : -1 ];
@@ -281,10 +333,10 @@ namespace cvv8 {
     
         Index = arg index to check.
         
-        ValIsType must match the ValuePredicateConcept interface.
+        ValIsType must match the ValuePredicate interface.
     */
     template <unsigned short Index, typename ValIsType >
-    struct ArgAt_Is : ArgumentsPredicateConcept
+    struct ArgAt_Is : ArgumentsPredicate
     {
         /**
             Returns true if ValType()( av[Index] ) is true.
@@ -309,7 +361,6 @@ namespace cvv8 {
     template <unsigned short Index, typename T>
     struct ArgAt_IsA : ArgAt_Is< Index, ValIs<T> > {};
 
-#if !defined(DOXYGEN)   
     namespace Detail {
         /**
             Functor which proxies the v8::Value "is-a" functions.
@@ -318,7 +369,7 @@ namespace cvv8 {
             member to be used to perform the is-a evaluation.
         */
         template <unsigned short Index, bool (v8::Value::*Getter)() const>
-        struct ArgAt_IsX : ArgumentsPredicateConcept
+        struct ArgAt_IsX : ArgumentsPredicate
         {
             /**
                 Returns true only if (Index < av.Length())
@@ -332,76 +383,90 @@ namespace cvv8 {
             }  
         };
     }
-#endif // DOXYGEN
+
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Array. */
     template <unsigned short Index>
     struct ArgAt_IsArray : Detail::ArgAt_IsX<Index, &v8::Value::IsArray> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Object. */
     template <unsigned short Index>
     struct ArgAt_IsObject : Detail::ArgAt_IsX<Index, &v8::Value::IsObject> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Boolean. */
     template <unsigned short Index>
     struct ArgAt_IsBoolean : Detail::ArgAt_IsX<Index, &v8::Value::IsBoolean> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Date. */
     template <unsigned short Index>
     struct ArgAt_IsDate : Detail::ArgAt_IsX<Index, &v8::Value::IsDate> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a External. */
     template <unsigned short Index>
     struct ArgAt_IsExternal : Detail::ArgAt_IsX<Index, &v8::Value::IsExternal> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index has a false value. */
     template <unsigned short Index>
     struct ArgAt_IsFalse : Detail::ArgAt_IsX<Index, &v8::Value::IsFalse> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Function. */
     template <unsigned short Index>
     struct ArgAt_IsFunction : Detail::ArgAt_IsX<Index, &v8::Value::IsFunction> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Int32Boolean. */
     template <unsigned short Index>
     struct ArgAt_IsInt32 : Detail::ArgAt_IsX<Index, &v8::Value::IsInt32> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a UInt32. */
     template <unsigned short Index>
     struct ArgAt_IsUInt32 : Detail::ArgAt_IsX<Index, &v8::Value::IsUint32> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index has the special Null value. */
     template <unsigned short Index>
     struct ArgAt_IsNull : Detail::ArgAt_IsX<Index, &v8::Value::IsNull> {};
-    
+
+    //! ArgumentsPredicate which returns true if the argument at Index has the special Undefined value. */
     template <unsigned short Index>
     struct ArgAt_IsUndefined : Detail::ArgAt_IsX<Index, &v8::Value::IsUndefined> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a Number. */
     template <unsigned short Index>
     struct ArgAt_IsNumber : Detail::ArgAt_IsX<Index, &v8::Value::IsNumber> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a RegExp. */
     template <unsigned short Index>
     struct ArgAt_IsRegExp : Detail::ArgAt_IsX<Index, &v8::Value::IsRegExp> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index is-a String. */
     template <unsigned short Index>
     struct ArgAt_IsString : Detail::ArgAt_IsX<Index, &v8::Value::IsString> {};
 
+    //! ArgumentsPredicate which returns true if the argument at Index has a True value. */
     template <unsigned short Index>
     struct ArgAt_IsTrue : Detail::ArgAt_IsX<Index, &v8::Value::IsTrue> {};
 
 
     /**
-        ArgumentsPredicateConcept functor which always returns true.
+        ArgumentsPredicate functor which always returns true.
 
         This currently has only one obscure use: as the predicate given to a
         PredicatedInCa in conjunction with an N-arity callback, used as a
         catch-all fallback as the last item in a list of PredicatedInCas
         passed to PredicatedInCaDispatcher. (Got that?)
     */
-    struct Argv_True : ArgumentsPredicateConcept
+    struct Argv_True : ArgumentsPredicate
     {
-        /**
-            Always returns true.
-        */
         bool operator()( v8::Arguments const & ) const
         {
             return true;
         }
     };
-    struct Argv_False : ArgumentsPredicateConcept
+    /** ArgumentsPredicate which always returns false.
+
+        This predicate has only one known, rather obscure use in combination
+        with type lists.
+    */
+    struct Argv_False : ArgumentsPredicate
     {
-        /**
-            Always returns false.
-        */
         bool operator()( v8::Arguments const & ) const
         {
             return false;
@@ -409,7 +474,7 @@ namespace cvv8 {
     };
 
     /**
-        An ArgumentsPredicateConcept implementation which takes
+        An ArgumentsPredicate implementation which takes
         two ArgumentsPredicate functors as template parameters
         and combines them using an AND operation.
 
@@ -418,7 +483,7 @@ namespace cvv8 {
         than this form for that case.)
     */
     template <typename ArgPred1, typename ArgPred2>
-    struct Argv_And : ArgumentsPredicateConcept
+    struct Argv_And : ArgumentsPredicate
     {
         /**
             Returns true only if ArgPred1()(args) and
@@ -436,7 +501,7 @@ namespace cvv8 {
         Use Argv_OrN for chaining more than two predicates.
     */
     template <typename ArgPred1, typename ArgPred2>
-    struct Argv_Or : ArgumentsPredicateConcept
+    struct Argv_Or : ArgumentsPredicate
     {
         /**
             Returns true only if one of ArgPred1()(args) or
@@ -457,6 +522,9 @@ namespace cvv8 {
         This functor is a predicate which performs an AND operation on all
         of the predicates in the type list.
 
+        Note that an empty typelist evaluates to True in this context, for
+        deeply arcane reasons.
+
         See Argv_And if you just want to combine two functors
         (it is more succinct for that case).
 
@@ -464,15 +532,15 @@ namespace cvv8 {
 
         @code
         // Predicate matching (function, ANYTHING, function) signature:
-        typedef Argv_AndN< Signature<void (
+        typedef Argv_AndN< CVV8_TYPELIST((
             Argv_Length<3>,
             ArgAt_IsFunction<0>,
             ArgAt_IsFunction<2>
-        )> > PredFuncXFunc;
+        )) > PredFuncXFunc;
         @endcode
     */
     template <typename PredList>
-    struct Argv_AndN : ArgumentsPredicateConcept
+    struct Argv_AndN : ArgumentsPredicate
     {
         /**
             Returns true only if all predicates in PredList
@@ -499,9 +567,12 @@ namespace cvv8 {
 
         When chaining only two predicates Argv_Or offers
         a more succinct equivalent to this type.
+
+        Note that an empty typelist evaluates to False in this context, for
+        deeply arcane reasons.
     */
     template <typename PredList>
-    struct Argv_OrN : ArgumentsPredicateConcept
+    struct Argv_OrN : ArgumentsPredicate
     {
         /**
             Returns true only if one of the predicates in PredList
@@ -518,7 +589,7 @@ namespace cvv8 {
 
     //! End-of-list specialization.
     template <>
-    struct Argv_OrN<tmp::NilType> : ArgumentsPredicateConcept
+    struct Argv_OrN<tmp::NilType> : ArgumentsPredicate
     {
         /**
             Always returns false.
@@ -531,7 +602,7 @@ namespace cvv8 {
 
 
     /**
-        PredicatedInCa combines an ArgumentsPredicateConcept functor
+        PredicatedInCa combines an ArgumentsPredicate functor
         (ArgPred) with an InCa type, such that we can create lists
         of functor/callback pairs for use in dispatching callbacks
         based on the results of ArgumentPredicates.
@@ -544,13 +615,13 @@ namespace cvv8 {
         Reminder to self: this class is only in arguments.hpp, as opposed to
         invocable_core.hpp, because i want (for pedantic
         documentation-related reasons) this class to inherit
-        ArgumentsPredicateConcept, which invocable*.hpp does not know about.
-        We might want to move ArgumentsPredicateConcept and
-        ValuePredicateConcept into convert_core.hpp and move this class back
+        ArgumentsPredicate, which invocable*.hpp does not know about.
+        We might want to move ArgumentsPredicate and
+        ValuePredicate into convert_core.hpp and move this class back
         into invocable_core.hpp.
     */
     template <typename ArgPred, typename InCaT>
-    struct PredicatedInCa : InCa, ArgumentsPredicateConcept
+    struct PredicatedInCa : InCa, ArgumentsPredicate
     {
         /** Returns ArgPred()(argv). */
         bool operator()( v8::Arguments const & argv ) const
@@ -587,9 +658,6 @@ namespace cvv8 {
         // Combine them into one InvocationCallback:
         typedef PredicatedInCaDispatcher< CVV8_TYPELIST((
             Cb1, Cb2, Cb3, CbN
-            // Note that "N-arity" callbacks MUST come last in the list
-            // because they will always match any arity count and therefore
-            // trump any overloads which follow them.
         ))> AllOverloads;
         v8::InvocationCallback cb = AllOverloads::Call;
         @endcode

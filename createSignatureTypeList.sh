@@ -47,7 +47,7 @@ struct Signature< RV (T::*)() > : Signature<RV ()>
     typedef RV (T::*FunctionType)();
 };
 
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 
 template <typename RV>
 struct Signature< RV () const > : Signature<RV ()>
@@ -61,7 +61,7 @@ struct Signature< RV (T::*)() const > : Signature<RV () const>
     typedef RV (T::*FunctionType)() const;
 };
 
-#endif /* V8_CONVERT_ENABLE_CONST_OVERLOADS */
+#endif /* CVV8_CONFIG_ENABLE_CONST_OVERLOADS */
 EOF
 
 fi # $from==0
@@ -117,7 +117,7 @@ struct Signature< RV (T::*)(${targs}) > : Signature<RV (${targs})>
     typedef RV (T::*FunctionType)(${targs});
 };
 
-#if defined(V8_CONVERT_ENABLE_CONST_OVERLOADS) && V8_CONVERT_ENABLE_CONST_OVERLOADS
+#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 //! Specialization for ${i} arg(s).
 template <$tparam>
 struct Signature< RV (${targs}) const > : Signature<RV (${targs})>
@@ -132,7 +132,7 @@ struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs}) const>
     typedef T Context;
     typedef RV (T::*FunctionType)(${targs}) const;
 };
-#endif /*V8_CONVERT_ENABLE_CONST_OVERLOADS*/
+#endif /*CVV8_CONFIG_ENABLE_CONST_OVERLOADS*/
 EOF
     #echo $tparam
     #echo $targs

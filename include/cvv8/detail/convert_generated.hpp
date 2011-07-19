@@ -2,7 +2,7 @@
 #if !defined(DOXYGEN)
 namespace Detail {
 template <>
-struct CtorForwarderProxy<1> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<1>
 {
     enum { Arity = 1 };
     template <typename Sig>
@@ -29,7 +29,7 @@ struct CtorForwarderProxy<1> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<2> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<2>
 {
     enum { Arity = 2 };
     template <typename Sig>
@@ -59,7 +59,7 @@ struct CtorForwarderProxy<2> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<3> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<3>
 {
     enum { Arity = 3 };
     template <typename Sig>
@@ -92,7 +92,7 @@ struct CtorForwarderProxy<3> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<4> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<4>
 {
     enum { Arity = 4 };
     template <typename Sig>
@@ -128,7 +128,7 @@ struct CtorForwarderProxy<4> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<5> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<5>
 {
     enum { Arity = 5 };
     template <typename Sig>
@@ -167,7 +167,7 @@ struct CtorForwarderProxy<5> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<6> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<6>
 {
     enum { Arity = 6 };
     template <typename Sig>
@@ -209,7 +209,7 @@ struct CtorForwarderProxy<6> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<7> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<7>
 {
     enum { Arity = 7 };
     template <typename Sig>
@@ -254,7 +254,7 @@ struct CtorForwarderProxy<7> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<8> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<8>
 {
     enum { Arity = 8 };
     template <typename Sig>
@@ -302,7 +302,7 @@ struct CtorForwarderProxy<8> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<9> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<9>
 {
     enum { Arity = 9 };
     template <typename Sig>
@@ -353,7 +353,7 @@ struct CtorForwarderProxy<9> // todo: subclass Signature<Sig>
 }
 namespace Detail {
 template <>
-struct CtorForwarderProxy<10> // todo: subclass Signature<Sig>
+struct CtorForwarderProxy<10>
 {
     enum { Arity = 10 };
     template <typename Sig>
