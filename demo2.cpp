@@ -32,6 +32,7 @@ struct MyType
         CERR << "MyType::~MyType() @ "<<this<<'\n';
     }
     void aNonConstMethod() { CERR << "\n"; }
+    void aConstMethod() const { CERR << "\n"; }
 };
 
 int a_non_member(int i)
@@ -93,7 +94,8 @@ void SetupCvv8DemoBindings( v8::Handle<v8::Object> const & dest )
     cc
         ("destroy", CC::DestroyObjectCallback)
         ("nonMember", cv::FunctionToInCa< int (int), a_non_member>::Call)
-        ("nonConstMethod", cv::MethodToInCa<T, void (void), &T::aNonConstMethod>::Call)
+        ("nonConstMethod", cv::MethodToInCa<T, void (), &T::aNonConstMethod>::Call)
+        ("constMethod", cv::ConstMethodToInCa<T, void (), &T::aConstMethod>::Call)
         .AddClassTo( cv::TypeName<T>::Value, dest );
     CERR << "Finished binding " << cv::TypeName<T>::Value << ".\n";
 }

@@ -124,7 +124,6 @@ template <typename RV, ${aTDecl} >
 struct FunctionSignature< RV (*)(${aTParam}) >
   : FunctionSignature< RV (${aTParam}) >
 {};
-
 EOF
 }
 
@@ -148,18 +147,6 @@ struct MethodSignature< T, RV (T::*)(${aTParam}) > :
     MethodSignature< T, RV (${aTParam}) >
 {};
 
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (${aTParam}) const > : Signature< RV (T::*)(${aTParam}) const >
-{
-    enum { IsConst = 1 };
-};
-template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (T::*)(${aTParam}) const > :
-    MethodSignature< T, RV (${aTParam}) const >
-{};
-#endif /*CVV8_CONFIG_ENABLE_CONST_OVERLOADS*/
-
 EOF
 }
 
@@ -168,33 +155,15 @@ EOF
 # TODO: move this into makeMethodSignature.
 function makeConstMethodSignature()
 {
-# reminder: role of const overloading is reversed for ConstMethodSignature.
     mycat <<EOF
 template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) const > :
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-    Signature< RV (T::*)(${aTParam}) const > {};
-#else
-    Signature< RV (T::*)(${aTParam}) >
-{
-    //enum { IsConst = 1 };
-    static const bool IsConst = true;
-    typedef RV (T::*FunctionType)(${aTParam}) const;
-};
-#endif
-
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) > : ConstMethodSignature< T, RV (${aTParam}) const >
+struct ConstMethodSignature< T, RV (${aTParam}) > : Signature< RV (T::*)(${aTParam}) const >
 {
 };
-#endif
-
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (T::*)(${aTParam}) const > :
-    ConstMethodSignature< T, RV (${aTParam}) const >
+    ConstMethodSignature< T, RV (${aTParam}) >
 {};
-
 EOF
 
 }
