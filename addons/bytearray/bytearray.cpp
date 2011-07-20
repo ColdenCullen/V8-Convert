@@ -426,7 +426,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     typedef cv::MemberPropertyBinder<N> SPB;
     cw
         ( "destroy", CW::DestroyObjectCallback )
-        ( "append", cv::ToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
+        ( "append", cv::MethodToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
         ( "stringValue", cv::ConstMethodToInCa<N, std::string (),&N::stringValue>::Call )
         ( "toString", cv::ConstMethodToInCa<N, std::string (),&N::toString>::Call )
         // i don't like these next two...

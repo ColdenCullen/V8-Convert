@@ -214,7 +214,7 @@ namespace cvv8 {
         const static void * Value;
     };
     template <typename T>
-    const void * ClassCreator_TypeID<T>::Value = "";
+    const void * ClassCreator_TypeID<T>::Value = TypeName<T>::Value;
 
     /**
        Convenience base type for ClassCreator_InternalFields

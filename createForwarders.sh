@@ -29,6 +29,7 @@ castTypedefs="" # typedef ArgCaster<A#> AC#, ...
 castInits="" # AC# ac#; ...
 callArgs="" # a0, ... aN
 sigTypeDecls="" # SignatureType::ArgType# A#...
+unlocker="V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );"
 at=0
 
 ########################################################
@@ -188,7 +189,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> unlocker;
+            ${unlocker}
             return (ReturnType)(*func)( ${castCalls} );
         }
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
@@ -209,7 +210,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> unlocker;
+            ${unlocker}
             return (ReturnType)(*func)( ${castCalls} );
         }
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
@@ -249,7 +250,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> unlocker;
+            ${unlocker}
             return (ReturnType)(self.*func)( ${castCalls} );
         }
         static ${ValHnd} Call( T ${constness} & self, FunctionType func, v8::Arguments const & argv )
@@ -282,7 +283,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> unlocker;
+            ${unlocker}
             return (ReturnType)(self.*func)( ${castCalls} );
         }
         static ${ValHnd} Call( T ${constness} & self, FunctionType func, v8::Arguments const & argv )

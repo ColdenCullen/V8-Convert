@@ -17,22 +17,22 @@ namespace cv = cvv8;
 struct MyType
 {
     MyType() {
-        CERR << "MyType::MyType() @ "<<this<<'\n';
+        CERR << "MyType::MyType() @ "<<(void const *)this<<'\n';
     }
     MyType( int i, double d ) {
-        CERR << "MyType::MyType("<<i<<", "<<d<<") @ "<<this<<'\n';
+        CERR << "MyType::MyType("<<i<<", "<<d<<") @ "<<(void const *)this<<'\n';
     }
     MyType( char const * str ) {
         CERR << "MyType::MyType("<<str<<") @ "<<this<<'\n';
     }
     MyType( v8::Arguments const & argv ) {
-        CERR << "MyType::MyType("<<argv.Length()<<" arg(s)) @ "<<this<<'\n';
+        CERR << "MyType::MyType("<<argv.Length()<<" arg(s)) @ "<<(void const *)this<<'\n';
     }
     ~MyType() {
-        CERR << "MyType::~MyType() @ "<<this<<'\n';
+        CERR << "MyType::~MyType() @ "<<(void const *)this<<'\n';
     }
-    void aNonConstMethod() { CERR << "\n"; }
-    void aConstMethod() const { CERR << "\n"; }
+    void aNonConstMethod() { CERR << " @ "<<(void const *)this<<'\n'; }
+    void aConstMethod() const { CERR << " @ "<<(void const *)this<<'\n'; }
 };
 
 int a_non_member(int i)

@@ -710,7 +710,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (self.*func)();
         }
         
@@ -796,7 +796,7 @@ namespace Detail {
         typedef typename TypeInfo<T>::Type Type;
         static ReturnType CallNative( Type const & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
         }
         
@@ -839,7 +839,7 @@ namespace Detail {
         typedef typename TypeInfo<T>::Type Type;
         static ReturnType CallNative( Type const & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
         }
         static v8::Handle<v8::Value> Call( Type const & self, FunctionType func, v8::Arguments const & argv )
@@ -1330,7 +1330,7 @@ struct MethodToInCaVoid
 
     @code
     v8::InvocationCallback cb = 
-       ConstMethodToInCa< T, int (int) const, &T::myFunc>::Call;
+       ConstMethodToInCa< T, int (int), &T::myFunc>::Call;
     @endcode
 
 */
@@ -1354,7 +1354,7 @@ struct ConstMethodToInCa
 
     @code
     v8::InvocationCallback cb = 
-       ConstMethodToInCaVoid< T, int (int) const, &T::myFunc>::Call;
+       ConstMethodToInCaVoid< T, int (int), &T::myFunc>::Call;
     @endcode
 
 */
@@ -1909,6 +1909,12 @@ struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
 {
 };    
 
+/** @def ENABLE_TOINCA
+
+Temporary refactoring macro to disable the ToInCa templates while we accommodate
+the constness issues for MSVC 2010.
+
+*/
 #define ENABLE_TOINCA 0
 
 #if ENABLE_TOINCA
@@ -2005,7 +2011,7 @@ namespace Detail {
 
     @code
     typedef ToInCa<MyT, int (int), &MyT::nonConstFunc> NonConstMethod;
-    typedef ToInCa<MyT, void (int) const, &MyT::constFunc> ConstMethod;
+    typedef ToInCa<MyT, void (int), &MyT::constFunc> ConstMethod;
     typedef ToInCa<void, int (char const *), ::puts, true> Func;
     
     v8::InvocationCallback cb;
@@ -2172,5 +2178,6 @@ struct OneTimeInitInCa : InCa
 } // namespace
 
 #undef HANDLE_PROPAGATE_EXCEPTION
+#undef ENABLE_TOINCA
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */

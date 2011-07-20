@@ -16,7 +16,7 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -40,7 +40,7 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -66,7 +66,7 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -102,7 +102,7 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -147,7 +147,7 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -183,7 +183,7 @@ namespace Detail {
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -284,7 +284,7 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -311,7 +311,7 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -340,7 +340,7 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -379,7 +379,7 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -427,7 +427,7 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -466,7 +466,7 @@ namespace Detail {
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -573,7 +573,7 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -603,7 +603,7 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -635,7 +635,7 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -677,7 +677,7 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -728,7 +728,7 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -770,7 +770,7 @@ namespace Detail {
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -883,7 +883,7 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -916,7 +916,7 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -951,7 +951,7 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -996,7 +996,7 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -1050,7 +1050,7 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -1095,7 +1095,7 @@ namespace Detail {
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -1214,7 +1214,7 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -1250,7 +1250,7 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -1288,7 +1288,7 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -1336,7 +1336,7 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -1393,7 +1393,7 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -1441,7 +1441,7 @@ namespace Detail {
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -1566,7 +1566,7 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -1605,7 +1605,7 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -1646,7 +1646,7 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -1697,7 +1697,7 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -1757,7 +1757,7 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -1808,7 +1808,7 @@ namespace Detail {
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -1939,7 +1939,7 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -1981,7 +1981,7 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -2025,7 +2025,7 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -2079,7 +2079,7 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -2142,7 +2142,7 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -2196,7 +2196,7 @@ namespace Detail {
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -2333,7 +2333,7 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -2378,7 +2378,7 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -2425,7 +2425,7 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -2482,7 +2482,7 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -2548,7 +2548,7 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -2605,7 +2605,7 @@ namespace Detail {
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -2748,7 +2748,7 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -2796,7 +2796,7 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -2846,7 +2846,7 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -2906,7 +2906,7 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -2975,7 +2975,7 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -3035,7 +3035,7 @@ namespace Detail {
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -3184,7 +3184,7 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -3235,7 +3235,7 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -3288,7 +3288,7 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -3351,7 +3351,7 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
         static v8::Handle<v8::Value> Call( T  & self, FunctionType func, v8::Arguments const & argv )
@@ -3423,7 +3423,7 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
@@ -3486,7 +3486,7 @@ namespace Detail {
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
         static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
