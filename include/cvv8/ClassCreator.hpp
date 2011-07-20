@@ -127,11 +127,8 @@ namespace cvv8 {
     struct Opt_ConstVal
     {
         typedef ValT Type;
-        //static Type const Value = Val; // giving me an undefined ref error?
-        static Type const Value;
+        const static Type Value = Val;
     };
-    template <typename ValT, ValT Val>
-    const ValT Opt_ConstVal<ValT,Val>::Value = Val;
 
     /**
        Base class for static integer ClassCreator options.
