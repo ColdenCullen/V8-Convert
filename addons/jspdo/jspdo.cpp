@@ -78,18 +78,22 @@ namespace jspdo {
 }
 
 namespace cvv8 {
-    template <>
-    char const * TypeName<cpdo::driver>::Value = "JSPDO";
-    template <>
-    char const * TypeName<cpdo::statement>::Value = "Statement";
+    CVV8_TypeName_DECL((cpdo::driver));
+    CVV8_TypeName_DECL((cpdo::statement));
+    CVV8_TypeName_IMPL((cpdo::driver),"JSPDO");
+    CVV8_TypeName_IMPL((cpdo::statement),"Statement");
 
     // Various ClassCreator policy classes specialized for the native types
     // we are binding...
 
 #if 1
+    /** We don't really need the extra type-safety bits for Statement b/c
+        subclassing will never be an issue (b/c client code can't create
+        Statements directly (or it's not in the public API, anyway)).
+    */
     template <>
     struct ClassCreator_InternalFields<cpdo::statement>
-        : ClassCreator_InternalFields_Base<cpdo::statement,1,-1,0>
+        : ClassCreator_InternalFields_Base<cpdo::statement,3,0,1>
     {};
 #endif
     template <>
@@ -150,6 +154,12 @@ namespace jspdo {
     }
 #endif
 
+    /* The following plumbing is to map Statments to their owning
+       DBs. We do this to cover up for sloppy script code which does not
+       close statements before the db is closed (leading to undefined
+       behaviour). So we manage the relationships and try to DTRT.
+    */
+
     /**
         Map of cpdo::statement to their JS selves.
     */
@@ -207,6 +217,12 @@ namespace jspdo {
 
 namespace cvv8 {
 
+    typedef ClassCreator_InternalFields<cpdo::statement> CCI_Stmt;
+    const static char AssertStatementInternalFieldSanityCheck[ (CCI_Stmt::Count>2) ? 1 : -1 ] = {0};
+    enum {
+        //! The v8::Object internal field number to store the Driver-for-Statement mapping.
+        StatementDrvInternalField = CCI_Stmt::Count-1
+    };
 
     /**
         This specialization adds some plumbing to allow the framework
@@ -220,13 +236,15 @@ namespace cvv8 {
         static cpdo::driver const * getDriverForStmt( void const * self, v8::Handle<v8::Object> const & jsSelf )
         {
             typedef ClassCreator_InternalFields<cpdo::statement> CCI;
-            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(CCI::NativeIndex) );
+            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(StatementDrvInternalField) );
             cpdo::driver const * drv = cv::CastFromJS<cpdo::driver>( db );
-            if( 0 && !drv )
-            { // this happens when... not exactly sure...
+#if 0
+            if( !drv )
+            { // this happens during db.close() cleanup of "dangling" statements.
                 CERR << "Driver is NULL for cpdo::statement@"<<self<<'\n';
                 assert( 0 && "Driver is NULL!" );
             }
+#endif
             return drv;
         }
     public:
@@ -275,7 +293,7 @@ namespace cvv8 {
         v8::String::Utf8Value const u8v(sql);
         cpdo::statement * rc = drv->prepare( *u8v );
         typedef ClassCreator_InternalFields<cpdo::statement> CCI;
-        jsSelf->SetInternalField(CCI::NativeIndex,jdrv);
+        jsSelf->SetInternalField(StatementDrvInternalField,jdrv);
         jsSelf->Set(JSTR("sql"),sql);
         if( jspdo::IsDebugEnabled() )
         {
@@ -351,7 +369,7 @@ namespace cvv8 {
             jspdo::StmtMap::iterator sit(smap.begin());
             for( ; smap.end() != sit; ++sit )
             {
-                if( jspdo::IsDebugEnabled() )
+                if( jspdo::IsDebugEnabled() || enableDestructorDebug )
                 {
                     CERR << "JSPDO.close() is cleaning up a dangling/unclosed cpdo::statement@"<<(*sit).first<<'\n';
                 }
