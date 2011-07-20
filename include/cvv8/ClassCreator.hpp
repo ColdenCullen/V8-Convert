@@ -348,7 +348,7 @@ namespace cvv8 {
 
             On error the binding should throw a NATIVE exception (ideally
             deriving from std::exception because (A) it's portable practice
-            and (B) parts of the v8::convert API handles those explicitly).
+            and (B) parts of the cvv8 API handles those explicitly).
 
             Several years of experience have shown that this function (or
             similar implementations) should take some care to make sure
@@ -514,7 +514,7 @@ namespace cvv8 {
        A basic Native-to-JS class binding mechanism. This class does
        not aim to be a monster framework, just something simple,
        mainly for purposes of showing (and testing) what the core
-       v8::convert can do.
+       cvv8 can do.
 
        The framework must know how to convert JS objects to T objects,
        and for this to work client code must define a JSToNative<T>
@@ -1010,23 +1010,29 @@ namespace cvv8 {
     };
 
     /**
-       Intended to be the base class for JSToNative<T> specializations
-       when T is JS-bound using ClassCreator.
+        Intended to be the base class for JSToNative<T> specializations
+        when T is JS-bound using ClassCreator.
 
-       This particular implementation must be defined _after_
-       ClassCreator_InternalFields<T> is defined. If the caller will
-       not specialize that type then this is irrelevant, but when
-       specializing it, it must come before this JSToNative
-       implementation is instantiated.
-       
-       If TypeSafe is true then this type is a proxy for
-       JSToNative_ObjectWithInternalFieldsTypeSafe, else it is a proxy
-       for JSToNative_ObjectWithInternalFields. Note that
-       ClassCreator is hard-wired to implant/deplant type id information,
-       with the _hope_ that JSToNative<T> will use it, but it does not
-       enforce that. For types where TypeSafe is true, ClassCreator will
-       still set up bits for the check, so disabling this does not save
-       that one v8::Object internal field needed for the type identifier.
+        This particular implementation must be defined _after_
+        any of the following policies are customized for T:
+
+        - ClassCreator_InternalFields
+        - ClassCreator_SearchPrototypeForThis
+        - ClassCreator_TypeID (only if TypeSafe is true!)
+
+        If the client will not specialize those types type then the order is
+        irrelevant, but when specializing any of them, they must come before
+        this JSToNative implementation is instantiated.
+
+        If TypeSafe is true then this type is a proxy for
+        JSToNative_ObjectWithInternalFieldsTypeSafe, else it is a proxy for
+        JSToNative_ObjectWithInternalFields. Note that ClassCreator is
+        hard-wired to implant/deplant type id information if
+        ClassCreator_InternalFields<T>::TypeIDIndex is not negative, with the
+        _hope_ that JSToNative<T> will use it, but it does not enforce that
+        the type ID is used. For types where the internal fields' TypeIDIndex
+        is negative, ClassCreator will not set up bits for the type check,
+        which means a slightly smaller runtime memory footprint.
     */
     template <typename T, bool TypeSafe = ClassCreator_InternalFields<T>::TypeIDIndex >= 0 >
     struct JSToNative_ClassCreator :
@@ -1109,7 +1115,7 @@ namespace cvv8 {
         To make use of this, the client should do the following:
         
         @code
-        // in the v8::convert namespace:
+        // in the cvv8 namespace:
         template <>
             struct NativeToJS<T> : NativeToJSMap<T>::NativeToJSImpl {};
         @endcode
