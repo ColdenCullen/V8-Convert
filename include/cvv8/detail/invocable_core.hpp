@@ -1909,6 +1909,9 @@ struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
 {
 };    
 
+#define ENABLE_TOINCA 0
+
+#if ENABLE_TOINCA
 #if !defined(DOXYGEN)
 namespace Detail {
     //! Internal helper for ToInCa impl.
@@ -2049,6 +2052,30 @@ struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
 };
 
 /**
+    This works just like ToInCa but instead of behaving like
+    FunctionToInCa or Const/MethoToInCa it behaves like
+    FunctionToInCaVoid or Const/MethoToInCaVoid.
+*/
+template <typename T, typename Sig,
+        typename Detail::ToInCaSigSelectorVoid<T,Sig>::FunctionType Func,
+        bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
+        >
+struct ToInCaVoid : Detail::ToInCaSigSelectorVoid<T,Sig>::template Base<Func,UnlockV8>
+{
+};
+
+/**
+    Specialization for FunctionToInCaVoid behaviour.
+*/
+template <typename Sig,
+    typename FunctionSignature<Sig>::FunctionType Func,
+    bool UnlockV8
+>
+struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8>
+{
+};
+#endif /* ENABLE_TOINCA */
+/**
     A slightly simplified form of FunctionToInCa which is only
     useful for "InvocationCallback-like" functions and requires
     only two arguments:
@@ -2073,7 +2100,7 @@ struct InCaLikeFunc : FunctionToInCa< RV (v8::Arguments const &), Func>
     @endcode
 */
 template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &)>
-struct InCaLikeMethod : ToInCa< T, RV (v8::Arguments const &), Func>
+struct InCaLikeMethod : MethodToInCa< T, RV (v8::Arguments const &), Func>
 {};
 
 /**
@@ -2090,29 +2117,6 @@ struct InCaLikeConstMethod : ConstMethodToInCa< T, RV (v8::Arguments const &), F
 {};
 
 
-/**
-    This works just like ToInCa but instead of behaving like
-    FunctionToInCa or Const/MethoToInCa it behaves like
-    FunctionToInCaVoid or Const/MethoToInCaVoid.
-*/
-template <typename T, typename Sig,
-        typename Detail::ToInCaSigSelectorVoid<T,Sig>::FunctionType Func,
-        bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
-        >
-struct ToInCaVoid : Detail::ToInCaSigSelectorVoid<T,Sig>::template Base<Func,UnlockV8>
-{
-};
-
-/**
-    Specialization for FunctionToInCaVoid behaviour.
-*/
-template <typename Sig,
-    typename FunctionSignature<Sig>::FunctionType Func,
-    bool UnlockV8
->
-struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8>
-{
-};
 
 
 /**

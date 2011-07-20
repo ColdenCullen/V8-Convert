@@ -19,6 +19,7 @@ By the way: the library is completely untested with
 CVV8_CONFIG_ENABLE_CONST_OVERLOADS=0.
 
 */
+#define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
 #if !defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS)
 #  if defined(_MSC_VER)
 #    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
