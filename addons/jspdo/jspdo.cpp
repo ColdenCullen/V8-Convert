@@ -1115,17 +1115,17 @@ namespace cvv8 {
 #define CATCHER cv::InCaCatcher_std
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObjectCallback )
-                ("step", CATCHER< cv::ToInCa<ST, bool (),&ST::step> >::Call)
+                ("step", CATCHER< cv::MethodToInCa<ST, bool (),&ST::step> >::Call)
                 ("stepArray", CATCHER< cv::InCaToInCa<Statement_stepArray> >::Call)
                 ("stepObject", CATCHER< cv::InCaToInCa<Statement_stepObject> >::Call)
-                ("columnName", CATCHER< cv::ToInCa<ST, char const * (uint16_t),&ST::col_name> >::Call )
-                ("columnType", CATCHER< ToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
+                ("columnName", CATCHER< cv::MethodToInCa<ST, char const * (uint16_t),&ST::col_name> >::Call )
+                ("columnType", CATCHER< cv::MethodToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
                 ("get", CATCHER< cv::InCaToInCa<Statement_get> >::Call )
                 ("bind", CATCHER< cv::InCaToInCa<Statement_bind> >::Call)
-                ("reset", CATCHER< cv::ToInCa<ST, void (void),&ST::reset> >::Call)
+                ("reset", CATCHER< cv::MethodToInCa<ST, void (void),&ST::reset> >::Call)
                 ("toString", CATCHER< cv::InCaToInCa<Statement_toString> >::Call )
-                ("paramIndex", ToInCa<ST, uint16_t (char const *),&ST::param_index>::Call /* doesn't throw */ )
-                ("paramName", CATCHER<cv::ToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
+                ("paramIndex", MethodToInCa<ST, uint16_t (char const *),&ST::param_index>::Call /* doesn't throw */ )
+                ("paramName", CATCHER<cv::MethodToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
             typedef cv::MemberPropertyBinder<ST> SPB;
@@ -1156,10 +1156,10 @@ namespace cvv8 {
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
             wdrv("close", WDRV::DestroyObjectCallback )
-                ("begin", CATCHER< cv::ToInCa<DRV,void (),&DRV::begin> >::Call )
-                ("commit", CATCHER< cv::ToInCa<DRV,void (),&DRV::commit> >::Call )
-                ("rollback", CATCHER< cv::ToInCa<DRV,void (),&DRV::rollback> >::Call)
-                ("exec", CATCHER< cv::ToInCa<DRV,void (std::string const &),&DRV::exec> >::Call)
+                ("begin", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::begin> >::Call )
+                ("commit", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::commit> >::Call )
+                ("rollback", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::rollback> >::Call)
+                ("exec", CATCHER< cv::MethodToInCa<DRV,void (std::string const &),&DRV::exec> >::Call)
                 ("prepare", CATCHER< cv::InCaToInCa<JSPDO_prepare> >::Call )
                 ("exec", CATCHER< cv::InCaToInCa<JSPDO_exec> >::Call )
                 ("lastInsertId",
@@ -1207,7 +1207,8 @@ namespace cvv8 {
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             dCtor->Set( JSTR("enableDebug"), v8::False() );
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
-            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::ToInCa< void, void (bool), setEnableDestructorDebug>::Call) );
+            dCtor->Set(JSTR("enableDestructorDebug"),
+                    cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, changing the semantics of step()'s return value
