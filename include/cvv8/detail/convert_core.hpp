@@ -82,7 +82,7 @@ namespace cvv8 {
 
     /** @def CVV8_TypeName_DECL
 
-        A convenience macro for declaring a TypeName specialization X must
+        A convenience macro for declaring a TypeName specialization. X must
         be a type name with extra wrapping parenthesis, e.g.:
 
         @code
@@ -96,6 +96,7 @@ namespace cvv8 {
     */
 #define CVV8_TypeName_DECL(X) template <> struct TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type > \
     { const static char * Value; }
+
     /** @def CVV8_TypeName_IMPL
 
         The counterpart of CVV8_TypeName_DECL, this must be called from the
