@@ -53,7 +53,7 @@ static void signal_ignore(int)
 }
 #endif
 
-template <> char const * cv::TypeName<cv::JSSocket>::Value = "Socket";
+char const * cv::TypeName<cv::JSSocket>::Value = "Socket";
 
 namespace {
     /**
