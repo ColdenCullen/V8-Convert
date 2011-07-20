@@ -100,3 +100,25 @@ void SetupCvv8DemoBindings( v8::Handle<v8::Object> const & dest )
     CERR << "Finished binding " << cv::TypeName<T>::Value << ".\n";
 }
 
+void SetupCvv8DemoBindings2( v8::Handle<v8::Object> const & dest )
+{
+    typedef MyType T;
+    typedef cv::ClassCreator<T> CC;
+    CC & cc(CC::Instance());
+    v8::Handle<v8::Object> obj;
+    if( cc.IsSealed() ) { // the binding was already initialized.
+        obj = cc.NewInstance(0,NULL);
+        dest->Set(v8::String::New(cv::TypeName<T>::Value), obj);
+        return;
+    }
+    // Else initialize the bindings...
+    cc
+        ("destroy", CC::DestroyObjectCallback)
+        ("nonMember", cv::FunctionToInCa< int (int), a_non_member>::Call)
+        ("nonConstMethod", cv::MethodToInCa<T, void (), &T::aNonConstMethod>::Call)
+        ("constMethod", cv::ConstMethodToInCa<T, void (), &T::aConstMethod>::Call)
+        ;
+    obj = cc.NewInstance(0,NULL);
+    dest->Set(v8::String::New(cv::TypeName<T>::Value), obj);
+    CERR << "Finished binding " << cv::TypeName<T>::Value << ".\n";
+}
