@@ -449,7 +449,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return func();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -472,7 +472,7 @@ namespace Detail {
         typedef Sig FunctionType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)func()
             /* the explicit cast there is a workaround for the RV==void
                case. It is a no-op for other cases, since the return value
@@ -499,7 +499,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)func(argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
