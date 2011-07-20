@@ -80,6 +80,37 @@ namespace cvv8 {
     template <typename T>
     char const * TypeName<T>::Value = "T";
 
+    /** @def CVV8_TypeName_DECL
+
+        A convenience macro for declaring a TypeName specialization X must
+        be a type name with extra wrapping parenthesis, e.g.:
+
+        @code
+        CVV8_TypeName_DECL((MyType))
+        @endcode
+
+        They are required so that we can also support template types with commas
+        in the names, e.g. (std::map<int,double>).
+
+        It must be called from inside the cvv8 namespace.
+    */
+#define CVV8_TypeName_DECL(X) template <> struct TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type > \
+    { const static char * Value; }
+    /** @def CVV8_TypeName_IMPL
+
+        The counterpart of CVV8_TypeName_DECL, this must be called from the
+        cvv8 namespace. The X argument is as documented for CVV8_TypeName_DECL
+        and the NAME argument must be a C string.
+
+        Example:
+
+        @code
+        CVV8_TypeName_IMPL((MyType),"MyType")
+        @endcode
+    */
+#define CVV8_TypeName_IMPL(X,NAME) char const * TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type >::Value = NAME
+
+
 #if 0
     template <typename T>
     struct TypeName<T *> : TypeName<T> {};

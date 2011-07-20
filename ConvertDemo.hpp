@@ -270,6 +270,7 @@ struct BoundSubNative : public BoundNative
     }
 };
 
+
 /**
    The following code is mostly here for use with ClassCreator<>, a
    class-binding mechanism which is demonstrated in
@@ -278,6 +279,15 @@ struct BoundSubNative : public BoundNative
 */
 namespace cvv8 {
 
+    /**
+        Optional: used mainly by error reporting code but can also be used
+        as a convenient place to store the type's JS name (which often differs
+        from its C++ name).
+    */
+    CVV8_TypeName_DECL((BoundNative));
+    CVV8_TypeName_DECL((BoundSubNative));
+
+#if 0 // replaced by CVV8_TypeName_DECL()
     //! Optional: used by some error reporting code.
     template <>
     struct TypeName< BoundNative >
@@ -290,7 +300,7 @@ namespace cvv8 {
     {
         static char const * Value;
     };
-
+#endif
     /**
         This is required by subclasses for certain constellations of internal
         fields/type-safety options. It is always optional for base classes,

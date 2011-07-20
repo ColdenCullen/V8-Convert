@@ -7,8 +7,9 @@
 #include "cvv8/arguments.hpp"
 #endif
 
-char const * cvv8::TypeName< BoundNative >::Value = "BoundNative";
-char const * cvv8::TypeName< BoundSubNative >::Value = "BoundSubNative";
+
+//char const * cvv8::TypeName< BoundNative >::Value = "BoundNative";
+//char const * cvv8::TypeName< BoundSubNative >::Value = "BoundSubNative";
 
 int BoundNative::publicStaticInt = 42;
 
@@ -41,6 +42,9 @@ void throwStdString()
 }
 
 namespace cvv8 {
+    CVV8_TypeName_IMPL((BoundNative),"BoundNative");
+    CVV8_TypeName_IMPL((BoundSubNative),"BoundSubNative");
+
     // A helper to support converting from BoundNative to its JS handle.
     typedef NativeToJSMap<BoundNative> BMap;
     typedef NativeToJSMap<BoundSubNative> BSubMap;
