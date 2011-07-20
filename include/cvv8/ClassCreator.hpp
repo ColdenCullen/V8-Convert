@@ -172,54 +172,6 @@ namespace cvv8 {
     struct ClassCreator_SearchPrototypeForThis : Opt_Bool<true>
     {};
 
-    namespace Detail {
-    
-        template <typename T>
-        struct TypeID_Default
-        {
-            /* i'm getting link errors if set TheID inline. */
-            //const static int TheID = 0;
-            const static void * Value;
-        };
-        //template <typename T>
-        //int const TypeID_Default<T>::TheID = 0;
-        template <typename T>
-        const void * TypeID_Default<T>::Value =
-            "TypeID_Default<>"
-            //&TypeID_Default<T,ID>::TheID
-            /* Reminder: NULL leads to errors. */
-            ;
-#if 0
-        template <typename T>
-        struct TypeNameToTypeID
-        {
-            static void const * Value;
-        };
-        template <typename T>
-        void const * TypeNameToTypeID<T>::Value = TypeName<T>::Value;
-#endif
-    }
-
-    /**
-        A convenience base type for concrete ClassCreator_TypeID implementations.
-
-        The ID parameter is an opaque type ID value. Its value may legally
-        be the same non-NULL value for any and all types because the
-        framework uses the address of Value, as opposed Value's contents, for
-        comparison purposes.
-
-        The default ID value is unspecified and guaranteed to be unique to T.
-    */
-    template <typename T, void const * & ID = Detail::TypeID_Default<T>::Value >
-    struct ClassCreator_TypeID_Base
-    {
-        typedef T Type;
-        /** The ID template parameter. */
-        static void const *Value;
-    };
-    template <typename T, void const * & Name>
-    void const * ClassCreator_TypeID_Base<T,Name>::Value = Name;
-    
     /**
         ClassCreator policy type which defines a "type ID" value
         for a type wrapped using ClassCreator. This is used
@@ -258,10 +210,11 @@ namespace cvv8 {
     */
     template <typename T>
     struct ClassCreator_TypeID
-        : ClassCreator_TypeID_Base<T,
-                                   Detail::TypeID_Default<T>::Value>
     {
+        const static void * Value;
     };
+    template <typename T>
+    const void * ClassCreator_TypeID<T>::Value = "";
 
     /**
        Convenience base type for ClassCreator_InternalFields
