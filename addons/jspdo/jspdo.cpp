@@ -2,7 +2,7 @@
 This file contains v8 bindings for the cpdo db abstraction layer
 (http://fossil.wanderinghorse.net/repos/cpdo/). We call it JSPDO.
 
-This file gives a fairly complete demonstration of what v8::convert's
+This file gives a fairly complete demonstration of what cvv8's
 class/function/method-binding mechanisms can do. In particular, it 
 demonstrates that we can bind 3rd-party C++ classes (in this case 
 from cpdo) which were not designed specifically for v8, and can 
