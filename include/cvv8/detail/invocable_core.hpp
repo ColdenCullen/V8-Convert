@@ -530,7 +530,7 @@ namespace Detail {
         typedef typename TypeInfo<T>::Type Type;
         static ReturnType CallNative( T & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (self.*func)();
         }
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
@@ -618,7 +618,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( Type & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
         }
         static v8::Handle<v8::Value> Call( Type & self, FunctionType func, v8::Arguments const & argv )
