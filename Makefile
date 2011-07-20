@@ -55,20 +55,20 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 gen: $(invo_gen_h)
 all: $(invo_gen_h)
 
-ifeq (1,0)
 ConvertDemo.o: ConvertDemo.cpp
 demo.BIN.OBJECTS := demo.o ConvertDemo.o
 demo.BIN.LDFLAGS := $(LDFLAGS_V8)
 $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
 demo.o: $(sig_gen_h)
 all: $(demo.BIN)
-endif
 
 ########################################################################
 # shell app...
 SHELL.DIR := addons/shell-skel
-SHELL_LDFLAGS := demo2.o
-SHELL_BINDINGS_HEADER := demo2.hpp
-SHELL_BINDINGS_FUNC := ::SetupCvv8DemoBindings
+SHELL_LDFLAGS := ConvertDemo.o
+SHELL_BINDINGS_HEADER := ConvertDemo.hpp
+SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
+#SHELL_BINDINGS_HEADER := demo2.hpp
+#SHELL_BINDINGS_FUNC := ::SetupCvv8DemoBindings
 include addons/shell-common.make
-$(SHELL.LOCAL.O): demo2.o
+$(SHELL.LOCAL.O): ConvertDemo.o
