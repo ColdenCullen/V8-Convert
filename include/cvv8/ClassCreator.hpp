@@ -177,15 +177,18 @@ namespace cvv8 {
         template <typename T>
         struct TypeID_Default
         {
-            /* i'm getting link errors if set TheID=0 inline. */
-            static int const TheID;
-            static void const * Value;
-            
+            /* i'm getting link errors if set TheID inline. */
+            //const static int TheID = 0;
+            const static void * Value;
         };
+        //template <typename T>
+        //int const TypeID_Default<T>::TheID = 0;
         template <typename T>
-        int const TypeID_Default<T>::TheID = 0;
-        template <typename T>
-        void const * TypeID_Default<T>::Value = &TypeID_Default<T>::TheID /* Reminder: NULL leads to errors. */;
+        const void * TypeID_Default<T>::Value =
+            "TypeID_Default<>"
+            //&TypeID_Default<T,ID>::TheID
+            /* Reminder: NULL leads to errors. */
+            ;
 #if 0
         template <typename T>
         struct TypeNameToTypeID
