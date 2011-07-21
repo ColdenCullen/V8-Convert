@@ -585,7 +585,8 @@ namespace cvv8 {
            returned. If none is found, jo's prototype object is searched,
            recursively, until either nh is found in the prototype chain or
            the end of the chain is reached. If a match is found, the JS
-           object in which the native was found is returned.
+           object in which the native was found is returned. This does no
+           casting - it only compares by address.
 
            If nh is not found anywhere in the chain, an empty handle is
            returned.
@@ -609,6 +610,12 @@ namespace cvv8 {
                     ? NULL
                     : obj->GetPointerFromInternalField( InternalFields::NativeIndex );
                 // FIXME: if InternalFields::TypeIDIndex>=0 then also do a check on that one.
+                /*
+                    If !ext, there is no bound pointer. If (ext &&
+                    (ext!=nh)) then there is one, but it's not the droid
+                    we're looking for. In either case, (possibly) check the
+                    prototype...
+                */
                 if( ext == nh ) return obj;
                 else if( !SPFT::Value ) break;
                 else proto = obj->GetPrototype();
