@@ -1850,13 +1850,14 @@ namespace cvv8 {
        typedef CtorForwarder<MyType *(double,int)> CF2;
        typedef CtorForwarder<MyType *(v8::Arguments const &)> CFAny;
        @endcode
-       
+
        @see CtorArityDispatcher
     */
     template <typename Sig>
     struct CtorForwarder : Signature<Sig>
     {
         typedef Signature<Sig> STL;
+        //typedef typename tmp::AddPointer<typename STL::ReturnType>::Type ReturnType;
         typedef typename STL::ReturnType ReturnType;
         /**
             If (argv.Length()>=Arity) or Arity is less than 0,
@@ -1993,7 +1994,7 @@ namespace cvv8 {
         typedef typename TypeInfo<RT>::NativeHandle NativeHandle;
         static NativeHandle Call( v8::Arguments const & argv )
         {
-            typedef typename TypeInfo<RT>::Type Type;
+            typedef typename tmp::PlainType<RT>::Type Type;
             typedef Detail::CtorFwdDispatchList<Type, CtorList> Proxy;
             return Proxy::Call( argv );
         }
