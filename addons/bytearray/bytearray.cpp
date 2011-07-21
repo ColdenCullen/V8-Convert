@@ -269,6 +269,17 @@ std::string JSByteArray::toString() const
        << ']';
     return os.str();
 }
+bool JSByteArray::isGzipped() const
+{
+    if( this->vec.empty() || (19 >= this->vec.size()) ) return false
+        /* smallest gzip file i've seen was 20 bytes, from a 0-byte file. */
+        ;
+    else
+    {
+        unsigned char const * mem = (unsigned char const *)this->rawBuffer();
+        return (31 == mem[0]) && (139 == mem[1]);
+    }
+}
 
 #if 0
 void * JSByteArray::rawBuffer()
@@ -434,11 +445,15 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         //( "gunzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gunzipTo>::Call )
         ( "gzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gzip>::Call )
         ( "gunzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
+        //( "isGzipped", cv::ConstMethodToInCa<N, bool (), &N::isGzipped>::Call )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),
                         SPB::ConstMethodToAccessorGetter<uint32_t(),&N::length>,
                         SPB::MethodToAccessorSetter<uint32_t (uint32_t), &N::length> );
+    proto->SetAccessor( JSTR("isGzipped"),
+                        SPB::ConstMethodToAccessorGetter<bool(),&N::isGzipped>,
+                        SPB::AccessorSetterThrow );
 #if 0 // don't do this b/c the cost of the conversion (on each access) is deceptively high (O(N) time and memory, N=bytearray length)
     proto->SetAccessor( JSTR("stringValue"),
                         SPB::ConstMethodToAccessorGetter<std::string(),&N::stringValue>,
