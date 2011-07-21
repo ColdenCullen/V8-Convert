@@ -139,8 +139,8 @@ namespace cvv8 {
 
 
     /**
-        This NativeToJS variation uses plumbing installed by
-        ClassCreator_Factory_NativeToJSMap to implement the NativeToJS
+        This NativeToJS variation uses custom plumbing we install
+        via ClassCreator_WeakWrap to implement the NativeToJS
         conversion.
 
         There is no single generic solution to the NativeToJS problem, and
@@ -154,10 +154,8 @@ namespace cvv8 {
 
         It is _not_ necessary when functions take such arguments as parameters.
 
-        This demonstration code mades use of NativeToJSMap to map native
-        MyType objects to their JS counterparts. The majority of class
-        conversions do not require this overhead, and we do it here just for
-        demonstration/test purposes.
+        The majority of class conversions do not require this overhead, and
+        we do it here just for demonstration/test purposes.
     */
     template <>
     struct NativeToJS< MyType >
