@@ -78,28 +78,8 @@ static int v8_main(int argc, char const * const * argv)
             SETUP_SHELL_BINDINGS(global);
         }
 #endif
-        v8::TryCatch tryCatch;
-        tryCatch.SetVerbose(true);
-        tryCatch.SetCaptureMessage(true);
         char const * fname = argv[1];
-        v8::Handle<v8::Value> rc = shell.ExecuteFile( fname, &tryCatch );
-#if 0
-        //assert( tryCatch.Exception().IsEmpty() );
-        if(
-            tryCatch.HasCaught()
-            //!tryCatch.Exception().IsEmpty()
-            )
-        { // v8 bug, IMO: HasCaught() _always_ returns false for me.
-            shell.ReportException(&tryCatch);
-            return 2;
-        }
-#elif 0
-        if( rc.IsEmpty() )
-        { // exception was reported by shell already, we hope.
-            //CERR << "JS exception during script execution.\n";
-            return 2;
-        }
-#endif
+        v8::Handle<v8::Value> rc = shell.ExecuteFile( fname );
     }
     catch(std::exception const & ex)
     {

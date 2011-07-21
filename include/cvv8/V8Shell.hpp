@@ -61,6 +61,9 @@ namespace cvv8 {
         Maintenance reminder: keep this class free of dependencies 
         on other library-level code so that we can re-use it 
         in arbitrary v8 clients.
+
+        FIXME: the way this class uses v8::TryCatch is "all wrong", and any
+        functions using it need to be revisited.
     */
     template <bool UseLocker = true>
     class V8Shell
@@ -142,6 +145,12 @@ namespace cvv8 {
                 this->ProcessMainArgv( argc, argv, argOffset );
             }
         }
+
+        static void SetupTryCatch( v8::TryCatch & tc )
+        {
+            tc.SetVerbose(true);
+            tc.SetCaptureMessage(true);
+        }
     public:
         /**
            Initialize a v8 context and global object belonging to this object.
@@ -217,7 +226,7 @@ namespace cvv8 {
                 // output (filename):(line number): (message)...
                 int linenum = message->GetLineNumber();
                 os << *v8::String::Utf8Value(message->GetScriptResourceName()) << ':'
-                   << linenum << ": "
+                   << std::dec << linenum << ": "
                    << excCstr << '\n';
                 // output source code line...
                 os << *v8::String::AsciiValue(message->GetSourceLine()) << '\n';
@@ -339,42 +348,42 @@ namespace cvv8 {
            Executes the given source string in the current
            context.
 
-           If reportExceptions is not NULL and the script throws an exception
-           then that TryCatch object is used to build an error string, which
-           is passed to this object's error reporter function. The default sends
-           the output to std::cerr.
+           If the script throws an exception then a TryCatch object is used
+           to build an error string, which is passed to this object's error
+           reporter function. The default sends the output to std::cerr.
 
-           If resultGoesTo is not null and the result is neither an
-           error nor undefined, then the result is converted to a
-           string and sent to that stream.
+           If resultGoesTo is not null and the result a valid handle, then
+           the result is converted to a string and sent to that stream.
 
            Returns the result of the last expression evaluated in the script,
            or an empty handle on error.
         */
         v8::Handle<v8::Value> ExecuteString(v8::Handle<v8::String> const & source,
                                            v8::Handle<v8::Value> name,
-                                           v8::TryCatch * reportExceptions = NULL,
                                            std::ostream * out = NULL )
         {
             //this->executeThrew = false;
             v8::HandleScope scope;
+            v8::TryCatch tc;
+            SetupTryCatch(tc);
             v8::Handle<v8::Script> script = v8::Script::Compile(source, name);
-            if( reportExceptions && reportExceptions->HasCaught())//script.IsEmpty())
+            if( script.IsEmpty())//tc.HasCaught())
             {
                 // Report errors that happened during compilation.
                 //this->executeThrew = true;
-                if (reportExceptions)
-                    this->ReportException(reportExceptions);
-                return v8::Handle<v8::Value>();
+                this->ReportException(&tc);
+                return scope.Close(tc.ReThrow());
+                //return v8::Handle<v8::Value>();
             }
             else
             {
                 v8::Handle<v8::Value> const & result( script->Run() );
-                if( reportExceptions && reportExceptions->HasCaught())//(result.IsEmpty())
+                if( tc.HasCaught())//(result.IsEmpty())
                 {
                     //this->executeThrew = true;
-                    this->ReportException(reportExceptions);
-                    return v8::Handle<v8::Value>();
+                    this->ReportException(&tc);
+                    //return v8::Handle<v8::Value>();
+                    return scope.Close(tc.ReThrow());
                 }
                 else
                 {
@@ -382,7 +391,7 @@ namespace cvv8 {
                     {
                         (*out) << *v8::String::Utf8Value(result) << '\n';
                     }
-                    return scope.Close(result/* is this legal if result.IsEmpty() (i.e. an Exception)? Probably not. */);
+                    return scope.Close(result);
                 }
             }
         }
@@ -399,76 +408,64 @@ namespace cvv8 {
         */
         v8::Handle<v8::Value> ExecuteString(std::string const & source,
                                            std::string const & name,
-                                           v8::TryCatch * reportExceptions,
                                            std::ostream * resultGoesTo )
         {
             v8::HandleScope scope;
             v8::Local<v8::String> const & s( v8::String::New( source.c_str(), static_cast<int>(source.size()) ) );
             v8::Local<v8::String> const & n( v8::String::New( name.c_str(), static_cast<int>(name.size()) ) );
-            return scope.Close(this->ExecuteString( s, n, reportExceptions, resultGoesTo ));
+            return scope.Close(this->ExecuteString( s, n, resultGoesTo ));
         }
 
         /**
            Convenience overload taking input from a native string.
         */
-        v8::Handle<v8::Value> ExecuteString(std::string const & source, v8::TryCatch * reportExceptions = NULL )
+        v8::Handle<v8::Value> ExecuteString(std::string const & source )
         {
-            return this->ExecuteString(source, "ExecuteString()", reportExceptions, 0);
+            return this->ExecuteString(source, "ExecuteString()", 0);
         }
 
         /**
            Convenience form of ExecuteString(source,"some default name", 0, reportExceptions).
         */
-        v8::Handle<v8::Value> ExecuteString(v8::Handle<v8::String> source, v8::TryCatch * reportExceptions = NULL )
+        v8::Handle<v8::Value> ExecuteString(v8::Handle<v8::String> source )
         {
-            return this->ExecuteString(source, v8::String::New("ExecuteString()"), reportExceptions, 0);
+            return this->ExecuteString(source, v8::String::New("ExecuteString()"), 0);
         }
         
         /**
            Convenience form of ExecuteString() reading from an opened input stream.
+
+           Throws a std::exception if reading fails or the input is empty.
+
+           An empty input is not necessarily an error. Todo: re-think this decision.
         */
         v8::Handle<v8::Value> ExecuteStream( std::istream & is, std::string const & name,
-                                            v8::TryCatch * reportExceptions = NULL,
                                             std::ostream * resultGoesTo = NULL )
         {
             std::ostringstream os;
             is >> std::noskipws;
-            try
-            {
-                std::copy( std::istream_iterator<char>(is), std::istream_iterator<char>(), std::ostream_iterator<char>(os) );
-            }
-            catch(std::exception const & ex)
-            {
-                char const * msg = ex.what();
-                return v8::ThrowException(v8::Exception::Error(v8::String::New(msg ? msg : "Unknown exception.")));
-            }
+            std::copy( std::istream_iterator<char>(is), std::istream_iterator<char>(), std::ostream_iterator<char>(os) );
             std::string const & str( os.str() );
             if( str.empty() )
             {
                 std::ostringstream msg;
                 msg << "Input stream ["<<name<<"] is empty.";
-                return v8::ThrowException(v8::Exception::Error(v8::String::New(msg.str().c_str())));
+                //return v8::ThrowException(v8::Exception::Error(v8::String::New(msg.str().c_str())));
+                std::string const & str(os.str());
+                throw std::runtime_error(str.c_str());
             }
-            return this->ExecuteString( str, name, reportExceptions, resultGoesTo );
+            return this->ExecuteString( str, name, resultGoesTo );
         }
         
         /**
            Convenience form of ExecuteString() reading from a local file.
         */
         v8::Handle<v8::Value> ExecuteFile( char const * filename,
-                                           v8::TryCatch * reportExceptions = NULL,
                                            std::ostream * resultGoesTo = NULL )
         {
             if( ! filename || !*filename )
             {
-                v8::ThrowException(v8::Exception::Error(v8::String::New("filename argument must not be NULL/empty.")));
-#if 0
-                if( reportExceptions )
-                {
-                    this->ReportException( reportExceptions );
-                }
-#endif
-                return v8::Handle<v8::Value>();
+                throw std::runtime_error("filename argument must not be NULL/empty.");
             }
             std::ifstream inf(filename);
             if( ! inf.good() )
@@ -478,16 +475,9 @@ namespace cvv8 {
                 std::ostringstream msg;
                 msg << "Could not open file ["<<filename<<"].";
                 std::string const & str( msg.str() );
-                v8::ThrowException(v8::Exception::Error(v8::String::New(str.c_str(), static_cast<int/*grrrr!*/>(str.size()))));
-#if 0
-                if( reportExceptions )
-                {
-                    this->ReportException( reportExceptions );
-                }
-#endif
-                return v8::Handle<v8::Value>();
+                throw std::runtime_error( str.c_str() );
             }
-            return this->ExecuteStream( inf, filename, reportExceptions, resultGoesTo );
+            return this->ExecuteStream( inf, filename, resultGoesTo );
         }
 
         /**
@@ -523,7 +513,15 @@ namespace cvv8 {
             }
             V8Shell * self = static_cast<V8Shell *>( v8::External::Cast(*jvself)->Value() );
             v8::String::Utf8Value fn(argv[0]);
-            return hsc.Close(self->ExecuteFile( *fn ));
+            try
+            {
+                return hsc.Close(self->ExecuteFile( *fn ));
+            }
+            catch( std::exception const & ex )
+            {
+                char const * msg = ex.what();
+                return v8::ThrowException(v8::Exception::Error(v8::String::New(msg ? msg : "Unspecified native exception.")));
+            }
         }
     
     public:
