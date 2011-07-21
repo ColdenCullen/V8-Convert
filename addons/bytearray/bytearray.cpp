@@ -19,13 +19,21 @@ by Ondrej Zara
 #endif
 
 #include "bytearray.hpp"
+
+#if !defined(ByteArray_CONFIG_ENABLE_ZLIB)
+#  define ByteArray_CONFIG_ENABLE_ZLIB 1
+#endif
+
 #include <cvv8/convert.hpp>
 #include <cvv8/properties.hpp>
 
 #include <sstream>
 #include <vector>
-#include <zlib.h>
 #include <string.h> /* memset */
+#if ByteArray_CONFIG_ENABLE_ZLIB
+#  include <zlib.h>
+#endif
+
 
 
 #if 1 && !defined(CERR)
@@ -445,7 +453,6 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         //( "gunzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gunzipTo>::Call )
         ( "gzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gzip>::Call )
         ( "gunzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
-        //( "isGzipped", cv::ConstMethodToInCa<N, bool (), &N::isGzipped>::Call )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),
@@ -478,6 +485,10 @@ namespace cvv8 {
 
     int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level )
     {
+#if ! ByteArray_CONFIG_ENABLE_ZLIB
+        Toss("zlib functionality was not compiled in.");
+        return -1;
+#else
         /**
            Achtung: this impl was a quick hack port from another tree. It is
            not an optimal solution.
@@ -559,10 +570,15 @@ namespace cvv8 {
             (void)deflateEnd(&strm);
             return (ret == Z_STREAM_END) ? Z_OK : ret;
         }
+#endif /* ByteArray_CONFIG_ENABLE_ZLIB */
     }
 
     int GUnzipJSByteArray( JSByteArray const & src, JSByteArray & dest )
     {
+#if ! ByteArray_CONFIG_ENABLE_ZLIB
+        Toss("zlib functionality was not compiled in.");
+        return -1;
+#else
         /**
            Achtung: this impl was a quick hack port from another tree. It is
            not an optimal solution.
@@ -650,6 +666,7 @@ namespace cvv8 {
             (void)inflateEnd( &strm );
             return (ret == Z_STREAM_END) ? Z_OK : Z_DATA_ERROR;
         }
+#endif /* ByteArray_CONFIG_ENABLE_ZLIB */
     }
 
 }// namespace
@@ -657,3 +674,4 @@ namespace cvv8 {
 #undef JSTR
 #undef BA_JS_CLASS_NAME
 #undef CERR
+#undef ByteArray_CONFIG_ENABLE_ZLIB
