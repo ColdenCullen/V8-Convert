@@ -35,7 +35,7 @@ private:
         this->anInt = 42;
         this->aDouble = 42.24;
     }
-    v8::Handle<v8::Object> jsSelf;
+    mutable v8::Handle<v8::Object> jsSelf;
     double aDouble;
 public:
     int anInt;
@@ -76,7 +76,7 @@ public:
     double getDouble() const { return this->aDouble; }
     void setDouble(double d) { this->aDouble = d; }
 
-    v8::Handle<v8::Object> & jsThis() { return this->jsSelf; }
+    v8::Handle<v8::Object> & jsThis() const { return this->jsSelf; }
 };
 
 /**
@@ -137,6 +137,62 @@ namespace cvv8 {
     CVV8_TypeName_DECL((MySubType));
     CVV8_TypeName_IMPL((MySubType),"MySubType");
 
+
+    /**
+        This NativeToJS variation uses plumbing installed by
+        ClassCreator_Factory_NativeToJSMap to implement the NativeToJS
+        conversion.
+
+        There is no single generic solution to the NativeToJS problem, and
+        there is no default implementation.
+
+        Note that a NativeToJS is ONLY necessary when:
+
+        - CastToJS<T> is called by client code.
+
+        - Bound functions _return_ native T pointers or references
+
+        It is _not_ necessary when functions take such arguments as parameters.
+
+        This demonstration code mades use of NativeToJSMap to map native
+        MyType objects to their JS counterparts. The majority of class
+        conversions do not require this overhead, and we do it here just for
+        demonstration/test purposes.
+    */
+    template <>
+    struct NativeToJS< MyType >
+    {
+        typedef MyType const * ArgType;
+        v8::Handle<v8::Value> operator()( ArgType n ) const
+        {
+            if( n ) return n->jsThis();
+            else return v8::Null();
+        }
+        // i'm not quite sure why i need this overload :/
+        v8::Handle<v8::Value> operator()( MyType const & n ) const
+        {
+            if( !n.jsThis().IsEmpty() ) return n.jsThis();
+            else return v8::Null();
+        }
+    };
+
+    template <>
+    struct NativeToJS< MySubType >
+    {
+        typedef MySubType const * ArgType;
+        v8::Handle<v8::Value> operator()( ArgType n ) const
+        {
+            if( n ) return n->jsThis();
+            else return v8::Null();
+        }
+        // i'm not quite sure why i need this overload :/
+        v8::Handle<v8::Value> operator()( MyType const & n ) const
+        {
+            if( !n.jsThis().IsEmpty() ) return n.jsThis();
+            else return v8::Null();
+        }
+    };
+
 #if 0
     /**
         We can customize the v8::Object internal field layout by
@@ -190,36 +246,6 @@ namespace cvv8 {
         : JSToNative_ClassCreator< MySubType >
     {};
 
-    /**
-        This NativeToJS variation uses plumbing installed by
-        ClassCreator_Factory_NativeToJSMap to implement the NativeToJS
-        conversion.
-
-        There is no single generic solution to the NativeToJS problem, and
-        there is no default implementation.
-
-        Note that a NativeToJS is ONLY necessary when:
-
-        - CastToJS<T> is called by client code.
-
-        - Bound functions _return_ native T pointers or references
-
-        It is _not_ necessary when functions take such arguments as parameters.
-
-        This demonstration code mades use of NativeToJSMap to map native
-        MyType objects to their JS counterparts. The majority of class
-        conversions do not require this overhead, and we do it here just for
-        demonstration/test purposes.
-    */
-    template <>
-    struct NativeToJS< MyType >
-        : NativeToJSMap< MyType >::NativeToJSImpl
-    {};
-
-    template <>
-    struct NativeToJS< MySubType >
-        : NativeToJSMap< MySubType >::NativeToJSImpl
-    {};
 
     /**
         A custom MyType ctor/factor which actually returns a MySubType.
@@ -237,6 +263,9 @@ namespace cvv8 {
     };
 
 
+    /** We reimplement this to demonstrate one relatively simple way to wire
+        up a NativeToJS binding.
+    */
     template <>
     struct ClassCreator_WeakWrap<MyType>
     {
