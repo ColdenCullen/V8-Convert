@@ -884,7 +884,7 @@ namespace cvv8 {
         template <typename ValueT>
         inline ClassCreator & Set( char const * name, ValueT val )
         {
-            this->protoTmpl->Set(v8::String::New(name), CastToJS<ValueT>(val));
+            this->protoTmpl->Set(v8::String::New(name), CastToJS(val));
             return *this;
         }
         //! Not quite sure why i need this overload, but i do.
@@ -1052,6 +1052,26 @@ namespace cvv8 {
         >::Type
     {
     };
+
+#if 0
+    //! Experimental.
+    template <typename ParentT, typename SubT >
+    struct JSToNative_ClassCreator_Subclass
+    {
+        typedef typename TypeInfo<SubT>::NativeHandle ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            typedef typename TypeInfo<ParentT>::NativeHandle PTP;
+            PTP typeCheck; typeCheck = (ResultType)NULL
+                /* If compiler errors led you here then SubT probably does not
+                    publicly subclass ParentT. */
+                ;
+            PTP p = CastFromJS<ParentT>(h);
+            //std::cerr << "dyncast="<<dynamic_cast<ResultType>(p)<<"\n";
+            return p ? dynamic_cast<ResultType>(p) : NULL; 
+        }
+    };
+#endif
 
 #if !defined(DOXYGEN)
     namespace Detail

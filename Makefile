@@ -56,19 +56,28 @@ gen: $(invo_gen_h)
 all: $(invo_gen_h)
 
 ConvertDemo.o: ConvertDemo.cpp
-demo.BIN.OBJECTS := demo.o ConvertDemo.o
-demo.BIN.LDFLAGS := $(LDFLAGS_V8)
-$(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
-demo.o: $(sig_gen_h)
-all: $(demo.BIN)
+SHELL.DIR := addons/shell-skel
+ifeq (0,1)
+  demo.BIN.OBJECTS := demo.o ConvertDemo.o
+  demo.BIN.LDFLAGS := $(LDFLAGS_V8)
+  $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
+  demo.o: $(sig_gen_h) $(invo_gen_h)
+  all: $(demo.BIN)
+  SHELL.OBJECTS := ConvertDemo.o
+  SHELL_BINDINGS_HEADER := ConvertDemo.hpp
+  SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
+else
+  SHELL.NAME := demo2
+  SHELL.OBJECTS := demo2.o
+  SHELL_BINDINGS_HEADER := demo2.hpp
+  SHELL_BINDINGS_FUNC := ::SetupCvv8DemoBindings
+  demo2.o: $(sig_gen_h) $(invo_gen_h)
+endif
 
 ########################################################################
 # shell app...
-SHELL.DIR := addons/shell-skel
-SHELL_LDFLAGS := ConvertDemo.o
-SHELL_BINDINGS_HEADER := ConvertDemo.hpp
-SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
-#SHELL_BINDINGS_HEADER := demo2.hpp
-#SHELL_BINDINGS_FUNC := ::SetupCvv8DemoBindings
 include addons/shell-common.make
-$(SHELL.LOCAL.O): ConvertDemo.o
+
+ifneq (,$(filter-out demo2,$(SHELL_LDFLAGS)))
+  $(SHELL.LOCAL.O): demo2.o
+endif

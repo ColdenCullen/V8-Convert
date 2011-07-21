@@ -440,9 +440,16 @@ namespace cvv8 {
             catch(std::exception const & ex)
             {
                 char const * msg = ex.what();
-                v8::ThrowException(v8::Exception::Error(v8::String::New(msg ? msg : "Unknown exception.")));
+                return v8::ThrowException(v8::Exception::Error(v8::String::New(msg ? msg : "Unknown exception.")));
             }
-            return this->ExecuteString( os.str(), name, reportExceptions, resultGoesTo );
+            std::string const & str( os.str() );
+            if( str.empty() )
+            {
+                std::ostringstream msg;
+                msg << "Input stream ["<<name<<"] is empty.";
+                return v8::ThrowException(v8::Exception::Error(v8::String::New(msg.str().c_str())));
+            }
+            return this->ExecuteString( str, name, reportExceptions, resultGoesTo );
         }
         
         /**
@@ -454,7 +461,14 @@ namespace cvv8 {
         {
             if( ! filename || !*filename )
             {
-                return v8::ThrowException(v8::Exception::Error(v8::String::New("filename argument must not be NULL/empty.")));
+                v8::ThrowException(v8::Exception::Error(v8::String::New("filename argument must not be NULL/empty.")));
+#if 1
+                if( reportExceptions )
+                {
+                    this->ReportException( reportExceptions );
+                }
+#endif
+                return v8::Handle<v8::Value>();
             }
             std::ifstream inf(filename);
             if( ! inf.good() )
@@ -464,7 +478,14 @@ namespace cvv8 {
                 std::ostringstream msg;
                 msg << "Could not open file ["<<filename<<"].";
                 std::string const & str( msg.str() );
-                return v8::ThrowException(v8::Exception::Error(v8::String::New(str.c_str(), static_cast<int/*grrrr!*/>(str.size()))));
+                v8::ThrowException(v8::Exception::Error(v8::String::New(str.c_str(), static_cast<int/*grrrr!*/>(str.size()))));
+#if 1
+                if( reportExceptions )
+                {
+                    this->ReportException( reportExceptions );
+                }
+#endif
+                return v8::Handle<v8::Value>();
             }
             return this->ExecuteStream( inf, filename, reportExceptions, resultGoesTo );
         }

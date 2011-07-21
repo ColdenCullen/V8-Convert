@@ -4,19 +4,7 @@
 
 /** @def CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 
-If CVV8_CONFIG_ENABLE_CONST_OVERLOADS is defined to a false value
-then certain templates are not generated, or are generated slightly
-differently. The intention is to try to support MSVC, which reportedly
-cannot distinguish specializations between Template<T> and Template<T const>.
-That said, i this code pretty much relies on proper distinction of
-constness.
-
-Originally, ConstMethodSignature (and its various derivates) was split from
-MethodSignature to support MSVC, but i have since given up (in my soul, if
-not in the code) on making too much effort to coddle to it.
-
-By the way: the library is completely untested with
-CVV8_CONFIG_ENABLE_CONST_OVERLOADS=0.
+Don't use this - it's going away very soon.
 
 */
 #define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
@@ -437,14 +425,6 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 };
 
 #if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename T, typename RV >
-struct MethodSignature< T, RV () const > : Signature< RV () const >
-{
-    typedef typename tmp::PlainType<T>::Type Context;
-    typedef RV (Context::*FunctionType)() const;
-    enum { IsConst = 1 };
-};
-
 template <typename T, typename RV >
 struct MethodSignature< T, RV (T::*)() const > : MethodSignature<T, RV () const>
 {

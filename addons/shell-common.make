@@ -13,8 +13,8 @@ ifeq (,$(SHELL_BINDINGS_HEADER))
 $(warning SHELL_BINDINGS_HEADER not defined.)
 endif
 
-ifeq (,$(SHELL_LDFLAGS))
-$(warning You have not set SHELL_LDFLAGS, which means we are not linking the shell to the add-on code.)
+ifeq (,$(SHELL_LDFLAGS)$(SHELL.OBJECTS))
+$(warning You have not set SHELL_LDFLAGS or SHELL.OBJECTS, which means we might not be linking the shell to the add-on code.)
 endif
 
 ifeq (1,1)
@@ -29,7 +29,7 @@ ifeq (1,1)
   $(SHELL.LOCAL.CPP): $(SHELL.ORIG.CPP)
 	cp $< $@
   $(SHELL.LOCAL.O): $(SHELL.LOCAL.CPP)
-  $(SHELL.NAME).BIN.OBJECTS := $(SHELL.LOCAL.O)
+  $(SHELL.NAME).BIN.OBJECTS := $(SHELL.LOCAL.O) $(SHELL.OBJECTS)
   $(SHELL.NAME).BIN.LDFLAGS := $(LDFLAGS_V8) $(SHELL_LDFLAGS)
   $(eval $(call ShakeNMake.CALL.RULES.BINS,$(SHELL.NAME)))
 ifneq (,$(SHELL_BINDINGS_FUNC))
