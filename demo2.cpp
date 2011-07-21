@@ -124,14 +124,18 @@ namespace cvv8 {
         Optional TypeName<> specialization: used mostly for error reporting
         purposes but can also be used to hold the class' JS-side name (which
         often differs from its native name). If used, it should be declared
-        (and optionally defined) before (most) other ClassCreator policies.
+        (and optionally defined) before (many) other ClassCreator policies,
+        as many policies will instantiate (possibly indirectly) TypeName<T>.
+
+        The IMPL parts should go in the implementation file, not the header,
+        to avoid ODR violations.
     */
     CVV8_TypeName_DECL((MyType));
     CVV8_TypeName_IMPL((MyType),"MyType");
     CVV8_TypeName_DECL((MySubType));
     CVV8_TypeName_IMPL((MySubType),"MySubType");
 
-#if 1
+#if 0
     /**
         We can customize the v8::Object internal field layout by
         specializing this policy. It's rarely needed/useful, and we do it
@@ -215,12 +219,17 @@ namespace cvv8 {
         : NativeToJSMap< MySubType >::NativeToJSImpl
     {};
 
-    struct MyCustomCtor : Signature<MyType *()>
+    /**
+        A custom MyType ctor/factor which actually returns a MySubType.
+    */
+    struct MyCustomCtor : Signature<MyType *()>// we subclass to upgrade to a type-list
     {
+        //! ReturnType is required by CtorForwarder interface.
         typedef MyType * ReturnType;
+        //! ReturnType is required by CtorForwarder interface.
         static ReturnType Call( v8::Arguments const & argv )
         {
-            CERR << "Called custom MyType (MySubType) ctor.\n";
+            CERR << "Called custom MyType (MySubType) factory.\n";
             return new MySubType;
         }
     };
@@ -235,7 +244,7 @@ namespace cvv8 {
         CtorForwarder<MyType *( char const * )>,
         CtorForwarder<MyType *( int, double )>,
         CtorForwarder<MyType *( v8::Arguments const & )>
-#else
+#else // equivalent except for the 0-arg ctor:
         PredicatedCtorForwarder<Argv_Length< sl::Arity<MyCustomCtor>::Value >,
                                 MyCustomCtor
                                 //CtorForwarder<MyType *()>
@@ -255,7 +264,10 @@ namespace cvv8 {
     */
     template <>
     struct ClassCreator_Factory<MyType>
-        : ClassCreator_Factory_NativeToJSMap< MyType, CtorArityDispatcher<MyCtors> >
+        : ClassCreator_Factory_NativeToJSMap< MyType,
+            //CtorArityDispatcher<MyCtors>
+            PredicatedCtorDispatcher<MyCtors>
+            >
     {};
 
     template <>

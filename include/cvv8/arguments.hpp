@@ -762,7 +762,7 @@ namespace cvv8 {
                << "arguments (arg count="<<argv.Length()
                << ").";
             std::string const & str(os.Content());
-            throw std::runtime_error(str.c_str);
+            throw std::runtime_error(str.c_str());
             return NULL;
         }
     };
