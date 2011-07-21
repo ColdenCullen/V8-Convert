@@ -369,6 +369,10 @@ namespace cvv8 {
             cc.AddClassTo( "T", dest );
             return;
             @endcode
+
+            If you do not actually want to add the class to the dest object,
+            you should call Seal() instead of AddClassTo() (or pass a different
+            destination object to AddClassTo().
         */
         static void SetupBindings( v8::Handle<v8::Object> const & target )
         {
@@ -401,6 +405,11 @@ namespace cvv8 {
        The default specialization does nothing (which is okay for the
        general case) but defines the interface which specializations
        must implement.
+
+       Reminder to self: we could arguably benefit by splitting this policy
+       into 3 classes, but experience has shown that the metadata used by
+       the 3 functions are typically shared amongst the 3 implementations
+       (or 2 of them in most cases).
     */
     template <typename T>
     struct ClassCreator_WeakWrap
@@ -586,27 +595,25 @@ namespace cvv8 {
            parameter. Thus the T template parameter should not be omitted
            from calls to this function.
         */
-        static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> jo,
+        static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> const & jo,
                                                   T const * nh )
         {
-            // FIXME: make this iterative instead of recursive.
             if( !nh || jo.IsEmpty() ) return v8::Handle<v8::Object>();
-            //typedef TypeInfo<T> TI;
-            typedef T * NH;
-            void const * ext = (jo->InternalFieldCount() == InternalFields::Count)
-                ? jo->GetPointerFromInternalField(InternalFields::NativeIndex)
-                : NULL;
-            if( ext == nh ) return jo;
-            else
-            { /* if !ext, there is no bound pointer. If (ext!=nh) then
-                there is one, but it's not the droid we're looking for.
-                In either case, check the prototype...
-                */
-                v8::Local<v8::Value> proto = jo->GetPrototype();
-                return ( !proto.IsEmpty() && proto->IsObject() )
-                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
-                    : v8::Handle<v8::Object>();
-            }            
+            v8::Handle<v8::Value> proto(jo);
+            void const * ext = NULL;
+            typedef ClassCreator_SearchPrototypeForThis<T> SPFT;
+            while( !ext && !proto.IsEmpty() && proto->IsObject() )
+            {
+                v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
+                ext = (obj->InternalFieldCount() != InternalFields::Count)
+                    ? NULL
+                    : obj->GetPointerFromInternalField( InternalFields::NativeIndex );
+                // FIXME: if InternalFields::TypeIDIndex>=0 then also do a check on that one.
+                if( ext == nh ) return obj;
+                else if( !SPFT::Value ) break;
+                else proto = obj->GetPrototype();
+            }
+            return v8::Handle<v8::Object>();
         }
         
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
