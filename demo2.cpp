@@ -1,4 +1,10 @@
+/*****************************************************
+Demonstration of using cvv8 (a.k.a. v8-convert).
 
+Author: Stephan Beal (http://wanderinghorse.net)
+
+License: Public Domain
+*****************************************************/
 #include <cassert>
 #include <iostream>
 #include <sstream>
@@ -12,19 +18,43 @@
 #endif
 namespace cv = cvv8;
 
-struct MyType
+/**
+    This type exists to demonstrate how we can bind functions which return
+    non-convertible types.
+*/
+struct NonConvertibleType {};
+
+/**
+    A class we want to bind. All of its public members will be bound to JS.
+*/
+class MyType
 {
+private:
+        void init()
+        {
+            this->anInt = 42;
+            this->aDouble = 42.24;
+        }
+    double aDouble;
+public:
+    int anInt;
     MyType() {
+        this->init();
         CERR << "MyType::MyType() @ "<<(void const *)this<<'\n';
     }
     MyType( int i, double d ) {
+        this->init();
+        this->anInt = i;
+        this->aDouble = d;
         CERR << "MyType::MyType("<<i<<", "<<d<<") @ "<<(void const *)this<<'\n';
     }
     MyType( char const * str ) {
+        this->init();
         CERR << "MyType::MyType("<<str<<") @ "<<this<<'\n';
     }
     MyType( v8::Arguments const & argv ) {
         CERR << "MyType::MyType("<<argv.Length()<<" arg(s)) @ "<<(void const *)this<<'\n';
+        this->init();
     }
     ~MyType() {
         CERR << "MyType::~MyType() @ "<<(void const *)this<<'\n';
@@ -38,6 +68,13 @@ struct MyType
     MyType const & selfConstRef() const { return *this; }
 
     virtual std::string toString() const;
+
+    NonConvertibleType nonConvertibleReturn() const
+    { return NonConvertibleType(); }
+
+    double getDouble() const { return this->aDouble; }
+    void setDouble(double d) { this->aDouble = d; }
+
 };
 
 /**
@@ -83,17 +120,23 @@ int a_non_member(int i)
 //-----------------------------------
 // Policies used by cv::ClassCreator
 namespace cvv8 {
-    // Optional: used mostly for error reporting purposes but can
-    // also be used to hold the class' JS-side name (which often differs
-    // from its native name).
-    // If used, it should be declared (and optionally defined) before other
-    // ClassCreator policies.
+    /**
+        Optional TypeName<> specialization: used mostly for error reporting
+        purposes but can also be used to hold the class' JS-side name (which
+        often differs from its native name). If used, it should be declared
+        (and optionally defined) before (most) other ClassCreator policies.
+    */
     CVV8_TypeName_DECL((MyType));
     CVV8_TypeName_IMPL((MyType),"MyType");
     CVV8_TypeName_DECL((MySubType));
     CVV8_TypeName_IMPL((MySubType),"MySubType");
 
 #if 1
+    /**
+        We can customize the v8::Object internal field layout by
+        specializing this policy. It's rarely needed/useful, and we do it
+        here only for demonstration purposes.
+    */
     template <>
     struct ClassCreator_InternalFields<MyType> :
         ClassCreator_InternalFields_Base<MyType,1,-1,0> {};
@@ -111,7 +154,8 @@ namespace cvv8 {
         allows the JS objects to find their 'this' pointer when
         CastFromJS<MyType>() is called, e.g. to get the 'this' pointer for a
         member function dereference. This is a side-effect of the "extra"
-        type-safety check the library optionally does.
+        type-safety check the library optionally does (and this approach
+        partially bypasses/foils that check).
 
         If ClassCreator_InternalFields<BaseType>::TypeIDField is negative
         then the extra type-safety check is turned off and this policy's
@@ -124,11 +168,13 @@ namespace cvv8 {
     {};
 #endif
 
-    // A JSToNative specialization which makes use of the plumbing
-    // installed by ClassCreator. This is required so that
-    // CastFromJS<MyType>() will work, as the JS/native binding process
-    // requires that we be able to convert (via CastFromJS()) a JS-side
-    // MyType object to a C++-side MyType object.
+    /**
+        A JSToNative specialization which makes use of the plumbing
+        installed by ClassCreator. JSToNative is required so that
+        CastFromJS<MyType>() will work. The JS/native binding process
+        requires that we be able to convert (via CastFromJS()) a JS-side
+        MyType object to a C++-side MyType object.
+    */
     template <>
     struct JSToNative< MyType >
         : JSToNative_ClassCreator< MyType >
@@ -142,6 +188,22 @@ namespace cvv8 {
         This NativeToJS variation uses plumbing installed by
         ClassCreator_Factory_NativeToJSMap to implement the NativeToJS
         conversion.
+
+        There is no single generic solution to the NativeToJS problem, and
+        there is no default implementation.
+
+        Note that a NativeToJS is ONLY necessary when:
+
+        - CastToJS<T> is called by client code.
+
+        - Bound functions _return_ native T pointers or references
+
+        It is _not_ necessary when functions take such arguments as parameters.
+
+        This demonstration code mades use of NativeToJSMap to map native
+        MyType objects to their JS counterparts. The majority of class
+        conversions do not require this overhead, and we do it here just for
+        demonstration/test purposes.
     */
     template <>
     struct NativeToJS< MyType >
@@ -165,8 +227,13 @@ namespace cvv8 {
         CtorForwarder<MyType *( v8::Arguments const & )>
     )> MyCtors;
 
-    // The policy which tells ClassCreator how to instantiate and
-    // destroy MyType objects.
+    /**
+        The policy which tells ClassCreator how to instantiate and
+        destroy MyType objects.
+
+        See the NativeToJS specializations for a few more details
+        about NativeToJSMap.
+    */
     template <>
     struct ClassCreator_Factory<MyType>
         : ClassCreator_Factory_NativeToJSMap< MyType, CtorArityDispatcher<MyCtors> >
@@ -196,33 +263,56 @@ std::string MySubType::toString() const
 
 void SetupCvv8DemoBindings( v8::Handle<v8::Object> const & dest )
 {
+    using namespace cvv8;
     typedef MyType T;
-    typedef cv::ClassCreator<T> CC;
+    typedef ClassCreator<T> CC;
     typedef MySubType T2;
-    typedef cv::ClassCreator<T2> CSub;
+    typedef ClassCreator<T2> CSub;
     CSub & csub(CSub::Instance());
     CC & cc(CC::Instance());
-    if( cc.IsSealed() ) { // the binding was already initialized.
-        cc.AddClassTo( cv::TypeName<T>::Value, dest );
-        csub.AddClassTo( cv::TypeName<T2>::Value, dest );
+    if( cc.IsSealed() ) // the bindings were already initialized.
+    {
+        cc.AddClassTo( TypeName<T>::Value, dest );
+        csub.AddClassTo( TypeName<T2>::Value, dest );
         return;
     }
     // Else initialize the bindings...
     cc
         ("destroy", CC::DestroyObjectCallback)
-        ("nonMember", cv::FunctionToInCa< int (int), a_non_member>::Call)
-        ("nonConstMethod", cv::MethodToInCa<T, void (), &T::aNonConstMethod>::Call)
-        ("constMethod", cv::ConstMethodToInCa<T, void (), &T::aConstMethod>::Call)
-        ("nonConstPtr", cv::MethodToInCa<T, T * (), &T::selfPtr>::Call)
-        ("nonConstRef", cv::MethodToInCa<T, T & (), &T::selfRef>::Call)
-        ("constPtr", cv::ConstMethodToInCa<T, T const * (), &T::selfConstPtr>::Call)
-        ("constRef", cv::ConstMethodToInCa<T, T const & (), &T::selfConstRef>::Call)
-        ("toString", cv::ConstMethodToInCa<T, std::string (), &T::toString>::Call)       
-        .AddClassTo( cv::TypeName<T>::Value, dest );
-    CERR << "Finished binding " << cv::TypeName<T>::Value << ".\n";
-    
+        ("nonMember", FunctionToInCa< int (int), a_non_member>::Call)
+        ("nonConstMethod", MethodToInCa<T, void (), &T::aNonConstMethod>::Call)
+        ("constMethod", ConstMethodToInCa<T, void (), &T::aConstMethod>::Call)
+        ("nonConstPtr", MethodToInCa<T, T * (), &T::selfPtr>::Call)
+        ("nonConstRef", MethodToInCa<T, T & (), &T::selfRef>::Call)
+        ("constPtr", ConstMethodToInCa<T, T const * (), &T::selfConstPtr>::Call)
+        ("constRef", ConstMethodToInCa<T, T const & (), &T::selfConstRef>::Call)
+        ("toString", ConstMethodToInCa<T, std::string (), &T::toString>::Call)
+        ("nonConvertibleReturn", ConstMethodToInCaVoid<T, NonConvertibleType (), &T::nonConvertibleReturn>::Call)
+        ;
 
-    // ACHTUNG: inheritance support is broken in some ways (e.g. conversion to base type).
+    // Bind some non-function properties...
+#define JSTR v8::String::New
+    typedef MemberPropertyBinder<T> PB;
+    v8::Handle<v8::ObjectTemplate> const & proto( cc.Prototype() );
+    proto->SetAccessor( JSTR("aDouble"),
+                        PB::ConstMethodToAccessorGetter< double (), &T::getDouble>,
+                        PB::AccessorSetterThrow );
+    proto->SetAccessor( JSTR("anInt"),
+                        PB::MemberToAccessorGetter< int, &T::anInt>,
+                        PB::MemberToAccessorSetter< int, &T::anInt> );
+#undef JSTR
+
+    cc.AddClassTo( TypeName<T>::Value, dest ) /* this or Seal() must be the last op performed */;
+    CERR << "Finished binding " << TypeName<T>::Value << ".\n";
+    
+    /**
+        ACHTUNG: inheritance support is broken in some ways e.g. derived
+        funcs returning (MyType [*&]) cannot convert the return value at
+        runtime. Even though the return type is technically correct, the
+        type-strict templates can't figure that out without us adding more
+        plumbing/overhead to the bindings.
+    */
     csub.Inherit<MyType>();
-    csub.AddClassTo( cv::TypeName<T2>::Value, dest );
+    csub.AddClassTo( TypeName<T2>::Value, dest );
+    CERR << "Finished binding " << TypeName<T2>::Value << ".\n";
 }

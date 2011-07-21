@@ -83,8 +83,6 @@ function test1()
     asserteq( ++f.theInt, f.theIntNC );
     asserteq( f.theInt, f.theIntNC );
 
-    assertThrows( function(){ f.anton(); } );
-    assertThrows( function(){ f.anton2(); } );
     assertThrows( function(){ f.nativeParamRef(null); } );
     assertThrows( function(){ f.nativeParamConstRef(null); } );
     f.nativeParamRef(f);

@@ -6,8 +6,17 @@ function runTestsOn(m)
     var rc = -3;
     rc = m.nonMember(11);
     asserteq( rc, 11 );
+    m.anInt = 17;
+    rc = m.anInt;
+    asserteq( m.anInt, rc, 'rc == m.anInt');
+
+    assertThrows( function() { m.aDouble = 7.3; } );
+    assert( 'number' === typeof m.aDouble, 'm.aDouble is-a Number.');
+
     m.nonConstMethod();
     m.constMethod();
+
+    assert( undefined == m.nonConvertibleReturn(), 'm.nonConvertibleReturn() works.');
     if( !m.constPtr() ) {
         print("SKIPPING tests which are known to be problematic for subclassing cases.");
     }
