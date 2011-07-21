@@ -39,7 +39,10 @@ function runTestsOn(m)
 function f1()
 {
     print("hi, world.");
-    var m = new MyType();
+    var i = 19, d = 33.17;
+    var m = new MyType(i,d);
+    asserteq( i, m.anInt, 'm.anInt initialized properly');
+    asserteq( d, m.aDouble, 'm.aDouble initialized properly');
     runTestsOn( m );
     assert( m.destroy(), 'destroy() works.' );
     print("bye, world.");
@@ -52,8 +55,17 @@ function testSubclass()
     assert( m instanceof MyType, 'm instanceof MyType' );
     assert( /MySubType/.test( m.toString() ), 'toString() finds subclass reimplementation.' );
     runTestsOn( m );
-    assert( m.destroy(), 'destroy() works.' );}
+    assert( m.destroy(), 'destroy() works.' );
+}
+
+function try0ArgCtor()
+{
+    var m = new MyType();
+    print('m = '+m);
+    m.destroy();
+}
 
 f1();
 testSubclass();
+try0ArgCtor();
 print("If you got this far, it seems to have worked.");

@@ -702,6 +702,70 @@ namespace cvv8 {
         }
     };
 
+    //! Experimental - do not use.
+    template <typename ArgPred, typename FactoryT>
+    struct PredicatedCtorForwarder : ArgumentsPredicate, FactoryT
+    {
+        /** Returns ArgPred()(argv). */
+        bool operator()( v8::Arguments const & argv ) const
+        {
+            return ArgPred()( argv );
+        }
+#if 0
+        typedef typename FactoryT::ReturnType ReturnType;
+        /** Returns FactoryT::Call(argv). */
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            return FactoryT::Call(argv);
+        }
+#endif
+    };
+
+    //! Experimental - do not use.
+    template <typename PredList, typename ContextT = typename PredList::ReturnType>
+    struct PredicatedCtorDispatcher
+    {
+        typedef typename TypeInfo<typename PredList::ReturnType>::NativeHandle ReturnType;
+        /**
+            For each PredicatedInCa (P) in PredList, if P()(argv)
+            returns true then P::Call(argv) is returned, else the next
+            predicate in the list is tried.
+
+            If no predicates match then a JS-side exception will be triggered.
+        */
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            typedef typename PredList::Head Head;
+            typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
+                                            Argv_False,
+                                            Head>::Type Ftor;
+            typedef typename PredList::Tail Tail;
+            return ( Ftor()( argv ) )
+                ? Detail::CtorFwdDispatch<typename PredList::ReturnType,Head>::Call( argv )
+                : PredicatedCtorDispatcher<Tail,ContextT>::Call(argv);
+        }
+    };
+    //! End-of-list specialization.
+    template <typename ContextT>
+    struct PredicatedCtorDispatcher< tmp::NilType, ContextT > : InCa
+    {
+        typedef typename TypeInfo<ContextT>::NativeHandle ReturnType;
+        /**
+            Triggers a native exception explaining (in English text) that no
+            overloads could be matched to the given arguments.
+        */
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            StringBuffer os;
+            os <<"No predicates in the "
+               << "ctor argument dispatcher matched the given "
+               << "arguments (arg count="<<argv.Length()
+               << ").";
+            std::string const & str(os.Content());
+            throw std::runtime_error(str.c_str);
+            return NULL;
+        }
+    };
 }
 
 #endif

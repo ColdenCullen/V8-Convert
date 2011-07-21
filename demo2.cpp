@@ -215,16 +215,35 @@ namespace cvv8 {
         : NativeToJSMap< MySubType >::NativeToJSImpl
     {};
 
+    struct MyCustomCtor : Signature<MyType *()>
+    {
+        typedef MyType * ReturnType;
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            CERR << "Called custom MyType (MySubType) ctor.\n";
+            return new MySubType;
+        }
+    };
     /**
         The MyType constructors we want to bind to v8 (there are several
         other ways to do this): This can be defined anywhere which is
         convenient for the client.
     */
     typedef Signature<MyType (
+#if 0
         CtorForwarder<MyType *()>,
         CtorForwarder<MyType *( char const * )>,
         CtorForwarder<MyType *( int, double )>,
         CtorForwarder<MyType *( v8::Arguments const & )>
+#else
+        PredicatedCtorForwarder<Argv_Length< sl::Arity<MyCustomCtor>::Value >,
+                                MyCustomCtor
+                                //CtorForwarder<MyType *()>
+                                >,
+        PredicatedCtorForwarder<Argv_Length<1>, CtorForwarder<MyType *( char const * )> >,
+        PredicatedCtorForwarder<Argv_Length<2>, CtorForwarder<MyType *( int, double )> >,
+        PredicatedCtorForwarder<Argv_Length<3>, CtorForwarder<MyType *( v8::Arguments const & )> >
+#endif
     )> MyCtors;
 
     /**

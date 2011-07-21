@@ -7,6 +7,7 @@ test "$count" -gt 0 || {
     echo "Usage: $0 NUMBER (>=1) COMMAND(s)"
 cat <<EOF
 Commands:
+  CtorForwarder
   FunctionSignature
   MethodSignature
   ConstMethodSignature
@@ -82,12 +83,12 @@ function makeCtorForwarder()
 
     mycat <<EOF
 namespace Detail {
-template <>
-struct CtorForwarderProxy<${count}>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,${count}>
 {
     enum { Arity = ${count} };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -95,11 +96,10 @@ struct CtorForwarderProxy<${count}>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type( ${castCalls} );
         }
     }

@@ -1836,8 +1836,8 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             StringBuffer msg;
-            msg << "Found no overload taking "
-                <<argv.Length()<<" arguments!\n";
+            msg << "End of typelist reached. Argument count="
+                <<argv.Length()<<'\n';
             return Toss( msg.toError() );
         }
     };
@@ -1914,6 +1914,29 @@ struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
 Temporary refactoring macro to disable the ToInCa templates while we accommodate
 the constness issues for MSVC 2010.
 
+Reminder to self:
+
+The main reason we can't use ToInCa like we could pre-MSVC is the ambiguity
+for const/non-const methods:
+
+ToInCa<T, void (int) >
+
+MSVC doesn't allow us to specialize Signature such that:
+
+ConstMethodSignature<T, void (int) const>
+
+are legal. gcc does, but i honestly don't know what The Standard says
+on that topic.
+
+If we could get around that ambiguity, or if msvc will let us overload:
+
+MethodSignature<T, void (int), &T::constMethod >
+
+as an alias for:
+
+ConstMethodSignature<T, void (int), &T::constMethod >
+
+then we might be able to re-introduce ToInCa. i think.
 */
 #define ENABLE_TOINCA 0
 

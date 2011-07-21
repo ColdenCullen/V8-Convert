@@ -239,12 +239,12 @@ struct CallForwarder<1>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<1>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,1>
 {
     enum { Arity = 1 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -252,14 +252,13 @@ struct CtorForwarderProxy<1>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		
              typedef ArgCaster<A0> AC0;
 		
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0 );
         }
     }
@@ -522,12 +521,12 @@ struct CallForwarder<2>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<2>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,2>
 {
     enum { Arity = 2 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -535,8 +534,6 @@ struct CtorForwarderProxy<2>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		
@@ -546,6 +543,7 @@ struct CtorForwarderProxy<2>
              AC0 ac0; A0 arg0(ac0.ToNative(argv[0]));
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1 );
         }
     }
@@ -826,12 +824,12 @@ struct CallForwarder<3>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<3>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,3>
 {
     enum { Arity = 3 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -839,8 +837,6 @@ struct CtorForwarderProxy<3>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -853,6 +849,7 @@ struct CtorForwarderProxy<3>
 		 AC1 ac1; A1 arg1(ac1.ToNative(argv[1]));
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2 );
         }
     }
@@ -1151,12 +1148,12 @@ struct CallForwarder<4>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<4>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,4>
 {
     enum { Arity = 4 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -1164,8 +1161,6 @@ struct CtorForwarderProxy<4>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1181,6 +1176,7 @@ struct CtorForwarderProxy<4>
 		 AC2 ac2; A2 arg2(ac2.ToNative(argv[2]));
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3 );
         }
     }
@@ -1497,12 +1493,12 @@ struct CallForwarder<5>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<5>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,5>
 {
     enum { Arity = 5 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -1510,8 +1506,6 @@ struct CtorForwarderProxy<5>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1530,6 +1524,7 @@ struct CtorForwarderProxy<5>
 		 AC3 ac3; A3 arg3(ac3.ToNative(argv[3]));
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3, arg4 );
         }
     }
@@ -1864,12 +1859,12 @@ struct CallForwarder<6>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<6>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,6>
 {
     enum { Arity = 6 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -1877,8 +1872,6 @@ struct CtorForwarderProxy<6>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -1900,6 +1893,7 @@ struct CtorForwarderProxy<6>
 		 AC4 ac4; A4 arg4(ac4.ToNative(argv[4]));
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3, arg4, arg5 );
         }
     }
@@ -2252,12 +2246,12 @@ struct CallForwarder<7>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<7>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,7>
 {
     enum { Arity = 7 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -2265,8 +2259,6 @@ struct CtorForwarderProxy<7>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2291,6 +2283,7 @@ struct CtorForwarderProxy<7>
 		 AC5 ac5; A5 arg5(ac5.ToNative(argv[5]));
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6 );
         }
     }
@@ -2661,12 +2654,12 @@ struct CallForwarder<8>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<8>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,8>
 {
     enum { Arity = 8 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -2674,8 +2667,6 @@ struct CtorForwarderProxy<8>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -2703,6 +2694,7 @@ struct CtorForwarderProxy<8>
 		 AC6 ac6; A6 arg6(ac6.ToNative(argv[6]));
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7 );
         }
     }
@@ -3091,12 +3083,12 @@ struct CallForwarder<9>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<9>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,9>
 {
     enum { Arity = 9 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -3104,8 +3096,6 @@ struct CtorForwarderProxy<9>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -3136,6 +3126,7 @@ struct CtorForwarderProxy<9>
 		 AC7 ac7; A7 arg7(ac7.ToNative(argv[7]));
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8 );
         }
     }
@@ -3542,12 +3533,12 @@ struct CallForwarder<10>
 
 };
 namespace Detail {
-template <>
-struct CtorForwarderProxy<10>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,10>
 {
     enum { Arity = 10 };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -3555,8 +3546,6 @@ struct CtorForwarderProxy<10>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             typedef typename sl::At< 0, Signature<Sig> >::Type A0;
 		typedef typename sl::At< 1, Signature<Sig> >::Type A1;
 		typedef typename sl::At< 2, Signature<Sig> >::Type A2;
@@ -3590,6 +3579,7 @@ struct CtorForwarderProxy<10>
 		 AC8 ac8; A8 arg8(ac8.ToNative(argv[8]));
 		 AC9 ac9; A9 arg9(ac9.ToNative(argv[9]));
 		
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type(  arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9 );
         }
     }

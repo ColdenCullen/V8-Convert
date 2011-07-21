@@ -1764,60 +1764,41 @@ namespace cvv8 {
 
 #if !defined(DOXYGEN)
     namespace Detail {
-        /*
-            Potential todo/fixme: refactor CtorForwarderProxy
-            to take the signature at the class level, not the Call() level.
-            The reason would be so that we don't have to use this call syntax:
-
-            CtorForwarderProxy::template Call<...>()
-
-            which is not likely to work with client-provided ctor factories.
-
-            i.e. to make the interface more generic.
-
-            That said, the current impl requires less code on my part. :/
-
-            We could just add one level of redirection on top of it, of
-            course... that always solves everything ;).            
-        */
-        
         /**
             Default (unimplemented) CtorForwarderProxy impl. A helper
             for the CtorForwarder class. All specializations except
             the 0-arity one are generated from script code.
         */
-        template <int Arity>
+        template <typename Sig, int Arity = sl::Arity< Signature<Sig> >::Value >
         struct CtorForwarderProxy
         {
-            template <typename Sig>
-            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & );
+            typedef typename Signature<Sig>::ReturnType ReturnType;
+            static ReturnType Call( v8::Arguments const & );
         };
 
         //! Specialization for 0-arity ctors.
-        template <>
-        struct CtorForwarderProxy<0>
+        template <typename Sig>
+        struct CtorForwarderProxy<Sig,0>
         {
-            template <typename Sig>
-            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & )
+            typedef typename Signature<Sig>::ReturnType ReturnType;
+            static ReturnType Call( v8::Arguments const & )
             {
-                typedef typename Signature<Sig>::ReturnType RC;
-                typedef typename TypeInfo<RC>::Type RType;
+                typedef typename TypeInfo<ReturnType>::Type RType;
                 return new RType;
             }
         };
         //! Specialization for ctors taking (v8::Arguments const &).
-        template <>
-        struct CtorForwarderProxy<-1>
+        template <typename Sig>
+        struct CtorForwarderProxy<Sig,-1>
         {
-            template <typename Sig>
-            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+            typedef typename Signature<Sig>::ReturnType ReturnType;
+            static ReturnType Call( v8::Arguments const & argv )
             {
-                typedef Signature<Sig> SigT;
-                typedef typename SigT::ReturnType RV;
-                typedef typename TypeInfo<RV>::Type T;
+                typedef typename TypeInfo<ReturnType>::Type T;
                 return new T(argv);
             }
         };
+
     }
 #endif
     /**
@@ -1872,11 +1853,8 @@ namespace cvv8 {
         static ReturnType Call( v8::Arguments const & argv )
         {
             enum { Arity = sl::Arity< STL >::Value };
-            // TODO: refactor CtorForwarderProxy to not take an arity,
-            // but use CtorForwarderProxy<Sig> instead. The current impl
-            // pre-dates some of our templates-related advances.
-            typedef Detail::CtorForwarderProxy<Arity> Proxy;
-            return Proxy::template Call<Sig>( argv );
+            typedef Detail::CtorForwarderProxy<Sig> Proxy;
+            return Proxy::Call( argv );
         }
     };
 
@@ -1885,14 +1863,14 @@ namespace cvv8 {
     {
 
         /**
-           Internal dispatch routine. CTOR _must_ be a CtorForwarder implementation,
-           where N is 0..N.
+           Internal dispatch routine. CTOR _must_ be a CtorForwarder implementation
+           (or interface-compatible).
         */
         template <typename T,typename CTOR>
         struct CtorFwdDispatch
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Call( v8::Arguments const &  argv )
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 return CTOR::Call( argv );
             }
@@ -1903,8 +1881,8 @@ namespace cvv8 {
         template <typename T>
         struct CtorFwdDispatch<T,tmp::NilType>
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Call( v8::Arguments const &  argv )
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 return 0;
             }
@@ -1920,12 +1898,12 @@ namespace cvv8 {
         template <typename T,typename List>
         struct CtorFwdDispatchList
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
             /**
                Tries to dispatch Arguments to one of the constructors
                in the List type, based on the argument count.
              */
-            static NativeHandle Call( v8::Arguments const &  argv )
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
@@ -1933,7 +1911,7 @@ namespace cvv8 {
                                 ? -1 : sl::Length<CTOR>::Value
                 };
                 return ( (Arity < 0) || (Arity == argv.Length()) )
-                    ?  CtorFwdDispatch< T, CTOR >::Call(argv )
+                    ? CtorFwdDispatch< T, CTOR >::Call(argv )
                     : CtorFwdDispatchList<T,Tail>::Call(argv);
             }
         };
@@ -1943,9 +1921,9 @@ namespace cvv8 {
         template <typename T>
         struct CtorFwdDispatchList<T,tmp::NilType>
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
             /** Writes an error message to errmsg and returns 0. */
-            static NativeHandle Call( v8::Arguments const &  argv )
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 StringBuffer msg;
                 msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
