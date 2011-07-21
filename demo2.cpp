@@ -175,20 +175,8 @@ namespace cvv8 {
     };
 
     template <>
-    struct NativeToJS< MySubType >
+    struct NativeToJS< MySubType > : NativeToJS< MyType >
     {
-        typedef MySubType const * ArgType;
-        v8::Handle<v8::Value> operator()( ArgType n ) const
-        {
-            if( n ) return n->jsThis();
-            else return v8::Null();
-        }
-        // i'm not quite sure why i need this overload :/
-        v8::Handle<v8::Value> operator()( MyType const & n ) const
-        {
-            if( !n.jsThis().IsEmpty() ) return n.jsThis();
-            else return v8::Null();
-        }
     };
 
 #if 0

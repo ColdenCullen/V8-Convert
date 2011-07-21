@@ -1175,36 +1175,7 @@ namespace cvv8 {
         }
     };
 
-    /**
-        Can be used as a concrete ClassCreator_Factory<T> 
-        specialization to forward JS ctor calls directly to native 
-        ctors.
-        
-        T must (or is assumed to) be a ClassCreator<T>-wrapped 
-        class. CtorForwarderList must be a Signature typelist of 
-        CtorForwarder types and its "return type" must be T (optionally
-        pointer-qualified).
-        
-        Example:
-        
-        @code
-        typedef CtorFwdTest CFT;
-        typedef CtorForwarder<CFT *()> C0;
-        typedef CtorForwarder<CFT *(int)> C1;
-        typedef CtorForwarder<CFT *(int, double)> C2;
-        typedef Signature< CFT (C0, C1, C2) > CtorList;
-        
-        // Then create Factory specialization based on those:
-        template <>
-        struct ClassCreator_Factory<CFT> : 
-            ClassCreator_Factory_CtorArityDispatcher<CFT, CtorList> {};
-        @endcode
-        
-        TODO: see if this works: returning a derived type from the forwarder:
-        
-        @code
-        typedef CtorForwarder<SomeSubType *(int,int)> C2;
-        @endcode
+    /** @deprecated Use ClassCreator_Factory_Dispatcher instead (same interface).
     */
     template <typename T,typename CtorForwarderList>
     struct ClassCreator_Factory_CtorArityDispatcher : Detail::Factory_CtorForwarder_Base<T>
@@ -1219,6 +1190,37 @@ namespace cvv8 {
         }
     };
 
+    /**
+        A ClassCreator_Factory implementation which forwards its Create()
+        member to CtorT::Call() (the interface used by CtorForwarder and friends).
+
+        T must (or is assumed to) be a ClassCreator<T>-wrapped class.
+        CtorForwarderList must be a Signature typelist of CtorForwarder
+        types and its "return type" must be T (optionally pointer-qualified).
+        
+        Example:
+        
+        @code
+        typedef CtorForwarder<MyType *()> C0;
+        typedef CtorForwarder<MyType *(int)> C1;
+        typedef CtorForwarder<MyType *(int, double)> C2;
+        typedef Signature< CFT (C0, C1, C2) > CtorList;
+        
+        // Then create Factory specialization based on those:
+        template <>
+        struct ClassCreator_Factory<MyType> : 
+            ClassCreator_Factory_Dispatcher<MyType, CtorArityDispatcher<CtorList> > {};
+        @endcode
+
+        Or:
+        
+        @code
+        template <>
+        struct ClassCreator_Factory<MyType> :
+            ClassCreator_Factory_Dispatcher< MyType, CtorForwarder<MyType *()> >
+        {};
+        @endcode
+    */
     template <typename T,typename CtorT>
     struct ClassCreator_Factory_Dispatcher : Detail::Factory_CtorForwarder_Base<T>
     {
