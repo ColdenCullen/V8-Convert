@@ -853,16 +853,15 @@ namespace cvv8 {
         y.someFunc( ... ); // here is where it will likely end badly
         @endcode
         
-        When y.someFunc() is called, JS will look for a 'this' 
-        object of type Native1, not Native2, because the type 
-        information related to the conversion is "stored" in the 
-        callback function itself, not in the native object. (This is 
-        a side-effect of us using templates to create 
-        InvocationCallback implementations.) It will not find a Native1, but
-        it might (depending on how both classes are bound to JS) find a Native2
-        pointer and _think_ it is a Native1. And by "think it is" i mean
-        "it will try to cast it to," but the cast is illegal in that case.
-        In any case it would be bad news.
+        When y.someFunc() is called, JS will look for a 'this' object of
+        type Native1, not Native2, because the type information related to
+        the conversion is "stored" in the callback function itself, not in
+        the native object. (This is a side-effect of us using templates to
+        create InvocationCallback implementations.) It will not find a
+        Native1, but it might (depending on how both classes are bound to
+        JS) find a Native2 pointer and _think_ it is a Native1. And by
+        "think it is" i mean "it will try to cast it to," but the cast is
+        illegal in that case. In any case it would be bad news.
         
         The check performed by this class can catch that condition 
         (and similar ones) and fail gracefully (i.e. returning a 
