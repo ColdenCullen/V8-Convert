@@ -2088,11 +2088,11 @@ struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8
     
     @code
     // int my_func( v8::Arguments const & );
-    typedef InCaLikeFunc< int, my_func > F;
+    typedef InCaLikeFunction< int, my_func > F;
     @endcode
 */ 
 template <typename RV, RV (*Func)(v8::Arguments const &)>
-struct InCaLikeFunc : FunctionToInCa< RV (v8::Arguments const &), Func>
+struct InCaLikeFunction : FunctionToInCa< RV (v8::Arguments const &), Func>
 {
 };
 

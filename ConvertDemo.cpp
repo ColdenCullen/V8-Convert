@@ -188,7 +188,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     // Set up some other logic paths...
 
     // For 2 arguments:
-    typedef PredicatedInCa< Argv_Length<2>, InCaLikeFunc<int,bogo_callback2> > Group2;
+    typedef PredicatedInCa< Argv_Length<2>, InCaLikeFunction<int,bogo_callback2> > Group2;
 
     // For 0 or 3-5 args
     typedef PredicatedInCa<
