@@ -57,7 +57,7 @@ public:
         CERR << "MyType::MyType("<<argv.Length()<<" arg(s)) @ "<<(void const *)this<<'\n';
         this->init();
     }
-    ~MyType() {
+    virtual ~MyType() {
         CERR << "MyType::~MyType() @ "<<(void const *)this<<'\n';
     }
     void aNonConstMethod() { CERR << " @ "<<(void const *)this<<'\n'; }
@@ -105,7 +105,7 @@ class MySubType : public MyType
     {
         CERR << "MySubType() @ "<<(void const *)this<<'\n';
     }
-    ~MySubType()
+    virtual ~MySubType()
     {
         CERR << "MySubType::~MySubType() @ "<<(void const *)this<<'\n';
     }
@@ -179,7 +179,7 @@ namespace cvv8 {
     {
     };
 
-#if 0
+#if 1
     /**
         We can customize the v8::Object internal field layout by
         specializing this policy. It's rarely needed/useful, and we do it
