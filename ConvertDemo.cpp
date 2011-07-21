@@ -315,7 +315,7 @@ void test_using_locker()
         << "If something is broken in our locking setup then the "
         << "following will likely assert in v8...\n";
     {
-        v8::Locker const lock();
+        v8::Locker const lock;
     }
     CERR << "We're back...\n";
 }
