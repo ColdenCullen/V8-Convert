@@ -80,12 +80,11 @@ For cpdo_amalgamation.cpp:
 For jspdo.cpp:
 
         -I/path/to/v8/convert/install/prefix
-        -DCPDO_ENABLE_MYSQL5=1 and/or -DCPDO_ENABLE_SQLITE3=1
 
 Linking:
      - If using MySQL add: (mysql_config --libs).
-     - If using sqlite3 add: -lsqlite3 (or link in your own copy of
-     sqlite3.o)
+     - If using sqlite3 add: -lsqlite3 or link in your own copy of
+     sqlite3.o
 
 When using MySQL it is impossible (at least on Linux) to build a 
 static binary because MySQL links to libraries which cannot work in 
