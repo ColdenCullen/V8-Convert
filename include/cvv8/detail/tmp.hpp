@@ -72,7 +72,35 @@ namespace tmp {
     struct PlainType<T *> : PlainType<T> {};
     template <typename T>
     struct PlainType<T const *> : PlainType<T> {};
-    
+
+#if 0
+    /** Metatemplate whose Type evaluates to (T*). */
+    template <typename T>
+    struct AddPointer
+    {
+        typedef T * Type;
+    };
+    /** Specialization whose Type evaluates to (T *). */
+    template <typename T>
+    struct AddPointer<T *>
+    {
+        typedef T * Type;
+    };
+    /** Specialization whose Type evaluates to (T const *). */
+    template <typename T>
+    struct AddPointer<T const *>
+    {
+        typedef T const * Type;
+    };
+
+    //! Unimplemented. How to handle this?
+    template <typename T>
+    struct AddPointer<T const &>;
+    //! Unimplemented. How to handle this?
+    template <typename T>
+    struct AddPointer<T &>;
+#endif
+
     template <typename T>
     struct IsConst : BoolVal<false> {};
     template <typename T>
