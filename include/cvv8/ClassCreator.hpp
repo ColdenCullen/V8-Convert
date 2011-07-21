@@ -648,7 +648,9 @@ namespace cvv8 {
                 */
                 pv.Dispose();
                 pv.Clear();
-#if 0
+#if 1 /* i believe this problem was fixed. If you are reading this b/c
+         you followed an assert() message, please report this as a bug.
+        */
                 assert( 0 && "weak_dtor() got no native object!");
 #endif
                 return;
