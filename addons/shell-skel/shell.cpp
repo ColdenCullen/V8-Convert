@@ -83,7 +83,7 @@ static int v8_main(int argc, char const * const * argv)
         tryCatch.SetCaptureMessage(true);
         char const * fname = argv[1];
         v8::Handle<v8::Value> rc = shell.ExecuteFile( fname, &tryCatch );
-#if 1
+#if 0
         //assert( tryCatch.Exception().IsEmpty() );
         if(
             tryCatch.HasCaught()
@@ -93,7 +93,7 @@ static int v8_main(int argc, char const * const * argv)
             shell.ReportException(&tryCatch);
             return 2;
         }
-#else
+#elif 0
         if( rc.IsEmpty() )
         { // exception was reported by shell already, we hope.
             //CERR << "JS exception during script execution.\n";

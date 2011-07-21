@@ -462,7 +462,7 @@ namespace cvv8 {
             if( ! filename || !*filename )
             {
                 v8::ThrowException(v8::Exception::Error(v8::String::New("filename argument must not be NULL/empty.")));
-#if 1
+#if 0
                 if( reportExceptions )
                 {
                     this->ReportException( reportExceptions );
@@ -479,7 +479,7 @@ namespace cvv8 {
                 msg << "Could not open file ["<<filename<<"].";
                 std::string const & str( msg.str() );
                 v8::ThrowException(v8::Exception::Error(v8::String::New(str.c_str(), static_cast<int/*grrrr!*/>(str.size()))));
-#if 1
+#if 0
                 if( reportExceptions )
                 {
                     this->ReportException( reportExceptions );
