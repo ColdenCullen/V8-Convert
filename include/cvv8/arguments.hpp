@@ -711,19 +711,11 @@ namespace cvv8 {
         {
             return ArgPred()( argv );
         }
-#if 0
-        typedef typename FactoryT::ReturnType ReturnType;
-        /** Returns FactoryT::Call(argv). */
-        static ReturnType Call( v8::Arguments const & argv )
-        {
-            return FactoryT::Call(argv);
-        }
-#endif
     };
 
     //! Experimental - do not use.
     template <typename PredList, typename ContextT = typename PredList::ReturnType>
-    struct PredicatedCtorDispatcher
+    struct PredicatedCtorDispatcher : PredList
     {
         typedef typename TypeInfo<typename PredList::ReturnType>::NativeHandle ReturnType;
         /**
@@ -747,7 +739,7 @@ namespace cvv8 {
     };
     //! End-of-list specialization.
     template <typename ContextT>
-    struct PredicatedCtorDispatcher< tmp::NilType, ContextT > : InCa
+    struct PredicatedCtorDispatcher< tmp::NilType, ContextT > : Signature< ContextT * () >
     {
         typedef typename TypeInfo<ContextT>::NativeHandle ReturnType;
         /**
@@ -765,6 +757,7 @@ namespace cvv8 {
             throw std::runtime_error(str.c_str());
             return NULL;
         }
+
     };
 }
 

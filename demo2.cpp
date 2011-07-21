@@ -30,11 +30,12 @@ struct NonConvertibleType {};
 class MyType
 {
 private:
-        void init()
-        {
-            this->anInt = 42;
-            this->aDouble = 42.24;
-        }
+    void init()
+    {
+        this->anInt = 42;
+        this->aDouble = 42.24;
+    }
+    v8::Handle<v8::Object> jsSelf;
     double aDouble;
 public:
     int anInt;
@@ -75,6 +76,7 @@ public:
     double getDouble() const { return this->aDouble; }
     void setDouble(double d) { this->aDouble = d; }
 
+    v8::Handle<v8::Object> & jsThis() { return this->jsSelf; }
 };
 
 /**
@@ -233,6 +235,31 @@ namespace cvv8 {
             return new MySubType;
         }
     };
+
+
+    template <>
+    struct ClassCreator_WeakWrap<MyType>
+    {
+        typedef MyType * NativeHandle;
+        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf, v8::Arguments const & argv )
+        {
+            return;
+        }
+        static void Wrap( v8::Persistent<v8::Object> const & jsSelf, NativeHandle nativeSelf )
+        {
+            if( nativeSelf ) nativeSelf->jsThis() = jsSelf;
+            return;
+        }
+        static void Unwrap( v8::Handle<v8::Object> const & jsSelf, NativeHandle nativeSelf )
+        {
+            if( nativeSelf ) nativeSelf->jsThis() = v8::Handle<v8::Object>();
+            return;
+        }
+    };
+
+    template <>
+    struct ClassCreator_WeakWrap<MySubType> : ClassCreator_WeakWrap<MyType> {};
+    
     /**
         The MyType constructors we want to bind to v8 (there are several
         other ways to do this): This can be defined anywhere which is
@@ -264,7 +291,7 @@ namespace cvv8 {
     */
     template <>
     struct ClassCreator_Factory<MyType>
-        : ClassCreator_Factory_NativeToJSMap< MyType,
+        : ClassCreator_Factory_Dispatcher< MyType,
             //CtorArityDispatcher<MyCtors>
             PredicatedCtorDispatcher<MyCtors>
             >
@@ -272,7 +299,7 @@ namespace cvv8 {
 
     template <>
     struct ClassCreator_Factory<MySubType>
-        : ClassCreator_Factory_NativeToJSMap< MySubType, CtorForwarder<MySubType *()> >
+        : ClassCreator_Factory_Dispatcher< MySubType, CtorForwarder<MySubType *()> >
     {};
 }
 

@@ -1189,10 +1189,10 @@ namespace cvv8 {
         
         @code
         typedef CtorFwdTest CFT;
-        typedef cv::CtorForwarder<CFT *()> C0;
-        typedef cv::CtorForwarder<CFT *(int)> C1;
-        typedef cv::CtorForwarder<CFT *(int, double)> C2;
-        typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
+        typedef CtorForwarder<CFT *()> C0;
+        typedef CtorForwarder<CFT *(int)> C1;
+        typedef CtorForwarder<CFT *(int, double)> C2;
+        typedef Signature< CFT (C0, C1, C2) > CtorList;
         
         // Then create Factory specialization based on those:
         template <>
@@ -1203,7 +1203,7 @@ namespace cvv8 {
         TODO: see if this works: returning a derived type from the forwarder:
         
         @code
-        typedef cv::CtorForwarder<SomeSubType *(int,int)> C2;
+        typedef CtorForwarder<SomeSubType *(int,int)> C2;
         @endcode
     */
     template <typename T,typename CtorForwarderList>
@@ -1218,6 +1218,19 @@ namespace cvv8 {
             return Proxy::Call( argv );
         }
     };
+
+    template <typename T,typename CtorT>
+    struct ClassCreator_Factory_Dispatcher : Detail::Factory_CtorForwarder_Base<T>
+    {
+    public:
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv )
+        {
+            return CtorT::Call( argv );
+        }
+    };
+
 
 }// namespaces
 
