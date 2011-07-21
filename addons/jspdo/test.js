@@ -2,9 +2,9 @@ print("Starting tests...");
 
 load('../test-common.js');
 
-JSPDO.enableDebug = true;
+//JSPDO.enableDebug = true;
 //JSPDO.ByteArray.enableDestructorDebug(true);
-JSPDO.enableDestructorDebug(true);
+//JSPDO.enableDestructorDebug(true);
 var App = {
     drv:null,
     user:"",
