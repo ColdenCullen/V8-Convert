@@ -165,7 +165,12 @@ namespace cvv8 {
     template <typename NT>
     struct NativeToJS
     {
-        //! Must be specialized.
+        /**
+            Must be specialized. The argument type may be pointer-qualified.
+            Implementations for non-pod types are encouraged to have two
+            overloads, one taking (NT const &) and one taking (NT const *),
+            as this gives the underlying CastToJS() calls more leeway.
+        **/
         template <typename X>
         v8::Handle<v8::Value> operator()( X const & ) const;
     private:
@@ -174,14 +179,26 @@ namespace cvv8 {
 
     /**
        Specialization to treat (NT*) as (NT).
+
+       NativeToJS<NT> must have an operator() taking
+       (NT const *).
     */
     template <typename NT>
-    struct NativeToJS<NT *> : NativeToJS<NT> {};
+    struct NativeToJS<NT *> : NativeToJS<NT>
+    {
+        v8::Handle<v8::Value> operator()( NT const * v ) const
+        {
+            typedef NativeToJS<NT> Proxy;
+            if( v ) return Proxy()(v);
+            else return v8::Null()
+            ;
+        }
+    };
     /**
        Specialization to treat (NT const *) as (NT).
     */
     template <typename NT>
-    struct NativeToJS<NT const *> : NativeToJS<NT> {};
+    struct NativeToJS<NT const *> : NativeToJS<NT *> {};
     //     {
     //         typedef typename TypeInfo<NT>::Type const * ArgType;
     // 	v8::Handle<v8::Value> operator()( ArgType n ) const

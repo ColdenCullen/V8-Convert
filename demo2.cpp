@@ -146,40 +146,45 @@ namespace cvv8 {
         There is no single generic solution to the NativeToJS problem, and
         there is no default implementation.
 
+        The majority of class conversions do not require this conversion, and
+        we do it here just for demonstration/test purposes.
+
         Note that a NativeToJS is ONLY necessary when:
 
-        - CastToJS<T> is called by client code.
+        - CastToJS<T>() is called by client code.
 
-        - Bound functions _return_ native T pointers or references
+        - Bound functions _return_ native T pointers or references (normally
+        this is what causes CastToJS() to be called).
 
-        It is _not_ necessary when functions take such arguments as parameters.
-
-        The majority of class conversions do not require this overhead, and
-        we do it here just for demonstration/test purposes.
+        It is _not_ necessary when functions take such arguments as
+        parameters, as those are covered by the (mostly generically
+        implementable) CastFromJS().
     */
     template <>
     struct NativeToJS< MyType >
     {
-        typedef MyType const * ArgType;
-        v8::Handle<v8::Value> operator()( ArgType n ) const
+        typedef MyType const & ArgType;
+        v8::Handle<v8::Value> operator()( MyType const * n ) const
         {
             if( n ) return n->jsThis();
             else return v8::Null();
         }
-        // i'm not quite sure why i need this overload :/
-        v8::Handle<v8::Value> operator()( MyType const & n ) const
+        v8::Handle<v8::Value> operator()( ArgType n ) const
         {
-            if( !n.jsThis().IsEmpty() ) return n.jsThis();
-            else return v8::Null();
+            return this->operator ()( &n );
         }
     };
 
+    /**
+        In this particular case we can get away with subclassing the base
+        type's implementation.
+    */
     template <>
     struct NativeToJS< MySubType > : NativeToJS< MyType >
     {
     };
 
-#if 1
+#if 0
     /**
         We can customize the v8::Object internal field layout by
         specializing this policy. It's rarely needed/useful, and we do it
@@ -379,11 +384,13 @@ void SetupCvv8DemoBindings( v8::Handle<v8::Object> const & dest )
     CERR << "Finished binding " << TypeName<T>::Value << ".\n";
     
     /**
-        ACHTUNG: inheritance support is broken in some ways e.g. derived
-        funcs returning (MyType [*&]) cannot convert the return value at
-        runtime. Even though the return type is technically correct, the
-        type-strict templates can't figure that out without us adding more
-        plumbing/overhead to the bindings.
+        ACHTUNG: depending on the exact binding options, inheritance support
+        may be broken in some ways e.g. derived funcs returning (MyType
+        [*&]) cannot convert the return value at runtime. Even though the
+        return type is technically correct, the type-strict templates can't
+        figure that out without us adding more plumbing/overhead to the
+        bindings (or doing a non-typesafe conversion, which is actually safe
+        as long as JS code doesn't go swapping bound methods around).
     */
     csub.Inherit<MyType>();
     csub.AddClassTo( TypeName<T2>::Value, dest );
