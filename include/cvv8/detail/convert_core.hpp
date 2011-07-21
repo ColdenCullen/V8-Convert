@@ -185,6 +185,9 @@ namespace cvv8 {
     */
     template <typename NT>
     struct NativeToJS<NT *> : NativeToJS<NT>
+#if 1
+    {};
+#else
     {
         v8::Handle<v8::Value> operator()( NT const * v ) const
         {
@@ -194,6 +197,7 @@ namespace cvv8 {
             ;
         }
     };
+#endif
     /**
        Specialization to treat (NT const *) as (NT).
     */
