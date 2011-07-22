@@ -86,6 +86,12 @@ namespace cvv8 {
         v8::Handle<v8::Context> context;
         v8::Context::Scope cxscope;
         v8::Handle<v8::Object> global;
+        /**
+            tryCatch is only here until i can track down a post-main()
+            v8 assertion which happens when V8Shell-executed JS code
+            exits with an exception. It is just a workaround.
+        */
+        v8::TryCatch tryCatch;
         ErrorMessageReporter reporter;
         static void DefaultErrorMessageReporter( char const * msg )
         {
@@ -182,6 +188,9 @@ namespace cvv8 {
         */
         ~V8Shell()
         {
+            if( ! v8::V8::IsDead() ) {
+                tryCatch.Reset();
+            }
         }
         
         /**
