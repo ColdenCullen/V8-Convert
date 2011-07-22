@@ -1,13 +1,6 @@
 #!/usr/bin/make -f
 ########################################################################
 # Main makefile for v8-convert.
-#
-# Important targets for users not hacking this source tree:
-#
-#  all: do everything
-#  amal: build the amalgamation build
-#  run: run tests (it's not called 'test' because we have a binary with
-#       that name)
 ########################################################################
 include config.make # see that file for certain configuration options.
 
@@ -54,30 +47,3 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	} > $@;
 gen: $(invo_gen_h)
 all: $(invo_gen_h)
-
-ConvertDemo.o: ConvertDemo.cpp
-SHELL.DIR := addons/shell-skel
-ifeq (1,1)
-  demo.BIN.OBJECTS := demo.o ConvertDemo.o
-  demo.BIN.LDFLAGS := $(LDFLAGS_V8)
-  $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
-  demo.o: $(sig_gen_h) $(invo_gen_h)
-  all: $(demo.BIN)
-  SHELL.OBJECTS := ConvertDemo.o
-  SHELL_BINDINGS_HEADER := ConvertDemo.hpp
-  SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
-else
-  SHELL.NAME := demo2
-  SHELL.OBJECTS := demo2.o
-  SHELL_BINDINGS_HEADER := demo2.hpp
-  SHELL_BINDINGS_FUNC := ::SetupCvv8DemoBindings
-  demo2.o: $(sig_gen_h) $(invo_gen_h)
-endif
-
-########################################################################
-# shell app...
-include addons/shell-common.make
-
-ifneq (,$(filter-out demo2,$(SHELL_LDFLAGS)))
-  $(SHELL.LOCAL.O): demo2.o
-endif

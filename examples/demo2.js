@@ -1,4 +1,4 @@
-load("addons/test-common.js");
+load("../addons/test-common.js");
 
 function runTestsOn(m)
 {

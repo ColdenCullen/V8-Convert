@@ -398,11 +398,11 @@ namespace cvv8 {
     template <>
     struct NativeToJS<char const *>
     {
-	v8::Handle<v8::Value> operator()( char const * v ) const
-	{
-            if( ! v ) return v8::Null();
-            else return v8::String::New( v );
-	}
+        v8::Handle<v8::Value> operator()( char const * v ) const
+        {
+                if( ! v ) return v8::Null();
+                else return v8::String::New( v );
+        }
     };
 
     /**

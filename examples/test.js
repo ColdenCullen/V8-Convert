@@ -8,7 +8,7 @@
    set in the demo app (ConvertDemo.cpp), and changing them there might
    (should) cause these tests to fail.
 */
-load('addons/test-common.js');
+load('../addons/test-common.js');
 
 function printStackTrace(indention)
 {
