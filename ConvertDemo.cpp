@@ -462,27 +462,45 @@ namespace cvv8 {
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
             typedef cv::MemberPropertyBinder<BoundNative> PB;
+#if 0 // refactoring these...
             PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
             PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
-            PB::BindSharedVar<int,&BoundNative::publicStaticInt>("publicStaticIntRW", proto );
-            PB::BindSharedVarRO<int,&BoundNative::publicStaticInt>("publicStaticIntRO", proto );
-            PB::BindSharedVar<std::string,&sharedString>("staticString", proto );
-            PB::BindSharedVarRO<std::string,&sharedString>("staticStringRO", proto, true );
+#endif
+            typedef BoundNative T;
             // More generically, accessors can be bound using this approach:
             proto->SetAccessor( JSTR("self"),
-                                PB::MethodToAccessorGetter< BoundNative * (), &BoundNative::self>,
-                                PB::AccessorSetterThrow );
+                                PB::MethodToAccessorGetter< T * (), &T::self>,
+                                ThrowingSetter::Set );
             proto->SetAccessor( JSTR("selfRef"),
-                                PB::MethodToAccessorGetter< BoundNative & (), &BoundNative::selfRef>,
-                                PB::AccessorSetterThrow );
+                                PB::MethodToAccessorGetter< T & (), &T::selfRef>,
+                                ThrowingSetter::Set );
             proto->SetAccessor( JSTR("selfConst"),
-                                PB::ConstMethodToAccessorGetter< BoundNative const * (), &BoundNative::self>,
-                                PB::AccessorSetterThrow );
+                                PB::ConstMethodToAccessorGetter< T const * (), &T::self>,
+                                ThrowingSetter::Set );
             proto->SetAccessor( JSTR("selfConstRef"),
-                                PB::ConstMethodToAccessorGetter< BoundNative const & (), &BoundNative::selfRefConst>,
-                                PB::AccessorSetterThrow );
-                                
+                                PB::ConstMethodToAccessorGetter< T const & (), &T::selfRefConst>,
+                                ThrowingSetter::Set );
+
+            proto->SetAccessor( JSTR("publicIntRW"),
+                                MemberToGetter<T,int,&T::publicInt>::Get,
+                                MemberToSetter<T,int,&T::publicInt>::Set );
+            proto->SetAccessor( JSTR("publicIntRO"),
+                                MemberToGetter<T,int,&T::publicInt>::Get,
+                                ThrowingSetter::Set );
+            proto->SetAccessor( JSTR("publicStaticIntRW"),
+                                VarToGetter<int,&T::publicStaticInt>::Get,
+                                VarToSetter<int,&T::publicStaticInt>::Set );
+            proto->SetAccessor( JSTR("publicStaticIntRO"),
+                                VarToGetter<int,&T::publicStaticInt>::Get,
+                                ThrowingSetter::Set );
+            proto->SetAccessor( JSTR("staticString"),
+                                VarToGetter<std::string,&sharedString>::Get,
+                                VarToSetter<std::string,&sharedString>::Set );
+            proto->SetAccessor( JSTR("staticStringRO"),
+                                VarToGetter<std::string,&sharedString>::Get,
+                                ThrowingSetter::Set );
             
+#if 0
 #if 0
             PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
 #else
@@ -497,7 +515,7 @@ namespace cvv8 {
             PB::BindNonConstGetterSetterMethods<int (), &BoundNative::getIntNonConst,
                 void (int), &BoundNative::setInt
                 >("theIntNC", proto);
-
+#endif
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
             ctor->Set(JSTR("testLocker"),
                 cv::CastToJS(cv::FunctionToInCa<void (), test_using_locker<true>, true >::Call)

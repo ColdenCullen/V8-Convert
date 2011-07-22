@@ -7,6 +7,161 @@
 namespace cvv8 {
 
     /**
+        Marker class, primarily for documentation purposes.
+        
+        This class models the v8::AccessorGetter interface, and
+        XyzToGetter classes inherit this type as a sign that they
+        implement this interface.
+        
+        This class has no implemention - it only exists for 
+        documentation purposes.
+    */
+    struct AccessorGetterType
+    {
+        /** The v8::AccessorGetter() interface.
+        */
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+    };
+
+    /**
+        Marker class, primarily for documentation purposes.
+        
+        This class models the v8::AccessorSetter interface, and
+        XyzToSetter classes inherit this type as a sign that they
+        implement this interface.
+        
+        This class has no implemention - it only exists for 
+        documentation purposes.
+    */
+    struct AccessorSetterType
+    {
+        /** The v8::AccessorSetter() interface. */
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
+    };
+
+    /**
+       This template create an v8::AccessorGetter from a static/shared
+       variable.
+
+       SharedVar must be pointer to a static variable and must not
+       be NULL.
+
+       CastToJS(*SharedVar) must be legal.
+    */
+    template <typename PropertyType, PropertyType * const SharedVar>
+    struct VarToGetter : AccessorGetterType
+    {
+        /** Implements the v8::AccessorGetter() interface. */
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        {
+            return CastToJS( *SharedVar );
+        }
+    };
+
+    /**
+       The setter counterpart of StaticVarToGetter().
+
+       SharedVar must be pointer to a static variable and must not
+       be NULL.
+
+       (*SharedVar = CastFromJS<PropertyType>()) must be legal.
+       
+       Reminder: this is not included in the StaticVarToGetter 
+       template so that we can avoid either the Get or Set 
+       conversion for cases where it is not legal (or not desired). 
+       If they were both in one class, both Get and Set would _have_ 
+       to be legal.
+    */
+    template <typename PropertyType, PropertyType * const SharedVar>
+    struct VarToSetter : AccessorSetterType
+    {
+        /** Implements the v8::AccessorSetter() interface. */
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        {
+            *SharedVar = CastFromJS<PropertyType>( value );
+        }
+    };
+
+
+    /**
+       This template creates a v8::AcessorGetter which binds directly to
+       a non-const native class member variable.
+
+       Requirements:
+
+       - T must be convertible to (T*) via CastFromJS<T>().
+       - MemVar must be an accessible member of T.
+       - PropertyType must be convertible via CastToJS<PropertyType>().
+
+       If the underlying native 'this' object cannot be found (that
+       is, if CastFromJS<T>() fails) then this routine will
+       trigger a JS exception.
+    */
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberToGetter : AccessorGetterType
+    {
+        /** Implements the v8::AccessorGetter() interface. */
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        {
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle self = CastFromJS<T>( info.This() );
+            return ( ! self )
+                ? Toss( StringBuffer() << "Native member property getter '"
+                        << property << "' could not access native 'this' object!" )
+                : CastToJS( (self->*MemVar) );
+        }
+    };
+    
+    /**
+       This is the Setter counterpart of MemberToGetter.
+
+       Requirements:
+
+       - T must be convertible to (T*) via CastFromJS<T>().
+       - PropertyType must be convertible via CastToJS<PropertyType>().
+       - MemVar must be an accessible member of T.
+
+       If the underlying native This object cannot be found then this
+       routine will trigger a JS exception.
+    */
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberToSetter : AccessorSetterType
+    {
+        /** Implements the v8::AccessorSetter() interface. */
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        {
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle self = CastFromJS<T>( info.This() );
+            if( self ) self->*MemVar = CastFromJS<PropertyType>( value );
+            else Toss( StringBuffer() << "Native member property setter '"
+                        << property << "' could not access native 'this'his object!" );
+        }
+    };
+
+    /**
+       An AccessorSetter() implementation which always triggers a JS exception.
+       Can be used to enforce "pedantically read-only" variables. Note that
+       JS does not allow us to assign an AccessorSetter _without_ assigning
+       an AccessorGetter. Also note that there is no AccessorGetterThrow,
+       because a write-only var doesn't make all that much sense (use
+       methods for those use cases).
+    */
+    struct ThrowingSetter : AccessorSetterType
+    {
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        {
+             Toss(StringBuffer() <<
+                  "Native member property setter '"
+                  << property
+                  << "' is configured to throw an exception when modifying "
+                  << "this read-only member!");
+        }
+    };
+
+    /** @deprecated To be replaced by the XyzToGetter/XyzToSetter family of classes.
+    
        This class contains static methods which can be used to bind
        global/class-static/shared native variables to JS space.
 
@@ -21,58 +176,7 @@ namespace cvv8 {
     class PropertyBinder
     {
     public:
-        /**
-           This template can be used as an argument to
-           v8::ObjectTemplate::SetAccessor()'s Getter parameter to
-           generically tie a static variable to a named JS property.
 
-           SharedVar must be pointer to a static variable and must not
-           be 0.
-
-           CastToJS<PropertyType>() must be legal.
-        */
-        template <typename PropertyType, PropertyType const * SharedVar>
-        static v8::Handle<v8::Value> AccessorGetterStaticVar(v8::Local<v8::String> property, const v8::AccessorInfo &info)
-        {
-            return CastToJS<PropertyType>( *SharedVar );
-        }
-        /**
-           The setter counterpart of AccessorGetterStaticVar().
-
-           SharedVar must be pointer to a static variable and must not
-           be 0.
-
-           CastFromJS<PropertyType> must be legal.
-        */
-        template <typename PropertyType, PropertyType * SharedVar>
-        static void AccessorSetterStaticVar(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
-        {
-            *SharedVar = CastFromJS<PropertyType>( value );
-        }
-
-        /**
-           Binds the given static variable to a JS property, such that
-           get/set access will go through
-           AccessorGetterStaticVar<VarType,SharedVar> and
-           AccessorSetterStaticVar<VarType,SharedVar>.
-        */
-        template <typename VarType, VarType * SharedVar>
-        static void BindSharedVar( char const * name,
-                                   v8::Handle<v8::ObjectTemplate> const & prototype,
-                                   v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                   v8::PropertyAttribute attribute = v8::DontDelete
-                         )
-        {
-            if( ! prototype.IsEmpty() )
-            {
-                prototype->SetAccessor( v8::String::New(name),
-                                        AccessorGetterStaticVar<VarType,SharedVar>,
-                                        AccessorSetterStaticVar<VarType,SharedVar>,
-                                        v8::Handle< v8::Value >(),
-                                        settings,
-                                        attribute );
-            }
-        }
 
         /**
            A Setter implementation which always triggers a JS exception.
@@ -85,37 +189,6 @@ namespace cvv8 {
                                   << "' is configured to throw an exception when modifying "
                                   << "this read-only member!");
         }
-
-        /**
-           Binds the given static variable to a JS property, such that
-           read access will go through
-           AccessorGetterStaticVar<VarType,SharedVar> and set access will be
-           ignored (it will not change SharedVar).
-
-           The throwOnSet parameter installs a custom setter which,
-           when triggered, always throws a JS exception. If this value
-           is false, no setter will be installed (and see the notes in
-           MemberPropertyBinder::BindMemVarRO()). If you want
-           v8-specified behaviours, pass false for this value.
-        */
-        template <typename VarType, VarType const * SharedVar>
-        static void BindSharedVarRO( char const * name,
-                                     v8::Handle<v8::ObjectTemplate> const & prototype,
-                                     bool throwOnSet = false,
-                                     v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                     v8::PropertyAttribute attribute = v8::DontDelete )
-        {
-            if( ! prototype.IsEmpty() )
-            {
-                prototype->SetAccessor( v8::String::New(name),
-                                        AccessorGetterStaticVar<VarType,SharedVar>,
-                                        throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
-                                        v8::Handle< v8::Value >(),
-                                        v8::PROHIBITS_OVERWRITING,
-                                        attribute );
-            }
-        }
-
         /**
            Implements the v8::AccessorGetter interface to bind a JS
            member property to a native getter function. This function
@@ -146,32 +219,6 @@ namespace cvv8 {
                                              << property << "' threw an unknown native exception type!");
             }
         }
-
-        /**
-           Binds the templatized getter function to the given JS property of the
-           given prototype object, such that JS-side read access to the property
-           will return the value of that member function.
-
-           See FunctionToAccesorGetter() for the semantics of the Sig type.
-
-           If Getter() throws a native exception it is converted to a JS
-           exception.
-           
-           WEIRD: beware of this odd behaviour:
-
-           @code
-           BindGetterFunction<std::string // WEIRD: if i add () or (void) here,
-                                  // the template doesn't resolve!
-                      getSharedString>("sharedString", myProtoType);
-           @endcode
-
-        */
-        template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static void BindGetterFunction( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-	    prototype->SetAccessor( v8::String::New( propName ),
-                                    FunctionToAccesorGetter<Sig,Getter> );
-	}
 
         
         /**
@@ -219,6 +266,89 @@ namespace cvv8 {
             }
             return;
         }
+#if 0
+        /**
+           Binds the given static variable to a JS property, such that
+           get/set access will go through
+           AccessorGetterStaticVar<VarType,SharedVar> and
+           AccessorSetterStaticVar<VarType,SharedVar>.
+        */
+        template <typename VarType, VarType * SharedVar>
+        static void BindSharedVar( char const * name,
+                                   v8::Handle<v8::ObjectTemplate> const & prototype,
+                                   v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
+                                   v8::PropertyAttribute attribute = v8::DontDelete
+                         )
+        {
+            if( ! prototype.IsEmpty() )
+            {
+                prototype->SetAccessor( v8::String::New(name),
+                                        AccessorGetterStaticVar<VarType,SharedVar>,
+                                        AccessorSetterStaticVar<VarType,SharedVar>,
+                                        v8::Handle< v8::Value >(),
+                                        settings,
+                                        attribute );
+            }
+        }
+        /**
+           Binds the given static variable to a JS property, such that
+           read access will go through
+           AccessorGetterStaticVar<VarType,SharedVar> and set access will be
+           ignored (it will not change SharedVar).
+
+           The throwOnSet parameter installs a custom setter which,
+           when triggered, always throws a JS exception. If this value
+           is false, no setter will be installed (and see the notes in
+           MemberPropertyBinder::BindMemVarRO()). If you want
+           v8-specified behaviours, pass false for this value.
+        */
+        template <typename VarType, VarType const * SharedVar>
+        static void BindSharedVarRO( char const * name,
+                                     v8::Handle<v8::ObjectTemplate> const & prototype,
+                                     bool throwOnSet = false,
+                                     v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
+                                     v8::PropertyAttribute attribute = v8::DontDelete )
+        {
+            if( ! prototype.IsEmpty() )
+            {
+                prototype->SetAccessor( v8::String::New(name),
+                                        AccessorGetterStaticVar<VarType,SharedVar>,
+                                        throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
+                                        v8::Handle< v8::Value >(),
+                                        v8::PROHIBITS_OVERWRITING,
+                                        attribute );
+            }
+        }
+
+
+
+        /**
+           Binds the templatized getter function to the given JS property of the
+           given prototype object, such that JS-side read access to the property
+           will return the value of that member function.
+
+           See FunctionToAccesorGetter() for the semantics of the Sig type.
+
+           If Getter() throws a native exception it is converted to a JS
+           exception.
+           
+           WEIRD: beware of this odd behaviour:
+
+           @code
+           BindGetterFunction<std::string // WEIRD: if i add () or (void) here,
+                                  // the template doesn't resolve!
+                      getSharedString>("sharedString", myProtoType);
+           @endcode
+
+        */
+        template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
+        static void BindGetterFunction( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
+        {
+            prototype->SetAccessor( v8::String::New( propName ),
+                                        FunctionToAccesorGetter<Sig,Getter> );
+        }
+
+
 
         /**
            Binds the given JS property to a pair of non-member
@@ -259,16 +389,18 @@ namespace cvv8 {
                   typename FunctionSignature<SigSet>::FunctionType Setter
             >
         static void BindGetterSetterFunctions( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-            if( ! prototype.IsEmpty() )
-            prototype->SetAccessor( v8::String::New( propName ),
-                                    FunctionToAccesorGetter<SigGet,Getter>,
-                                    FunctionToAccesorSetter<SigSet,Setter> );
-	}
+        {
+                if( ! prototype.IsEmpty() )
+                prototype->SetAccessor( v8::String::New( propName ),
+                                        FunctionToAccesorGetter<SigGet,Getter>,
+                                        FunctionToAccesorSetter<SigSet,Setter> );
+        }
+#endif
        
     };
 
-    /**
+    /** @deprecated To be replaced by the XyzToGetter/XyzToSetter family of classes.
+
        A helper class for binding JS properties to native code, in particular
        for when JS objects are bound to native T objects.
 

@@ -57,7 +57,7 @@ all: $(invo_gen_h)
 
 ConvertDemo.o: ConvertDemo.cpp
 SHELL.DIR := addons/shell-skel
-ifeq (0,1)
+ifeq (1,1)
   demo.BIN.OBJECTS := demo.o ConvertDemo.o
   demo.BIN.LDFLAGS := $(LDFLAGS_V8)
   $(eval $(call ShakeNMake.EVAL.RULES.BIN,demo))
