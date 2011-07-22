@@ -127,7 +127,7 @@ int bogo_callback2( v8::Arguments const & argv )
     return 1;
 }
 
-char const * bogo_callback_fsf( v8::Handle<v8::Function> const & f1,
+std::string bogo_callback_fsf( v8::Handle<v8::Function> const & f1,
                                 char const * str,
                                 v8::Handle<v8::Function> const & f2 )
 {
@@ -204,7 +204,7 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
             ArgAt_IsFunction<2>
         ))> Is_Func_String_Func;
     typedef PredicatedInCa< Is_Func_String_Func,
-            FunctionToInCa< char const * (
+            FunctionToInCa< std::string (
                                 v8::Handle<v8::Function> const &,
                                 char const *,
                                 v8::Handle<v8::Function> const &),

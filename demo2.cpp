@@ -370,14 +370,13 @@ void SetupCvv8DemoBindings( v8::Handle<v8::Object> const & dest )
 
     // Bind some non-function properties...
 #define JSTR v8::String::New
-    typedef MemberPropertyBinder<T> PB;
     v8::Handle<v8::ObjectTemplate> const & proto( cc.Prototype() );
     proto->SetAccessor( JSTR("aDouble"),
-                        PB::ConstMethodToAccessorGetter< double (), &T::getDouble>,
-                        PB::AccessorSetterThrow );
+                        ConstMethodToGetter< T, double (), &T::getDouble>::Accessor,
+                        ThrowingSetter::Accessor );
     proto->SetAccessor( JSTR("anInt"),
-                        PB::MemberToAccessorGetter< int, &T::anInt>,
-                        PB::MemberToAccessorSetter< int, &T::anInt> );
+                        MemberToGetter<T, int, &T::anInt>::Accessor,
+                        MemberToSetter<T, int, &T::anInt>::Accessor );
 #undef JSTR
 
     cc.AddClassTo( TypeName<T>::Value, dest ) /* this or Seal() must be the last op performed */;
