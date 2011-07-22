@@ -47,3 +47,12 @@ $(invo_gen_h): $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 	} > $@;
 gen: $(invo_gen_h)
 all: $(invo_gen_h)
+
+.PHONY: show-message
+show-message:
+	@echo 'This library is header-only and requires no compiling' \
+		'(just generation of some code).'; \
+		echo "To build the example/demo code:"; \
+		echo "    cd examples; make"
+
+all: show-message
