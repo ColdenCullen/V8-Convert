@@ -464,7 +464,9 @@ namespace cvv8 {
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
             typedef BoundNative T;
+            //typedef ClassAccessor<T> CA;
             proto->SetAccessor( JSTR("self"),
+                                //CA::MethGet<T * (), &T::self>::Accessor,
                                 MethodToGetter<T, T * (), &T::self>::Accessor,
                                 ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("selfRef"),

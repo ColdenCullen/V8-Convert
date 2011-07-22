@@ -113,7 +113,7 @@ namespace cvv8 {
                 : CastToJS( (self->*MemVar) );
         }
     };
-    
+
     /**
        This is the Setter counterpart of MemberToGetter.
 
@@ -248,7 +248,6 @@ namespace cvv8 {
     };
 
 
-
     /**
        Implements the v8::AccessorGetter interface to bind a JS
        member property to a native getter function. This function
@@ -373,6 +372,7 @@ namespace cvv8 {
             return;
         }
     };
+
     /**
         Const-method equivalent of MethodToSetter.
     
@@ -411,6 +411,50 @@ namespace cvv8 {
             return;
         }
     };
+
+#if 0 /* i'm still undecided on the naming conventions here... */
+    /**
+        ClassAccessor provides a slight simplification for cases 
+        where several different members/methods of a given bound 
+        class (T) need to be bound to v8. It wraps the following 
+        classes so that clients can use them one fewer template 
+        parameters:
+        
+        MemberToGetter, MemberToSetter, MethodToGetter, MethodToSetter, 
+        ConstMethodToGetter, ConstMethodToSetter
+        
+        Example:
+        
+        @code
+        typedef ClassAccessor<MyType> CA;
+        v8::AccessorGetter get;
+        
+        get = MemberToGetter<MyType, int, &MyType::anInt>::Accessor
+        // is equivalent to:
+        get = CA::MemGet<int, &MyType::anInt>::Accessor
+        @endcode
+        
+        Its only real benefit is saving a bit of typing when several T
+        member/method bindings are made and T's real type has a name
+        longer than 'T'.
+    */
+    template <typename T>
+    struct ClassAccessor
+    {
+        template <typename PropertyType, PropertyType T::*MemVar>
+        struct MemGet : MemberToGetter<T, PropertyType, MemVar> {};
+        template <typename PropertyType, PropertyType T::*MemVar>
+        struct MemSet : MemberToSetter<T, PropertyType, MemVar> {};
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
+        struct MethGet : MethodToGetter<T,Sig,Getter> {};
+        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
+        struct CMethGet : ConstMethodToGetter<T,Sig,Getter> {};
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
+        struct MethSet : MethodToSetter<T,Sig,Setter> {};
+        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Setter>
+        struct CMethSet : ConstMethodToSetter<T,Sig,Setter> {};
+    };
+#endif /* ClassAccessor */
 
 } // namespaces
 /** LICENSE
