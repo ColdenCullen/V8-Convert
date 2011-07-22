@@ -412,7 +412,57 @@ namespace cvv8 {
         }
     };
 
-#if 0 /* i'm still undecided on the naming conventions here... */
+
+    /**
+        AccessAdder is a convenience class for use when applying several
+        (or more) accessor bindings to a prototype object.
+            
+        Example:
+        
+        @code
+        AccessorAdder acc(myPrototype);
+        acc("foo", MemberToGetter<MyType,int,&MyType::anInt>(),
+                   MemberToSetter<MyType,int,&MyType::anInt>())
+           ("bar", ConstMethodToGetter<MyType,int(),&MyType:getInt>(),
+                   MethodToSetter<MyType,void(int),&MyType:setInt>())
+           ...
+           ;
+        @endcode
+    */
+    class AccessorAdder
+    {
+    private:
+        v8::Handle<v8::ObjectTemplate> const & proto;
+    public:
+        /**
+            Initializes this object so that calls to operator() will
+            apply to p. p must out-live this object. More specifically,
+            operator() must not be called after p has been destroyed.
+        */
+        explicit AccessorAdder( v8::Handle<v8::ObjectTemplate> const & p )
+            : proto(p)
+        {}
+
+        /**
+            Adds GetterT::Accessor and SetterT::Accessor as accessors
+            for the given property in the prototype object.
+            
+            GetterT must be-a AccessorGetterType. SetterT must be-a 
+            AccessorSetterType.
+            
+            Returns this object, for chaining calls.
+        */
+        template <typename GetterT, typename SetterT>
+        AccessorAdder const & operator()( char const * name,
+                                          GetterT const &,
+                                          SetterT const & ) const
+        {
+            proto->SetAccessor(v8::String::New(name), GetterT::Accessor, SetterT::Accessor);
+            return *this;
+        }
+    };
+
+#if 0 /* i'm still undecided on the in-class naming conventions here... */
     /**
         ClassAccessor provides a slight simplification for cases 
         where several different members/methods of a given bound 

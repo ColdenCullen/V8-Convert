@@ -465,6 +465,23 @@ namespace cvv8 {
             // Bind some JS properties to native properties:
             typedef BoundNative T;
             //typedef ClassAccessor<T> CA;
+
+#if 1 // this is functionally equivalent to the following #else block:
+            AccessorAdder acc(proto);
+            acc( "self",
+                    MethodToGetter<T, T * (), &T::self>(),
+                    ThrowingSetter() )
+                ( "selfRef",
+                    MethodToGetter<T, T & (), &T::selfRef>(),
+                    ThrowingSetter() )
+                ( "selfConst",
+                    ConstMethodToGetter<T, T const * (), &T::self>(),
+                    ThrowingSetter() )
+                ( "selfConstRef",
+                    ConstMethodToGetter<T, T const & (), &T::selfRefConst>(),
+                    ThrowingSetter() )
+            ;
+#else
             proto->SetAccessor( JSTR("self"),
                                 //CA::MethGet<T * (), &T::self>::Accessor,
                                 MethodToGetter<T, T * (), &T::self>::Accessor,
@@ -478,6 +495,8 @@ namespace cvv8 {
             proto->SetAccessor( JSTR("selfConstRef"),
                                 ConstMethodToGetter<T, T const & (), &T::selfRefConst>::Accessor,
                                 ThrowingSetter::Accessor );
+#endif
+
 
             proto->SetAccessor( JSTR("publicIntRW"),
                                 MemberToGetter<T,int,&T::publicInt>::Accessor,
