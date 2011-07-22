@@ -442,7 +442,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         cw.AddClassTo( BA_JS_CLASS_NAME, dest );
         return;
     }
-    typedef cv::MemberPropertyBinder<N> SPB;
+
     cw
         ( "destroy", CW::DestroyObjectCallback )
         ( "append", cv::MethodToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
@@ -456,15 +456,15 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     proto->SetAccessor( JSTR("length"),
-                        SPB::ConstMethodToAccessorGetter<uint32_t(),&N::length>,
-                        SPB::MethodToAccessorSetter<uint32_t (uint32_t), &N::length> );
+                        ConstMethodToGetter<N,uint32_t(),&N::length>::Accessor,
+                        MethodToSetter<N, uint32_t (uint32_t), &N::length>::Accessor );
     proto->SetAccessor( JSTR("isGzipped"),
-                        SPB::ConstMethodToAccessorGetter<bool(),&N::isGzipped>,
-                        SPB::AccessorSetterThrow );
+                        ConstMethodToGetter<N, bool(),&N::isGzipped>::Accessor,
+                        ThrowingSetter::Accessor );
 #if 0 // don't do this b/c the cost of the conversion (on each access) is deceptively high (O(N) time and memory, N=bytearray length)
     proto->SetAccessor( JSTR("stringValue"),
-                        SPB::ConstMethodToAccessorGetter<std::string(),&N::stringValue>,
-                        SPB::AccessorSetterThrow );
+                        ConstMethodToGetter<N, std::string(),&N::stringValue>::Accessor,
+                        ThrowingSetter::Accessor );
 #endif
     v8::Handle<v8::FunctionTemplate> ctorTmpl = cw.CtorTemplate();
     ctorTmpl->InstanceTemplate()->SetIndexedPropertyHandler( JSByteArray::indexedPropertyGetter,

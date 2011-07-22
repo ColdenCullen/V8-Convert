@@ -1146,23 +1146,22 @@ namespace cvv8 {
                 ("paramName", CATCHER<cv::MethodToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
-            typedef cv::MemberPropertyBinder<ST> SPB;
-            v8::AccessorSetter const throwOnSet = SPB::AccessorSetterThrow;
+            v8::AccessorSetter const throwOnSet = ThrowingSetter::Accessor;
             //SPB::BindGetterMethod<std::string (),&ST::error_text>( "errorText", stProto );
             //SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
             stProto->SetAccessor(JSTR("errorCode"),
-                                 SPB::MethodToAccessorGetter<int (),&ST::error_code>,
+                                 MethodToGetter<ST, int (),&ST::error_code>::Accessor,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("errorText"),
-                                 SPB::MethodToAccessorGetter<std::string (),&ST::error_text>,
+                                 MethodToGetter<ST, std::string (),&ST::error_text>::Accessor,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnCount"),
-                                 SPB::MethodToAccessorGetter<uint16_t (),&ST::col_count>,
+                                 MethodToGetter<ST, uint16_t (),&ST::col_count>::Accessor,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("paramCount"),
-                                 SPB::MethodToAccessorGetter<uint16_t (),&ST::param_count>,
+                                 MethodToGetter<ST, uint16_t (),&ST::param_count>::Accessor,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
             // do not bind columnTypes for the time being because
@@ -1188,18 +1187,14 @@ namespace cvv8 {
                 ;
 #undef CATCHER
             
-            typedef cv::MemberPropertyBinder<DRV> PB;
-            //PB::BindGetterConstMethod<char const * (),&DRV::driver_name>( "driverName", dProto );
-            //PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
-            //PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
             dProto->SetAccessor(JSTR("driverName"),
-                                PB::ConstMethodToAccessorGetter< char const * (),&DRV::driver_name >,
+                                cv::ConstMethodToGetter<DRV, char const * (),&DRV::driver_name >::Accessor,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorText"),
-                                PB::MethodToAccessorGetter< std::string (),&DRV::error_text >,
+                                cv::MethodToGetter<DRV, std::string (),&DRV::error_text >::Accessor,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorCode"),
-                                PB::MethodToAccessorGetter< int (),&DRV::error_code >,
+                                cv::MethodToGetter<DRV, int (),&DRV::error_code >::Accessor,
                                 throwOnSet);
 
             ////////////////////////////////////////////////////////////////////////
