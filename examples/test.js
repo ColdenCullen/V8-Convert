@@ -76,6 +76,10 @@ function test1()
     asserteq( f.sharedString2, f.staticStringRO );
     assertThrows( function(){ f.staticStringRO = 'bye';} );
 
+    asserteq( typeof f.nsInt, 'number', 'f.nsInt is-a number.');
+    f.nsInt = 7;
+    asserteq( 8, ++f.nsInt );
+
     asserteq(42, f.answer);
     assert( /BoundNative/.test(f.toString()), 'toString() seems to work: '+f);
 

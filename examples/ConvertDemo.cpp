@@ -1,6 +1,7 @@
 #include "ConvertDemo.hpp"
 #include "cvv8/ClassCreator.hpp"
 #include "cvv8/properties.hpp"
+#include <cerrno>
 
 #define TRY_ARGS_CODE 1
 #if TRY_ARGS_CODE
@@ -323,6 +324,7 @@ void test_using_locker()
 namespace cvv8 {
 
 
+    int namespaceScopeInt = 3;
 
     template <>
     struct ClassCreator_SetupBindings<BoundNative>
@@ -503,6 +505,16 @@ namespace cvv8 {
             proto->SetAccessor( JSTR("theIntNC"),
                                 MethodToGetter<T, int (), &T::getIntNonConst>::Accessor,
                                 MethodToSetter<T, void (int), &T::setInt>::Accessor
+                                );
+#if 0 /* why? "template argument 2 is invalid" */
+            proto->SetAccessor( JSTR("errno"),
+                                VarToGetter<int,&std::errno>::Accessor,
+                                VarToSetter<int,&std::errno>::Accessor
+                                );
+#endif // but this is legal:
+            proto->SetAccessor( JSTR("nsInt"),
+                                VarToGetter<int,&namespaceScopeInt>::Accessor,
+                                VarToSetter<int,&namespaceScopeInt>::Accessor
                                 );
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
             ctor->Set(JSTR("testLocker"),
