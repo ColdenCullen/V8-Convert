@@ -1624,13 +1624,14 @@ namespace cvv8 {
 
 
     /**
+        Requi
         "Lexically casts" msg to a string and throws a new JS-side
         Error. ValT may be any type which can be sent to StringBuffer's
         ostream operator.
         
-        The return value is the result of calling v8::ThrowException()
-        (what _exactly_ that is, i'm not sure - Undefined or an empty
-        handle?).
+        The return value is the result of calling 
+        v8::ThrowException() (Undefined except in the face of a 
+        serious internal error like OOM, i'm told by the v8 devs).
     */
     template <typename ValT>
     static inline v8::Handle<v8::Value> Toss( ValT const & msg )

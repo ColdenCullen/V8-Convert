@@ -461,24 +461,18 @@ namespace cvv8 {
                        );
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
-            typedef cv::MemberPropertyBinder<BoundNative> PB;
-#if 0 // refactoring these...
-            PB::BindMemVar<int,&BoundNative::publicInt>( "publicIntRW", proto );
-            PB::BindMemVarRO<int,&BoundNative::publicInt>( "publicIntRO", proto, true );
-#endif
             typedef BoundNative T;
-            // More generically, accessors can be bound using this approach:
             proto->SetAccessor( JSTR("self"),
-                                PB::MethodToAccessorGetter< T * (), &T::self>,
+                                MethodToGetter<T, T * (), &T::self>::Get,
                                 ThrowingSetter::Set );
             proto->SetAccessor( JSTR("selfRef"),
-                                PB::MethodToAccessorGetter< T & (), &T::selfRef>,
+                                MethodToGetter<T, T & (), &T::selfRef>::Get,
                                 ThrowingSetter::Set );
             proto->SetAccessor( JSTR("selfConst"),
-                                PB::ConstMethodToAccessorGetter< T const * (), &T::self>,
+                                ConstMethodToGetter<T, T const * (), &T::self>::Get,
                                 ThrowingSetter::Set );
             proto->SetAccessor( JSTR("selfConstRef"),
-                                PB::ConstMethodToAccessorGetter< T const & (), &T::selfRefConst>,
+                                ConstMethodToGetter<T, T const & (), &T::selfRefConst>::Get,
                                 ThrowingSetter::Set );
 
             proto->SetAccessor( JSTR("publicIntRW"),
@@ -491,31 +485,25 @@ namespace cvv8 {
                                 VarToGetter<int,&T::publicStaticInt>::Get,
                                 VarToSetter<int,&T::publicStaticInt>::Set );
             proto->SetAccessor( JSTR("publicStaticIntRO"),
-                                VarToGetter<int,&T::publicStaticInt>::Get,
-                                ThrowingSetter::Set );
+                                VarToGetter<int,&T::publicStaticInt>::Get );
             proto->SetAccessor( JSTR("staticString"),
                                 VarToGetter<std::string,&sharedString>::Get,
                                 VarToSetter<std::string,&sharedString>::Set );
             proto->SetAccessor( JSTR("staticStringRO"),
                                 VarToGetter<std::string,&sharedString>::Get,
                                 ThrowingSetter::Set );
-            
-#if 0
-#if 0
-            PB::BindGetterFunction<std::string (), getSharedString>("sharedString2", proto);
-#else
-            PB::BindGetterSetterFunctions<std::string (),
-                getSharedString,
-                void (std::string const &),
-                setSharedString>("sharedString2", proto);
-#endif
-            PB::BindGetterSetterMethods<int (), &BoundNative::getInt,
-                void (int), &BoundNative::setInt
-                >("theInt", proto);
-            PB::BindNonConstGetterSetterMethods<int (), &BoundNative::getIntNonConst,
-                void (int), &BoundNative::setInt
-                >("theIntNC", proto);
-#endif
+            proto->SetAccessor( JSTR("sharedString2"),
+                                FunctionToGetter<std::string (), getSharedString>::Get,
+                                FunctionToSetter<void (std::string const &), setSharedString>::Set
+                                );
+            proto->SetAccessor( JSTR("theInt"),
+                                ConstMethodToGetter<T, int (), &T::getInt>::Get,
+                                MethodToSetter<T, void (int), &T::setInt>::Set
+                                );
+            proto->SetAccessor( JSTR("theIntNC"),
+                                MethodToGetter<T, int (), &T::getIntNonConst>::Get,
+                                MethodToSetter<T, void (int), &T::setInt>::Set
+                                );
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
             ctor->Set(JSTR("testLocker"),
                 cv::CastToJS(cv::FunctionToInCa<void (), test_using_locker<true>, true >::Call)
