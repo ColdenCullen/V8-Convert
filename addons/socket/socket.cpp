@@ -1085,13 +1085,13 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
         // is this useful? .Set( "sendTo", cv::JSSocket::sendTo )
         ( socket_strings.fieldPeer, false )
         ;
-    v8::AccessorSetter const throwOnSet = ThrowingSetter::Accessor;
+    v8::AccessorSetter const throwOnSet = ThrowingSetter::Set;
     v8::Handle<v8::ObjectTemplate> const & proto( cc.Prototype() );
-    proto->SetAccessor( JSTR("family"), cv::MemberToGetter<N,int,&N::family>::Accessor, throwOnSet );
-    proto->SetAccessor( JSTR("type"), cv::MemberToGetter<N,int,&N::type>::Accessor, throwOnSet );
-    proto->SetAccessor( JSTR("timeoutReached"), cv::MemberToGetter<N,bool,&N::hitTimeout>::Accessor, throwOnSet );
-    proto->SetAccessor( JSTR("peerInfo"), cv::MethodToGetter<N,ValH (),&N::peerInfo>::Accessor, throwOnSet );
-    proto->SetAccessor( JSTR("hostname"), cv::FunctionToGetter<std::string (),&N::hostname>::Accessor, throwOnSet );
+    proto->SetAccessor( JSTR("family"), cv::MemberToGetter<N,int,&N::family>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("type"), cv::MemberToGetter<N,int,&N::type>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("timeoutReached"), cv::MemberToGetter<N,bool,&N::hitTimeout>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("peerInfo"), cv::MethodToGetter<N,ValH (),&N::peerInfo>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("hostname"), cv::FunctionToGetter<std::string (),&N::hostname>::Get, throwOnSet );
 
     v8::Handle<v8::Function> ctor = cc.CtorFunction();
     JSByteArray::SetupBindings( ctor );

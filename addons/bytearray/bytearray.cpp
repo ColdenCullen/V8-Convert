@@ -455,16 +455,20 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         ( "gunzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
-    proto->SetAccessor( JSTR("length"),
-                        ConstMethodToGetter<N,uint32_t(),&N::length>::Accessor,
-                        MethodToSetter<N, uint32_t (uint32_t), &N::length>::Accessor );
-    proto->SetAccessor( JSTR("isGzipped"),
-                        ConstMethodToGetter<N, bool(),&N::isGzipped>::Accessor,
-                        ThrowingSetter::Accessor );
+    AccessorAdder acc(proto);
+    acc( "length",
+        ConstMethodToGetter<N,uint32_t(),&N::length>(),
+        MethodToSetter<N, uint32_t (uint32_t), &N::length>()
+        )
+        ( "isGzipped",
+            ConstMethodToGetter<N, bool(),&N::isGzipped>(),
+            ThrowingSetter()
+        )
+        ;
 #if 0 // don't do this b/c the cost of the conversion (on each access) is deceptively high (O(N) time and memory, N=bytearray length)
     proto->SetAccessor( JSTR("stringValue"),
-                        ConstMethodToGetter<N, std::string(),&N::stringValue>::Accessor,
-                        ThrowingSetter::Accessor );
+                        ConstMethodToGetter<N, std::string(),&N::stringValue>::Get,
+                        ThrowingSetter::Set );
 #endif
     v8::Handle<v8::FunctionTemplate> ctorTmpl = cw.CtorTemplate();
     ctorTmpl->InstanceTemplate()->SetIndexedPropertyHandler( JSByteArray::indexedPropertyGetter,

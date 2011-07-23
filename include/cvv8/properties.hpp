@@ -20,7 +20,7 @@ namespace cvv8 {
         /**
             The v8::AccessorGetter() interface.
         */
-        static v8::Handle<v8::Value> Accessor(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info);
     };
 
     /**
@@ -36,7 +36,7 @@ namespace cvv8 {
     struct AccessorSetterType
     {
         /** The v8::AccessorSetter() interface. */
-        static void Accessor(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
     };
 
     /**
@@ -52,7 +52,7 @@ namespace cvv8 {
     struct VarToGetter : AccessorGetterType
     {
         /** Implements the v8::AccessorGetter() interface. */
-        static v8::Handle<v8::Value> Accessor(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             return CastToJS( *SharedVar );
         }
@@ -76,12 +76,20 @@ namespace cvv8 {
     struct VarToSetter : AccessorSetterType
     {
         /** Implements the v8::AccessorSetter() interface. */
-        static void Accessor(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             *SharedVar = CastFromJS<PropertyType>( value );
         }
     };
 
+    /**
+        A proxy for both VarToGetter and VarToSetter, providing both
+        Get() and Set() functions.
+    */
+    template <typename PropertyType, PropertyType * const SharedVar>
+    struct VarToAccessors : VarToGetter<PropertyType,SharedVar>,
+                            VarToSetter<PropertyType,SharedVar>
+    {};
 
     /**
        This template creates a v8::AcessorGetter which binds directly to
@@ -101,7 +109,7 @@ namespace cvv8 {
     struct MemberToGetter : AccessorGetterType
     {
         /** Implements the v8::AccessorGetter() interface. */
-        static v8::Handle<v8::Value> Accessor(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -129,7 +137,7 @@ namespace cvv8 {
     struct MemberToSetter : AccessorSetterType
     {
         /** Implements the v8::AccessorSetter() interface. */
-        static void Accessor(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -141,6 +149,17 @@ namespace cvv8 {
     };
 
     /**
+        A proxy for both MemberToGetter and MemberToSetter, providing both
+        Get() and Set() functions.
+        
+        This should be called MembersToAccessors (plural Members).
+    */
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberToAccessors : MemberToGetter<T,PropertyType,MemVar>,
+                               MemberToSetter<T,PropertyType,MemVar>
+    {};
+    
+    /**
        An AccessorSetter() implementation which always triggers a JS exception.
        Can be used to enforce "pedantically read-only" variables. Note that
        JS does not allow us to assign an AccessorSetter _without_ assigning
@@ -150,7 +169,7 @@ namespace cvv8 {
     */
     struct ThrowingSetter : AccessorSetterType
     {
-        static void Accessor(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
              Toss(StringBuffer() <<
                   "Native member property setter '"
@@ -176,7 +195,7 @@ namespace cvv8 {
     template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
     struct FunctionToGetter : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Accessor( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             return CastToJS( (*Getter)() );
         }
@@ -209,7 +228,7 @@ namespace cvv8 {
     template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
     struct FunctionToSetter : AccessorSetterType
     {
-        static void Accessor( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void Set( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             typedef FunctionSignature<Sig> FT;
             (*Func)( CastFromJS<typename sl::At<0,FT>::Type>( value ) );
@@ -232,7 +251,7 @@ namespace cvv8 {
     template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
     struct MethodToGetter : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Accessor( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -250,7 +269,7 @@ namespace cvv8 {
     template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
     struct ConstMethodToGetter : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Accessor( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -286,7 +305,7 @@ namespace cvv8 {
     template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
     struct MethodToSetter : AccessorSetterType
     {
-        static void Accessor(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -315,7 +334,7 @@ namespace cvv8 {
     template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Setter>
     struct ConstMethodToSetter : AccessorSetterType
     {
-        static void Accessor(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -346,11 +365,11 @@ namespace cvv8 {
     >
     struct SetterCatcher : AccessorSetterType
     {
-        static void Accessor(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             try
             {
-                SetterT::Accessor( property, value, info );
+                SetterT::Set( property, value, info );
             }
             catch( ExceptionT const & e2 )
             {
@@ -401,11 +420,11 @@ namespace cvv8 {
     >
     struct GetterCatcher : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Accessor( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             try
             {
-                return GetterT::Accessor( property, info );
+                return GetterT::Get( property, info );
             }
             catch( ExceptionT const & e2 )
             {
@@ -475,12 +494,12 @@ namespace cvv8 {
         {}
 
         /**
-            Adds GetterT::Accessor and SetterT::Accessor as accessors
-            for the given property in the prototype object.
+            Adds GetterT::Get and SetterT::Set as accessors for the 
+            given property in the prototype object.
             
             GetterT must be-a AccessorGetterType. SetterT must be-a 
             AccessorSetterType. Note that their values are not used, 
-            but GetterT::Accessor and SetterT::Accessor are used 
+            but GetterT::Get and SetterT::Set are used 
             directly. The objects are only passed in to keep the 
             client from having to specify them as template 
             parameters (which is clumsy for operator()), as their 
@@ -499,7 +518,7 @@ namespace cvv8 {
                                           v8::AccessControl settings=v8::DEFAULT,
                                           v8::PropertyAttribute attribute=v8::None) const
         {
-            proto->SetAccessor(v8::String::New(name), GetterT::Accessor, SetterT::Accessor, data, settings, attribute);
+            proto->SetAccessor(v8::String::New(name), GetterT::Get, SetterT::Set, data, settings, attribute);
             return *this;
         }
 
@@ -514,7 +533,7 @@ namespace cvv8 {
                                       v8::AccessControl settings=v8::DEFAULT,
                                       v8::PropertyAttribute attribute=v8::None) const
         {
-            proto->SetAccessor(v8::String::New(name), GetterT::Accessor, NULL, data, settings, attribute);
+            proto->SetAccessor(v8::String::New(name), GetterT::Get, NULL, data, settings, attribute);
             return *this;
         }
     };
@@ -536,9 +555,9 @@ namespace cvv8 {
         typedef ClassAccessor<MyType> CA;
         v8::AccessorGetter get;
         
-        get = MemberToGetter<MyType, int, &MyType::anInt>::Accessor
+        get = MemberToGetter<MyType, int, &MyType::anInt>::Get
         // is equivalent to:
-        get = CA::MemGet<int, &MyType::anInt>::Accessor
+        get = CA::MemGet<int, &MyType::anInt>::Set
         @endcode
         
         Its only real benefit is saving a bit of typing when several T

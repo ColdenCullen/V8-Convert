@@ -1146,22 +1146,22 @@ namespace cvv8 {
                 ("paramName", CATCHER<cv::MethodToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
-            v8::AccessorSetter const throwOnSet = ThrowingSetter::Accessor;
+            v8::AccessorSetter const throwOnSet = ThrowingSetter::Set;
             //SPB::BindGetterMethod<std::string (),&ST::error_text>( "errorText", stProto );
             //SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
             stProto->SetAccessor(JSTR("errorCode"),
-                                 MethodToGetter<ST, int (),&ST::error_code>::Accessor,
+                                 MethodToGetter<ST, int (),&ST::error_code>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("errorText"),
-                                 MethodToGetter<ST, std::string (),&ST::error_text>::Accessor,
+                                 MethodToGetter<ST, std::string (),&ST::error_text>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnCount"),
-                                 MethodToGetter<ST, uint16_t (),&ST::col_count>::Accessor,
+                                 MethodToGetter<ST, uint16_t (),&ST::col_count>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("paramCount"),
-                                 MethodToGetter<ST, uint16_t (),&ST::param_count>::Accessor,
+                                 MethodToGetter<ST, uint16_t (),&ST::param_count>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
             // do not bind columnTypes for the time being because
@@ -1188,13 +1188,13 @@ namespace cvv8 {
 #undef CATCHER
             
             dProto->SetAccessor(JSTR("driverName"),
-                                cv::ConstMethodToGetter<DRV, char const * (),&DRV::driver_name >::Accessor,
+                                cv::ConstMethodToGetter<DRV, char const * (),&DRV::driver_name >::Get,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorText"),
-                                cv::MethodToGetter<DRV, std::string (),&DRV::error_text >::Accessor,
+                                cv::MethodToGetter<DRV, std::string (),&DRV::error_text >::Get,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorCode"),
-                                cv::MethodToGetter<DRV, int (),&DRV::error_code >::Accessor,
+                                cv::MethodToGetter<DRV, int (),&DRV::error_code >::Get,
                                 throwOnSet);
 
             ////////////////////////////////////////////////////////////////////////
