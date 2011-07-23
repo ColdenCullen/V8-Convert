@@ -219,6 +219,14 @@ function testMyType() {
     print("If you got this far, the ctor overloader worked.");
 }
 
+function testFork() {
+    print("About to fork()...");
+    assertThrows(function(){fork(1);},'fork() requires a Function argument.');
+    fork(function(){
+        print("This is a fork()'d process.");
+    });
+}
+
 if(0) {
     /**
        Interesting: if we have a native handle in the global object
@@ -256,4 +264,6 @@ if(0) {
     print( JSON.stringify(getCallLocation()) );
     print( JSON.stringify(getCallLocation()) );
 }
+if( 'fork' in this ) testFork();
+
 print("Done!");
