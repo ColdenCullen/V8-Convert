@@ -499,9 +499,6 @@ namespace cvv8 {
             proto->SetAccessor( JSTR("throwingProperty"),
                                 GetterCatcher_std< ConstMethodToGetter<T,int (),&T::throwingGetter> >::Accessor,
                                 SetterCatcher_std< MethodToSetter<T,void (int),&T::throwingSetter> >::Accessor );
-            proto->SetAccessor( JSTR("publicIntRO"),
-                                MemberToGetter<T,int,&T::publicInt>::Accessor,
-                                ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("publicIntRW"),
                                 MemberToGetter<T,int,&T::publicInt>::Accessor,
                                 MemberToSetter<T,int,&T::publicInt>::Accessor );
