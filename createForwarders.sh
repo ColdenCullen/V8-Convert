@@ -132,7 +132,6 @@ EOF
 # Create MethodSignature<> and friends...
 function makeMethodSignature()
 {
-    #return
     mycat <<EOF
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T, RV (${aTParam}) > : Signature< RV (T::*)(${aTParam}) >

@@ -33,7 +33,7 @@ template <typename RV, typename A1>
 struct Signature< RV (A1) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1);
     typedef A1 Head;
@@ -59,7 +59,7 @@ struct Signature< RV (T::*)(A1) const > : Signature<RV (A1)>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 2 arg(s).
@@ -67,7 +67,7 @@ template <typename RV, typename A1, typename A2>
 struct Signature< RV (A1, A2) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2);
     typedef A1 Head;
@@ -93,7 +93,7 @@ struct Signature< RV (T::*)(A1, A2) const > : Signature<RV (A1, A2)>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 3 arg(s).
@@ -101,7 +101,7 @@ template <typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (A1, A2, A3) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3);
     typedef A1 Head;
@@ -127,7 +127,7 @@ struct Signature< RV (T::*)(A1, A2, A3) const > : Signature<RV (A1, A2, A3)>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 4 arg(s).
@@ -135,7 +135,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (A1, A2, A3, A4) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4);
     typedef A1 Head;
@@ -161,7 +161,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4) const > : Signature<RV (A1, A2, A3, 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 5 arg(s).
@@ -169,7 +169,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5);
     typedef A1 Head;
@@ -195,7 +195,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5) const > : Signature<RV (A1, A2, 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 6 arg(s).
@@ -203,7 +203,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6);
     typedef A1 Head;
@@ -229,7 +229,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) const > : Signature<RV (A1, 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 7 arg(s).
@@ -237,7 +237,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7);
     typedef A1 Head;
@@ -263,7 +263,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) const > : Signature<RV (
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 8 arg(s).
@@ -271,7 +271,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8);
     typedef A1 Head;
@@ -297,7 +297,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) const > : Signature<
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 9 arg(s).
@@ -305,7 +305,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     typedef A1 Head;
@@ -331,7 +331,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const > : Signat
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 10 arg(s).
@@ -339,7 +339,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     typedef A1 Head;
@@ -365,7 +365,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : S
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 11 arg(s).
@@ -373,7 +373,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
     typedef A1 Head;
@@ -399,7 +399,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 12 arg(s).
@@ -407,7 +407,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
     typedef A1 Head;
@@ -433,7 +433,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) c
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 13 arg(s).
@@ -441,7 +441,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13);
     typedef A1 Head;
@@ -467,7 +467,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 14 arg(s).
@@ -475,7 +475,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14);
     typedef A1 Head;
@@ -501,7 +501,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 //! Specialization for 15 arg(s).
@@ -509,7 +509,7 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) >
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
+    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15);
     typedef A1 Head;
@@ -535,7 +535,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const;
-    static const bool IsConst = true;
+    //static const bool IsConst = true;
 };
 
 template <typename T, typename RV,  typename A0 >

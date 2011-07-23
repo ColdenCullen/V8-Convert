@@ -380,14 +380,14 @@ namespace cvv8 {
                 using cv::tmp::Assertion;
                 Assertion<true> ass;
 #define ASS ass = Assertion
-                ASS<BNPutsC::IsConst>();
-                ASS<BNPutsC2::IsConst>();
-                ASS<!BNPutsC3::IsConst>();
+                ASS<sl::IsConstMethod<BNPutsC>::Value>();
+                ASS<sl::IsConstMethod<BNPutsC2>::Value>();
+                ASS<!sl::IsConstMethod<BNPutsC3>::Value>();
 
                 typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
                 ASS< 1 == sl::Length<BNPutsC>::Value >();
                 ASS< 1 == sl::Length<BNPuts>::Value >();
-                ASS< !BNPuts::IsConst >();
+                ASS< !sl::IsConstMethod<BNPuts>::Value >();
                 ASS< tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value >();
                 ASS< 0 == sl::Index< char const *, BNPuts >::Value >();
 #undef ASS
@@ -679,13 +679,13 @@ namespace { // testing ground for some compile-time assertions...
         typedef int (CFT::*X2)(int,int) const;
         ASS<( 2 == (sl::Arity< cv::Signature<X2> >::Value) )>();
 
-        ASS<( !(cv::Signature< M1 >::IsConst) )>();
-        ASS<( (cv::Signature< M2 >::IsConst) )>();
+        ASS<( !cv::sl::IsConstMethod<cv::Signature< M1 > >::Value )>();
+        ASS<( cv::sl::IsConstMethod<cv::Signature< M2 > >::Value )>();
         ASS<( 2 == (sl::Arity< cv::Signature< M2 > >::Value) )>();
-        ASS<( !(cv::Signature< int (int) >::IsConst) )>();
+        ASS<( !cv::sl::IsConstMethod<cv::Signature< int (int) > >::Value )>();
         ASS<( (cv::Signature< int (CFT::*)() const >::IsConst) )>();
-        ASS<( (cv::Signature<X2>::IsConst) )>();
-        ASS<( !(cv::Signature<int (int)>::IsConst) )>();
+        ASS<( cv::sl::IsConstMethod<cv::Signature<X2> >::Value )>();
+        ASS<( !cv::sl::IsConstMethod<cv::Signature<int (int)> >::Value )>();
         ASS<( 1 == (sl::Arity< cv::MethodToInCa<CFT,M1,&CFT::afunc> >::Value) )>();
         ASS<( 1 == (sl::Arity< cv::MethodToInCa<CFT,int (int),&CFT::afunc> >::Value) )>();
         ASS<( 2 == (sl::Arity< cv::ConstMethodToInCa<CFT,M2,&CFT::bfunc> >::Value) )>();
@@ -813,9 +813,9 @@ namespace { // testing ground for some compile-time assertions...
         ASS< tmp::SameType< v8::Arguments const &, v8::Arguments const & >::Value >();
         ASS< tmp::SameType< v8::Arguments const &, sl::At<3,BL4b>::Type >::Value >();
 
-        ASS< Signature< int (BoundNative::*)( int, int ) const >::IsConst >();
-        ASS< ! Signature< int ( int, int ) >::IsConst >();
-        ASS< ! Signature< int (CtorFwdTest::*)( int, int ) >::IsConst >();
+        ASS< sl::IsConstMethod< Signature< int (BoundNative::*)( int, int ) const > >::Value >();
+        ASS< ! sl::IsConstMethod< Signature< int ( int, int ) > >::Value >();
+        ASS< ! sl::IsConstMethod< Signature< int (CtorFwdTest::*)( int, int ) > >::Value >();
         //ASS< tmp::SameType< SigList_At<SigList_Length<BL3>::Value,BL3>::Type, char >::Value >(); // must fail to compile
 
         // damn. ASS< tmp::IsConst< int (void) const >::Value >();

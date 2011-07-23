@@ -43,22 +43,12 @@ function/method signatures as full-fleged types.
 
     @code
     typedef functionReturnType ReturnType;
-    enum { IsConst = True_Only_for_Const_Methods };
     typedef T Context; // void for non-member functions, non-cvp T for all T members
     typedef firstArgType Head; // head type of type-list.
     typedef Signature< RV (...)> Tail; // tail of type-list. (...)==arg types 2..N.
     // When Arity==0, Head and Tail must both be tmp::NilType. For Arity==1
     // Tail is Signature<RV()> but one could argue that it should be tmp::NilType.
     @endcode
-
-    The IsConst part is a bit of an ugly hack, and is mildly unsettling but
-    i needed it to implement ToInCa (i couldn't figure out how to figure
-    that out with templates). It originates from the design decision that we
-    separate const/non-const templates because MSVC reportedly cannot
-    differentiate templates when the difference is only in const. i have
-    since (almost) given up the policy of coddling to MSVC, so the IsConst
-    bit might go away at some point (if i can get it back out without
-    rewriting everything).
 
     It is intended to be used like this:
     
@@ -264,13 +254,12 @@ template <typename Sig> struct Signature< Signature<Sig> > : Signature<Sig> {};
     an Arity value of -1.
 
     Reminder: we can get rid of this if we factory out the Arity definition
-    and use sl::Arity instead. (IsConst might be problematic, though.)
+    and use sl::Arity instead.
 */
 template <typename RV>
 struct Signature<RV (v8::Arguments const &)>
 {
     typedef RV ReturnType;
-    static const bool IsConst = false;
     typedef RV (*FunctionType)(v8::Arguments const &);
     typedef void Context;
     typedef v8::Arguments const & Head;
@@ -294,7 +283,6 @@ struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arg
 {
     typedef T const Context;
     typedef RV (Context::*FunctionType)(v8::Arguments const &) const;
-    static const bool IsConst = true;   
 };
 
 
@@ -346,6 +334,9 @@ struct FunctionSignature : Signature< FunctionSig > {};
    typedef MethodSignature< MyType, double (int,int) > TwoArgsReturnsDouble;
    @endcode
 
+   As of r2019 (20110723), MethodSignature<T const,...> and 
+   ConstMethodSignature<T,...> are equivalent.
+
    Reminders to self:
 
    i would really like this class to simply subclass Signature<Sig> and we
@@ -353,10 +344,7 @@ struct FunctionSignature : Signature< FunctionSig > {};
    we generate. However, i don't know how to make this work. The problems
    include:
 
-   a) without generating lots of specializations of
-   tmp::IsConst<FunctionSignatures>, i don't know how to tell if Sig is const.
-
-   b) i can't "refactor" Signature<Sig>::FunctionType to the proper type
+   - i can't "refactor" Signature<Sig>::FunctionType to the proper type
    at this level.
 */
 template <typename T, typename Sig>
@@ -385,14 +373,8 @@ struct MethodSignature;
    typedef ConstMethodSignature< MyType, double (int,int) > TwoArgsReturnsDouble;
    @endcode
 
-   If your compiler does not support distinguishing between specializations
-   which differ only in constness then the signatures shown above may require
-   a trailing 'const' qualifier, e.g.:
-
-   @code
-   typedef ConstMethodSignature< MyType, void () const > NoArgsReturnsVoid;
-   @endif
-
+    As of r2019 (20110723), MethodSignature<T const,...> and 
+    ConstMethodSignature<T,...> are equivalent.
 */
 template <typename T, typename Sig>
 struct ConstMethodSignature;
@@ -426,7 +408,6 @@ struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
 {
     typedef T const Context;
     typedef RV (Context::*FunctionType)() const;
-    enum { IsConst = 1 };
 };
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
