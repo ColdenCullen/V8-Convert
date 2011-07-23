@@ -1,7 +1,6 @@
 #if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_PROPERTIES_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_P_V8_CONVERT_PROPERTIES_HPP_INCLUDED 1
 
-
 #include "invocable.hpp"
 
 namespace cvv8 {
@@ -179,23 +178,7 @@ namespace cvv8 {
     {
         static v8::Handle<v8::Value> Accessor( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
-            /*
-                FIXME: remove the try/catch and move it into a higher-level wrapper
-                analog to InCaCatcher. e.g SetterCatcher and GetterCatcher.
-            */
-            try
-            {
-                return CastToJS( (*Getter)() );
-            }
-            catch( std::exception const & ex )
-            {
-                return Toss(CastToJS(ex));
-            }
-            catch( ... )
-            {
-                return Toss( StringBuffer() << "Native value property getter '"
-                             << property << "' threw an unknown native exception type!");
-            }
+            return CastToJS( (*Getter)() );
         }
     };
        
@@ -228,22 +211,8 @@ namespace cvv8 {
     {
         static void Accessor( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
-            /* FIXME: see FunctionToGetter::Get for info about the future of this exception handling. */
-            try
-            {
-                typedef FunctionSignature<Sig> FT;
-                (*Func)( CastFromJS<typename sl::At<0,FT>::Type>( value ) );
-            }
-            catch( std::exception const & ex )
-            {
-                Toss(CastToJS(ex));
-            }
-            catch( ... )
-            {
-                Toss( StringBuffer() << "Native member property setter '"
-                      << property << "' threw an unknown native exception type!");
-            }
-            return;
+            typedef FunctionSignature<Sig> FT;
+            (*Func)( CastFromJS<typename sl::At<0,FT>::Type>( value ) );
         }
     };
 
@@ -268,23 +237,10 @@ namespace cvv8 {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
             NativeHandle self = CastFromJS<T>( info.This() );
-            if( ! self ) return Toss( StringBuffer() << "Native member property getter '"
-                                      << property << "' could not access native This object!" );
-            /* FIXME: see FunctionToGetter::Get regarding the exception handling. */
-            try
-            {
-                return CastToJS( (self->*Getter)() );
-            }
-            catch( std::exception const & ex )
-            {
-                return CastToJS(ex);
-            }
-            catch( ... )
-            {
-                return Toss( StringBuffer() << "Native member property getter '"
-                             << property
-                             << "' threw an unknown native exception type!" );
-            }
+            return self
+                ? CastToJS( (self->*Getter)() )
+                : Toss( StringBuffer() << "Native member property getter '"
+                      << property << "' could not access native This object!" );
         }
     };
 
@@ -299,24 +255,11 @@ namespace cvv8 {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
             NativeHandle const self = CastFromJS<T>( info.This() );
-            if( ! self ) return Toss( (StringBuffer() << "Native member property getter '"
-                                       << property << "' could not access native This object!").toError() );
-            /* FIXME: see FunctionToGetter::Get regarding the exception handling. */
-            try
-            {
-                return CastToJS( (self->*Getter)() );
-            }
-            catch( std::exception const & ex )
-            {
-                return Toss(CastToJS(ex));
-            }
-            catch( ... )
-            {
-                return Toss( StringBuffer()
-                             << "Native member property getter '"
-                             << property
-                             << "' threw an unknown native exception type!" );
-            }
+            return self
+                ? CastToJS( (self->*Getter)() )
+                : Toss( (StringBuffer() << "Native member property getter '"
+                       << property << "' could not access native This object!").toError() )
+               ;
         }
     };
     
@@ -352,22 +295,12 @@ namespace cvv8 {
             {
                 Toss( StringBuffer() << "Native member property setter '"
                      << property << "' could not access native This object!" );
-                return;
             }
-            else try /* FIXME: see FunctionToGetter for details about exception handling. */
+            else
             {
 
                 typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
                 (self->*Setter)( CastFromJS<ArgT>( value ) );
-            }
-            catch( std::exception const & ex )
-            {
-                Toss(CastToJS(ex));
-            }
-            catch( ... )
-            {
-                Toss( StringBuffer() << "Native member property setter '"
-                      << property << "' threw an unknown native exception type!");
             }
             return;
         }
@@ -391,26 +324,124 @@ namespace cvv8 {
             {
                 Toss( StringBuffer() << "Native member property setter '"
                      << property << "' could not access native This object!" );
-                return;
             }
-            else try /* FIXME: see FunctionToGetter for details about exception handling. */
+            else
             {
-
                 typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
                 (self->*Setter)( CastFromJS<ArgT>( value ) );
             }
-            catch( std::exception const & ex )
-            {
-                Toss(CastToJS(ex));
-            }
-            catch( ... )
-            {
-                Toss( StringBuffer() << "Native member property setter '"
-                      << property << "' threw an unknown native exception type!");
-            }
-            return;
         }
     };
+
+    /**
+        SetterCatcher is the AccessorSetter equivalent of InCaCatcher, and
+        is functionality identical except that its 4th template parameter
+        must be-a AccessorSetterType instead of an InCa type.
+    */
+    template < typename ExceptionT,
+               typename SigGetMsg,
+               typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+               typename SetterT,
+               bool PropagateOtherExceptions = false
+    >
+    struct SetterCatcher : AccessorSetterType
+    {
+        static void Accessor(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        {
+            try
+            {
+                SetterT::Accessor( property, value, info );
+            }
+            catch( ExceptionT const & e2 )
+            {
+                Toss((e2.*Getter)());
+            }
+            catch( ExceptionT const * e2 )
+            {
+                Toss((e2->*Getter)());
+            }
+            catch(...)
+            {
+                if( PropagateOtherExceptions ) throw;
+                else Toss("Unknown native exception thrown!");
+            }
+        }
+    };
+
+    /**
+        A convenience form of SetterCatcher which catches std::exception
+        and subtyes. See InCaCatcher_std for full details - this type is
+        identical except that its first template parameter must be-a
+        AccessorSetterType instead of InCa type.
+    */
+    template <
+            typename SetterT,
+            typename ConcreteException = std::exception,
+            bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
+    >
+    struct SetterCatcher_std :
+        SetterCatcher<ConcreteException,
+                      char const * (),
+                      &ConcreteException::what,
+                      SetterT,
+                      PropagateOtherExceptions
+                    >
+    {};
+
+    /**
+        GetterCatcher is the AccessorSetter equivalent of InCaCatcher, and
+        is functionality identical except that its 4th template parameter
+        must be-a AccessorGetterType instead of an InCa type.
+    */
+    template < typename ExceptionT,
+               typename SigGetMsg,
+               typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+               typename GetterT,
+               bool PropagateOtherExceptions = false
+    >
+    struct GetterCatcher : AccessorGetterType
+    {
+        static v8::Handle<v8::Value> Accessor( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        {
+            try
+            {
+                return GetterT::Accessor( property, info );
+            }
+            catch( ExceptionT const & e2 )
+            {
+                return Toss(CastToJS((e2.*Getter)()));
+            }
+            catch( ExceptionT const * e2 )
+            {
+                return Toss(CastToJS((e2->*Getter)()));
+            }
+            catch(...)
+            {
+                if( PropagateOtherExceptions ) throw;
+                else return Toss("Unknown native exception thrown!");
+            }
+        }
+    };
+
+    /**
+        A convenience form of GetterCatcher which catches std::exception
+        and subtyes. See InCaCatcher_std for full details - this type is
+        identical except that its first template parameter must be-a
+        AccessorGetterType instead of InCa type.
+    */
+    template <
+            typename GetterT,
+            typename ConcreteException = std::exception,
+            bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
+    >
+    struct GetterCatcher_std :
+        GetterCatcher<ConcreteException,
+                      char const * (),
+                      &ConcreteException::what,
+                      GetterT,
+                      PropagateOtherExceptions
+                    >
+    {};
 
 
     /**

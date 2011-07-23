@@ -103,6 +103,9 @@ function test1()
     assertThrows( function() { f.self = 'configured to throw when set.'; } );
     assertThrows( function() { f.selfConstRef = 'configured to throw when set.'; } );
 
+    assertThrows( function(){ var x = f.throwingProperty;}, 'f.throwingProperty GETTER throws.' );
+    assertThrows( function(){ f.throwingProperty = 3;}, 'f.throwingProperty SETTER throws.' );
+
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );
 

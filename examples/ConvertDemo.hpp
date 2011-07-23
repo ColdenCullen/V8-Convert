@@ -212,6 +212,9 @@ public:
     BoundNative const * self() const { return this; }
     BoundNative const & selfRefConst() const { return *this; }
     
+    
+    int throwingGetter() const { throw std::runtime_error("You called throwingGetter()! What did you expect?"); }
+    void throwingSetter(int) { throw std::runtime_error("You called throwingSetter()! What did you expect?"); }
 };
 
 // BoundNative Ctors we want to bind to v8 (there are several other ways to do this):
