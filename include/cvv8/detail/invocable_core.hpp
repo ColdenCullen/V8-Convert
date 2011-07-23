@@ -1754,11 +1754,11 @@ struct InCaCatcher : InCa
             call TossAsError(), but i'm too tired and i honestly don't ever
             expect any exception type to return v8 handles.
             */
-            return Toss(CastToJS((e2.*Getter)()));
+            return Toss((e2.*Getter)());
         }
         catch( ExceptionT const * e2 )
         {
-            return Toss(CastToJS((e2->*Getter)()));
+            return Toss((e2->*Getter)());
         }
         catch(...)
         {
