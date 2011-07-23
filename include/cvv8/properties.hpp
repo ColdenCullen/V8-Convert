@@ -479,16 +479,42 @@ namespace cvv8 {
             for the given property in the prototype object.
             
             GetterT must be-a AccessorGetterType. SetterT must be-a 
-            AccessorSetterType.
+            AccessorSetterType. Note that their values are not used, 
+            but GetterT::Accessor and SetterT::Accessor are used 
+            directly. The objects are only passed in to keep the 
+            client from having to specify them as template 
+            parameters (which is clumsy for operator()), as their 
+            types can be deduced. 
+            
+            The 3rd and higher arguments are as documented (or not!)
+            for v8::ObjectTemplate::SetAccessor().
             
             Returns this object, for chaining calls.
         */
         template <typename GetterT, typename SetterT>
         AccessorAdder const & operator()( char const * name,
                                           GetterT const &,
-                                          SetterT const & ) const
+                                          SetterT const &,
+                                          v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
+                                          v8::AccessControl settings=v8::DEFAULT,
+                                          v8::PropertyAttribute attribute=v8::None) const
         {
-            proto->SetAccessor(v8::String::New(name), GetterT::Accessor, SetterT::Accessor);
+            proto->SetAccessor(v8::String::New(name), GetterT::Accessor, SetterT::Accessor, data, settings, attribute);
+            return *this;
+        }
+
+        /**
+            Like operator(), but only sets a getter - no setter is defined. i can't overload
+            operator() with this due to ambiguities.
+        */
+        template <typename GetterT>
+        AccessorAdder const & Getter( char const * name,
+                                      GetterT const &,
+                                      v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
+                                      v8::AccessControl settings=v8::DEFAULT,
+                                      v8::PropertyAttribute attribute=v8::None) const
+        {
+            proto->SetAccessor(v8::String::New(name), GetterT::Accessor, NULL, data, settings, attribute);
             return *this;
         }
     };

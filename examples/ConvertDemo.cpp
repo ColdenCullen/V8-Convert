@@ -483,61 +483,61 @@ namespace cvv8 {
             ;
 #else
             proto->SetAccessor( JSTR("self"),
-                                //CA::MethGet<T * (), &T::self>::Accessor,
-                                MethodToGetter<T, T * (), &T::self>::Accessor,
-                                ThrowingSetter::Accessor );
+                    //CA::MethGet<T * (), &T::self>::Accessor,
+                    MethodToGetter<T, T * (), &T::self>::Accessor,
+                    ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("selfRef"),
-                                MethodToGetter<T, T & (), &T::selfRef>::Accessor,
-                                ThrowingSetter::Accessor );
+                    MethodToGetter<T, T & (), &T::selfRef>::Accessor,
+                    ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("selfConst"),
-                                ConstMethodToGetter<T, T const * (), &T::self>::Accessor,
-                                ThrowingSetter::Accessor );
+                    ConstMethodToGetter<T, T const * (), &T::self>::Accessor,
+                    ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("selfConstRef"),
-                                ConstMethodToGetter<T, T const & (), &T::selfRefConst>::Accessor,
-                                ThrowingSetter::Accessor );
+                    ConstMethodToGetter<T, T const & (), &T::selfRefConst>::Accessor,
+                    ThrowingSetter::Accessor );
 #endif
             proto->SetAccessor( JSTR("throwingProperty"),
-                                GetterCatcher_std< ConstMethodToGetter<T,int (),&T::throwingGetter> >::Accessor,
-                                SetterCatcher_std< MethodToSetter<T,void (int),&T::throwingSetter> >::Accessor );
+                    GetterCatcher_std< ConstMethodToGetter<T,int (),&T::throwingGetter> >::Accessor,
+                    SetterCatcher_std< MethodToSetter<T,void (int),&T::throwingSetter> >::Accessor );
             proto->SetAccessor( JSTR("publicIntRW"),
-                                MemberToGetter<T,int,&T::publicInt>::Accessor,
-                                MemberToSetter<T,int,&T::publicInt>::Accessor );
+                    MemberToGetter<T,int,&T::publicInt>::Accessor,
+                    MemberToSetter<T,int,&T::publicInt>::Accessor );
             proto->SetAccessor( JSTR("publicIntRO"),
-                                MemberToGetter<T,int,&T::publicInt>::Accessor,
-                                ThrowingSetter::Accessor );
+                    MemberToGetter<T,int,&T::publicInt>::Accessor,
+                    ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("publicStaticIntRW"),
-                                VarToGetter<int,&T::publicStaticInt>::Accessor,
-                                VarToSetter<int,&T::publicStaticInt>::Accessor );
+                    VarToGetter<int,&T::publicStaticInt>::Accessor,
+                    VarToSetter<int,&T::publicStaticInt>::Accessor );
             proto->SetAccessor( JSTR("publicStaticIntRO"),
-                                VarToGetter<int,&T::publicStaticInt>::Accessor );
+                    VarToGetter<int,&T::publicStaticInt>::Accessor );
             proto->SetAccessor( JSTR("staticString"),
-                                VarToGetter<std::string,&sharedString>::Accessor,
-                                VarToSetter<std::string,&sharedString>::Accessor );
+                    VarToGetter<std::string,&sharedString>::Accessor,
+                    VarToSetter<std::string,&sharedString>::Accessor );
             proto->SetAccessor( JSTR("staticStringRO"),
-                                VarToGetter<std::string,&sharedString>::Accessor,
-                                ThrowingSetter::Accessor );
+                    VarToGetter<std::string,&sharedString>::Accessor,
+                    ThrowingSetter::Accessor );
             proto->SetAccessor( JSTR("sharedString2"),
-                                FunctionToGetter<std::string (), getSharedString>::Accessor,
-                                FunctionToSetter<void (std::string const &), setSharedString>::Accessor
-                                );
+                    FunctionToGetter<std::string (), getSharedString>::Accessor,
+                    FunctionToSetter<void (std::string const &), setSharedString>::Accessor
+                    );
             proto->SetAccessor( JSTR("theInt"),
-                                ConstMethodToGetter<T, int (), &T::getInt>::Accessor,
-                                MethodToSetter<T, void (int), &T::setInt>::Accessor
-                                );
+                    ConstMethodToGetter<T, int (), &T::getInt>::Accessor,
+                    MethodToSetter<T, void (int), &T::setInt>::Accessor
+                    );
             proto->SetAccessor( JSTR("theIntNC"),
-                                MethodToGetter<T, int (), &T::getIntNonConst>::Accessor,
-                                MethodToSetter<T, void (int), &T::setInt>::Accessor
-                                );
+                    MethodToGetter<T, int (), &T::getIntNonConst>::Accessor,
+                    MethodToSetter<T, void (int), &T::setInt>::Accessor
+                    );
 #if 0 /* why? "template argument 2 is invalid" */
             proto->SetAccessor( JSTR("errno"),
-                                VarToGetter<int,&std::errno>::Accessor,
-                                VarToSetter<int,&std::errno>::Accessor
-                                );
+                    VarToGetter<int,&std::errno>::Accessor,
+                    VarToSetter<int,&std::errno>::Accessor
+                    );
 #endif // but this is legal:
             proto->SetAccessor( JSTR("nsInt"),
-                                VarToGetter<int,&namespaceScopeInt>::Accessor,
-                                VarToSetter<int,&namespaceScopeInt>::Accessor
-                                );
+                    VarToGetter<int,&namespaceScopeInt>::Accessor,
+                    VarToSetter<int,&namespaceScopeInt>::Accessor
+                    );
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
             ctor->Set(JSTR("testLocker"),
                 cv::CastToJS(cv::FunctionToInCa<void (), test_using_locker<true>, true >::Call)
