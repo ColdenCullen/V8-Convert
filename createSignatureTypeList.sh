@@ -49,7 +49,7 @@ struct Signature< RV (T::*)() > : Signature<RV ()>
 template <typename T, typename RV>
 struct Signature< RV (T::*)() const > : Signature<RV ()>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)() const;
     enum { IsConst = 1 };
 };
@@ -112,7 +112,7 @@ struct Signature< RV (T::*)(${targs}) > : Signature<RV (${targs})>
 template <typename T, $tparam>
 struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs})>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(${targs}) const;
     static const bool IsConst = true;
 };

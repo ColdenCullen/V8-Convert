@@ -57,7 +57,7 @@ template <typename T, typename RV BOOST_PP_COMMA_IF(n) BOOST_PP_ENUM_PARAMS(n, c
 struct Signature< RV (T::*)(BOOST_PP_ENUM_PARAMS(n, A)) const >
     : Signature< RV (BOOST_PP_ENUM_PARAMS(n, A))>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (Context::*FunctionType)(BOOST_PP_ENUM_PARAMS(n, A)) const;
     static const bool IsConst = true;
 #if n > 0

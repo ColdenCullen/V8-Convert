@@ -229,14 +229,16 @@ namespace sl {
         represents a non-const member function.
     */
     template <typename SigT>
-    struct IsNonConstMethod : tmp::BoolVal< !SigT::IsConst && IsMethod<SigT>::Value > {};
+    struct IsNonConstMethod : tmp::BoolVal< !tmp::IsConst< typename SigT::Context >::Value && IsMethod<SigT>::Value > {};
 
     /**
         A metafunction which has a true Value if the Signature type SigT
         represents a const member function.
     */
     template <typename SigT>
-    struct IsConstMethod : tmp::BoolVal< SigT::IsConst && IsMethod<SigT>::Value > {};
+    struct IsConstMethod :
+        tmp::BoolVal< tmp::IsConst< typename SigT::Context >::Value && IsMethod<SigT>::Value > {};
+        //tmp::BoolVal< SigT::IsConst && IsMethod<SigT>::Value > {};
 
 }
 
@@ -290,7 +292,7 @@ struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments
 template <typename T, typename RV>
 struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (Context::*FunctionType)(v8::Arguments const &) const;
     static const bool IsConst = true;   
 };
@@ -394,13 +396,13 @@ struct MethodSignature;
 */
 template <typename T, typename Sig>
 struct ConstMethodSignature;
-template <typename T, typename Sig>
-struct ConstMethodSignature<T const, Sig> : ConstMethodSignature<T,Sig> {};
+//template <typename T, typename Sig>
+//struct ConstMethodSignature<T const, Sig> : ConstMethodSignature<T,Sig> {};
 
 template <typename T, typename RV >
 struct MethodSignature< T, RV () > : Signature< RV () >
 {
-    typedef typename tmp::PlainType<T>::Type Context;
+    typedef T Context;
     typedef RV (Context::*FunctionType)();
 };
 
@@ -422,7 +424,7 @@ struct MethodSignature< T const, RV (T::*)() > : MethodSignature<T const, RV ()>
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
 {
-    typedef typename tmp::PlainType<T>::Type Context;
+    typedef T const Context;
     typedef RV (Context::*FunctionType)() const;
     enum { IsConst = 1 };
 };

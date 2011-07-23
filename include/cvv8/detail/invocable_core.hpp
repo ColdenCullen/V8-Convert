@@ -1909,53 +1909,11 @@ struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
 {
 };    
 
-/** @def ENABLE_TOINCA
-
-Temporary refactoring macro to disable the ToInCa templates while we accommodate
-the constness issues for MSVC 2010.
-
-Reminder to self:
-
-The main reason we can't use ToInCa like we could pre-MSVC is the ambiguity
-for const/non-const methods:
-
-ToInCa<T, void (int) >
-
-MSVC doesn't allow us to specialize Signature such that:
-
-ConstMethodSignature<T, void (int) const>
-
-are legal. gcc does, but i honestly don't know what The Standard says
-on that topic.
-
-If we could get around that ambiguity, or if msvc will let us overload:
-
-MethodSignature<T, void (int), &T::constMethod >
-
-as an alias for:
-
-ConstMethodSignature<T, void (int), &T::constMethod >
-
-then we might be able to re-introduce ToInCa. i think.
-*/
-#define ENABLE_TOINCA 0
-
-#if ENABLE_TOINCA
 #if !defined(DOXYGEN)
 namespace Detail {
     //! Internal helper for ToInCa impl.
-    template <typename T, typename Sig, bool IsConst = Signature<Sig>::IsConst >
-    struct ToInCaSigSelector : ConstMethodSignature<T,Sig>
-    {
-        template < typename ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cvv8::ConstMethodToInCa<T, Sig, Func, UnlockV8 >
-        {
-        };
-    };
-    
-    //! Internal helper for ToInCa impl.
-    template <typename T, typename Sig>
-    struct ToInCaSigSelector<T,Sig,false> : MethodSignature<T,Sig>
+    template <typename T, typename Sig >
+    struct ToInCaSigSelector : MethodSignature<T,Sig>
     {
         template < typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
         struct Base : cvv8::MethodToInCa<T, Sig, Func, UnlockV8 >
@@ -1965,7 +1923,7 @@ namespace Detail {
     
     //! Internal helper for ToInCa impl.
     template <typename Sig>
-    struct ToInCaSigSelector<void,Sig,false> : FunctionSignature<Sig>
+    struct ToInCaSigSelector<void,Sig> : FunctionSignature<Sig>
     {
         template < typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
         struct Base : cvv8::FunctionToInCa<Sig, Func, UnlockV8 >
@@ -1973,26 +1931,9 @@ namespace Detail {
         };
     };
 
-    /** Internal helper for ToInCa impl.
-        We need both true and false specializations here to avoid an ambiguity
-        with (T,Sig,true) resp. (T,Sig,false).
-    */
-    template <typename Sig>
-    struct ToInCaSigSelector<void,Sig,true> : ToInCaSigSelector<void,Sig,false> {};
-
     //! Internal helper for ToInCaVoid impl.
-    template <typename T, typename Sig, bool IsConst = Signature<Sig>::IsConst >
-    struct ToInCaSigSelectorVoid : ConstMethodSignature<T,Sig>
-    {
-        template < typename ConstMethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
-        struct Base : cvv8::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8 >
-        {
-        };
-    };
-
-    //! Internal helper for ToInCaVoid impl.
-    template <typename T, typename Sig>
-    struct ToInCaSigSelectorVoid<T,Sig,false> : MethodSignature<T,Sig>
+    template <typename T, typename Sig >
+    struct ToInCaSigSelectorVoid : MethodSignature<T,Sig>
     {
         template < typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8 >
         struct Base : cvv8::MethodToInCaVoid<T, Sig, Func, UnlockV8 >
@@ -2002,7 +1943,7 @@ namespace Detail {
 
     //! Internal helper for ToInCaVoid impl.
     template <typename Sig>
-    struct ToInCaSigSelectorVoid<void,Sig,false> : FunctionSignature<Sig>
+    struct ToInCaSigSelectorVoid<void,Sig> : FunctionSignature<Sig>
     {
         template < typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8 >
         struct Base : cvv8::FunctionToInCaVoid<Sig, Func, UnlockV8 >
@@ -2010,23 +1951,17 @@ namespace Detail {
         };
     };
 
-    /**
-        Internal helper for ToInCaVoid impl. We need identical true and
-        false specializations here to avoid an ambiguity with
-        ToInCaSigSelectorVoid<T,Sig,true> resp. <T,Sig,false>.
-    */
-    template <typename Sig>
-    struct ToInCaSigSelectorVoid<void,Sig,true> : ToInCaSigSelectorVoid<void,Sig,false> {};
-
 }
 #endif // DOXYGEN
 
 /**
     A wrapper for MethodToInCa, ConstMethodToInCa, and 
     FunctionToInCa, which determines which one of those to use based 
-    on the type of T and the constness of the method signature Sig.
+    on the type of T and its constness.
 
-    For non-member functions, T must be void.
+    For non-member functions, T must be void. For non-const member
+    functions T must be non-cvp-qualified T. For const member functions
+    T must be const-qualified.
 
     See FunctionForwarder for the meaning of the UnlockV8 parameter.
 
@@ -2034,7 +1969,7 @@ namespace Detail {
 
     @code
     typedef ToInCa<MyT, int (int), &MyT::nonConstFunc> NonConstMethod;
-    typedef ToInCa<MyT, void (int), &MyT::constFunc> ConstMethod;
+    typedef ToInCa<MyT const, void (int), &MyT::constFunc> ConstMethod;
     typedef ToInCa<void, int (char const *), ::puts, true> Func;
     
     v8::InvocationCallback cb;
@@ -2043,40 +1978,17 @@ namespace Detail {
     cb = Func::Call;
     @endcode
 
-    Note the extra 'const' qualification for const method. This is
-    unfortunately neccessary (or at least i haven't found a way around
-    it yet). Also note that 'void' 1st parameter for non-member
-    functions (another minor hack).
-
-    It is unknown whether or not this template will work in Microsoft
-    compilers which reportedly have trouble differentiating 
-    constness in templates. The whole reason why (Const)MethodToInCa 
-    is split into const- and non-const forms is to be able to 
-    work around that shortcoming :/.
-
-    Maintenance reminder: we need the extra level of indirection 
-    (the classes in the Detail namespace) to avoid instantiating 
-    both ConstMethodToInCa and MethodToInCa with the given 
-    singature/function combination (which won't compile). That said, 
-    the indirection is purely compile-time - no extra Call() 
-    wrappers are injected because of this.
+    Note the extra 'const' qualification for const method. This is 
+    neccessary to be able to portably distinguish the constness 
+    (some compilers allow us to add the const as part of the 
+    function signature). Also note that the 'void' 1st parameter for 
+    non-member functions is a bit of a hack.
 */
 template <typename T, typename Sig,
         typename Detail::ToInCaSigSelector<T,Sig>::FunctionType Func,
         bool UnlockV8 = SignatureIsUnlockable< Detail::ToInCaSigSelector<T,Sig> >::Value
         >
-struct ToInCa : Detail::ToInCaSigSelector<T,Sig, Signature<Sig>::IsConst >::template Base<Func,UnlockV8>
-{
-};
-
-/**
-    Specialization for FunctionToInCa behaviour.
-*/
-template <typename Sig,
-    typename FunctionSignature<Sig>::FunctionType Func,
-    bool UnlockV8
->
-struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
+struct ToInCa : Detail::ToInCaSigSelector<T,Sig>::template Base<Func,UnlockV8>
 {
 };
 
@@ -2093,17 +2005,7 @@ struct ToInCaVoid : Detail::ToInCaSigSelectorVoid<T,Sig>::template Base<Func,Unl
 {
 };
 
-/**
-    Specialization for FunctionToInCaVoid behaviour.
-*/
-template <typename Sig,
-    typename FunctionSignature<Sig>::FunctionType Func,
-    bool UnlockV8
->
-struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8>
-{
-};
-#endif /* ENABLE_TOINCA */
+
 /**
     A slightly simplified form of FunctionToInCa which is only
     useful for "InvocationCallback-like" functions and requires

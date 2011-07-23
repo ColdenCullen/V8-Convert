@@ -442,11 +442,16 @@ namespace cvv8 {
                  ("nativeReturn",
                  cv::MethodToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)
                  ("nativeReturnConst",
-                 cv::ConstMethodToInCa<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst, true>::Call)
-                 // Hopefully someday:
-                 // cv::MethodToInCa<BoundNative, BoundNative const * () const, &BoundNative::nativeReturnConst>::Call)
+                 //cv::ConstMethodToInCa<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst, true>::Call)
+                 // Equivalent:
+                 //cv::MethodToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call)
+                 // Equivalent:
+                  cv::ToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call)
                  ("nativeReturnRef",
-                 CATCHER< cv::MethodToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true> >::Call)
+                 CATCHER<
+                    //cv::MethodToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>
+                    cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>
+                    >::Call)
                  ("nativeReturnConstRef",
                  CATCHER< cv::ConstMethodToInCa<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef, true> >::Call)
                  // Hopefully someday:
@@ -835,12 +840,17 @@ namespace { // testing ground for some compile-time assertions...
 
         {
             typedef BoundNative T;
-            typedef cv::MethodSignature<T, void()> S1;
-            typedef cv::MethodSignature<T const, void()> S2;
-            ASS< sl::IsMethod<S1>::Value >();
-            ASS< sl::IsMethod<S2>::Value >();
-            ASS< !sl::IsConstMethod<S1>::Value >();
-            ASS< sl::IsConstMethod<S2>::Value >();
+            typedef cv::MethodSignature<T, void()> M1;
+            typedef cv::MethodSignature<T const, void()> M2;
+            typedef cv::ConstMethodSignature<T, void()> C1;
+            ASS< !tmp::IsConst< M1::Context >::Value >();
+            ASS< tmp::IsConst< M2::Context >::Value >();
+            ASS< tmp::IsConst< C1::Context >::Value >();
+            ASS< sl::IsMethod<M1>::Value >();
+            ASS< sl::IsMethod<M2>::Value >();
+            ASS< !sl::IsConstMethod<M1>::Value >();
+            ASS< sl::IsConstMethod<C1>::Value >();
+            ASS< sl::IsConstMethod<M2>::Value >();
         }
 
 #undef ASS

@@ -24,7 +24,7 @@ struct Signature< RV (T::*)() > : Signature<RV ()>
 template <typename T, typename RV>
 struct Signature< RV (T::*)() const > : Signature<RV ()>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)() const;
     enum { IsConst = 1 };
 };
@@ -57,7 +57,7 @@ struct Signature< RV (T::*)(A1) > : Signature<RV (A1)>
 template <typename T, typename RV, typename A1>
 struct Signature< RV (T::*)(A1) const > : Signature<RV (A1)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1) const;
     static const bool IsConst = true;
 };
@@ -91,7 +91,7 @@ struct Signature< RV (T::*)(A1, A2) > : Signature<RV (A1, A2)>
 template <typename T, typename RV, typename A1, typename A2>
 struct Signature< RV (T::*)(A1, A2) const > : Signature<RV (A1, A2)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2) const;
     static const bool IsConst = true;
 };
@@ -125,7 +125,7 @@ struct Signature< RV (T::*)(A1, A2, A3) > : Signature<RV (A1, A2, A3)>
 template <typename T, typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (T::*)(A1, A2, A3) const > : Signature<RV (A1, A2, A3)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3) const;
     static const bool IsConst = true;
 };
@@ -159,7 +159,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4) > : Signature<RV (A1, A2, A3, A4)>
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (T::*)(A1, A2, A3, A4) const > : Signature<RV (A1, A2, A3, A4)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4) const;
     static const bool IsConst = true;
 };
@@ -193,7 +193,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5) > : Signature<RV (A1, A2, A3, A4
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5) const > : Signature<RV (A1, A2, A3, A4, A5)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5) const;
     static const bool IsConst = true;
 };
@@ -227,7 +227,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) > : Signature<RV (A1, A2, A3
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) const > : Signature<RV (A1, A2, A3, A4, A5, A6)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6) const;
     static const bool IsConst = true;
 };
@@ -261,7 +261,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) > : Signature<RV (A1, A2
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7) const;
     static const bool IsConst = true;
 };
@@ -295,7 +295,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) > : Signature<RV (A1
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8) const;
     static const bool IsConst = true;
 };
@@ -329,7 +329,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) > : Signature<RV
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const;
     static const bool IsConst = true;
 };
@@ -363,7 +363,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) > : Signatu
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const;
     static const bool IsConst = true;
 };
@@ -397,7 +397,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) > : Si
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const;
     static const bool IsConst = true;
 };
@@ -431,7 +431,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const;
     static const bool IsConst = true;
 };
@@ -465,7 +465,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const;
     static const bool IsConst = true;
 };
@@ -499,7 +499,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const;
     static const bool IsConst = true;
 };
@@ -533,7 +533,7 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 template <typename T, typename RV, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9, typename A10, typename A11, typename A12, typename A13, typename A14, typename A15>
 struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const > : Signature<RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15)>
 {
-    typedef T Context;
+    typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const;
     static const bool IsConst = true;
 };
