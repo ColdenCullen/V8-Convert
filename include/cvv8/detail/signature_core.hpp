@@ -402,6 +402,10 @@ template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() > : MethodSignature<T const, RV ()>
 {
 };
+template <typename T, typename RV >
+struct MethodSignature< T const, RV (T::*)() const > : MethodSignature<T const, RV ()>
+{
+};
 
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
@@ -410,7 +414,7 @@ struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
     typedef RV (Context::*FunctionType)() const;
 };
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
+struct ConstMethodSignature< T, RV (T::*)() const > : MethodSignature<T const, RV ()>
 {
 };
 
@@ -453,7 +457,6 @@ struct MethodPtr : MethodSignature<T,Sig>
 };
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType FuncPtr>
 typename MethodPtr<T,Sig,FuncPtr>::FunctionType const MethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
-
 /**
    Used like MethodPtr, but in conjunction with const methods of the T
    class.
@@ -467,6 +470,15 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
 };
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType FuncPtr>
 typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
+
+//! Specialization to treat (const T) as ConstMethodPtr.
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType FuncPtr>
+struct MethodPtr<T const, Sig, FuncPtr> : ConstMethodPtr<T,Sig,FuncPtr>
+{
+    typedef MethodSignature<T,Sig> SignatureType;
+    typedef typename SignatureType::FunctionType FunctionType;
+    static const FunctionType Function;
+};
 
 #include "signature_generated.hpp"
 } // namespaces

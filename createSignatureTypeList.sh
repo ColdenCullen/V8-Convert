@@ -88,7 +88,6 @@ template <$tparam>
 struct Signature< RV (${targs}) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(${targs});
     typedef ${head} Head;
@@ -114,7 +113,6 @@ struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs})>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(${targs}) const;
-    //static const bool IsConst = true;
 };
 
 EOF

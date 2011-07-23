@@ -33,7 +33,6 @@ template <typename RV, typename A1>
 struct Signature< RV (A1) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1);
     typedef A1 Head;
@@ -59,7 +58,6 @@ struct Signature< RV (T::*)(A1) const > : Signature<RV (A1)>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 2 arg(s).
@@ -67,7 +65,6 @@ template <typename RV, typename A1, typename A2>
 struct Signature< RV (A1, A2) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2);
     typedef A1 Head;
@@ -93,7 +90,6 @@ struct Signature< RV (T::*)(A1, A2) const > : Signature<RV (A1, A2)>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 3 arg(s).
@@ -101,7 +97,6 @@ template <typename RV, typename A1, typename A2, typename A3>
 struct Signature< RV (A1, A2, A3) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3);
     typedef A1 Head;
@@ -127,7 +122,6 @@ struct Signature< RV (T::*)(A1, A2, A3) const > : Signature<RV (A1, A2, A3)>
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 4 arg(s).
@@ -135,7 +129,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4>
 struct Signature< RV (A1, A2, A3, A4) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4);
     typedef A1 Head;
@@ -161,7 +154,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4) const > : Signature<RV (A1, A2, A3, 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 5 arg(s).
@@ -169,7 +161,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5);
     typedef A1 Head;
@@ -195,7 +186,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5) const > : Signature<RV (A1, A2, 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 6 arg(s).
@@ -203,7 +193,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6);
     typedef A1 Head;
@@ -229,7 +218,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6) const > : Signature<RV (A1, 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 7 arg(s).
@@ -237,7 +225,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7);
     typedef A1 Head;
@@ -263,7 +250,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7) const > : Signature<RV (
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 8 arg(s).
@@ -271,7 +257,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8);
     typedef A1 Head;
@@ -297,7 +282,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8) const > : Signature<
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 9 arg(s).
@@ -305,7 +289,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9);
     typedef A1 Head;
@@ -331,7 +314,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const > : Signat
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 10 arg(s).
@@ -339,7 +321,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10);
     typedef A1 Head;
@@ -365,7 +346,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const > : S
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 11 arg(s).
@@ -373,7 +353,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11);
     typedef A1 Head;
@@ -399,7 +378,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const 
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 12 arg(s).
@@ -407,7 +385,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12);
     typedef A1 Head;
@@ -433,7 +410,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) c
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 13 arg(s).
@@ -441,7 +417,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13);
     typedef A1 Head;
@@ -467,7 +442,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 14 arg(s).
@@ -475,7 +449,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14);
     typedef A1 Head;
@@ -501,7 +474,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14) const;
-    //static const bool IsConst = true;
 };
 
 //! Specialization for 15 arg(s).
@@ -509,7 +481,6 @@ template <typename RV, typename A1, typename A2, typename A3, typename A4, typen
 struct Signature< RV (A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) >
 {
     typedef RV ReturnType;
-    //static const bool IsConst = false;
     typedef void Context;
     typedef RV (*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15);
     typedef A1 Head;
@@ -535,7 +506,6 @@ struct Signature< RV (T::*)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A
 {
     typedef T const Context;
     typedef RV (T::*FunctionType)(A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, A12, A13, A14, A15) const;
-    //static const bool IsConst = true;
 };
 
 template <typename T, typename RV,  typename A0 >
@@ -562,7 +532,7 @@ struct MethodSignature< T const, RV (T::*)( A0) > :
     MethodSignature< T const, RV ( A0) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0 >
 struct MethodSignature< T const, RV (T::*)( A0) const > :
     MethodSignature< T const, RV ( A0) >
@@ -602,7 +572,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1) > :
     MethodSignature< T const, RV ( A0, A1) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1 >
 struct MethodSignature< T const, RV (T::*)( A0, A1) const > :
     MethodSignature< T const, RV ( A0, A1) >
@@ -642,7 +612,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2) > :
     MethodSignature< T const, RV ( A0, A1, A2) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2) const > :
     MethodSignature< T const, RV ( A0, A1, A2) >
@@ -682,7 +652,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3) >
@@ -722,7 +692,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4) >
@@ -762,7 +732,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5) >
@@ -802,7 +772,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6) >
@@ -842,7 +812,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7) >
@@ -882,7 +852,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8) 
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8) >
@@ -922,7 +892,7 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8, 
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
 {};
 
-#if 0 // i'm pretty sure MSVC can't overload this specialization:
+#if 1 // i'm pretty sure MSVC can't overload this specialization:
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >

@@ -424,8 +424,6 @@ namespace cvv8 {
                     //cv::ConstMethodToInCa<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
                     cv::MethodToInCa<const BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
                     >::Call)
-                 // Hopefully someday:
-                 //CATCHER< cv::MethodToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef> >::Call)
                 ("cstr",
                  //cv::FunctionToInvocationCallback< char const * (char const *), cstring_test>)
                  cv::FunctionToInCa< char const * (char const *), cstring_test>::Call)
@@ -600,12 +598,18 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
         ("subFunc",
          cv::ConstMethodToInCa<BoundSubNative,void (),&BoundSubNative::subFunc>::Call)
         ("toString",
-         cv::ConstMethodToInCa<BoundSubNative,ValueHandle (),&BoundSubNative::toString>::Call)
+         cv::MethodToInCa<const BoundSubNative,ValueHandle (),&BoundSubNative::toString>::Call)
+         //cv::SigToInCa<ValueHandle (BoundSubNative::*)() const,&BoundSubNative::toString>::Call)
          ("nonBoundNative",
          cv::MethodToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType & (), &BoundSubNative::nonBoundNative>::Call)
          ("nonBoundNativeConst",
-         cv::ConstMethodToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType const& (), &BoundSubNative::nonBoundNative>::Call)
-         //cv::ToInCa<BoundSubNative, BoundSubNative::NonBoundType &(), &BoundSubNative::nonBoundNative>::Call) // must fail to compile OR link
+         //cv::ConstMethodToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType const& (), &BoundSubNative::nonBoundNative>::Call)
+         
+         //Equivalent:
+         cv::MethodToInCaVoid<const BoundSubNative, BoundSubNative::NonBoundType const& (), &BoundSubNative::nonBoundNative>::Call)
+         
+         //Error: must fail to compile OR link (likely a link error):
+         //cv::ToInCa<BoundSubNative, BoundSubNative::NonBoundType &(), &BoundSubNative::nonBoundNative>::Call)
          ("puts",
          cv::FunctionToInCa<int (char const *),::puts>::Call)
         ;
@@ -851,6 +855,18 @@ namespace { // testing ground for some compile-time assertions...
             ASS< !sl::IsConstMethod<M1>::Value >();
             ASS< sl::IsConstMethod<C1>::Value >();
             ASS< sl::IsConstMethod<M2>::Value >();
+        }
+
+        {
+            typedef BoundNative T;
+            typedef cv::MethodSignature<T const, void (T::*)() const> CS0;
+            typedef cv::MethodSignature<T const, void (T::*)()> CS02;
+            typedef cv::MethodSignature<T const, void (T::*)(int) const> CS1;
+            typedef cv::MethodSignature<T const, void (T::*)(int)> CS2;
+            ASS< sl::IsConstMethod<CS0>::Value >();
+            ASS< sl::IsConstMethod<CS02>::Value >();
+            ASS< sl::IsConstMethod<CS1>::Value >();
+            ASS< sl::IsConstMethod<CS2>::Value >();
         }
 
 #undef ASS

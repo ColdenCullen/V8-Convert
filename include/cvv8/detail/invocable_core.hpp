@@ -1021,9 +1021,6 @@ struct CallForwarder<0>
 
 #if !defined(DOXYGEN)
 namespace Detail {
-    // FIXME (maybe): rename all of the Detail classes to NOT have the same name
-    // as non-Detail classes. The current names have caused difficult-to
-    // find mis-resolutions on occassion.
 
     /**
         Base internal implementation of cvv8::FunctionToInCa.
@@ -1090,7 +1087,12 @@ namespace Detail {
     struct MethodToInCa : MethodPtr<T,Sig, Func>, InCa
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
-        typedef MethodForwarder< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        enum { Arity = sl::Arity<SignatureType>::Value };
+        typedef typename tmp::IfElse<
+            sl::IsConstMethod<SignatureType>::Value,
+            ConstMethodForwarder< T, Arity, Sig, UnlockV8 >,
+            MethodForwarder< T, Arity, Sig, UnlockV8 >
+        >::Type Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1120,7 +1122,13 @@ namespace Detail {
     struct MethodToInCaVoid : MethodPtr<T,Sig,Func>, InCa
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
-        typedef MethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        enum { Arity = sl::Arity<SignatureType>::Value };
+        typedef typename tmp::IfElse<
+            sl::IsConstMethod<SignatureType>::Value,
+            ConstMethodForwarderVoid< T, Arity, Sig, UnlockV8 >,
+            MethodForwarderVoid< T, Arity, Sig, UnlockV8 >
+        >::Type Proxy;
+        //typedef MethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1262,9 +1270,9 @@ struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
 
 
 /**
-   A template for converting non-const member function pointers to
-   v8::InvocationCallback. For const member functions use
-   ConstMethodToInCa instead.
+   A template for converting non-const member function pointers to 
+   v8::InvocationCallback. If T is const qualified then this works 
+   as for ConstMethodToInCaVoid.
 
    To convert JS objects to native 'this' pointers this API uses
    CastFromJS<T>(arguments.This()), where arguments is the
@@ -1283,7 +1291,9 @@ struct FunctionToInCaVoid : Detail::FunctionToInCaVoid< Sig, Func, UnlockV8>
 
     @code
     v8::InvocationCallback cb = 
-       MethodToInCa< T, int (int), &T::myFunc>::Call;
+        MethodToInCa<T, int (int), &T::myFunc>::Call;
+    // For const methods:
+    cb = MethodToInCa<const T, int (int), &T::myFunc>::Call;
     @endcode
 */
 template <typename T, typename Sig,
@@ -1300,7 +1310,8 @@ struct MethodToInCa
 
 /**
     See FunctionToInCaVoid - this is identical exception that it
-    works on member functions of T.
+    works on member functions of T. If T is const qualified
+    then this works as for ConstMethodToInCaVoid.
     
     Example:
 
@@ -1338,12 +1349,15 @@ template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::Functi
           bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
           >
 struct ConstMethodToInCa
+#if 0 // not working due to an ambiguous Sig<T,...> vs Sig<const T,...>. Kinda weird, since MethodToInCa<const T,...> works.
+    : MethodToInCa<const T,Sig,Func,UnlockV8> {};
+#else
     : tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T, Sig>::ReturnType>::Value,
                  Detail::ConstMethodToInCaVoid<T, Sig, Func, UnlockV8>,
                  Detail::ConstMethodToInCa<T, Sig, Func, UnlockV8>
         >::Type
 {};
-
+#endif
 /**
     See FunctionToInCaVoid - this is identical exception that it
     works on const member functions of T.
@@ -1416,41 +1430,7 @@ public:
 template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
         >
-struct ConstMethodForwarder
-{
-private:
-    typedef typename
-    tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T,Sig>::ReturnType>::Value,
-                 Detail::ConstMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
-                 Detail::ConstMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
-    >::Type
-    Proxy;
-public:
-    typedef typename Proxy::SignatureType SignatureType;
-    typedef typename Proxy::FunctionType FunctionType;
-
-    /**
-       Passes the given arguments to (self.*func)(), converting them 
-       to the appropriate types. If argv.Length() is less than 
-       sl::Arity< Signature<Sig> >::Value then a JS exception is thrown, with one 
-       exception: if the function has "-1 arity" (i.e. it is 
-       InvocationCallback-like) then argv is passed on to it 
-       regardless of the value of argv.Length().
-    */
-    static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
-    {
-        return Proxy::Call( self, func, argv );
-    }
-
-    /**
-       Like the 3-arg overload, but tries to extract the (T const *)
-       object using CastFromJS<T>(argv.This()).
-    */
-    static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
-    {
-        return Proxy::Call( func, argv );
-    }
-};
+struct ConstMethodForwarder : MethodForwarder<T const, Sig, UnlockV8> {};
 
 /**
    Tries to forward the given arguments to the given native 
@@ -2048,6 +2028,19 @@ struct InCaLikeConstMethod : ConstMethodToInCa< T, RV (v8::Arguments const &), F
 {};
 
 
+//! Don't use. Doesn't yet compile.
+template <typename ASig, typename Signature<ASig>::FunctionType Func>
+struct SigToInCa :
+    tmp::IfElse<
+        sl::IsFunction< Signature<ASig> >::Value,
+        FunctionToInCa< ASig, Func >,
+        typename tmp::IfElse<
+            sl::IsConstMethod< Signature<ASig> >::Value,
+            ConstMethodToInCa< typename tmp::PlainType<typename Signature<ASig>::Context>::Type, ASig, Func >,
+            MethodToInCa< typename Signature<ASig>::Context, ASig, Func >
+        >::Type
+    >::Type
+{};
 
 
 /**
