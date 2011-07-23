@@ -2,20 +2,6 @@
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
 
-/** @def CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-
-Don't use this - it's going away very soon.
-
-*/
-#define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
-#if !defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS)
-#  if defined(_MSC_VER)
-#    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
-#  else
-#    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 1
-#  endif
-#endif
-
 namespace cvv8 {
 /** @file signature_core.hpp
 
@@ -423,13 +409,6 @@ template <typename T, typename RV >
 struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 {
 };
-
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename T, typename RV >
-struct MethodSignature< T, RV (T::*)() const > : MethodSignature<T, RV () const>
-{
-};
-#endif
 
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
