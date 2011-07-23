@@ -329,7 +329,7 @@ namespace cvv8 {
     template <>
     struct ClassCreator_SetupBindings<BoundNative>
     {
-        static void SetupBindings( v8::Handle<v8::Object> const & dest )
+        static void Initialize( v8::Handle<v8::Object> const & dest )
         {
             using namespace v8;
 

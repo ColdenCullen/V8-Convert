@@ -326,7 +326,7 @@ namespace cvv8 {
     /**
         This policy is used by ClassCreator::SetupBindings() as the generic
         interface for plugging in a bound class. Clients are not required to
-        specialise this, but see this class' SetupBindings() for what might
+        specialise this, but see this class' Initialize() for what might
         happen if they don't.
     */
     template <typename T>
@@ -374,7 +374,7 @@ namespace cvv8 {
             you should call Seal() instead of AddClassTo() (or pass a different
             destination object to AddClassTo().
         */
-        static void SetupBindings( v8::Handle<v8::Object> const & target )
+        static void Initialize( v8::Handle<v8::Object> const & target )
         {
             throw std::runtime_error("ClassCreator_SetupBindings<T> MUST be specialized "
                                      "in order to be useful!");
@@ -391,7 +391,7 @@ namespace cvv8 {
         /**
             Calls Func(target).
         */
-        static void SetupBindings( v8::Handle<v8::Object> const & target )
+        static void Initialize( v8::Handle<v8::Object> const & target )
         {
             Func(target);
         }
@@ -1015,12 +1015,12 @@ namespace cvv8 {
         }
 
         /**
-            Simply runs ClassCreator_SetupBindings<T>::SetupBindings( target ).
+            Simply runs ClassCreator_SetupBindings<T>::Initialize( target ).
             It is provided here to simplify the client-side interface.
         */
         static void SetupBindings( v8::Handle<v8::Object> const & target )
         {
-            ClassCreator_SetupBindings<T>::SetupBindings( target );
+            ClassCreator_SetupBindings<T>::Initialize( target );
         }
         
     };
