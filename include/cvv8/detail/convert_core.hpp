@@ -1697,8 +1697,6 @@ namespace cvv8 {
     template <typename T>
     struct ArgCaster
     {
-        //typedef typename TypeInfo<T>::Type Type;
-        //typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         typedef typename JSToNative<T>::ResultType ResultType;
         /**
            Default impl simply returns CastFromJS<T>(v).
@@ -1730,10 +1728,13 @@ namespace cvv8 {
        1) This will only work properly for nul-terminated strings,
        and not binary data!
 
-       2) Do not use this to pass (char const *) as a function
-       parameter if that function will hold a copy of the pointer
-       after it returns (as opposed to copying/consuming the
-       pointed-to-data before it returns).
+       2) Do not use this to pass (char const *) as a function 
+       parameter if that function will hold a copy of the pointer 
+       after it returns (as opposed to copying/consuming the 
+       pointed-to-data before it returns) OR if it returns the 
+       pointer passed to it. Returning is a specific corner-case
+       of "holding a copy" for which we cannot guaranty the lifetime
+       at the function-binding level.
 
        3) Do not use the same ArgCaster object to convert multiple
        arguments, as each call to ToNative() will invalidate the
@@ -1749,6 +1750,12 @@ namespace cvv8 {
     struct ArgCaster<char const *>
     {
     private:
+        /**
+            Reminder to self: we cannot use v8::String::Utf8Value
+            here because at the point the bindings call ToNative(),
+            v8 might have been unlocked, at which point dereferencing
+            the Utf8Value becomes illegal.
+        */
         std::string val;
         typedef char Type;
     public:
