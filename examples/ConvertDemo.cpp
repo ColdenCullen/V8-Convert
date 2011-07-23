@@ -618,8 +618,14 @@ namespace { // testing ground for some compile-time assertions...
         CtorFwdTest(v8::Arguments const &) {}
         virtual ~CtorFwdTest() {}
         
-        int afunc(int);
-        int bfunc(int,int) const;
+        int afunc(int)
+        {
+            return 'a';
+        }
+        int bfunc(int,int) const
+        {
+            return 'b';
+        }
     };
 
     struct CtorFwdTestSub : CtorFwdTest
