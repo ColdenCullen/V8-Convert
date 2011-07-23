@@ -702,7 +702,11 @@ namespace cvv8 {
         }
     };
 
-    //! Experimental - do not use.
+    /**
+        The constructor counterpart of PredicatedInCa.
+        ArgPred must be an ArgumentsPredicate type and
+        FactoryT must be CtorForwarder or interface-compatible.
+    */
     template <typename ArgPred, typename FactoryT>
     struct PredicatedCtorForwarder : ArgumentsPredicate, FactoryT
     {
@@ -713,13 +717,17 @@ namespace cvv8 {
         }
     };
 
-    //! Experimental - do not use.
+    /**
+        The constructor counterpart of PredicatedInCaDispatcher. PredList
+        must be a typelist of PredicatedCtorForwarder (or interface-compatible)
+        types.
+    */
     template <typename PredList, typename ContextT = typename PredList::ReturnType>
     struct PredicatedCtorDispatcher : PredList
     {
         typedef typename TypeInfo<typename PredList::ReturnType>::NativeHandle ReturnType;
         /**
-            For each PredicatedInCa (P) in PredList, if P()(argv)
+            For each PredicatedCtorForwarder (P) in PredList, if P()(argv)
             returns true then P::Call(argv) is returned, else the next
             predicate in the list is tried.
 
@@ -737,6 +745,7 @@ namespace cvv8 {
                 : PredicatedCtorDispatcher<Tail,ContextT>::Call(argv);
         }
     };
+
     //! End-of-list specialization.
     template <typename ContextT>
     struct PredicatedCtorDispatcher< tmp::NilType, ContextT > : Signature< ContextT * () >
