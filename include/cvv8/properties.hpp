@@ -1,634 +1,586 @@
 #if !defined(CODE_GOOGLE_COM_P_V8_CONVERT_PROPERTIES_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_P_V8_CONVERT_PROPERTIES_HPP_INCLUDED 1
 
-
 #include "invocable.hpp"
 
 namespace cvv8 {
 
     /**
-       This class contains static methods which can be used to bind
-       global/class-static/shared native variables to JS space.
-
-       Note that it cannot bind file- or function-scope static
-       variables because C++ does not allow pointers to them to be
-       used as template parameters (for linking reasons).
-
-       For binding member functions to accessors, see the
-       MemberPropertyBinder class (which subclasses this one, for
-       usage convenience).
-    */
-    class PropertyBinder
-    {
-    public:
-        /**
-           This template can be used as an argument to
-           v8::ObjectTemplate::SetAccessor()'s Getter parameter to
-           generically tie a static variable to a named JS property.
-
-           SharedVar must be pointer to a static variable and must not
-           be 0.
-
-           CastToJS<PropertyType>() must be legal.
-        */
-        template <typename PropertyType, PropertyType const * SharedVar>
-        static v8::Handle<v8::Value> AccessorGetterStaticVar(v8::Local<v8::String> property, const v8::AccessorInfo &info)
-        {
-            return CastToJS<PropertyType>( *SharedVar );
-        }
-        /**
-           The setter counterpart of AccessorGetterStaticVar().
-
-           SharedVar must be pointer to a static variable and must not
-           be 0.
-
-           CastFromJS<PropertyType> must be legal.
-        */
-        template <typename PropertyType, PropertyType * SharedVar>
-        static void AccessorSetterStaticVar(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
-        {
-            *SharedVar = CastFromJS<PropertyType>( value );
-        }
-
-        /**
-           Binds the given static variable to a JS property, such that
-           get/set access will go through
-           AccessorGetterStaticVar<VarType,SharedVar> and
-           AccessorSetterStaticVar<VarType,SharedVar>.
-        */
-        template <typename VarType, VarType * SharedVar>
-        static void BindSharedVar( char const * name,
-                                   v8::Handle<v8::ObjectTemplate> const & prototype,
-                                   v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                   v8::PropertyAttribute attribute = v8::DontDelete
-                         )
-        {
-            if( ! prototype.IsEmpty() )
-            {
-                prototype->SetAccessor( v8::String::New(name),
-                                        AccessorGetterStaticVar<VarType,SharedVar>,
-                                        AccessorSetterStaticVar<VarType,SharedVar>,
-                                        v8::Handle< v8::Value >(),
-                                        settings,
-                                        attribute );
-            }
-        }
-
-        /**
-           A Setter implementation which always triggers a JS exception.
-        */
-        static void AccessorSetterThrow(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
-        {
-             ::v8::ThrowException(StringBuffer() <<
-                                  "Native member property setter '"
-                                  << property
-                                  << "' is configured to throw an exception when modifying "
-                                  << "this read-only member!");
-        }
-
-        /**
-           Binds the given static variable to a JS property, such that
-           read access will go through
-           AccessorGetterStaticVar<VarType,SharedVar> and set access will be
-           ignored (it will not change SharedVar).
-
-           The throwOnSet parameter installs a custom setter which,
-           when triggered, always throws a JS exception. If this value
-           is false, no setter will be installed (and see the notes in
-           MemberPropertyBinder::BindMemVarRO()). If you want
-           v8-specified behaviours, pass false for this value.
-        */
-        template <typename VarType, VarType const * SharedVar>
-        static void BindSharedVarRO( char const * name,
-                                     v8::Handle<v8::ObjectTemplate> const & prototype,
-                                     bool throwOnSet = false,
-                                     v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                     v8::PropertyAttribute attribute = v8::DontDelete )
-        {
-            if( ! prototype.IsEmpty() )
-            {
-                prototype->SetAccessor( v8::String::New(name),
-                                        AccessorGetterStaticVar<VarType,SharedVar>,
-                                        throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
-                                        v8::Handle< v8::Value >(),
-                                        v8::PROHIBITS_OVERWRITING,
-                                        attribute );
-            }
-        }
-
-        /**
-           Implements the v8::AccessorGetter interface to bind a JS
-           member property to a native getter function. This function
-           can be used as the getter parameter to
-           v8::ObjectTemplate::SetAccessor().
-
-           Sig must be a function-signature-style type and Getter must
-           capable of being called with no arguments and returning a
-           value which can be CastToJS() to a JS value.
-
-           If Getter() throws a native exception it is converted to a JS
-           exception.
-        */
-        template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> FunctionToAccesorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
-        {
-            try
-            {
-                return CastToJS( (*Getter)() );
-            }
-            catch( std::exception const & ex )
-            {
-                return ::v8::ThrowException( ::v8::String::New(ex.what()) );
-            }
-            catch( ... )
-            {
-                return ::v8::ThrowException( StringBuffer() << "Native value property getter '"
-                                             << property << "' threw an unknown native exception type!");
-            }
-        }
-
-        /**
-           Binds the templatized getter function to the given JS property of the
-           given prototype object, such that JS-side read access to the property
-           will return the value of that member function.
-
-           See FunctionToAccesorGetter() for the semantics of the Sig type.
-
-           If Getter() throws a native exception it is converted to a JS
-           exception.
-           
-           WEIRD: beware of this odd behaviour:
-
-           @code
-           BindGetterFunction<std::string // WEIRD: if i add () or (void) here,
-                                  // the template doesn't resolve!
-                      getSharedString>("sharedString", myProtoType);
-           @endcode
-
-        */
-        template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
-        static void BindGetterFunction( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-	    prototype->SetAccessor( v8::String::New( propName ),
-                                    FunctionToAccesorGetter<Sig,Getter> );
-	}
-
+        Marker class, primarily for documentation purposes.
         
+        This class models the v8::AccessorGetter interface, and
+        XyzToGetter classes inherit this type as a sign that they
+        implement this interface.
+        
+        This class has no implemention - it only exists for 
+        documentation purposes.
+    */
+    struct AccessorGetterType
+    {
         /**
-           Implements the v8::AccessorSetter interface to bind a JS
-           member property to a native getter function. This function
-           can be used as the getter parameter to
-           v8::ObjectTemplate::SetAccessor().
-
-           SigSet must be function-signature-style pattern
-           for the setter function. The native
-           function must follow conventional mutator signature:
-
-           ReturnType ( PropertyType )
-
-           PropertyType may differ from the return type. PropertyType
-           may not be void but the ReturnType may be. Any return value
-           from the setter is ignored by the JS engine.
-           
-           Note that the v8 API appears to not allow us to just set
-           a setter, but not a getter. We have to set a getter without
-           a setter, a getter with a setter, or neither. At least that's
-           been my experience.
-
-           If Setter() throws a native exception it is converted to a JS
-           exception.
-
+            The v8::AccessorGetter() interface.
         */
-        template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-        static void FunctionToAccesorSetter(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
-        {
-            try
-            {
-                typedef FunctionSignature<Sig> FT;
-                typedef Signature<Sig> STL;
-                (*Func)( CastFromJS<typename sl::At<0,STL>::Type>( value ) );
-            }
-            catch( std::exception const & ex )
-            {
-                ::v8::ThrowException( ::v8::String::New(ex.what()) );
-            }
-            catch( ... )
-            {
-                v8::ThrowException( StringBuffer() << "Native member property setter '"
-                                    << property << "' threw an unknown native exception type!");
-            }
-            return;
-        }
-
-        /**
-           Binds the given JS property to a pair of non-member
-           functions, such that these functions will be called in
-           place of get/set operations for the property.
-
-           SigGet and SigSet must be function-signature-style patterns
-           for the getter resp. setter functions. The native
-           functions must follow conventional accessor signatures:
-
-           - SigGet: PropertyType ()
-           - SigSet: AnyType ( PropertyType )
-
-           For the setter, PropertyType may differ from the return
-           type. PropertyType may not be void but the AnyType may
-           be. Any return value from the setter is ignored by the JS
-           engine.
-
-           If Getter() or Setter() throw a native exception it is
-           converted to a JS exception.
-           
-           Example:
-
-           @code
-           std::string getSharedString();
-           void setSharedString(std::string const &);
-           ...
-           PropertyBinder::BindGetterSetterFunctions<std::string (),
-                                            getSharedString,
-                                            void (std::string const &),
-                                            setSharedString>
-                                            ("sharedString", prototypeObject);
-           @endcode
-        */
-        template <typename SigGet,
-                  typename FunctionSignature<SigGet>::FunctionType Getter,
-                  typename SigSet,
-                  typename FunctionSignature<SigSet>::FunctionType Setter
-            >
-        static void BindGetterSetterFunctions( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-            if( ! prototype.IsEmpty() )
-            prototype->SetAccessor( v8::String::New( propName ),
-                                    FunctionToAccesorGetter<SigGet,Getter>,
-                                    FunctionToAccesorSetter<SigSet,Setter> );
-	}
-       
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info);
     };
 
     /**
-       A helper class for binding JS properties to native code, in particular
-       for when JS objects are bound to native T objects.
+        Marker class, primarily for documentation purposes.
+        
+        This class models the v8::AccessorSetter interface, and
+        XyzToSetter classes inherit this type as a sign that they
+        implement this interface.
+        
+        This class has no implemention - it only exists for 
+        documentation purposes.
+    */
+    struct AccessorSetterType
+    {
+        /** The v8::AccessorSetter() interface. */
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
+    };
 
-       It contains utility functions to simplify the process of binding
-       JS properties to native member functions or native properties.
+    /**
+       This template create an v8::AccessorGetter from a static/shared
+       variable.
+
+       SharedVar must be pointer to a static variable and must not
+       be NULL.
+
+       CastToJS(*SharedVar) must be legal.
+    */
+    template <typename PropertyType, PropertyType * const SharedVar>
+    struct VarToGetter : AccessorGetterType
+    {
+        /** Implements the v8::AccessorGetter() interface. */
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        {
+            return CastToJS( *SharedVar );
+        }
+    };
+
+    /**
+       The setter counterpart of StaticVarToGetter().
+
+       SharedVar must be pointer to a static variable and must not
+       be NULL.
+
+       (*SharedVar = CastFromJS<PropertyType>()) must be legal.
        
+       Reminder: this is not included in the StaticVarToGetter 
+       template so that we can avoid either the Get or Set 
+       conversion for cases where it is not legal (or not desired). 
+       If they were both in one class, both Get and Set would _have_ 
+       to be legal.
+    */
+    template <typename PropertyType, PropertyType * const SharedVar>
+    struct VarToSetter : AccessorSetterType
+    {
+        /** Implements the v8::AccessorSetter() interface. */
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        {
+            *SharedVar = CastFromJS<PropertyType>( value );
+        }
+    };
+
+    /**
+        A proxy for both VarToGetter and VarToSetter, providing both
+        Get() and Set() functions.
+    */
+    template <typename PropertyType, PropertyType * const SharedVar>
+    struct VarToAccessors : VarToGetter<PropertyType,SharedVar>,
+                            VarToSetter<PropertyType,SharedVar>
+    {};
+
+    /**
+       This template creates a v8::AcessorGetter which binds directly to
+       a non-const native class member variable.
+
        Requirements:
 
-       - T must be of class type.
+       - T must be convertible to (T*) via CastFromJS<T>().
+       - MemVar must be an accessible member of T.
+       - PropertyType must be convertible via CastToJS<PropertyType>().
 
-       - JSToNative<T> must be implemented for T.
-
-       - TypeInfo<T>::NativeHandle must be usable in a boolean context
-       to determine whether the JS-to-Native converted object is null
-       or not.
-
-       - The JS class to which members are bound using this approach
-       must be set up so that it is actually wrapping T objects.
-       i.e. this class only works with "fully bound" native classes,
-       and not with arbitrary JS objects.
+       If the underlying native 'this' object cannot be found (that
+       is, if CastFromJS<T>() fails) then this routine will
+       trigger a JS exception.
     */
-    template <typename T>
-    class MemberPropertyBinder : public PropertyBinder
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberToGetter : AccessorGetterType
     {
-    public:
-        typedef typename TypeInfo<T>::Type Type;
-        typedef typename JSToNative<T>::ResultType NativeHandle;
-
-        /**
-           This template can be used as an argument to
-           v8::ObjectTemplate::SetAccessor()'s Getter parameter to
-           generically tie a native member variable to a named JS
-           property.
-
-           Requirements:
-
-           - Type must be convertible to NativeHandle via CastFromJS<NativeHandle>().
-
-           - PropertyType must be convertible via CastToJS<PropertyType>().
-
-           If the underlying native This object cannot be found (that
-           is, if CastFromJS<NativeHandle>() fails) then this routine will
-           trigger a JS exception.
-
-           Example:
-
-           Assume we have a native type Foo with a std::string member
-           called str. We can bind the member variable with:
-
-           \code
-           myObjectTemplate.SetAccessor(String::New("foo"),
-           MemberToAccessorGetter<Foo,std::string,&Foo::str>,
-           MemberToAccessorSetter<Foo,std::string,&Foo::str> );
-           \endcode
-
-           In 10 years of C++ coding, this is the first time i've ever
-           had a use for a pointer-to-member.
-        */
-        template <typename PropertyType, PropertyType Type::*MemVar>
-        static v8::Handle<v8::Value> MemberToAccessorGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        /** Implements the v8::AccessorGetter() interface. */
+        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
-            NativeHandle self = CastFromJS<NativeHandle>( info.This() );
-            if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                                    << property << "' could not access native This object!" );
-            try
-            {
-                return CastToJS( (self->*MemVar) );
-            }
-            catch( std::exception const & ex )
-            {
-                return CastToJS( ex );
-            }
-            catch( ... )
-            {
-                return ::v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                             << property << "' threw an unknown native exception type!");
-            }
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle self = CastFromJS<T>( info.This() );
+            return ( ! self )
+                ? Toss( StringBuffer() << "Native member property getter '"
+                        << property << "' could not access native 'this' object!" )
+                : CastToJS( (self->*MemVar) );
         }
+    };
 
-        /**
-           This is the Setter counterpart of MemberToAccessorGetter(). See
-           that function for most of the details.
+    /**
+       This is the Setter counterpart of MemberToGetter.
 
-           Requirements:
+       Requirements:
 
-           - MemVar must be an accessible member of Type.
-           - PropertyType must be convertible via CastFromJS<PropertyType>().
+       - T must be convertible to (T*) via CastFromJS<T>().
+       - PropertyType must be convertible via CastToJS<PropertyType>().
+       - MemVar must be an accessible member of T.
 
-           If the underlying native This object cannot be found then this
-           routine will trigger a JS exception, though it is currently
-           unclear whether this is actually legal in v8 (and difficult to
-           test, since the native bindings work so well ;).
-        */
-        template <typename PropertyType, PropertyType Type::*MemVar>
-        static void MemberToAccessorSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+       If the underlying native This object cannot be found then this
+       routine will trigger a JS exception.
+    */
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberToSetter : AccessorSetterType
+    {
+        /** Implements the v8::AccessorSetter() interface. */
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
-            NativeHandle self = CastFromJS<NativeHandle>( info.This() );
-            if( self )
-            {
-                self->*MemVar = CastFromJS<PropertyType>( value );
-            }
-            else
-            {
-                v8::ThrowException( StringBuffer() << "Native member property setter '"
-                                    << property << "' could not access native This object!" );
-            }
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle self = CastFromJS<T>( info.This() );
+            if( self ) self->*MemVar = CastFromJS<PropertyType>( value );
+            else Toss( StringBuffer() << "Native member property setter '"
+                        << property << "' could not access native 'this'his object!" );
         }
+    };
 
+    /**
+        A proxy for both MemberToGetter and MemberToSetter, providing both
+        Get() and Set() functions.
         
-        /**
-           Binds automatically-generated getter/setter functions to the given
-           member variable. See MemberToAccessorGetter() and MemberToAccessorSetter()
-           for the requirements of the templatized types.
-
-           If you only want to bind one of the getter OR the setter then
-           use the 5-argument variant of Set() instead and pass MemberToAccessorGetter<>
-           or MemberToAccessorGetter<>, as appropriate, to that function.
-        */
-        template <typename VarType, VarType Type::*MemVar>
-        static void BindMemVar( char const * name,
-                                v8::Handle<v8::ObjectTemplate> const & prototype,
-                                v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                v8::PropertyAttribute attribute = v8::DontDelete
-                         )
+        This should be called MembersToAccessors (plural Members).
+    */
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberToAccessors : MemberToGetter<T,PropertyType,MemVar>,
+                               MemberToSetter<T,PropertyType,MemVar>
+    {};
+    
+    /**
+       An AccessorSetter() implementation which always triggers a JS exception.
+       Can be used to enforce "pedantically read-only" variables. Note that
+       JS does not allow us to assign an AccessorSetter _without_ assigning
+       an AccessorGetter. Also note that there is no AccessorGetterThrow,
+       because a write-only var doesn't make all that much sense (use
+       methods for those use cases).
+    */
+    struct ThrowingSetter : AccessorSetterType
+    {
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
-            if( ! prototype.IsEmpty() )
-            {
-                prototype->SetAccessor( v8::String::New(name),
-                                        MemberToAccessorGetter<VarType,MemVar>,
-                                        MemberToAccessorSetter<VarType,MemVar>,
-                                        v8::Handle< v8::Value >(),
-                                        settings,
-                                        attribute );
-            }
+             Toss(StringBuffer() <<
+                  "Native member property setter '"
+                  << property
+                  << "' is configured to throw an exception when modifying "
+                  << "this read-only member!");
         }
+    };
 
-        /**
-           Binds the given JS property to MemVar, such that read/get
-           operations will work but write/set operations will be
-           ignored (that is, will not affect the value returned by the
-           getter).
+    /**
+       Implements the v8::AccessorGetter interface to bind a JS
+       member property to a native getter function. This function
+       can be used as the getter parameter to
+       v8::ObjectTemplate::SetAccessor().
 
-           The throwOnSet parameter installs a custom setter which,
-           when triggered, always throws a JS exception. If this value
-           is false, no setter will be installed (and see the notes
-           below). If you want v8-specified behaviours, pass false
-           for this value.
-           
-           Achtung: the JS engine exhibits the following, slightly
-           unintuitive behaviour, for values bound in this way. Assume
-           that we have bound an integer member to JS with the name
-           "roVar" and we do the following in JS:
+       Sig must be a function-signature-style type and Getter must
+       capable of being called with no arguments and returning a
+       value which can be CastToJS() to a JS value.
 
-           @code
-           ++myobj.roVar;
-           @endcode
-
-           The return value of that statement is actually the
-           incremented value, but myobj.roVar is not actually modified
-           and its accessor-setter is not called. Since the exact
-           semantics of things like how native accessor proxies work
-           are an unspecified part of the ECMAScript standard, we
-           cannot complain that what v8 does here is "wrong" (it could
-           arguably throw a JS exception in that case).
-        */
-        template <typename VarType, VarType Type::*MemVar>
-        static void BindMemVarRO( char const * name,
-                                  v8::Handle<v8::ObjectTemplate> const & prototype,
-                                  bool throwOnSet = false,
-                                  v8::AccessControl settings = v8::PROHIBITS_OVERWRITING,
-                                  v8::PropertyAttribute attribute = v8::DontDelete )
+       If Getter() throws a native exception it is converted to a JS
+       exception.
+    */
+    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
+    struct FunctionToGetter : AccessorGetterType
+    {
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
-            if( ! prototype.IsEmpty() )
-            {
-                prototype->SetAccessor( v8::String::New(name),
-                                        MemberToAccessorGetter<VarType,MemVar>,
-                                        throwOnSet ? AccessorSetterThrow : (v8::AccessorSetter)NULL,
-                                        v8::Handle< v8::Value >(),
-                                        settings,
-                                        attribute );
-            }
+            return CastToJS( (*Getter)() );
         }
-        /**
-           Implements the v8::AccessorGetter interface to bind a JS
-           member property to a native getter function. This function
-           can be used as the getter parameter to
-           v8::ObjectTemplate::SetAccessor().
+    };
+       
+    /**
+       Implements the v8::AccessorSetter interface to bind a JS
+       member property to a native getter function. This function
+       can be used as the getter parameter to
+       v8::ObjectTemplate::SetAccessor().
 
-           Sig must be a function-pointer-style argument with a
-           non-void return type convertible to v8 via CastToJS(), and
-           Getter must be function capable of being called with 0
-           arguments (either because it has none or they have
-           defaults).
-        */
-        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> MethodToAccessorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+       SigSet must be function-signature-style pattern
+       for the setter function. The native
+       function must follow conventional mutator signature:
+
+       ReturnType ( PropertyType )
+
+       PropertyType may differ from the return type. PropertyType
+       may not be void but the ReturnType may be. Any return value
+       from the setter is ignored by the JS engine.
+
+       Note that the v8 API appears to not allow us to just set
+       a setter, but not a getter. We have to set a getter without
+       a setter, a getter with a setter, or neither. At least that's
+       been my experience.
+
+       If Setter() throws a native exception it is converted to a JS
+       exception.
+    */
+    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
+    struct FunctionToSetter : AccessorSetterType
+    {
+        static void Set( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
-            NativeHandle self = CastFromJS<NativeHandle>( info.This() );
-            if( ! self ) return v8::ThrowException( StringBuffer() << "Native member property getter '"
-                                                    << property << "' could not access native This object!" );
-            try
-            {
-                return CastToJS( (self->*Getter)() );
-            }
-            catch( std::exception const & ex )
-            {
-                return CastToJS(ex);
-            }
-            catch( ... )
-            {
-                return Toss( (StringBuffer() << "Native member property getter '"
-                             << property
-                             << "' threw an unknown native exception type!"
-                             ).toError() );
-            }
+            typedef FunctionSignature<Sig> FT;
+            (*Func)( CastFromJS<typename sl::At<0,FT>::Type>( value ) );
         }
+    };
 
-        /**
-           Overload for const native getter functions.
-        */
-        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
-        static v8::Handle<v8::Value> ConstMethodToAccessorGetter( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+
+    /**
+       Implements the v8::AccessorGetter interface to bind a JS
+       member property to a native getter function. This function
+       can be used as the getter parameter to
+       v8::ObjectTemplate::SetAccessor().
+
+       Sig must be a function-pointer-style argument with a
+       non-void return type convertible to v8 via CastToJS(), and
+       Getter must be function capable of being called with 0
+       arguments (either because it has none or they have
+       defaults).
+    */
+    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
+    struct MethodToGetter : AccessorGetterType
+    {
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
-            NativeHandle const self = CastFromJS<NativeHandle>( info.This() );
-            if( ! self ) return Toss( (StringBuffer() << "Native member property getter '"
-                                       << property << "' could not access native This object!").toError() );
-            try
-            {
-                return CastToJS( (self->*Getter)() );
-            }
-            catch( std::exception const & ex )
-            {
-                return CastToJS(ex);
-            }
-            catch( ... )
-            {
-                return Toss( (StringBuffer()
-                             << "Native member property getter '"
-                             << property
-                             << "' threw an unknown native exception type!"
-                             ).toError());
-            }
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle self = CastFromJS<T>( info.This() );
+            return self
+                ? CastToJS( (self->*Getter)() )
+                : Toss( StringBuffer() << "Native member property getter '"
+                      << property << "' could not access native This object!" );
         }
+    };
 
-        /**
-            Implements v8::AccessorSetter interface to proxy a JS
-            member property through a native member setter function.
-
-            This function can be used as the setter parameter to
-            v8::ObjectTemplate::SetAccessor().
-
-            Sig must be a function-pointer-style type and Getter must
-            be a T member function of that type. The function must be
-            capable of being called with only 1 argument (either
-            because it only accepts 1 or has defaults for the others),
-            and its return value is discarded (not converted to v8)
-            because that's how v8's native setters work.
-
-            Exceptions thrown by the underlying function are
-            translated to JS exceptions.
-        */
-        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
-        static void MethodToAccessorSetter(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+   /**
+       Overload for const native getter functions.
+    */
+    template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
+    struct ConstMethodToGetter : AccessorGetterType
+    {
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle const self = CastFromJS<T>( info.This() );
+            return self
+                ? CastToJS( (self->*Getter)() )
+                : Toss( (StringBuffer() << "Native member property getter '"
+                       << property << "' could not access native This object!").toError() )
+               ;
+        }
+    };
+    
+    /**
+        Implements v8::AccessorSetter interface to proxy a JS
+        member property through a native member setter function.
+
+        This function can be used as the setter parameter to
+        v8::ObjectTemplate::SetAccessor().
+
+        Sig must be a function-pointer-style type and Getter must
+        be a T member function of that type. The function must be
+        capable of being called with only 1 argument (either
+        because it only accepts 1 or has defaults for the others),
+        and its return value is discarded (not converted to v8)
+        because that's how v8's native setters work.
+
+        Exceptions thrown by the underlying function are
+        translated to JS exceptions.
+        
+        FIXME: code is 100% identical to ConstMethodToSetter except 
+        for FunctionType typedef. Consolidate them in a base class.
+    */
+    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
+    struct MethodToSetter : AccessorSetterType
+    {
+        static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        {
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
             NativeHandle self = CastFromJS<NativeHandle>( info.This() );
             if( ! self )
             {
-                v8::ThrowException( StringBuffer() << "Native member property setter '"
-                                    << property << "' could not access native This object!" );
-                return;
+                Toss( StringBuffer() << "Native member property setter '"
+                     << property << "' could not access native This object!" );
             }
-            else try
+            else
             {
 
                 typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
                 (self->*Setter)( CastFromJS<ArgT>( value ) );
             }
-            catch( std::exception const & ex )
-            {
-                CastToJS(ex);
-            }
-            catch( ... )
-            {
-                ::v8::ThrowException( StringBuffer() << "Native member property setter '"
-                                      << property << "' threw an unknown native exception type!");
-            }
             return;
+        }
+    };
+
+    /**
+        Const-method equivalent of MethodToSetter.
+    
+        FIXME: code is 100% identical to ConstMethodToSetter except 
+        for FunctionType typedef. Consolidate them in a base class.
+    */
+    template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Setter>
+    struct ConstMethodToSetter : AccessorSetterType
+    {
+        static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        {
+            typedef typename TypeInfo<T>::Type Type;
+            typedef typename JSToNative<T>::ResultType NativeHandle;
+            NativeHandle self = CastFromJS<NativeHandle>( info.This() );
+            if( ! self )
+            {
+                Toss( StringBuffer() << "Native member property setter '"
+                     << property << "' could not access native This object!" );
+            }
+            else
+            {
+                typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
+                (self->*Setter)( CastFromJS<ArgT>( value ) );
+            }
+        }
+    };
+
+    /**
+        SetterCatcher is the AccessorSetter equivalent of InCaCatcher, and
+        is functionality identical except that its 4th template parameter
+        must be-a AccessorSetterType instead of an InCa type.
+    */
+    template < typename ExceptionT,
+               typename SigGetMsg,
+               typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+               typename SetterT,
+               bool PropagateOtherExceptions = false
+    >
+    struct SetterCatcher : AccessorSetterType
+    {
+        static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        {
+            try
+            {
+                SetterT::Set( property, value, info );
+            }
+            catch( ExceptionT const & e2 )
+            {
+                Toss((e2.*Getter)());
+            }
+            catch( ExceptionT const * e2 )
+            {
+                Toss((e2->*Getter)());
+            }
+            catch(...)
+            {
+                if( PropagateOtherExceptions ) throw;
+                else Toss("Unknown native exception thrown!");
+            }
+        }
+    };
+
+    /**
+        A convenience form of SetterCatcher which catches std::exception
+        and subtyes. See InCaCatcher_std for full details - this type is
+        identical except that its first template parameter must be-a
+        AccessorSetterType instead of InCa type.
+    */
+    template <
+            typename SetterT,
+            typename ConcreteException = std::exception,
+            bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
+    >
+    struct SetterCatcher_std :
+        SetterCatcher<ConcreteException,
+                      char const * (),
+                      &ConcreteException::what,
+                      SetterT,
+                      PropagateOtherExceptions
+                    >
+    {};
+
+    /**
+        GetterCatcher is the AccessorSetter equivalent of InCaCatcher, and
+        is functionality identical except that its 4th template parameter
+        must be-a AccessorGetterType instead of an InCa type.
+    */
+    template < typename ExceptionT,
+               typename SigGetMsg,
+               typename ConstMethodSignature<ExceptionT,SigGetMsg>::FunctionType Getter,
+               typename GetterT,
+               bool PropagateOtherExceptions = false
+    >
+    struct GetterCatcher : AccessorGetterType
+    {
+        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        {
+            try
+            {
+                return GetterT::Get( property, info );
+            }
+            catch( ExceptionT const & e2 )
+            {
+                return Toss(CastToJS((e2.*Getter)()));
+            }
+            catch( ExceptionT const * e2 )
+            {
+                return Toss(CastToJS((e2->*Getter)()));
+            }
+            catch(...)
+            {
+                if( PropagateOtherExceptions ) throw;
+                else return Toss("Unknown native exception thrown!");
+            }
+        }
+    };
+
+    /**
+        A convenience form of GetterCatcher which catches std::exception
+        and subtyes. See InCaCatcher_std for full details - this type is
+        identical except that its first template parameter must be-a
+        AccessorGetterType instead of InCa type.
+    */
+    template <
+            typename GetterT,
+            typename ConcreteException = std::exception,
+            bool PropagateOtherExceptions = !tmp::SameType< std::exception, ConcreteException >::Value
+    >
+    struct GetterCatcher_std :
+        GetterCatcher<ConcreteException,
+                      char const * (),
+                      &ConcreteException::what,
+                      GetterT,
+                      PropagateOtherExceptions
+                    >
+    {};
+
+
+    /**
+        AccessAdder is a convenience class for use when applying several
+        (or more) accessor bindings to a prototype object.
+            
+        Example:
+        
+        @code
+        AccessorAdder acc(myPrototype);
+        acc("foo", MemberToGetter<MyType,int,&MyType::anInt>(),
+                   MemberToSetter<MyType,int,&MyType::anInt>())
+           ("bar", ConstMethodToGetter<MyType,int(),&MyType:getInt>(),
+                   MethodToSetter<MyType,void(int),&MyType:setInt>())
+           ...
+           ;
+        @endcode
+    */
+    class AccessorAdder
+    {
+    private:
+        v8::Handle<v8::ObjectTemplate> const & proto;
+    public:
+        /**
+            Initializes this object so that calls to operator() will
+            apply to p. p must out-live this object. More specifically,
+            operator() must not be called after p has been destroyed.
+        */
+        explicit AccessorAdder( v8::Handle<v8::ObjectTemplate> const & p )
+            : proto(p)
+        {}
+
+        /**
+            Adds GetterT::Get and SetterT::Set as accessors for the 
+            given property in the prototype object.
+            
+            GetterT must be-a AccessorGetterType. SetterT must be-a 
+            AccessorSetterType. Note that their values are not used, 
+            but GetterT::Get and SetterT::Set are used 
+            directly. The objects are only passed in to keep the 
+            client from having to specify them as template 
+            parameters (which is clumsy for operator()), as their 
+            types can be deduced. 
+            
+            The 3rd and higher arguments are as documented (or not!)
+            for v8::ObjectTemplate::SetAccessor().
+            
+            Returns this object, for chaining calls.
+        */
+        template <typename GetterT, typename SetterT>
+        AccessorAdder const & operator()( char const * name,
+                                          GetterT const &,
+                                          SetterT const &,
+                                          v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
+                                          v8::AccessControl settings=v8::DEFAULT,
+                                          v8::PropertyAttribute attribute=v8::None) const
+        {
+            proto->SetAccessor(v8::String::New(name), GetterT::Get, SetterT::Set, data, settings, attribute);
+            return *this;
         }
 
         /**
-           Binds the given JS property to a pair of T member
-           functions, such that these functions will be called in
-           place of get/set operations for the property.
-
-           See the inherited BindGetterSetterFunctions() for the full
-           details. This function is identical except that it maps
-           member functions.
+            Like operator(), but only sets a getter - no setter is defined. i can't overload
+            operator() with this due to ambiguities.
         */
-        template <typename SigGet,
-                  typename ConstMethodSignature<T,SigGet>::FunctionType Getter,
-                  typename SigSet,
-                  typename MethodSignature<T,SigSet>::FunctionType Setter
-            >
-        static void BindGetterSetterMethods( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-            if( ! prototype.IsEmpty() )
-                prototype->SetAccessor( v8::String::New( propName ),
-                                        ConstMethodToAccessorGetter<SigGet,Getter>,
-                                        MethodToAccessorSetter<SigSet,Setter>
-                                        );
-	}
-
-        /**
-           Equivalent to BindGetterSetterMethods() but takes a
-           non-const getter. Member setter functions are not, by
-           nature, const. This function has a different name than
-           BindGetterSetterMethods() because MSVC cannot distinguish
-           between templates which differ only in constness.
-        */
-        template <typename SigGet,
-                  typename MethodSignature<T,SigGet>::FunctionType Getter,
-                  typename SigSet,
-                  typename MethodSignature<T,SigSet>::FunctionType Setter
-            >
-        static void BindNonConstGetterSetterMethods( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-            if( ! prototype.IsEmpty() )
-                prototype->SetAccessor( v8::String::New( propName ),
-                                        MethodToAccessorGetter<SigGet,Getter>,
-                                        MethodToAccessorSetter<SigSet,Setter>
-                                        );
-	}
-
-        
-
-        /**
-           Binds the templatized getter function to the given JS property of the
-           given prototype object, such that JS-side read access to the property
-           will return the value of that member function.
-
-           Sig must be a function-pointer-style function signature and Getter must be
-           a non-const T member function matching that signature.
-         */
-        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
-        static void BindGetterMethod( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-	    prototype->SetAccessor( v8::String::New( propName ),
-                                    MethodToAccessorGetter<Sig,Getter> );
-	}
-        /**
-           Overload too support const getters.
-        */
-        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
-        static void BindGetterConstMethod( char const * propName, v8::Handle<v8::ObjectTemplate> const & prototype )
-	{
-	    prototype->SetAccessor( v8::String::New( propName ),
-                                    MethodToAccessorGetter<Sig,Getter> );
-	}
-
+        template <typename GetterT>
+        AccessorAdder const & Getter( char const * name,
+                                      GetterT const &,
+                                      v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
+                                      v8::AccessControl settings=v8::DEFAULT,
+                                      v8::PropertyAttribute attribute=v8::None) const
+        {
+            proto->SetAccessor(v8::String::New(name), GetterT::Get, NULL, data, settings, attribute);
+            return *this;
+        }
     };
+
+#if 0 /* i'm still undecided on the in-class naming conventions here... */
+    /**
+        ClassAccessor provides a slight simplification for cases 
+        where several different members/methods of a given bound 
+        class (T) need to be bound to v8. It wraps the following 
+        classes so that clients can use them one fewer template 
+        parameters:
+        
+        MemberToGetter, MemberToSetter, MethodToGetter, MethodToSetter, 
+        ConstMethodToGetter, ConstMethodToSetter
+        
+        Example:
+        
+        @code
+        typedef ClassAccessor<MyType> CA;
+        v8::AccessorGetter get;
+        
+        get = MemberToGetter<MyType, int, &MyType::anInt>::Get
+        // is equivalent to:
+        get = CA::MemGet<int, &MyType::anInt>::Set
+        @endcode
+        
+        Its only real benefit is saving a bit of typing when several T
+        member/method bindings are made and T's real type has a name
+        longer than 'T'.
+    */
+    template <typename T>
+    struct ClassAccessor
+    {
+        template <typename PropertyType, PropertyType T::*MemVar>
+        struct MemGet : MemberToGetter<T, PropertyType, MemVar> {};
+        template <typename PropertyType, PropertyType T::*MemVar>
+        struct MemSet : MemberToSetter<T, PropertyType, MemVar> {};
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
+        struct MethGet : MethodToGetter<T,Sig,Getter> {};
+        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
+        struct CMethGet : ConstMethodToGetter<T,Sig,Getter> {};
+        template <typename Sig, typename MethodSignature<T,Sig>::FunctionType Setter>
+        struct MethSet : MethodToSetter<T,Sig,Setter> {};
+        template <typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Setter>
+        struct CMethSet : ConstMethodToSetter<T,Sig,Setter> {};
+    };
+#endif /* ClassAccessor */
 
 } // namespaces
 /** LICENSE

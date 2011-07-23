@@ -7,6 +7,7 @@ test "$count" -gt 0 || {
     echo "Usage: $0 NUMBER (>=1) COMMAND(s)"
 cat <<EOF
 Commands:
+  CtorForwarder
   FunctionSignature
   MethodSignature
   ConstMethodSignature
@@ -29,6 +30,7 @@ castTypedefs="" # typedef ArgCaster<A#> AC#, ...
 castInits="" # AC# ac#; ...
 callArgs="" # a0, ... aN
 sigTypeDecls="" # SignatureType::ArgType# A#...
+unlocker="V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );"
 at=0
 
 ########################################################
@@ -81,12 +83,12 @@ function makeCtorForwarder()
 
     mycat <<EOF
 namespace Detail {
-template <>
-struct CtorForwarderProxy<${count}>
+template <typename Sig>
+struct CtorForwarderProxy<Sig,${count}>
 {
     enum { Arity = ${count} };
-    template <typename Sig>
-    static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+    typedef typename Signature<Sig>::ReturnType ReturnType;
+    static ReturnType Call( v8::Arguments const & argv )
     {
         if( argv.Length() < Arity )
         {
@@ -94,11 +96,10 @@ struct CtorForwarderProxy<${count}>
         }
         else
         {
-            typedef typename Signature<Sig>::ReturnType Type_;
-            typedef typename TypeInfo<Type_>::Type Type;
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
+            typedef typename TypeInfo<ReturnType>::Type Type;
             return new Type( ${castCalls} );
         }
     }
@@ -124,7 +125,6 @@ template <typename RV, ${aTDecl} >
 struct FunctionSignature< RV (*)(${aTParam}) >
   : FunctionSignature< RV (${aTParam}) >
 {};
-
 EOF
 }
 
@@ -148,18 +148,6 @@ struct MethodSignature< T, RV (T::*)(${aTParam}) > :
     MethodSignature< T, RV (${aTParam}) >
 {};
 
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (${aTParam}) const > : Signature< RV (T::*)(${aTParam}) const >
-{
-    enum { IsConst = 1 };
-};
-template <typename T, typename RV, ${aTDecl} >
-struct MethodSignature< T, RV (T::*)(${aTParam}) const > :
-    MethodSignature< T, RV (${aTParam}) const >
-{};
-#endif /*CVV8_CONFIG_ENABLE_CONST_OVERLOADS*/
-
 EOF
 }
 
@@ -168,33 +156,15 @@ EOF
 # TODO: move this into makeMethodSignature.
 function makeConstMethodSignature()
 {
-# reminder: role of const overloading is reversed for ConstMethodSignature.
     mycat <<EOF
 template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) const > :
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-    Signature< RV (T::*)(${aTParam}) const > {};
-#else
-    Signature< RV (T::*)(${aTParam}) >
-{
-    //enum { IsConst = 1 };
-    static const bool IsConst = true;
-    typedef RV (T::*FunctionType)(${aTParam}) const;
-};
-#endif
-
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename T, typename RV, ${aTDecl} >
-struct ConstMethodSignature< T, RV (${aTParam}) > : ConstMethodSignature< T, RV (${aTParam}) const >
+struct ConstMethodSignature< T, RV (${aTParam}) > : Signature< RV (T::*)(${aTParam}) const >
 {
 };
-#endif
-
 template <typename T, typename RV, ${aTDecl} >
 struct ConstMethodSignature< T, RV (T::*)(${aTParam}) const > :
-    ConstMethodSignature< T, RV (${aTParam}) const >
+    ConstMethodSignature< T, RV (${aTParam}) >
 {};
-
 EOF
 
 }
@@ -219,7 +189,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> const unlocker();
+            ${unlocker}
             return (ReturnType)(*func)( ${castCalls} );
         }
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
@@ -240,7 +210,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> const unlocker();
+            ${unlocker}
             return (ReturnType)(*func)( ${castCalls} );
         }
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
@@ -280,7 +250,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> const unlocker();
+            ${unlocker}
             return (ReturnType)(self.*func)( ${castCalls} );
         }
         static ${ValHnd} Call( T ${constness} & self, FunctionType func, v8::Arguments const & argv )
@@ -313,7 +283,7 @@ namespace Detail {
             ${sigTypeDecls}
             ${castTypedefs}
             ${castInits}
-            V8Unlocker<UnlockV8> const unlocker();
+            ${unlocker}
             return (ReturnType)(self.*func)( ${castCalls} );
         }
         static ${ValHnd} Call( T ${constness} & self, FunctionType func, v8::Arguments const & argv )

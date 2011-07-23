@@ -269,7 +269,7 @@ function testCopyDb() {
 
 function testUnclosedHandles() {
     var count = 3;
-    var db = 1 ? new JSPDO('sqlite3::memory:') : App.drv;
+    var db = new JSPDO('sqlite3::memory:');
     print("Testing closing of danging statement handles...");
     try {
         for( var i = 0; i < count; ++i ) {
@@ -281,7 +281,7 @@ function testUnclosedHandles() {
     finally {
         print("If JSPDO.enableDebug is on you should see several Statement dtors...");
         print("At the very least, it shouldn't crash during GC as a result of these leaked statements.");
-        if( App.drv !== db ) db.close();
+        db.close();
     }
 }
 
@@ -351,8 +351,6 @@ function testGzippedJSON()
     finally {
         if(st) st.finalize();
     }
-
-
 }
 
 try {
@@ -368,9 +366,8 @@ try {
     testExt_forEach();
     testExt_fetchAll();
     testCopyDb();
-    
     testGzippedJSON();
-    if( 0 && ('sqlite3' === App.drv.driverName) ) {
+    if( 1 ) {
         testUnclosedHandles();
     }
 }

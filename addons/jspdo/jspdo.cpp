@@ -2,7 +2,7 @@
 This file contains v8 bindings for the cpdo db abstraction layer
 (http://fossil.wanderinghorse.net/repos/cpdo/). We call it JSPDO.
 
-This file gives a fairly complete demonstration of what v8::convert's
+This file gives a fairly complete demonstration of what cvv8's
 class/function/method-binding mechanisms can do. In particular, it 
 demonstrates that we can bind 3rd-party C++ classes (in this case 
 from cpdo) which were not designed specifically for v8, and can 
@@ -78,18 +78,22 @@ namespace jspdo {
 }
 
 namespace cvv8 {
-    template <>
-    char const * TypeName<cpdo::driver>::Value = "JSPDO";
-    template <>
-    char const * TypeName<cpdo::statement>::Value = "Statement";
+    CVV8_TypeName_DECL((cpdo::driver));
+    CVV8_TypeName_DECL((cpdo::statement));
+    CVV8_TypeName_IMPL((cpdo::driver),"JSPDO");
+    CVV8_TypeName_IMPL((cpdo::statement),"Statement");
 
     // Various ClassCreator policy classes specialized for the native types
     // we are binding...
 
 #if 1
+    /** We don't really need the extra type-safety bits for Statement b/c
+        subclassing will never be an issue (b/c client code can't create
+        Statements directly (or it's not in the public API, anyway)).
+    */
     template <>
     struct ClassCreator_InternalFields<cpdo::statement>
-        : ClassCreator_InternalFields_Base<cpdo::statement,1,-1,0>
+        : ClassCreator_InternalFields_Base<cpdo::statement,3,0,1>
     {};
 #endif
     template <>
@@ -150,6 +154,12 @@ namespace jspdo {
     }
 #endif
 
+    /* The following plumbing is to map Statments to their owning
+       DBs. We do this to cover up for sloppy script code which does not
+       close statements before the db is closed (leading to undefined
+       behaviour). So we manage the relationships and try to DTRT.
+    */
+
     /**
         Map of cpdo::statement to their JS selves.
     */
@@ -207,6 +217,12 @@ namespace jspdo {
 
 namespace cvv8 {
 
+    typedef ClassCreator_InternalFields<cpdo::statement> CCI_Stmt;
+    const static char AssertStatementInternalFieldSanityCheck[ (CCI_Stmt::Count>2) ? 1 : -1 ] = {0};
+    enum {
+        //! The v8::Object internal field number to store the Driver-for-Statement mapping.
+        StatementDrvInternalField = CCI_Stmt::Count-1
+    };
 
     /**
         This specialization adds some plumbing to allow the framework
@@ -220,13 +236,15 @@ namespace cvv8 {
         static cpdo::driver const * getDriverForStmt( void const * self, v8::Handle<v8::Object> const & jsSelf )
         {
             typedef ClassCreator_InternalFields<cpdo::statement> CCI;
-            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(CCI::NativeIndex) );
+            v8::Handle<v8::Value> const & db( jsSelf->GetInternalField(StatementDrvInternalField) );
             cpdo::driver const * drv = cv::CastFromJS<cpdo::driver>( db );
-            if( 0 && !drv )
-            { // this happens when... not exactly sure...
+#if 0
+            if( !drv )
+            { // this happens during db.close() cleanup of "dangling" statements.
                 CERR << "Driver is NULL for cpdo::statement@"<<self<<'\n';
                 assert( 0 && "Driver is NULL!" );
             }
+#endif
             return drv;
         }
     public:
@@ -275,7 +293,7 @@ namespace cvv8 {
         v8::String::Utf8Value const u8v(sql);
         cpdo::statement * rc = drv->prepare( *u8v );
         typedef ClassCreator_InternalFields<cpdo::statement> CCI;
-        jsSelf->SetInternalField(CCI::NativeIndex,jdrv);
+        jsSelf->SetInternalField(StatementDrvInternalField,jdrv);
         jsSelf->Set(JSTR("sql"),sql);
         if( jspdo::IsDebugEnabled() )
         {
@@ -351,7 +369,7 @@ namespace cvv8 {
             jspdo::StmtMap::iterator sit(smap.begin());
             for( ; smap.end() != sit; ++sit )
             {
-                if( jspdo::IsDebugEnabled() )
+                if( jspdo::IsDebugEnabled() || enableDestructorDebug )
                 {
                     CERR << "JSPDO.close() is cleaning up a dangling/unclosed cpdo::statement@"<<(*sit).first<<'\n';
                 }
@@ -1115,36 +1133,35 @@ namespace cvv8 {
 #define CATCHER cv::InCaCatcher_std
             Handle<ObjectTemplate> const & stProto( wst.Prototype() );
             wst("finalize", WST::DestroyObjectCallback )
-                ("step", CATCHER< cv::ToInCa<ST, bool (),&ST::step> >::Call)
+                ("step", CATCHER< cv::MethodToInCa<ST, bool (),&ST::step> >::Call)
                 ("stepArray", CATCHER< cv::InCaToInCa<Statement_stepArray> >::Call)
                 ("stepObject", CATCHER< cv::InCaToInCa<Statement_stepObject> >::Call)
-                ("columnName", CATCHER< cv::ToInCa<ST, char const * (uint16_t),&ST::col_name> >::Call )
-                ("columnType", CATCHER< ToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
+                ("columnName", CATCHER< cv::MethodToInCa<ST, char const * (uint16_t),&ST::col_name> >::Call )
+                ("columnType", CATCHER< cv::MethodToInCa<ST, cpdo_data_type (uint16_t),&ST::col_type> >::Call )
                 ("get", CATCHER< cv::InCaToInCa<Statement_get> >::Call )
                 ("bind", CATCHER< cv::InCaToInCa<Statement_bind> >::Call)
-                ("reset", CATCHER< cv::ToInCa<ST, void (void),&ST::reset> >::Call)
+                ("reset", CATCHER< cv::MethodToInCa<ST, void (void),&ST::reset> >::Call)
                 ("toString", CATCHER< cv::InCaToInCa<Statement_toString> >::Call )
-                ("paramIndex", ToInCa<ST, uint16_t (char const *),&ST::param_index>::Call /* doesn't throw */ )
-                ("paramName", CATCHER<cv::ToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
+                ("paramIndex", MethodToInCa<ST, uint16_t (char const *),&ST::param_index>::Call /* doesn't throw */ )
+                ("paramName", CATCHER<cv::MethodToInCa<ST, char const *(uint16_t),&ST::param_name> >::Call )
                 ;
 
-            typedef cv::MemberPropertyBinder<ST> SPB;
-            v8::AccessorSetter const throwOnSet = SPB::AccessorSetterThrow;
+            v8::AccessorSetter const throwOnSet = ThrowingSetter::Set;
             //SPB::BindGetterMethod<std::string (),&ST::error_text>( "errorText", stProto );
             //SPB::BindGetterMethod<int (),&ST::error_code>( "errorCode", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
             stProto->SetAccessor(JSTR("errorCode"),
-                                 SPB::MethodToAccessorGetter<int (),&ST::error_code>,
+                                 MethodToGetter<ST, int (),&ST::error_code>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("errorText"),
-                                 SPB::MethodToAccessorGetter<std::string (),&ST::error_text>,
+                                 MethodToGetter<ST, std::string (),&ST::error_text>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnCount"),
-                                 SPB::MethodToAccessorGetter<uint16_t (),&ST::col_count>,
+                                 MethodToGetter<ST, uint16_t (),&ST::col_count>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("paramCount"),
-                                 SPB::MethodToAccessorGetter<uint16_t (),&ST::param_count>,
+                                 MethodToGetter<ST, uint16_t (),&ST::param_count>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
             // do not bind columnTypes for the time being because
@@ -1156,10 +1173,10 @@ namespace cvv8 {
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
             wdrv("close", WDRV::DestroyObjectCallback )
-                ("begin", CATCHER< cv::ToInCa<DRV,void (),&DRV::begin> >::Call )
-                ("commit", CATCHER< cv::ToInCa<DRV,void (),&DRV::commit> >::Call )
-                ("rollback", CATCHER< cv::ToInCa<DRV,void (),&DRV::rollback> >::Call)
-                ("exec", CATCHER< cv::ToInCa<DRV,void (std::string const &),&DRV::exec> >::Call)
+                ("begin", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::begin> >::Call )
+                ("commit", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::commit> >::Call )
+                ("rollback", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::rollback> >::Call)
+                ("exec", CATCHER< cv::MethodToInCa<DRV,void (std::string const &),&DRV::exec> >::Call)
                 ("prepare", CATCHER< cv::InCaToInCa<JSPDO_prepare> >::Call )
                 ("exec", CATCHER< cv::InCaToInCa<JSPDO_exec> >::Call )
                 ("lastInsertId",
@@ -1170,18 +1187,14 @@ namespace cvv8 {
                 ;
 #undef CATCHER
             
-            typedef cv::MemberPropertyBinder<DRV> PB;
-            //PB::BindGetterConstMethod<char const * (),&DRV::driver_name>( "driverName", dProto );
-            //PB::BindGetterMethod<std::string (),&DRV::error_text>( "errorText", dProto );
-            //PB::BindGetterMethod<int (),&DRV::error_code>( "errorCode", dProto );
             dProto->SetAccessor(JSTR("driverName"),
-                                PB::ConstMethodToAccessorGetter< char const * (),&DRV::driver_name >,
+                                cv::ConstMethodToGetter<DRV, char const * (),&DRV::driver_name >::Get,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorText"),
-                                PB::MethodToAccessorGetter< std::string (),&DRV::error_text >,
+                                cv::MethodToGetter<DRV, std::string (),&DRV::error_text >::Get,
                                 throwOnSet);
             dProto->SetAccessor(JSTR("errorCode"),
-                                PB::MethodToAccessorGetter< int (),&DRV::error_code >,
+                                cv::MethodToGetter<DRV, int (),&DRV::error_code >::Get,
                                 throwOnSet);
 
             ////////////////////////////////////////////////////////////////////////
@@ -1207,7 +1220,8 @@ namespace cvv8 {
             dCtor->Set( JSTR("driverList"), JSPDO_driverList() );
             dCtor->Set( JSTR("enableDebug"), v8::False() );
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
-            dCtor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::ToInCa< void, void (bool), setEnableDestructorDebug>::Call) );
+            dCtor->Set(JSTR("enableDestructorDebug"),
+                    cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, changing the semantics of step()'s return value

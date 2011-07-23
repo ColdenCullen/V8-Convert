@@ -15,7 +15,7 @@ function getCallLocation(framesBack){
 function assert(cond,msg)
 {
     if( ! cond ) {
-        var loc = getCallLocation(3);
+        var loc = getCallLocation(5);
         msg = 'Assertion failed in ['+loc.scriptName+
             '] at (or around) line '+
             loc.line+': '+

@@ -403,7 +403,12 @@ public:
     int setTimeoutMs( unsigned int ms );
 
 }/*JSSocket*/;
-    
+
+template <>
+struct TypeName<JSSocket>
+{
+    const static char * Value;
+};
 template <>
 struct ClassCreator_Factory<JSSocket>
 {

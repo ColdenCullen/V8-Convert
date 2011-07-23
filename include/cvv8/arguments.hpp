@@ -600,6 +600,29 @@ namespace cvv8 {
         }
     };
 
+    /**
+        Intended as a base class for a couple other
+        PredicatedXyz types.
+        
+        This type combines ArgumentsPredicate ArgPred and
+        CallT::Call() into one type, for template-based dispatching
+        purposes.
+        
+        ArgPred must be-a ArgumentsPredicate. CallT must
+        be a type having a static Call() function taking one
+        (v8::Arguments const &) and returning any type.
+        
+        This type uses subclassing instead of composition
+        to avoid having to specify the CallT::Call() return
+        type as an additional template parameter. i don't seem to 
+        be able to template-calculate it from here. We can't use
+        CallT::ReturnType because for most bindings that value
+        is different from its Call() return type. We will possibly
+        eventually run into a problem with the lack of a way
+        to get Call()'s return type.
+    */
+    template <typename ArgPred, typename CallT>
+    struct PredicatedInCaLike : ArgPred, CallT {};
 
     /**
         PredicatedInCa combines an ArgumentsPredicate functor
@@ -621,19 +644,7 @@ namespace cvv8 {
         into invocable_core.hpp.
     */
     template <typename ArgPred, typename InCaT>
-    struct PredicatedInCa : InCa, ArgumentsPredicate
-    {
-        /** Returns ArgPred()(argv). */
-        bool operator()( v8::Arguments const & argv ) const
-        {
-            return ArgPred()( argv );
-        }
-        /** Returns InCaT::Call(argv). */
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
-        {
-            return InCaT::Call(argv);
-        }
-    };
+    struct PredicatedInCa : PredicatedInCaLike<ArgPred, InCaT> {};
 
     /**
         This class creates an InvocationCallback which dispatches to one of an
@@ -651,7 +662,7 @@ namespace cvv8 {
         typedef PredicatedInCa< Argv_Length<2>, ToInCa<...> > Cb2;
         typedef PredicatedInCa< Argv_Length<3>, ToInCa<...> > Cb3;
         // Fallback impl for 0 or 4+ args:
-        typedef PredicatedInCa< Argv_True, InCa<my_invocation_callback> > CbN;
+        typedef PredicatedInCa< Argv_True, InCaToInCa<my_invocation_callback> > CbN;
         // Side note: this ^^^^^^^^^^^^^^ is the only known use for the
         // Argv_True predicate.
 
@@ -663,7 +674,8 @@ namespace cvv8 {
         @endcode
     */
     template <typename PredList>
-    struct PredicatedInCaDispatcher : InCa
+    struct PredicatedInCaDispatcher
+        : InCa
     {
         /**
             For each PredicatedInCa (P) in PredList, if P()(argv)
@@ -702,6 +714,76 @@ namespace cvv8 {
         }
     };
 
+    /**
+        The constructor counterpart of PredicatedInCa.
+        ArgPred must be an ArgumentsPredicate type and
+        FactoryT must be CtorForwarder or interface-compatible.
+        
+        We could probably have this take a signature instead of 
+        FactoryT, and wrap that signature in a CtorForwarder. That 
+        would which would simplify most client code but:
+        
+        a) ctor signatures are a bit kludgy.
+        
+        b) That would preclude the use of ctor-like factories which 
+        return subclasses of some base interface type (the 
+        parameterized type).
+    */
+    template <typename ArgPred, typename FactoryT>
+    struct PredicatedCtorForwarder
+        : PredicatedInCaLike<ArgPred, FactoryT> {};
+
+    /**
+        The constructor counterpart of PredicatedInCaDispatcher. PredList
+        must be a typelist of PredicatedCtorForwarder (or interface-compatible)
+        types.
+    */
+    template <typename PredList, typename ContextT = typename PredList::ReturnType>
+    struct PredicatedCtorDispatcher
+    {
+        typedef typename TypeInfo<typename PredList::ReturnType>::NativeHandle ReturnType;
+        /**
+            For each PredicatedCtorForwarder (P) in PredList, if P()(argv)
+            returns true then P::Call(argv) is returned, else the next
+            predicate in the list is tried.
+
+            If no predicates match then a JS-side exception will be triggered.
+        */
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            typedef typename PredList::Head Head;
+            typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
+                                            Argv_False,
+                                            Head>::Type Ftor;
+            typedef typename PredList::Tail Tail;
+            return ( Ftor()( argv ) )
+                ? Detail::CtorFwdDispatch<typename PredList::ReturnType,Head>::Call( argv )
+                : PredicatedCtorDispatcher<Tail,ContextT>::Call(argv);
+        }
+    };
+
+    //! End-of-list specialization.
+    template <typename ContextT>
+    struct PredicatedCtorDispatcher< tmp::NilType, ContextT > : Signature< ContextT * () >
+    {
+        typedef typename TypeInfo<ContextT>::NativeHandle ReturnType;
+        /**
+            Triggers a native exception explaining (in English text) that no
+            overloads could be matched to the given arguments.
+        */
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            StringBuffer os;
+            os <<"No predicates in the "
+               << "ctor argument dispatcher matched the given "
+               << "arguments (arg count="<<argv.Length()
+               << ").";
+            std::string const & str(os.Content());
+            throw std::runtime_error(str.c_str());
+            return NULL;
+        }
+
+    };
 }
 
 #endif

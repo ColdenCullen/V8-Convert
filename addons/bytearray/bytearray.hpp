@@ -165,6 +165,11 @@ namespace cvv8 {
            See gzip() for details about the return value.
         */
         v8::Handle<v8::Value> gunzip() const;
+
+        /** Returns true if this object appears to contain
+            gzipped data (we can only guess, though!).
+        */
+        bool isGzipped() const;
     private:
         static v8::Handle<v8::Value> indexedPropertyGetter(uint32_t index, const v8::AccessorInfo &info);
         static v8::Handle<v8::Value> indexedPropertySetter(uint32_t index, v8::Local< v8::Value > value, const v8::AccessorInfo &info);

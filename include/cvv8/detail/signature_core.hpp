@@ -2,31 +2,6 @@
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
 
-/** @def CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-
-If CVV8_CONFIG_ENABLE_CONST_OVERLOADS is defined to a false value
-then certain templates are not generated, or are generated slightly
-differently. The intention is to try to support MSVC, which reportedly
-cannot distinguish specializations between Template<T> and Template<T const>.
-That said, i this code pretty much relies on proper distinction of
-constness.
-
-Originally, ConstMethodSignature (and its various derivates) was split from
-MethodSignature to support MSVC, but i have since given up (in my soul, if
-not in the code) on making too much effort to coddle to it.
-
-By the way: the library is completely untested with
-CVV8_CONFIG_ENABLE_CONST_OVERLOADS=0.
-
-*/
-#if !defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS)
-#  if defined(_MSC_VER)
-#    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 0
-#  else
-#    define CVV8_CONFIG_ENABLE_CONST_OVERLOADS 1
-#  endif
-#endif
-
 namespace cvv8 {
 /** @file signature_core.hpp
 
@@ -311,11 +286,6 @@ struct Signature<RV (T::*)(v8::Arguments const &)> : Signature<RV (v8::Arguments
     typedef RV (Context::*FunctionType)(v8::Arguments const &);
 };
 
-#if CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-template <typename RV>
-struct Signature<RV (v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
-{
-};
 
 template <typename T, typename RV>
 struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arguments const &)>
@@ -324,7 +294,6 @@ struct Signature<RV (T::*)(v8::Arguments const &) const> : Signature<RV (v8::Arg
     typedef RV (Context::*FunctionType)(v8::Arguments const &) const;
     static const bool IsConst = true;   
 };
-#endif
 
 
 
@@ -441,39 +410,17 @@ struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
 {
 };
 
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
 template <typename T, typename RV >
-struct MethodSignature< T, RV () const > : Signature< RV () const >
-{
-    typedef typename tmp::PlainType<T>::Type Context;
-    typedef RV (Context::*FunctionType)() const;
-    enum { IsConst = 1 };
-};
-
-template <typename T, typename RV >
-struct MethodSignature< T, RV (T::*)() const > : MethodSignature<T, RV () const>
-{
-};
-#endif
-
-template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () const > : Signature< RV () >
+struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
 {
     typedef typename tmp::PlainType<T>::Type Context;
     typedef RV (Context::*FunctionType)() const;
     enum { IsConst = 1 };
 };
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV () const>
+struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T, RV ()>
 {
 };
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-// reminder: roles of const/non-const overloads are reversed for ConstMethodSignature
-template <typename T, typename RV >
-struct ConstMethodSignature< T, RV () > : ConstMethodSignature<T, RV () const >
-{
-};
-#endif
 
 
 /**

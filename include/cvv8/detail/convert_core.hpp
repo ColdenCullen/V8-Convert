@@ -80,6 +80,38 @@ namespace cvv8 {
     template <typename T>
     char const * TypeName<T>::Value = "T";
 
+    /** @def CVV8_TypeName_DECL
+
+        A convenience macro for declaring a TypeName specialization. X must
+        be a type name with extra wrapping parenthesis, e.g.:
+
+        @code
+        CVV8_TypeName_DECL((MyType))
+        @endcode
+
+        They are required so that we can also support template types with commas
+        in the names, e.g. (std::map<int,double>).
+
+        It must be called from inside the cvv8 namespace.
+    */
+#define CVV8_TypeName_DECL(X) template <> struct TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type > \
+    { const static char * Value; }
+
+    /** @def CVV8_TypeName_IMPL
+
+        The counterpart of CVV8_TypeName_DECL, this must be called from the
+        cvv8 namespace. The X argument is as documented for CVV8_TypeName_DECL
+        and the NAME argument must be a C string.
+
+        Example:
+
+        @code
+        CVV8_TypeName_IMPL((MyType),"MyType")
+        @endcode
+    */
+#define CVV8_TypeName_IMPL(X,NAME) char const * TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type >::Value = NAME
+
+
 #if 0
     template <typename T>
     struct TypeName<T *> : TypeName<T> {};
@@ -133,7 +165,12 @@ namespace cvv8 {
     template <typename NT>
     struct NativeToJS
     {
-        //! Must be specialized.
+        /**
+            Must be specialized. The argument type may be pointer-qualified.
+            Implementations for non-pod types are encouraged to have two
+            overloads, one taking (NT const &) and one taking (NT const *),
+            as this gives the underlying CastToJS() calls more leeway.
+        **/
         template <typename X>
         v8::Handle<v8::Value> operator()( X const & ) const;
     private:
@@ -142,14 +179,30 @@ namespace cvv8 {
 
     /**
        Specialization to treat (NT*) as (NT).
+
+       NativeToJS<NT> must have an operator() taking
+       (NT const *).
     */
     template <typename NT>
-    struct NativeToJS<NT *> : NativeToJS<NT> {};
+    struct NativeToJS<NT *> : NativeToJS<NT>
+#if 1
+    {};
+#else
+    {
+        v8::Handle<v8::Value> operator()( NT const * v ) const
+        {
+            typedef NativeToJS<NT> Proxy;
+            if( v ) return Proxy()(v);
+            else return v8::Null()
+            ;
+        }
+    };
+#endif
     /**
        Specialization to treat (NT const *) as (NT).
     */
     template <typename NT>
-    struct NativeToJS<NT const *> : NativeToJS<NT> {};
+    struct NativeToJS<NT const *> : NativeToJS<NT *> {};
     //     {
     //         typedef typename TypeInfo<NT>::Type const * ArgType;
     // 	v8::Handle<v8::Value> operator()( ArgType n ) const
@@ -345,11 +398,11 @@ namespace cvv8 {
     template <>
     struct NativeToJS<char const *>
     {
-	v8::Handle<v8::Value> operator()( char const * v ) const
-	{
+        v8::Handle<v8::Value> operator()( char const * v ) const
+        {
             if( ! v ) return v8::Null();
             else return v8::String::New( v );
-	}
+        }
     };
 
     /**
@@ -821,16 +874,15 @@ namespace cvv8 {
         y.someFunc( ... ); // here is where it will likely end badly
         @endcode
         
-        When y.someFunc() is called, JS will look for a 'this' 
-        object of type Native1, not Native2, because the type 
-        information related to the conversion is "stored" in the 
-        callback function itself, not in the native object. (This is 
-        a side-effect of us using templates to create 
-        InvocationCallback implementations.) It will not find a Native1, but
-        it might (depending on how both classes are bound to JS) find a Native2
-        pointer and _think_ it is a Native1. And by "think it is" i mean
-        "it will try to cast it to," but the cast is illegal in that case.
-        In any case it would be bad news.
+        When y.someFunc() is called, JS will look for a 'this' object of
+        type Native1, not Native2, because the type information related to
+        the conversion is "stored" in the callback function itself, not in
+        the native object. (This is a side-effect of us using templates to
+        create InvocationCallback implementations.) It will not find a
+        Native1, but it might (depending on how both classes are bound to
+        JS) find a Native2 pointer and _think_ it is a Native1. And by
+        "think it is" i mean "it will try to cast it to," but the cast is
+        illegal in that case. In any case it would be bad news.
         
         The check performed by this class can catch that condition 
         (and similar ones) and fail gracefully (i.e. returning a 
@@ -1572,13 +1624,14 @@ namespace cvv8 {
 
 
     /**
+        Requi
         "Lexically casts" msg to a string and throws a new JS-side
         Error. ValT may be any type which can be sent to StringBuffer's
         ostream operator.
         
-        The return value is the result of calling v8::ThrowException()
-        (what _exactly_ that is, i'm not sure - Undefined or an empty
-        handle?).
+        The return value is the result of calling 
+        v8::ThrowException() (Undefined except in the face of a 
+        serious internal error like OOM, i'm told by the v8 devs).
     */
     template <typename ValT>
     static inline v8::Handle<v8::Value> Toss( ValT const & msg )
@@ -1644,8 +1697,6 @@ namespace cvv8 {
     template <typename T>
     struct ArgCaster
     {
-        //typedef typename TypeInfo<T>::Type Type;
-        //typedef typename TypeInfo<T>::NativeHandle NativeHandle;
         typedef typename JSToNative<T>::ResultType ResultType;
         /**
            Default impl simply returns CastFromJS<T>(v).
@@ -1677,10 +1728,13 @@ namespace cvv8 {
        1) This will only work properly for nul-terminated strings,
        and not binary data!
 
-       2) Do not use this to pass (char const *) as a function
-       parameter if that function will hold a copy of the pointer
-       after it returns (as opposed to copying/consuming the
-       pointed-to-data before it returns).
+       2) Do not use this to pass (char const *) as a function 
+       parameter if that function will hold a copy of the pointer 
+       after it returns (as opposed to copying/consuming the 
+       pointed-to-data before it returns) OR if it returns the 
+       pointer passed to it. Returning is a specific corner-case
+       of "holding a copy" for which we cannot guaranty the lifetime
+       at the function-binding level.
 
        3) Do not use the same ArgCaster object to convert multiple
        arguments, as each call to ToNative() will invalidate the
@@ -1696,6 +1750,12 @@ namespace cvv8 {
     struct ArgCaster<char const *>
     {
     private:
+        /**
+            Reminder to self: we cannot use v8::String::Utf8Value
+            here because at the point the bindings call ToNative(),
+            v8 might have been unlocked, at which point dereferencing
+            the Utf8Value becomes illegal.
+        */
         std::string val;
         typedef char Type;
     public:
@@ -1732,60 +1792,41 @@ namespace cvv8 {
 
 #if !defined(DOXYGEN)
     namespace Detail {
-        /*
-            Potential todo/fixme: refactor CtorForwarderProxy
-            to take the signature at the class level, not the Call() level.
-            The reason would be so that we don't have to use this call syntax:
-
-            CtorForwarderProxy::template Call<...>()
-
-            which is not likely to work with client-provided ctor factories.
-
-            i.e. to make the interface more generic.
-
-            That said, the current impl requires less code on my part. :/
-
-            We could just add one level of redirection on top of it, of
-            course... that always solves everything ;).            
-        */
-        
         /**
             Default (unimplemented) CtorForwarderProxy impl. A helper
             for the CtorForwarder class. All specializations except
             the 0-arity one are generated from script code.
         */
-        template <int Arity>
+        template <typename Sig, int Arity = sl::Arity< Signature<Sig> >::Value >
         struct CtorForwarderProxy
         {
-            template <typename Sig>
-            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & );
+            typedef typename Signature<Sig>::ReturnType ReturnType;
+            static ReturnType Call( v8::Arguments const & );
         };
 
         //! Specialization for 0-arity ctors.
-        template <>
-        struct CtorForwarderProxy<0>
+        template <typename Sig>
+        struct CtorForwarderProxy<Sig,0>
         {
-            template <typename Sig>
-            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & )
+            typedef typename Signature<Sig>::ReturnType ReturnType;
+            static ReturnType Call( v8::Arguments const & )
             {
-                typedef typename Signature<Sig>::ReturnType RC;
-                typedef typename TypeInfo<RC>::Type RType;
+                typedef typename TypeInfo<ReturnType>::Type RType;
                 return new RType;
             }
         };
         //! Specialization for ctors taking (v8::Arguments const &).
-        template <>
-        struct CtorForwarderProxy<-1>
+        template <typename Sig>
+        struct CtorForwarderProxy<Sig,-1>
         {
-            template <typename Sig>
-            static typename Signature<Sig>::ReturnType Call( v8::Arguments const & argv )
+            typedef typename Signature<Sig>::ReturnType ReturnType;
+            static ReturnType Call( v8::Arguments const & argv )
             {
-                typedef Signature<Sig> SigT;
-                typedef typename SigT::ReturnType RV;
-                typedef typename TypeInfo<RV>::Type T;
+                typedef typename TypeInfo<ReturnType>::Type T;
                 return new T(argv);
             }
         };
+
     }
 #endif
     /**
@@ -1818,13 +1859,14 @@ namespace cvv8 {
        typedef CtorForwarder<MyType *(double,int)> CF2;
        typedef CtorForwarder<MyType *(v8::Arguments const &)> CFAny;
        @endcode
-       
+
        @see CtorArityDispatcher
     */
     template <typename Sig>
     struct CtorForwarder : Signature<Sig>
     {
         typedef Signature<Sig> STL;
+        //typedef typename tmp::AddPointer<typename STL::ReturnType>::Type ReturnType;
         typedef typename STL::ReturnType ReturnType;
         /**
             If (argv.Length()>=Arity) or Arity is less than 0,
@@ -1839,11 +1881,8 @@ namespace cvv8 {
         static ReturnType Call( v8::Arguments const & argv )
         {
             enum { Arity = sl::Arity< STL >::Value };
-            // TODO: refactor CtorForwarderProxy to not take an arity,
-            // but use CtorForwarderProxy<Sig> instead. The current impl
-            // pre-dates some of our templates-related advances.
-            typedef Detail::CtorForwarderProxy<Arity> Proxy;
-            return Proxy::template Call<Sig>( argv );
+            typedef Detail::CtorForwarderProxy<Sig> Proxy;
+            return Proxy::Call( argv );
         }
     };
 
@@ -1852,14 +1891,14 @@ namespace cvv8 {
     {
 
         /**
-           Internal dispatch routine. CTOR _must_ be a CtorForwarder implementation,
-           where N is 0..N.
+           Internal dispatch routine. CTOR _must_ be a CtorForwarder implementation
+           (or interface-compatible).
         */
         template <typename T,typename CTOR>
         struct CtorFwdDispatch
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Call( v8::Arguments const &  argv )
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 return CTOR::Call( argv );
             }
@@ -1870,8 +1909,8 @@ namespace cvv8 {
         template <typename T>
         struct CtorFwdDispatch<T,tmp::NilType>
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-            static NativeHandle Call( v8::Arguments const &  argv )
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 return 0;
             }
@@ -1887,12 +1926,12 @@ namespace cvv8 {
         template <typename T,typename List>
         struct CtorFwdDispatchList
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
             /**
                Tries to dispatch Arguments to one of the constructors
                in the List type, based on the argument count.
              */
-            static NativeHandle Call( v8::Arguments const &  argv )
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 typedef typename List::Head CTOR;
                 typedef typename List::Tail Tail;
@@ -1900,7 +1939,7 @@ namespace cvv8 {
                                 ? -1 : sl::Length<CTOR>::Value
                 };
                 return ( (Arity < 0) || (Arity == argv.Length()) )
-                    ?  CtorFwdDispatch< T, CTOR >::Call(argv )
+                    ? CtorFwdDispatch< T, CTOR >::Call(argv )
                     : CtorFwdDispatchList<T,Tail>::Call(argv);
             }
         };
@@ -1910,9 +1949,9 @@ namespace cvv8 {
         template <typename T>
         struct CtorFwdDispatchList<T,tmp::NilType>
         {
-            typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+            typedef typename TypeInfo<T>::NativeHandle ReturnType;
             /** Writes an error message to errmsg and returns 0. */
-            static NativeHandle Call( v8::Arguments const &  argv )
+            static ReturnType Call( v8::Arguments const &  argv )
             {
                 StringBuffer msg;
                 msg << "No native constructor was defined for "<<argv.Length()<<" arguments!\n";
@@ -1961,7 +2000,7 @@ namespace cvv8 {
         typedef typename TypeInfo<RT>::NativeHandle NativeHandle;
         static NativeHandle Call( v8::Arguments const & argv )
         {
-            typedef typename TypeInfo<RT>::Type Type;
+            typedef typename tmp::PlainType<RT>::Type Type;
             typedef Detail::CtorFwdDispatchList<Type, CtorList> Proxy;
             return Proxy::Call( argv );
         }

@@ -121,6 +121,19 @@ $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLIT
 $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5)
 
 
+
+EXT.JS := jspdo-init.js
+EXT.CPP := jspdo-init.cpp
+$(EXT.JS):
+jspdo.o: $(EXT.CPP)
+
+js2c: js2c.c Makefile
+# adding $(MAKEFILE_LIST) as a dep causes a circular dep on .make.c_deps and js2c???
+	$(CC) -o $@ js2c.c
+CLEAN_FILES += js2c
+$(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)
+	./js2c jspdoInitCode < $(EXT.JS) > $@
+
 ########################################################################
 # Binaries...
 LDFLAGS_JSPDO := -L. -ljspdo #$(LDFLAGS_DRIVERS)
@@ -141,14 +154,3 @@ amal-cpp: cpdo_amalgamation.o
 		-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3) \
 		-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5) \
 		$(CFLAGS_MYSQL5)
-
-EXT.JS := jspdo-init.js
-EXT.CPP := jspdo-init.cpp
-$(EXT.JS):
-
-js2c: js2c.c Makefile
-# adding $(MAKEFILE_LIST) as a dep causes a circular dep on .make.c_deps and js2c???
-	$(CC) -o $@ js2c.c
-CLEAN_FILES += js2c
-$(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)
-	./js2c jspdoInitCode < $(EXT.JS) > $@

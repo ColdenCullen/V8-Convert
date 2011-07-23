@@ -8,7 +8,7 @@
    set in the demo app (ConvertDemo.cpp), and changing them there might
    (should) cause these tests to fail.
 */
-load('addons/test-common.js');
+load('../addons/test-common.js');
 
 function printStackTrace(indention)
 {
@@ -76,6 +76,10 @@ function test1()
     asserteq( f.sharedString2, f.staticStringRO );
     assertThrows( function(){ f.staticStringRO = 'bye';} );
 
+    asserteq( typeof f.nsInt, 'number', 'f.nsInt is-a number.');
+    f.nsInt = 7;
+    asserteq( 8, ++f.nsInt );
+
     asserteq(42, f.answer);
     assert( /BoundNative/.test(f.toString()), 'toString() seems to work: '+f);
 
@@ -83,8 +87,6 @@ function test1()
     asserteq( ++f.theInt, f.theIntNC );
     asserteq( f.theInt, f.theIntNC );
 
-    assertThrows( function(){ f.anton(); } );
-    assertThrows( function(){ f.anton2(); } );
     assertThrows( function(){ f.nativeParamRef(null); } );
     assertThrows( function(){ f.nativeParamConstRef(null); } );
     f.nativeParamRef(f);
@@ -93,13 +95,16 @@ function test1()
     print("Return native const pointer : "+f.nativeReturnConst());
     print("Return native reference : "+f.nativeReturnRef());
     print("Return native const ref : "+f.nativeReturnConstRef());
-    asserteq( true, !!f.self );
-    asserteq( true, !!f.selfConst );
+    assert( !!f.self, '!!f.self' );
+    assert( !!f.selfConst, '!!f.selfConst' );
     asserteq( f.self, f.selfConst );
     asserteq( f.selfRef, f.selfConst );
     asserteq( f.selfConstRef, f.self );
     assertThrows( function() { f.self = 'configured to throw when set.'; } );
     assertThrows( function() { f.selfConstRef = 'configured to throw when set.'; } );
+
+    assertThrows( function(){ var x = f.throwingProperty;}, 'f.throwingProperty GETTER throws.' );
+    assertThrows( function(){ f.throwingProperty = 3;}, 'f.throwingProperty SETTER throws.' );
 
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );
@@ -214,6 +219,14 @@ function testMyType() {
     print("If you got this far, the ctor overloader worked.");
 }
 
+function testFork() {
+    print("About to fork()...");
+    assertThrows(function(){fork(1);},'fork() requires a Function argument.');
+    fork(function(){
+        print("This is a fork()'d process.");
+    });
+}
+
 if(0) {
     /**
        Interesting: if we have a native handle in the global object
@@ -251,4 +264,6 @@ if(0) {
     print( JSON.stringify(getCallLocation()) );
     print( JSON.stringify(getCallLocation()) );
 }
+if( 'fork' in this ) testFork();
+
 print("Done!");

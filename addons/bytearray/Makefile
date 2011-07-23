@@ -23,10 +23,17 @@ include ../../config.make # see that file for certain configuration options.
 # If needed, append the CPPFLAGS to point to where <v8/convert/*.hpp> can
 # be found.
 
+ENABLE_ZLIB ?= 1
+ifeq (,$(ENABLE_ZLIB))
+  ENABLE_ZLIB := 0
+endif
+bytearray.o: CPPFLAGS+=-DByteArray_CONFIG_ENABLE_ZLIB=$(ENABLE_ZLIB)
 libv8bytearray.LIB.OBJECTS := bytearray.o
-libv8bytearray.DLL.LDFLAGS += -lz
 libv8bytearray.DLL.OBJECTS := $(libv8bytearray.LIB.OBJECTS)
 libv8bytearray.DLL: $(libv8bytearray.LIB.OBJECTS)
+ifeq (1,$(ENABLE_ZLIB))
+  libv8bytearray.DLL.LDFLAGS += -lz
+endif
 $(eval $(call ShakeNMake.CALL.RULES.LIBS,libv8bytearray))
 all: $(libv8bytearray.LIB)
 $(eval $(call ShakeNMake.CALL.RULES.DLLS,libv8bytearray))

@@ -19,13 +19,21 @@ by Ondrej Zara
 #endif
 
 #include "bytearray.hpp"
+
+#if !defined(ByteArray_CONFIG_ENABLE_ZLIB)
+#  define ByteArray_CONFIG_ENABLE_ZLIB 1
+#endif
+
 #include <cvv8/convert.hpp>
 #include <cvv8/properties.hpp>
 
 #include <sstream>
 #include <vector>
-#include <zlib.h>
 #include <string.h> /* memset */
+#if ByteArray_CONFIG_ENABLE_ZLIB
+#  include <zlib.h>
+#endif
+
 
 
 #if 1 && !defined(CERR)
@@ -269,6 +277,17 @@ std::string JSByteArray::toString() const
        << ']';
     return os.str();
 }
+bool JSByteArray::isGzipped() const
+{
+    if( this->vec.empty() || (19 >= this->vec.size()) ) return false
+        /* smallest gzip file i've seen was 20 bytes, from a 0-byte file. */
+        ;
+    else
+    {
+        unsigned char const * mem = (unsigned char const *)this->rawBuffer();
+        return (31 == mem[0]) && (139 == mem[1]);
+    }
+}
 
 #if 0
 void * JSByteArray::rawBuffer()
@@ -423,10 +442,10 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         cw.AddClassTo( BA_JS_CLASS_NAME, dest );
         return;
     }
-    typedef cv::MemberPropertyBinder<N> SPB;
+
     cw
         ( "destroy", CW::DestroyObjectCallback )
-        ( "append", cv::ToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
+        ( "append", cv::MethodToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
         ( "stringValue", cv::ConstMethodToInCa<N, std::string (),&N::stringValue>::Call )
         ( "toString", cv::ConstMethodToInCa<N, std::string (),&N::toString>::Call )
         // i don't like these next two...
@@ -436,13 +455,20 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         ( "gunzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
-    proto->SetAccessor( JSTR("length"),
-                        SPB::ConstMethodToAccessorGetter<uint32_t(),&N::length>,
-                        SPB::MethodToAccessorSetter<uint32_t (uint32_t), &N::length> );
+    AccessorAdder acc(proto);
+    acc( "length",
+        ConstMethodToGetter<N,uint32_t(),&N::length>(),
+        MethodToSetter<N, uint32_t (uint32_t), &N::length>()
+        )
+        ( "isGzipped",
+            ConstMethodToGetter<N, bool(),&N::isGzipped>(),
+            ThrowingSetter()
+        )
+        ;
 #if 0 // don't do this b/c the cost of the conversion (on each access) is deceptively high (O(N) time and memory, N=bytearray length)
     proto->SetAccessor( JSTR("stringValue"),
-                        SPB::ConstMethodToAccessorGetter<std::string(),&N::stringValue>,
-                        SPB::AccessorSetterThrow );
+                        ConstMethodToGetter<N, std::string(),&N::stringValue>::Get,
+                        ThrowingSetter::Set );
 #endif
     v8::Handle<v8::FunctionTemplate> ctorTmpl = cw.CtorTemplate();
     ctorTmpl->InstanceTemplate()->SetIndexedPropertyHandler( JSByteArray::indexedPropertyGetter,
@@ -463,6 +489,10 @@ namespace cvv8 {
 
     int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level )
     {
+#if ! ByteArray_CONFIG_ENABLE_ZLIB
+        Toss("zlib functionality was not compiled in.");
+        return -1;
+#else
         /**
            Achtung: this impl was a quick hack port from another tree. It is
            not an optimal solution.
@@ -544,10 +574,15 @@ namespace cvv8 {
             (void)deflateEnd(&strm);
             return (ret == Z_STREAM_END) ? Z_OK : ret;
         }
+#endif /* ByteArray_CONFIG_ENABLE_ZLIB */
     }
 
     int GUnzipJSByteArray( JSByteArray const & src, JSByteArray & dest )
     {
+#if ! ByteArray_CONFIG_ENABLE_ZLIB
+        Toss("zlib functionality was not compiled in.");
+        return -1;
+#else
         /**
            Achtung: this impl was a quick hack port from another tree. It is
            not an optimal solution.
@@ -635,6 +670,7 @@ namespace cvv8 {
             (void)inflateEnd( &strm );
             return (ret == Z_STREAM_END) ? Z_OK : Z_DATA_ERROR;
         }
+#endif /* ByteArray_CONFIG_ENABLE_ZLIB */
     }
 
 }// namespace
@@ -642,3 +678,4 @@ namespace cvv8 {
 #undef JSTR
 #undef BA_JS_CLASS_NAME
 #undef CERR
+#undef ByteArray_CONFIG_ENABLE_ZLIB

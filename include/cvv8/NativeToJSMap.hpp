@@ -15,6 +15,23 @@ namespace cvv8 {
        and strings, basically), or explicitly return v8-supported
        types (e.g. v8::Handle<v8::Value>) then no native-to-JS
        conversion is typically needed.
+
+       Known limitations:
+
+       This type does not fully support subclass conversions.
+       e.g. the following function binding:
+
+       @code
+       virtual MyType * (MyType::*)();
+       @endcode
+
+       _should_ be able to return a MySubType from derived implementations
+       but it currently cannot. Handling this requires that a parent class
+       be told each of its subclasses, and that we add internal handlers
+       which try lookups on those classes if a conversion to MyType fails.
+
+       Reminder to self: the v8::juice tree has an example of that which we
+       can probably plunder.
     */
     template <typename T>
     struct NativeToJSMap
@@ -130,6 +147,35 @@ namespace cvv8 {
                 return this->operator()( &n );
             }
         };
+
+#if 0
+        //! Experimental
+        template <typename ParentType>
+        struct NativeToJSImpl_Subclass
+        {
+            v8::Handle<v8::Value> operator()( Type const * n ) const
+            {
+                typedef NativeToJSMap<T> BM;
+                v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
+                if( rc.IsEmpty() )
+                {
+                    typedef typename NativeToJSMap<ParentType>::NativeToJSImpl PI;
+                    return PI()(n);
+#if 0
+                    typedef typename TypeInfo<ParentType>::NativeHandle PH;
+                    rc = CastToJS<ParentType>(n);
+                    if( rc.IsEmpty() ) return v8::Null();
+                    else return rc;
+#endif
+                }
+                else return rc;
+            }
+            v8::Handle<v8::Value> operator()( Type const & n ) const
+            {
+                return this->operator()( &n );
+            }
+        };
+#endif
     };
 
 } // namespaces

@@ -53,7 +53,7 @@ static void signal_ignore(int)
 }
 #endif
 
-template <> char const * cv::TypeName<cv::JSSocket>::Value = "Socket";
+char const * cv::TypeName<cv::JSSocket>::Value = "Socket";
 
 namespace {
     /**
@@ -1085,14 +1085,13 @@ void cv::JSSocket::SetupBindings( v8::Handle<v8::Object> const & dest )
         // is this useful? .Set( "sendTo", cv::JSSocket::sendTo )
         ( socket_strings.fieldPeer, false )
         ;
-    typedef cv::MemberPropertyBinder<N> SPB;
-    v8::AccessorSetter const throwOnSet = SPB::AccessorSetterThrow;
+    v8::AccessorSetter const throwOnSet = ThrowingSetter::Set;
     v8::Handle<v8::ObjectTemplate> const & proto( cc.Prototype() );
-    proto->SetAccessor( JSTR("family"), SPB::MemberToAccessorGetter<int,&N::family>, throwOnSet );
-    proto->SetAccessor( JSTR("type"), SPB::MemberToAccessorGetter<int,&N::type>, throwOnSet );
-    proto->SetAccessor( JSTR("timeoutReached"), SPB::MemberToAccessorGetter<bool,&N::hitTimeout>, throwOnSet );
-    proto->SetAccessor( JSTR("peerInfo"), SPB::MethodToAccessorGetter<ValH (),&N::peerInfo>, throwOnSet );
-    proto->SetAccessor( JSTR("hostname"), SPB::FunctionToAccesorGetter<std::string (),N::hostname>, throwOnSet );
+    proto->SetAccessor( JSTR("family"), cv::MemberToGetter<N,int,&N::family>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("type"), cv::MemberToGetter<N,int,&N::type>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("timeoutReached"), cv::MemberToGetter<N,bool,&N::hitTimeout>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("peerInfo"), cv::MethodToGetter<N,ValH (),&N::peerInfo>::Get, throwOnSet );
+    proto->SetAccessor( JSTR("hostname"), cv::FunctionToGetter<std::string (),&N::hostname>::Get, throwOnSet );
 
     v8::Handle<v8::Function> ctor = cc.CtorFunction();
     JSByteArray::SetupBindings( ctor );

@@ -301,8 +301,7 @@ void test1(cv::Shell & shell)
         assert( ! global.IsEmpty() );
         Local<Function> jf( Function::Cast( *(global->Get(JSTR("load"))) ) );
         assert( ! jf.IsEmpty() );
-        ValueHandle varg[] = { v8::String::New(extScr), cv::CastToJS(extScr) };
-        jf->Call( global, 1, varg );
+        cv::CallForwarder<1>::Call( global, jf, extScr );
     }
     else if(1)
     {
@@ -311,12 +310,35 @@ void test1(cv::Shell & shell)
     CERR << "Returned from external script\n";
 }
 
+#if 1 || defined(_MSVC_VER)
+#define TRY_FORK 0
+#else
+#include <unistd.h>
+#define TRY_FORK 1
+void js_fork( v8::Handle<v8::Function> f )
+{
+    pid_t p = ::fork();
+    if( p ) return;
+    else
+    {
+        f->Call( f, 0, NULL );
+        exit(0);
+    }
+}
+typedef cvv8::PredicatedInCaDispatcher< CVV8_TYPELIST((
+    cv::PredicatedInCa< cv::ArgAt_IsFunction<0>, cv::FunctionToInCa<void (v8::Handle<v8::Function>), js_fork> >
+))> ForkCallback;
+#endif
+
 static int v8_main(int argc, char const * const * argv)
 {
     cv::Shell shell(NULL,argc,argv);
     //v8::Handle<v8::Object> global = shell.Global();
     shell.SetupDefaultBindings()
         ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
+#if TRY_FORK
+        ("fork", ForkCallback::Call)
+#endif
     ;
     try
     {

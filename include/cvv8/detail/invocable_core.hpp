@@ -366,8 +366,8 @@ v8::Handle<v8::Value> TossMissingThis()
 #if !defined(DOXYGEN)
 namespace Detail {
 /** Temporary internal macro. Undef'd at the end of this file. */
-#define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ex ){ return TossMissingThis<T>(); } \
-            catch(...){ throw; } (void)0
+#define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ){ return TossMissingThis<T>(); } \
+            catch(...){ throw; } (void)0/* (void)0 is a hack to help emacs' indentation out!*/
 
     /**
         A MissingThisException type holding generic
@@ -449,7 +449,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> unlocker;
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return func();
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -472,7 +472,7 @@ namespace Detail {
         typedef Sig FunctionType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)func()
             /* the explicit cast there is a workaround for the RV==void
                case. It is a no-op for other cases, since the return value
@@ -499,7 +499,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)func(argv);
         }
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
@@ -530,7 +530,7 @@ namespace Detail {
         typedef typename TypeInfo<T>::Type Type;
         static ReturnType CallNative( T & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (self.*func)();
         }
         static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
@@ -618,7 +618,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( Type & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
         }
         static v8::Handle<v8::Value> Call( Type & self, FunctionType func, v8::Arguments const & argv )
@@ -710,7 +710,7 @@ namespace Detail {
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (self.*func)();
         }
         
@@ -796,7 +796,7 @@ namespace Detail {
         typedef typename TypeInfo<T>::Type Type;
         static ReturnType CallNative( Type const & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
         }
         
@@ -839,7 +839,7 @@ namespace Detail {
         typedef typename TypeInfo<T>::Type Type;
         static ReturnType CallNative( Type const & self, FunctionType func, v8::Arguments const & argv )
         {
-            V8Unlocker<UnlockV8> const unlocker();
+            V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
         }
         static v8::Handle<v8::Value> Call( Type const & self, FunctionType func, v8::Arguments const & argv )
@@ -1330,7 +1330,7 @@ struct MethodToInCaVoid
 
     @code
     v8::InvocationCallback cb = 
-       ConstMethodToInCa< T, int (int) const, &T::myFunc>::Call;
+       ConstMethodToInCa< T, int (int), &T::myFunc>::Call;
     @endcode
 
 */
@@ -1354,7 +1354,7 @@ struct ConstMethodToInCa
 
     @code
     v8::InvocationCallback cb = 
-       ConstMethodToInCaVoid< T, int (int) const, &T::myFunc>::Call;
+       ConstMethodToInCaVoid< T, int (int), &T::myFunc>::Call;
     @endcode
 
 */
@@ -1754,11 +1754,11 @@ struct InCaCatcher : InCa
             call TossAsError(), but i'm too tired and i honestly don't ever
             expect any exception type to return v8 handles.
             */
-            return Toss(CastToJS((e2.*Getter)()));
+            return Toss((e2.*Getter)());
         }
         catch( ExceptionT const * e2 )
         {
-            return Toss(CastToJS((e2->*Getter)()));
+            return Toss((e2->*Getter)());
         }
         catch(...)
         {
@@ -1836,8 +1836,8 @@ namespace Detail {
         static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             StringBuffer msg;
-            msg << "Found no overload taking "
-                <<argv.Length()<<" arguments!\n";
+            msg << "End of typelist reached. Argument count="
+                <<argv.Length()<<'\n';
             return Toss( msg.toError() );
         }
     };
@@ -1909,6 +1909,38 @@ struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
 {
 };    
 
+/** @def ENABLE_TOINCA
+
+Temporary refactoring macro to disable the ToInCa templates while we accommodate
+the constness issues for MSVC 2010.
+
+Reminder to self:
+
+The main reason we can't use ToInCa like we could pre-MSVC is the ambiguity
+for const/non-const methods:
+
+ToInCa<T, void (int) >
+
+MSVC doesn't allow us to specialize Signature such that:
+
+ConstMethodSignature<T, void (int) const>
+
+are legal. gcc does, but i honestly don't know what The Standard says
+on that topic.
+
+If we could get around that ambiguity, or if msvc will let us overload:
+
+MethodSignature<T, void (int), &T::constMethod >
+
+as an alias for:
+
+ConstMethodSignature<T, void (int), &T::constMethod >
+
+then we might be able to re-introduce ToInCa. i think.
+*/
+#define ENABLE_TOINCA 0
+
+#if ENABLE_TOINCA
 #if !defined(DOXYGEN)
 namespace Detail {
     //! Internal helper for ToInCa impl.
@@ -2002,7 +2034,7 @@ namespace Detail {
 
     @code
     typedef ToInCa<MyT, int (int), &MyT::nonConstFunc> NonConstMethod;
-    typedef ToInCa<MyT, void (int) const, &MyT::constFunc> ConstMethod;
+    typedef ToInCa<MyT, void (int), &MyT::constFunc> ConstMethod;
     typedef ToInCa<void, int (char const *), ::puts, true> Func;
     
     v8::InvocationCallback cb;
@@ -2049,48 +2081,6 @@ struct ToInCa<void,Sig,Func,UnlockV8> : FunctionToInCa<Sig,Func,UnlockV8>
 };
 
 /**
-    A slightly simplified form of FunctionToInCa which is only
-    useful for "InvocationCallback-like" functions and requires
-    only two arguments:
-    
-    @code
-    // int my_func( v8::Arguments const & );
-    typedef InCaLikeFunc< int, my_func > F;
-    @endcode
-*/ 
-template <typename RV, RV (*Func)(v8::Arguments const &)>
-struct InCaLikeFunc : FunctionToInCa< RV (v8::Arguments const &), Func>
-{
-};
-
-/**
-    A slightly simplified form of MethodToInCa which is only
-    useful for non-const "InvocationCallback-like" methods:
-    
-    @code
-    // Method: int MyType::func( v8::Arguments const & )
-    typedef InCaLikeMethod<MyType, int, &MyType::func > F;
-    @endcode
-*/
-template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &)>
-struct InCaLikeMethod : ToInCa< T, RV (v8::Arguments const &), Func>
-{};
-
-/**
-    A slightly simplified form of ConstMethodToInCa which is only 
-    useful for const "InvocationCallback-like" methods:
-    
-    @code
-    // Method: int MyType::func( v8::Arguments const & ) const
-    typedef InCaLikeConstMethod<MyType, int, &MyType::func > F;
-    @endcode
-*/
-template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &) const>
-struct InCaLikeConstMethod : ConstMethodToInCa< T, RV (v8::Arguments const &), Func>
-{};
-
-
-/**
     This works just like ToInCa but instead of behaving like
     FunctionToInCa or Const/MethoToInCa it behaves like
     FunctionToInCaVoid or Const/MethoToInCaVoid.
@@ -2113,6 +2103,49 @@ template <typename Sig,
 struct ToInCaVoid<void,Sig,Func,UnlockV8> : FunctionToInCaVoid<Sig,Func,UnlockV8>
 {
 };
+#endif /* ENABLE_TOINCA */
+/**
+    A slightly simplified form of FunctionToInCa which is only
+    useful for "InvocationCallback-like" functions and requires
+    only two arguments:
+    
+    @code
+    // int my_func( v8::Arguments const & );
+    typedef InCaLikeFunction< int, my_func > F;
+    @endcode
+*/ 
+template <typename RV, RV (*Func)(v8::Arguments const &)>
+struct InCaLikeFunction : FunctionToInCa< RV (v8::Arguments const &), Func>
+{
+};
+
+/**
+    A slightly simplified form of MethodToInCa which is only
+    useful for non-const "InvocationCallback-like" methods:
+    
+    @code
+    // Method: int MyType::func( v8::Arguments const & )
+    typedef InCaLikeMethod<MyType, int, &MyType::func > F;
+    @endcode
+*/
+template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &)>
+struct InCaLikeMethod : MethodToInCa< T, RV (v8::Arguments const &), Func>
+{};
+
+/**
+    A slightly simplified form of ConstMethodToInCa which is only 
+    useful for const "InvocationCallback-like" methods:
+    
+    @code
+    // Method: int MyType::func( v8::Arguments const & ) const
+    typedef InCaLikeConstMethod<MyType, int, &MyType::func > F;
+    @endcode
+*/
+template <typename T, typename RV, RV (T::*Func)(v8::Arguments const &) const>
+struct InCaLikeConstMethod : ConstMethodToInCa< T, RV (v8::Arguments const &), Func>
+{};
+
+
 
 
 /**
@@ -2168,5 +2201,6 @@ struct OneTimeInitInCa : InCa
 } // namespace
 
 #undef HANDLE_PROPAGATE_EXCEPTION
+#undef ENABLE_TOINCA
 
 #endif /* CODE_GOOGLE_COM_V8_CONVERT_INVOCABLE_V8_HPP_INCLUDED */

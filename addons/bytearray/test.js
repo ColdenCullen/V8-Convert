@@ -41,11 +41,13 @@ function testGZip()
 {
     print("Starting gzip tests...");
     var ba = new ByteArray();
+    assert( !ba.isGzipped, '!ba.isGzipped' );
     var i;
     for( i = 0; i < 10; ++i ) ba.append("Line #"+i+"\n");
     var origString = ba.stringValue();
     var z = ba.gzip(z);
     assert( z instanceof ByteArray );
+    assert( z.isGzipped, 'z.isGzipped' );
     print("ba.length="+ba.length+", z.length="+z.length);
     assertneq( ba.length, z.length );
     print("First few bytes of z:");
@@ -55,7 +57,8 @@ function testGZip()
     }
     print( JSON.stringify(li) );
     var u = z.gunzip();
-    assert( z instanceof ByteArray );
+    assert( u instanceof ByteArray );
+    assert( !u.isGzipped, '!u.isGzipped' );
     print("Unzipped; u.length="+u.length);
     asserteq( ba.length, u.length );
     print("Unzipped data:\n"+u.stringValue());

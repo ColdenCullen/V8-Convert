@@ -78,13 +78,8 @@ static int v8_main(int argc, char const * const * argv)
             SETUP_SHELL_BINDINGS(global);
         }
 #endif
-        v8::TryCatch tryCatch;
         char const * fname = argv[1];
-        v8::Handle<v8::Value> rc = shell.ExecuteFile( fname, &tryCatch );
-        if( rc.IsEmpty() )
-        { // exception was reported by shell already
-            return 2;
-        }
+        v8::Handle<v8::Value> rc = shell.ExecuteFile( fname );
     }
     catch(std::exception const & ex)
     {

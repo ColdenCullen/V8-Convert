@@ -127,11 +127,8 @@ namespace cvv8 {
     struct Opt_ConstVal
     {
         typedef ValT Type;
-        //static Type const Value = Val; // giving me an undefined ref error?
-        static Type const Value;
+        const static Type Value = Val;
     };
-    template <typename ValT, ValT Val>
-    const ValT Opt_ConstVal<ValT,Val>::Value = Val;
 
     /**
        Base class for static integer ClassCreator options.
@@ -175,51 +172,6 @@ namespace cvv8 {
     struct ClassCreator_SearchPrototypeForThis : Opt_Bool<true>
     {};
 
-    namespace Detail {
-    
-        template <typename T>
-        struct TypeID_Default
-        {
-            /* i'm getting link errors if set TheID=0 inline. */
-            static int const TheID;
-            static void const * Value;
-            
-        };
-        template <typename T>
-        int const TypeID_Default<T>::TheID = 0;
-        template <typename T>
-        void const * TypeID_Default<T>::Value = &TypeID_Default<T>::TheID /* Reminder: NULL leads to errors. */;
-#if 0
-        template <typename T>
-        struct TypeNameToTypeID
-        {
-            static void const * Value;
-        };
-        template <typename T>
-        void const * TypeNameToTypeID<T>::Value = TypeName<T>::Value;
-#endif
-    }
-
-    /**
-        A convenience base type for concrete ClassCreator_TypeID implementations.
-
-        The ID parameter is an opaque type ID value. Its value may legally
-        be the same non-NULL value for any and all types because the
-        framework uses the address of Value, as opposed Value's contents, for
-        comparison purposes.
-
-        The default ID value is unspecified and guaranteed to be unique to T.
-    */
-    template <typename T, void const * & ID = Detail::TypeID_Default<T>::Value >
-    struct ClassCreator_TypeID_Base
-    {
-        typedef T Type;
-        /** The ID template parameter. */
-        static void const *Value;
-    };
-    template <typename T, void const * & Name>
-    void const * ClassCreator_TypeID_Base<T,Name>::Value = Name;
-    
     /**
         ClassCreator policy type which defines a "type ID" value
         for a type wrapped using ClassCreator. This is used
@@ -258,10 +210,11 @@ namespace cvv8 {
     */
     template <typename T>
     struct ClassCreator_TypeID
-        : ClassCreator_TypeID_Base<T,
-                                   Detail::TypeID_Default<T>::Value>
     {
+        const static void * Value;
     };
+    template <typename T>
+    const void * ClassCreator_TypeID<T>::Value = TypeName<T>::Value;
 
     /**
        Convenience base type for ClassCreator_InternalFields
@@ -395,7 +348,7 @@ namespace cvv8 {
 
             On error the binding should throw a NATIVE exception (ideally
             deriving from std::exception because (A) it's portable practice
-            and (B) parts of the v8::convert API handles those explicitly).
+            and (B) parts of the cvv8 API handles those explicitly).
 
             Several years of experience have shown that this function (or
             similar implementations) should take some care to make sure
@@ -416,6 +369,10 @@ namespace cvv8 {
             cc.AddClassTo( "T", dest );
             return;
             @endcode
+
+            If you do not actually want to add the class to the dest object,
+            you should call Seal() instead of AddClassTo() (or pass a different
+            destination object to AddClassTo().
         */
         static void SetupBindings( v8::Handle<v8::Object> const & target )
         {
@@ -448,6 +405,11 @@ namespace cvv8 {
        The default specialization does nothing (which is okay for the
        general case) but defines the interface which specializations
        must implement.
+
+       Reminder to self: we could arguably benefit by splitting this policy
+       into 3 classes, but experience has shown that the metadata used by
+       the 3 functions are typically shared amongst the 3 implementations
+       (or 2 of them in most cases).
     */
     template <typename T>
     struct ClassCreator_WeakWrap
@@ -561,7 +523,7 @@ namespace cvv8 {
        A basic Native-to-JS class binding mechanism. This class does
        not aim to be a monster framework, just something simple,
        mainly for purposes of showing (and testing) what the core
-       v8::convert can do.
+       cvv8 can do.
 
        The framework must know how to convert JS objects to T objects,
        and for this to work client code must define a JSToNative<T>
@@ -623,7 +585,8 @@ namespace cvv8 {
            returned. If none is found, jo's prototype object is searched,
            recursively, until either nh is found in the prototype chain or
            the end of the chain is reached. If a match is found, the JS
-           object in which the native was found is returned.
+           object in which the native was found is returned. This does no
+           casting - it only compares by address.
 
            If nh is not found anywhere in the chain, an empty handle is
            returned.
@@ -633,27 +596,31 @@ namespace cvv8 {
            parameter. Thus the T template parameter should not be omitted
            from calls to this function.
         */
-        static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> jo,
+        static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> const & jo,
                                                   T const * nh )
         {
-            // FIXME: make this iterative instead of recursive.
             if( !nh || jo.IsEmpty() ) return v8::Handle<v8::Object>();
-            //typedef TypeInfo<T> TI;
-            typedef T * NH;
-            void const * ext = (jo->InternalFieldCount() == InternalFields::Count)
-                ? jo->GetPointerFromInternalField(InternalFields::NativeIndex)
-                : NULL;
-            if( ext == nh ) return jo;
-            else
-            { /* if !ext, there is no bound pointer. If (ext!=nh) then
-                there is one, but it's not the droid we're looking for.
-                In either case, check the prototype...
+            v8::Handle<v8::Value> proto(jo);
+            void const * ext = NULL;
+            typedef ClassCreator_SearchPrototypeForThis<T> SPFT;
+            while( !ext && !proto.IsEmpty() && proto->IsObject() )
+            {
+                v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
+                ext = (obj->InternalFieldCount() != InternalFields::Count)
+                    ? NULL
+                    : obj->GetPointerFromInternalField( InternalFields::NativeIndex );
+                // FIXME: if InternalFields::TypeIDIndex>=0 then also do a check on that one.
+                /*
+                    If !ext, there is no bound pointer. If (ext &&
+                    (ext!=nh)) then there is one, but it's not the droid
+                    we're looking for. In either case, (possibly) check the
+                    prototype...
                 */
-                v8::Local<v8::Value> proto = jo->GetPrototype();
-                return ( !proto.IsEmpty() && proto->IsObject() )
-                    ? FindHolder( v8::Local<v8::Object>( v8::Object::Cast( *proto ) ), nh )
-                    : v8::Handle<v8::Object>();
-            }            
+                if( ext == nh ) return obj;
+                else if( !SPFT::Value ) break;
+                else proto = obj->GetPrototype();
+            }
+            return v8::Handle<v8::Object>();
         }
         
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
@@ -681,7 +648,9 @@ namespace cvv8 {
                 */
                 pv.Dispose();
                 pv.Clear();
-#if 0
+#if 1 /* i believe this problem was fixed. If you are reading this b/c
+         you followed an assert() message, please report this as a bug.
+        */
                 assert( 0 && "weak_dtor() got no native object!");
 #endif
                 return;
@@ -931,7 +900,7 @@ namespace cvv8 {
         template <typename ValueT>
         inline ClassCreator & Set( char const * name, ValueT val )
         {
-            this->protoTmpl->Set(v8::String::New(name), CastToJS<ValueT>(val));
+            this->protoTmpl->Set(v8::String::New(name), CastToJS(val));
             return *this;
         }
         //! Not quite sure why i need this overload, but i do.
@@ -1057,23 +1026,29 @@ namespace cvv8 {
     };
 
     /**
-       Intended to be the base class for JSToNative<T> specializations
-       when T is JS-bound using ClassCreator.
+        Intended to be the base class for JSToNative<T> specializations
+        when T is JS-bound using ClassCreator.
 
-       This particular implementation must be defined _after_
-       ClassCreator_InternalFields<T> is defined. If the caller will
-       not specialize that type then this is irrelevant, but when
-       specializing it, it must come before this JSToNative
-       implementation is instantiated.
-       
-       If TypeSafe is true then this type is a proxy for
-       JSToNative_ObjectWithInternalFieldsTypeSafe, else it is a proxy
-       for JSToNative_ObjectWithInternalFields. Note that
-       ClassCreator is hard-wired to implant/deplant type id information,
-       with the _hope_ that JSToNative<T> will use it, but it does not
-       enforce that. For types where TypeSafe is true, ClassCreator will
-       still set up bits for the check, so disabling this does not save
-       that one v8::Object internal field needed for the type identifier.
+        This particular implementation must be defined _after_
+        any of the following policies are customized for T:
+
+        - ClassCreator_InternalFields
+        - ClassCreator_SearchPrototypeForThis
+        - ClassCreator_TypeID (only if TypeSafe is true!)
+
+        If the client will not specialize those types type then the order is
+        irrelevant, but when specializing any of them, they must come before
+        this JSToNative implementation is instantiated.
+
+        If TypeSafe is true then this type is a proxy for
+        JSToNative_ObjectWithInternalFieldsTypeSafe, else it is a proxy for
+        JSToNative_ObjectWithInternalFields. Note that ClassCreator is
+        hard-wired to implant/deplant type id information if
+        ClassCreator_InternalFields<T>::TypeIDIndex is not negative, with the
+        _hope_ that JSToNative<T> will use it, but it does not enforce that
+        the type ID is used. For types where the internal fields' TypeIDIndex
+        is negative, ClassCreator will not set up bits for the type check,
+        which means a slightly smaller runtime memory footprint.
     */
     template <typename T, bool TypeSafe = ClassCreator_InternalFields<T>::TypeIDIndex >= 0 >
     struct JSToNative_ClassCreator :
@@ -1093,6 +1068,26 @@ namespace cvv8 {
         >::Type
     {
     };
+
+#if 0
+    //! Experimental.
+    template <typename ParentT, typename SubT >
+    struct JSToNative_ClassCreator_Subclass
+    {
+        typedef typename TypeInfo<SubT>::NativeHandle ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            typedef typename TypeInfo<ParentT>::NativeHandle PTP;
+            PTP typeCheck; typeCheck = (ResultType)NULL
+                /* If compiler errors led you here then SubT probably does not
+                    publicly subclass ParentT. */
+                ;
+            PTP p = CastFromJS<ParentT>(h);
+            //std::cerr << "dyncast="<<dynamic_cast<ResultType>(p)<<"\n";
+            return p ? dynamic_cast<ResultType>(p) : NULL; 
+        }
+    };
+#endif
 
 #if !defined(DOXYGEN)
     namespace Detail
@@ -1156,7 +1151,7 @@ namespace cvv8 {
         To make use of this, the client should do the following:
         
         @code
-        // in the v8::convert namespace:
+        // in the cvv8 namespace:
         template <>
             struct NativeToJS<T> : NativeToJSMap<T>::NativeToJSImpl {};
         @endcode
@@ -1196,36 +1191,7 @@ namespace cvv8 {
         }
     };
 
-    /**
-        Can be used as a concrete ClassCreator_Factory<T> 
-        specialization to forward JS ctor calls directly to native 
-        ctors.
-        
-        T must (or is assumed to) be a ClassCreator<T>-wrapped 
-        class. CtorForwarderList must be a Signature typelist of 
-        CtorForwarder types and its "return type" must be T (optionally
-        pointer-qualified).
-        
-        Example:
-        
-        @code
-        typedef CtorFwdTest CFT;
-        typedef cv::CtorForwarder<CFT *()> C0;
-        typedef cv::CtorForwarder<CFT *(int)> C1;
-        typedef cv::CtorForwarder<CFT *(int, double)> C2;
-        typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
-        
-        // Then create Factory specialization based on those:
-        template <>
-        struct ClassCreator_Factory<CFT> : 
-            ClassCreator_Factory_CtorArityDispatcher<CFT, CtorList> {};
-        @endcode
-        
-        TODO: see if this works: returning a derived type from the forwarder:
-        
-        @code
-        typedef cv::CtorForwarder<SomeSubType *(int,int)> C2;
-        @endcode
+    /** @deprecated Use ClassCreator_Factory_Dispatcher instead (same interface).
     */
     template <typename T,typename CtorForwarderList>
     struct ClassCreator_Factory_CtorArityDispatcher : Detail::Factory_CtorForwarder_Base<T>
@@ -1239,6 +1205,50 @@ namespace cvv8 {
             return Proxy::Call( argv );
         }
     };
+
+    /**
+        A ClassCreator_Factory implementation which forwards its Create()
+        member to CtorT::Call() (the interface used by CtorForwarder and friends).
+
+        T must (or is assumed to) be a ClassCreator<T>-wrapped class.
+        CtorForwarderList must be a Signature typelist of CtorForwarder
+        types and its "return type" must be T (optionally pointer-qualified).
+        
+        Example:
+        
+        @code
+        typedef CtorForwarder<MyType *()> C0;
+        typedef CtorForwarder<MyType *(int)> C1;
+        typedef CtorForwarder<MyType *(int, double)> C2;
+        typedef Signature< CFT (C0, C1, C2) > CtorList;
+        
+        // Then create Factory specialization based on those:
+        template <>
+        struct ClassCreator_Factory<MyType> : 
+            ClassCreator_Factory_Dispatcher<MyType, CtorArityDispatcher<CtorList> > {};
+        @endcode
+
+        Or:
+        
+        @code
+        template <>
+        struct ClassCreator_Factory<MyType> :
+            ClassCreator_Factory_Dispatcher< MyType, CtorForwarder<MyType *()> >
+        {};
+        @endcode
+    */
+    template <typename T,typename CtorT>
+    struct ClassCreator_Factory_Dispatcher : Detail::Factory_CtorForwarder_Base<T>
+    {
+    public:
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv )
+        {
+            return CtorT::Call( argv );
+        }
+    };
+
 
 }// namespaces
 

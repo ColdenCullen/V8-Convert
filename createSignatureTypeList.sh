@@ -46,22 +46,13 @@ struct Signature< RV (T::*)() > : Signature<RV ()>
     typedef T Context;
     typedef RV (T::*FunctionType)();
 };
-
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-
-template <typename RV>
-struct Signature< RV () const > : Signature<RV ()>
-{
-    enum { IsConst = 1 };
-};
 template <typename T, typename RV>
-struct Signature< RV (T::*)() const > : Signature<RV () const>
+struct Signature< RV (T::*)() const > : Signature<RV ()>
 {
     typedef T Context;
     typedef RV (T::*FunctionType)() const;
+    enum { IsConst = 1 };
 };
-
-#endif /* CVV8_CONFIG_ENABLE_CONST_OVERLOADS */
 EOF
 
 fi # $from==0
@@ -117,22 +108,15 @@ struct Signature< RV (T::*)(${targs}) > : Signature<RV (${targs})>
     typedef RV (T::*FunctionType)(${targs});
 };
 
-#if defined(CVV8_CONFIG_ENABLE_CONST_OVERLOADS) && CVV8_CONFIG_ENABLE_CONST_OVERLOADS
-//! Specialization for ${i} arg(s).
-template <$tparam>
-struct Signature< RV (${targs}) const > : Signature<RV (${targs})>
-{
-    static const bool IsConst = true;
-};
-
 //! Specialization for T const methods taking ${i} arg(s).
 template <typename T, $tparam>
-struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs}) const>
+struct Signature< RV (T::*)(${targs}) const > : Signature<RV (${targs})>
 {
     typedef T Context;
     typedef RV (T::*FunctionType)(${targs}) const;
+    static const bool IsConst = true;
 };
-#endif /*CVV8_CONFIG_ENABLE_CONST_OVERLOADS*/
+
 EOF
     #echo $tparam
     #echo $targs
