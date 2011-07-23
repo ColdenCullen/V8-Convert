@@ -833,6 +833,16 @@ namespace { // testing ground for some compile-time assertions...
             ASS< sl::IsConstMethod< BogoConstMethod >::Value >();
         }
 
+        {
+            typedef BoundNative T;
+            typedef cv::MethodSignature<T, void()> S1;
+            typedef cv::MethodSignature<T const, void()> S2;
+            ASS< sl::IsMethod<S1>::Value >();
+            ASS< sl::IsMethod<S2>::Value >();
+            ASS< !sl::IsConstMethod<S1>::Value >();
+            ASS< sl::IsConstMethod<S2>::Value >();
+        }
+
 #undef ASS
     }
 
