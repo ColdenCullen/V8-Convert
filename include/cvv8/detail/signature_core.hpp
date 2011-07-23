@@ -394,9 +394,8 @@ struct MethodSignature;
 */
 template <typename T, typename Sig>
 struct ConstMethodSignature;
-
-//template <typename T, typename Sig>
-//struct ConstMethodSignature<const T,Sig> : ConstMethodSignature<T,Sig> {};
+template <typename T, typename Sig>
+struct ConstMethodSignature<T const, Sig> : ConstMethodSignature<T,Sig> {};
 
 template <typename T, typename RV >
 struct MethodSignature< T, RV () > : Signature< RV () >
@@ -405,8 +404,18 @@ struct MethodSignature< T, RV () > : Signature< RV () >
     typedef RV (Context::*FunctionType)();
 };
 
+
 template <typename T, typename RV >
 struct MethodSignature< T, RV (T::*)() > : MethodSignature<T, RV ()>
+{
+};
+
+template <typename T, typename RV >
+struct MethodSignature< T const, RV () > : ConstMethodSignature< T, RV () >
+{};
+
+template <typename T, typename RV >
+struct MethodSignature< T const, RV (T::*)() > : MethodSignature<T const, RV ()>
 {
 };
 

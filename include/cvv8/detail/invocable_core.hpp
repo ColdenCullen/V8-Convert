@@ -614,7 +614,7 @@ namespace Detail {
     public:
         typedef MethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
-        typedef typename TypeInfo<T>::Type Type;
+        typedef T Type;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( Type & self, FunctionType func, v8::Arguments const & argv )
         {

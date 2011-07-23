@@ -525,6 +525,11 @@ namespace cvv8 {
         //! Must be specialized to be useful.
         ResultType operator()( v8::Handle<v8::Value> const & h ) const;
     };
+    
+    /** Specialization to treat (JST*) as JST. */
+    template <typename JST>
+    struct JSToNative<JST const> : JSToNative<JST> {};
+
     /** Specialization to treat (JST*) as JST. */
     template <typename JST>
     struct JSToNative<JST *> : JSToNative<JST> {};

@@ -148,6 +148,24 @@ struct MethodSignature< T, RV (T::*)(${aTParam}) > :
     MethodSignature< T, RV (${aTParam}) >
 {};
 
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T const, RV (${aTParam}) > :
+    ConstMethodSignature< T, RV (${aTParam}) >
+{};
+
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T const, RV (T::*)(${aTParam}) > :
+    MethodSignature< T const, RV (${aTParam}) >
+{};
+
+#if 0 // i'm pretty sure MSVC can't overload this specialization:
+template <typename T, typename RV, ${aTDecl} >
+struct MethodSignature< T const, RV (T::*)(${aTParam}) const > :
+    MethodSignature< T const, RV (${aTParam}) >
+{};
+#endif
+
+
 EOF
 }
 

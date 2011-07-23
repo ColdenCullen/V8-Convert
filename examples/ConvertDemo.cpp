@@ -406,9 +406,12 @@ namespace cvv8 {
                 ("toString",
                  cv::FunctionToInCa<ValueHandle (v8::Arguments const &),BoundNative_toString>::Call)
                 ("puts",
-                 cv::ConstMethodToInCa<BoundNative,void (char const *),&BoundNative::puts>::Call)
+                 cv::MethodToInCa<BoundNative const,void (char const *),&BoundNative::puts>::Call)
+                 // Equivalent:
+                 //cv::ConstMethodToInCa<BoundNative,void (char const *),&BoundNative::puts>::Call)
                 ("doFooConst",
-                 cv::ConstMethodToInCa<BoundNative,void (),&BoundNative::doFooConst>::Call)
+                 cv::MethodToInCa<BoundNative const,void (),&BoundNative::doFooConst>::Call)
+                 //cv::ConstMethodToInCa<BoundNative,void (),&BoundNative::doFooConst>::Call)
                 ("invoInt",
                  cv::MethodToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Call)
                  //cv::ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt,true>::Call) // this must fail to compile
@@ -417,7 +420,10 @@ namespace cvv8 {
                 ("nativeParamRef",
                  CATCHER< cv::MethodToInCa<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef> >::Call)
                 ("nativeParamConstRef",
-                 CATCHER< cv::ConstMethodToInCa<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef> >::Call)
+                 CATCHER<
+                    //cv::ConstMethodToInCa<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
+                    cv::MethodToInCa<const BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
+                    >::Call)
                  // Hopefully someday:
                  //CATCHER< cv::MethodToInCa<BoundNative, void (BoundNative const &) const, &BoundNative::nativeParamConstRef> >::Call)
                 ("cstr",
@@ -826,6 +832,7 @@ namespace { // testing ground for some compile-time assertions...
             ASS< !sl::IsNonConstMethod< BogoConstMethod >::Value >();
             ASS< sl::IsConstMethod< BogoConstMethod >::Value >();
         }
+
 #undef ASS
     }
 
