@@ -445,7 +445,7 @@ namespace cvv8 {
                 ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
-                ("myFunctor", // Binding MyFunctor::operator() overloads...
+                ("myFunctor", // Bind several MyFunctor::operator() overloads...
                     cv::PredicatedInCaDispatcher<CVV8_TYPELIST((
                         // 0-arity:
                         cv::PredicatedInCa< cv::Argv_Length<0>,
@@ -933,10 +933,15 @@ void test_weird_bindings()
     s = VarGetSet::Set;
 
     typedef BoundNative T;
-    typedef MethodTo< InCa, const T, int (), &T::getInt > MemInCa;
+    
+    typedef MethodTo< InCa, T, void (), &T::doFoo > MemInCa;
+    typedef MethodTo< InCa, const T, int (), &T::getInt > MemInCaConst;
+    typedef MethodTo< InCaVoid, const T, int (), &T::getInt > MemInCaConstVoid;
     typedef MethodTo< Getter, const T, int (), &T::getInt > MemGet;
     typedef MethodTo< Setter, T, void (int), &T::setInt > MemSet;
     cb = MemInCa::Call;
+    cb = MemInCaConst::Call;
+    cb = MemInCaConstVoid::Call;
     g = MemGet::Get;
     s = MemSet::Set;
 }

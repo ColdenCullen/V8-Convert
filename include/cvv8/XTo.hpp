@@ -88,30 +88,39 @@ namespace cvv8 {
         FunctionToSetter. Tag must be one of (InCa, InCaVoid,
         Getter, Setter). The other args are as documented for the
         aforementioned proxied types.
+
+        Achtung: UnlockingV8 option is currently ignored for Getter
+        and Setter conversions. See FunctionToInCa for more
+        information about that parameter.
     */
-    template <typename Tag, typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
+    template <typename Tag, typename Sig, typename FunctionSignature<Sig>::FunctionType Func,
+              bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
     struct FunctionTo;
 
-    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionTo< InCa, Sig, Func > : FunctionToInCa<Sig, Func>
+    //! Behaves like FunctionToInCa.
+    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
+    struct FunctionTo< InCa, Sig, Func, UnlockV8 > : FunctionToInCa<Sig, Func, UnlockV8>
     {};
 
-    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionTo< InCaVoid, Sig, Func > : FunctionToInCaVoid<Sig, Func>
+    //! Behaves like FunctionToInCaVoid.
+    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
+    struct FunctionTo< InCaVoid, Sig, Func, UnlockV8 > : FunctionToInCaVoid<Sig, Func, UnlockV8>
     {};
 
-    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionTo< Getter, Sig, Func > : FunctionToGetter<Sig,Func>
+    //! Behaves like FunctionToGetter.
+    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
+    struct FunctionTo< Getter, Sig, Func, UnlockV8 > : FunctionToGetter<Sig,Func>
     {};
 
-    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
-    struct FunctionTo< Setter, Sig, Func > : FunctionToSetter<Sig,Func>
+    //! Behaves like FunctionToSetter.
+    template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
+    struct FunctionTo< Setter, Sig, Func, UnlockV8 > : FunctionToSetter<Sig,Func>
     {};
 
     /**
-        Acts as a proxy for VarToGetter and VarToSetter. Tag
-        must be one of (Getter, Setter). The other args are
-        as documented for VarToGetter and VarToSetter.
+        Acts as a proxy for VarToGetter and VarToSetter. Tag must be
+        one of (Getter, Setter, Accessors). The other args are as
+        documented for VarToGetter and VarToSetter.
     */
     template <typename Tag, typename PropertyType, PropertyType * const SharedVar>
     struct VarTo;
@@ -137,28 +146,33 @@ namespace cvv8 {
         const-qualified). Tag must be one of (InCa, InCaVoid,
         Getter, Setter). The other args are as documented for the
         aforementioned proxied types.
+
+        Achtung: UnlockingV8 option is currently ignored for Getter
+        and Setter conversions. See FunctionToInCa for more
+        information about that parameter.
     */
-    template <typename Tag, typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
+    template <typename Tag, typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
+              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value>
     struct MethodTo;
 
-    //! Behaves like MethodToInCa.
-    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodTo< InCa, T, Sig, Func > : MethodToInCa<T, Sig, Func>
+    //! Behaves like MethodToInCa. For const methods, const-qualify T.
+    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
+    struct MethodTo< InCa, T, Sig, Func, UnlockV8 > : MethodToInCa<T, Sig, Func, UnlockV8>
     {};
 
-    //! Behaves like MethodToInCaVoid.
-    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodTo< InCaVoid, T, Sig, Func > : MethodToInCaVoid<T, Sig, Func>
+    //! Behaves like MethodToInCaVoid. For const methods, const-qualify T.
+    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
+    struct MethodTo< InCaVoid, T, Sig, Func, UnlockV8 > : MethodToInCaVoid<T, Sig, Func, UnlockV8>
     {};
 
-    //! Behaves like MethodToGetter.
-    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodTo< Getter, T, Sig, Func > : MethodToGetter<T,Sig,Func>
+    //! Behaves like MethodToGetter. For const methods, const-qualify T.
+    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
+    struct MethodTo< Getter, T, Sig, Func, UnlockV8 > : MethodToGetter<T,Sig,Func>
     {};
 
-    //! Behaves like MethodToSetter.
-    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
-    struct MethodTo< Setter, T, Sig, Func > : MethodToSetter<T,Sig,Func>
+    //! Behaves like MethodToSetter. For const methods, const-qualify T.
+    template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
+    struct MethodTo< Setter, T, Sig, Func, UnlockV8 > : MethodToSetter<T,Sig,Func>
     {};
 }
 /** LICENSE
