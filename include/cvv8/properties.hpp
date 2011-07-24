@@ -39,6 +39,16 @@ namespace cvv8 {
         static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
     };
 
+    /** Convenience typedef, primarily to simplify usage of
+        FunctionTo and friends.
+    */
+    typedef AccessorGetterType Getter;
+
+    /** Convenience typedef, primarily to simplify usage of
+        FunctionTo and friends.
+    */
+    typedef AccessorSetterType Setter;
+
     /**
        This template create an v8::AccessorGetter from a static/shared
        variable.
@@ -281,7 +291,7 @@ namespace cvv8 {
                ;
         }
     };
-    
+
     /**
         Implements v8::AccessorSetter interface to proxy a JS
         member property through a native member setter function.
@@ -352,6 +362,46 @@ namespace cvv8 {
         }
     };
 
+
+    /**
+        Similar to FunctionToGetter but uses a functor as a getter.
+        This is rarely useful, since the functor has no direct access
+        to any application state (unless that is static/shared within
+        the Ftor class).
+
+        Ftor must be a functor. Sig must be a signature matching a
+        const Ftor::operator() implementation.
+    */
+    template <typename Ftor, typename Sig>
+    struct FunctorToGetter
+    {
+        inline static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        {
+            //const static Ftor f();
+            return CastToJS(Ftor()());
+        }
+    };
+
+    /**
+        The setter counterpart of FunctorToGetter.
+
+        Ftor must be a functor which accepts 1 arguments.
+        Sig must be a signature matching a Ftor::operator()
+        implementation.
+
+        The return value of Ftor::operator() is not evaluated,
+        so it may be void or any non-convertible type.
+    */
+    template <typename Ftor, typename Sig>
+    struct FunctorToSetter
+    {
+        inline static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        {
+            typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
+            Ftor()( CastFromJS<ArgT>( value ) );
+        }
+    };
+    
     /**
         SetterCatcher is the AccessorSetter equivalent of InCaCatcher, and
         is functionality identical except that its 4th template parameter

@@ -63,16 +63,6 @@
 
 namespace cvv8 {
 
-    /** Convenience typedef, primarily to simplify usage of
-        FunctionTo and friends.
-    */
-    typedef AccessorGetterType Getter;
-
-    /** Convenience typedef, primarily to simplify usage of
-        FunctionTo and friends.
-    */
-    typedef AccessorSetterType Setter;
-
     /**
         A tag type for use with VarTo.
     */
@@ -173,6 +163,37 @@ namespace cvv8 {
     //! Behaves like MethodToSetter. For const methods, const-qualify T.
     template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
     struct MethodTo< Setter, T, Sig, Func, UnlockV8 > : MethodToSetter<T,Sig,Func>
+    {};
+
+    /**
+        Behaves like either FunctorToInCa or FunctorToInCaVoid, depending
+        on the Tag type (InCa or InCaVoid).
+
+        TODO: Getter/Setter support is missing in the property binding API.
+    */
+    template <typename Tag, typename FtorT, typename Sig,
+              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<FtorT,Sig> >::Value
+              >
+    struct FunctorTo;
+
+    //! Behaves like FunctorToInCa.
+    template <typename FtorT, typename Sig, bool UnlockV8>
+    struct FunctorTo< InCa, FtorT, Sig, UnlockV8 > : FunctorToInCa<FtorT,Sig>
+    {};
+
+    //! Behaves like FunctorToInCaVoid.
+    template <typename FtorT, typename Sig, bool UnlockV8>
+    struct FunctorTo< InCaVoid, FtorT, Sig, UnlockV8 > : FunctorToInCaVoid<FtorT,Sig>
+    {};
+
+    //! Behaves like FunctorToGetter.
+    template <typename FtorT, typename Sig, bool UnlockV8>
+    struct FunctorTo< Getter, FtorT, Sig, UnlockV8 > : FunctorToGetter<FtorT,Sig>
+    {};
+
+    //! Behaves like FunctorToSetter.
+    template <typename FtorT, typename Sig, bool UnlockV8>
+    struct FunctorTo< Setter, FtorT, Sig, UnlockV8 > : FunctorToSetter<FtorT,Sig>
     {};
 }
 /** LICENSE

@@ -223,6 +223,8 @@ function testMyType() {
 function testFunctors()
 {
     var f = new BoundNative();
+    assert( f.time > 0, 'f.time = '+f.time );
+    assertThrows( function(){ f.time = 0;}, 'f.time disallows assignment.' );
     assert( f.myFunctor(), 'f.myFunctor()' );
     assert( f.myFunctor(3), 'f.myFunctor(int)' );
     asserteq( undefined, f.myFunctor(3.3), 'f.myFunctor(double)' );

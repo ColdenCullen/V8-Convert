@@ -57,6 +57,19 @@ struct MyFunctor
     }
 };
 
+struct CurrentTimeFtor
+{
+    int32_t operator()() const
+    {
+        return static_cast<int32_t>(::time(NULL));
+    }
+    void operator()(int32_t) const
+    {
+        cvv8::Toss("Not even Hawkings can modify time!");
+    }
+
+};
+
 namespace cvv8 {
     CVV8_TypeName_IMPL((BoundNative),"BoundNative");
     CVV8_TypeName_IMPL((BoundSubNative),"BoundSubNative");
@@ -507,7 +520,6 @@ namespace cvv8 {
             // Bind some JS properties to native properties:
             typedef BoundNative T;
 
-#if 1 // this is functionally equivalent to the following #else block:
             AccessorAdder acc(proto);
             acc("self",
                 MethodToGetter<T, T * (), &T::self>(),
@@ -521,22 +533,10 @@ namespace cvv8 {
                 ("selfConstRef",
                  ConstMethodToGetter<T, T const & (), &T::selfRefConst>(),
                  ThrowingSetter() )
+                ("time",
+                 FunctorTo< Getter, CurrentTimeFtor, int32_t()>(),
+                 FunctorTo< Setter, CurrentTimeFtor, void (int32_t) >() )
             ;
-#else
-            proto->SetAccessor( JSTR("self"),
-                    //CA::MethGet<T * (), &T::self>::Get,
-                    MethodToGetter<T, T * (), &T::self>::Get,
-                    ThrowingSetter::Set );
-            proto->SetAccessor( JSTR("selfRef"),
-                    MethodToGetter<T, T & (), &T::selfRef>::Get,
-                    ThrowingSetter::Set );
-            proto->SetAccessor( JSTR("selfConst"),
-                    ConstMethodToGetter<T, T const * (), &T::self>::Get,
-                    ThrowingSetter::Set );
-            proto->SetAccessor( JSTR("selfConstRef"),
-                    ConstMethodToGetter<T, T const & (), &T::selfRefConst>::Get,
-                    ThrowingSetter::Set );
-#endif
             proto->SetAccessor( JSTR("throwingProperty"),
                     GetterCatcher_std< ConstMethodToGetter<T,int (),&T::throwingGetter> >::Get,
                     SetterCatcher_std< MethodToSetter<T,void (int),&T::throwingSetter> >::Set );
@@ -907,7 +907,7 @@ namespace { // testing ground for some compile-time assertions...
 } // namespace
 
 int aBoundInt = 3;
-void test_weird_bindings()
+void test_xto_bindings()
 {
     v8::InvocationCallback cb;
     v8::AccessorGetter g;
@@ -944,6 +944,14 @@ void test_weird_bindings()
     cb = MemInCaConstVoid::Call;
     g = MemGet::Get;
     s = MemSet::Set;
+
+    typedef MyFunctor F;
+    typedef FunctorTo< InCa, F, bool () > F0;
+    typedef FunctorTo< InCa, F, bool (int) > F1i;
+    typedef FunctorTo< InCa, F, void (double) > F1d;
+    cb = F0::Call;
+    cb = F1i::Call;
+    cb = F1d::Call;
 }
 
 
