@@ -1269,13 +1269,16 @@ namespace cvv8 {
     static const JSToNative<std::string> JSToStdString = JSToNative<std::string>();
 
     /**
-       A utility to append entries to a JS array.
+       A utility to append entries to a JS array or add properties
+       to a JS Object or ObjectTemplate. ObjectType must be
+       either v8::Object or v8::ObjectTemplate. It _might_ work
+       in limited context with v8::Array, but that is untested.
 
        It is intended to be used like this:
 
        \code
        Handle<Object> obj = ...;
-       ObjectPropSetter set(obj);
+       ObjectPropSetter<Object> set(obj);
        set("propOne", CastToJS(32) )
        ("propTwo", ... )
        (32, ... )
@@ -1283,26 +1286,51 @@ namespace cvv8 {
        ;
        \endcode
     */
+    template <typename ObjectType = v8::Object,
+              typename KeyType = typename tmp::IfElse<
+                            tmp::SameType<ObjectType,v8::ObjectTemplate>::Value,
+                            v8::Handle<v8::String>,
+                            v8::Handle<v8::Value>
+                        >::Type
+             >
     class ObjectPropSetter
     {
     private:
-        v8::Handle< ::v8::Object > target;
+        v8::Handle<ObjectType> const target;
     public:
         /**
            Initializes this object to use the given array
            as its append target. Results are undefined if
            target is not a valid Object.
         */
-        explicit ObjectPropSetter( v8::Handle< v8::Object > obj ) :target(obj)
+        explicit ObjectPropSetter( v8::Handle< ObjectType > const & obj ) :target(obj)
         {}
         ~ObjectPropSetter(){}
+
+
+        /**
+           Adds an arbtirary property to the target object.
+        */
+        inline ObjectPropSetter & Set( KeyType const & key, v8::Handle<v8::Value> const & v )
+        {
+            this->target->Set(key->ToString(), CastToJS(v));
+            return *this;
+        }
+        /**
+           Adds an arbtirary property to the target object.
+        */
+        inline ObjectPropSetter & Set( char const * key, v8::Handle<v8::Value> const & v )
+        {
+            this->target->Set( v8::String::New(key), CastToJS(v));
+            return *this;
+        }
 
         /**
            Adds an arbitrary property to the target object using
            CastToJS(v).
         */
         template <typename T>
-        ObjectPropSetter & operator()( v8::Handle<v8::Value> key, T const & v )
+        inline ObjectPropSetter & operator()( KeyType const & key, T const & v )
         {
             this->target->Set(key, CastToJS(v));
             return *this;
@@ -1312,40 +1340,29 @@ namespace cvv8 {
            Adds a numeric property to the target object.
         */
         template <typename T>
-        ObjectPropSetter & operator()( int32_t ndx, T const & v )
+        inline ObjectPropSetter & operator()( int32_t ndx, T const & v )
         {
-            return this->operator()( v8::Integer::New(ndx), v );
+            return this->Set( v8::Integer::New(ndx), CastToJS(v) );
         }
 
         /**
            Adds a string-keyed property to the target object.
+           Note that if key is NULL, the v8::String constructor
+           will crash your app. (Good luck with that!)
         */
         template <typename T>
-        ObjectPropSetter & operator()( char const * key, T const & v )
+        inline ObjectPropSetter & operator()( char const * key, T const & v )
         {
-            return this->operator()( v8::String::New(key), v );
+            return this->Set( v8::String::New(key), CastToJS(v) );
         }
 
-        /**
-           Adds an arbtirary property to the target object.
-
-           WTF did i add the tmpl args here for? They DO make
-           a difference, but i can't for the life of me remember
-           why.          
-        */
-        template <typename T1, typename T2>
-        ObjectPropSetter & operator()( v8::Handle<v8::Value> key, v8::Handle<v8::Value> v )
-        {
-            return this->operator()( key, v );
-        }
 
         /**
            Adds the given function as a member of the target object.
         */
-        ObjectPropSetter & operator()( char const * name, v8::InvocationCallback pf )
+        inline ObjectPropSetter & operator()( char const * name, v8::InvocationCallback pf )
         {
-            return this->operator()( name,
-                                     v8::FunctionTemplate::New(pf)->GetFunction() );
+            return this->Set( name, v8::FunctionTemplate::New(pf)->GetFunction() );
         }
             
         /**
