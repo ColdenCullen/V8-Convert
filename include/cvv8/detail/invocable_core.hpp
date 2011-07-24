@@ -1422,7 +1422,7 @@ template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
         >
 struct ConstMethodForwarder
-#if 0
+#if 1 //?msvc Seems to work.
 : MethodForwarder<T const, Sig, UnlockV8> {};
 #else
 {
