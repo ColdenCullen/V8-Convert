@@ -71,14 +71,24 @@ namespace cvv8 {
     template <typename T>
     struct TypeName
     {
-        /** Default implementation's value is "T".
-            Specializations must have a non-NULL value, and any number
-            of specializations may legally have the same name.
+        /** Specializations must have a non-NULL value, and any number
+            of specializations may legally have the same value.
         */
         static char const * Value;
     };
-    //template <typename T>
-    //char const * TypeName<T>::Value = "T";
+    /**
+        This default implementation is unfortunate, but quite a bit 
+        of error-reporting code uses this, with the assumption that 
+        if it was worth binding to JS then it's worth having a 
+        useful type name in error strings.
+        
+        FIXME: remove the default specialization if we can, as it will
+        cause us problems with some planned/potential uses which cross
+        DLL boundaries (there may be multiple definitions with different
+        addresses).
+    */
+    template <typename T>
+    char const * TypeName<T>::Value = "T";
 
     /** @def CVV8_TypeName_DECL
 
