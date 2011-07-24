@@ -273,7 +273,7 @@ function testUnclosedHandles() {
     print("Testing closing of danging statement handles...");
     try {
         for( var i = 0; i < count; ++i ) {
-            var st = db.prepare("SELECT COUNT(*) sqlite_master");
+            var st = db.prepare("SELECT COUNT(*) FROM sqlite_master");
             //st.step();
             print('Intentionally trying to "leak" statement '+st);
         }
