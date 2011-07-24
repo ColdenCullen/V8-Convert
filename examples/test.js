@@ -227,7 +227,7 @@ function testFunctors()
     assert( f.myFunctor(3), 'f.myFunctor(int)' );
     asserteq( undefined, f.myFunctor(3.3), 'f.myFunctor(double)' );
     //assert( f.myFunctor(42), 'f.myFunctor(...)' );
-    //assertThrows( function(){ f.myFunctor(1,2);}, 'myFunctor() does not accept 2 arguments.' );
+    assertThrows( function(){ f.myFunctor(1,2);}, 'myFunctor() does not accept 2 arguments.' );
     f.destroy();
 }
 

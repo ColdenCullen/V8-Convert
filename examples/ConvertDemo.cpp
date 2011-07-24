@@ -448,14 +448,22 @@ namespace cvv8 {
                 ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
-                ("myFunctor",
+                ("myFunctor", // Binding MyFunctor::operator() overloads...
                     cv::PredicatedInCaDispatcher<CVV8_TYPELIST((
+                        // 0-arity:
                         cv::PredicatedInCa< cv::Argv_Length<0>,
                                             cv::FunctorToInCa<MyFunctor, bool ()> >,
-                        cv::PredicatedInCa< cv::ArgAt_IsInt32<0>,
-                                            cv::FunctorToInCa<MyFunctor, bool (int)> >,
-                        cv::PredicatedInCa< cv::ArgAt_IsA<0,double>,
-                                            cv::FunctorToInCa<MyFunctor, void (double)> >
+                        // 1-arity
+                        cv::PredicatedInCa< cv::Argv_Length<1>,
+                            cv::PredicatedInCaDispatcher<CVV8_TYPELIST((
+                                // operator()(int):
+                                cv::PredicatedInCa< cv::ArgAt_IsInt32<0>,
+                                                    cv::FunctorToInCa<MyFunctor, bool (int)> >,
+                                // operator()(double):
+                                cv::PredicatedInCa< cv::ArgAt_IsA<0,double>,
+                                                    cv::FunctorToInCa<MyFunctor, void (double)> >
+                            ))>
+                        >
                     ))>::Call
                 )
                 ("throwStdString",
@@ -468,20 +476,22 @@ namespace cvv8 {
                  ("nativeReturn",
                  cv::MethodToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)
                  ("nativeReturnConst",
-                 //cv::ConstMethodToInCa<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst, true>::Call)
+                 //cv::ConstMethodToInCa<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst, true>::Call
                  // Equivalent:
-                 //cv::MethodToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call)
+                 cv::MethodToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call
                  // Equivalent:
-                  cv::ToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call)
+                 //cv::ToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call
+                 )
                  ("nativeReturnRef",
                  CATCHER<
                     //cv::MethodToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>
                     cv::ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>
                     >::Call)
                  ("nativeReturnConstRef",
-                 CATCHER< cv::ConstMethodToInCa<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef, true> >::Call)
-                 // Hopefully someday:
-                 //CATCHER< cv::MethodToInCa<BoundNative, BoundNative const & () const, &BoundNative::nativeReturnConstRef> >::Call)
+                 //CATCHER< cv::ConstMethodToInCa<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef, true> >::Call
+                 // Equivalent:
+                 CATCHER< cv::MethodToInCa<BoundNative const, BoundNative const & (), &BoundNative::nativeReturnConstRef> >::Call
+                 )
 #endif
                 ;
 #undef CATCHER
