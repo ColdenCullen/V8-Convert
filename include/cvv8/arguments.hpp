@@ -22,7 +22,7 @@ namespace cvv8 {
             Returns argv[I] if argv.Length() is <= I, else v8::Undefined()
             is returned.
         */
-        v8::Handle<v8::Value> operator()( v8::Arguments const & argv ) const
+        inline v8::Handle<v8::Value> operator()( v8::Arguments const & argv ) const
         {
             return (argv.Length() > I) ? argv[I] : v8::Undefined();
         }
@@ -45,7 +45,7 @@ namespace cvv8 {
         /**
             Returns CastFromJS<T>( ArtAt<I>(argv) ).
         */
-        ReturnType operator()( v8::Arguments const & argv ) const
+        inline ReturnType operator()( v8::Arguments const & argv ) const
         {
             typedef ArgAt<I> Proxy;
             return CastFromJS<T>( Proxy()(argv) );
@@ -341,7 +341,7 @@ namespace cvv8 {
         /**
             Returns true if ValType()( av[Index] ) is true.
         */
-        bool operator()( v8::Arguments const & av ) const
+        inline bool operator()( v8::Arguments const & av ) const
         {
             return (Index >= av.Length())
                 ? false
@@ -375,7 +375,7 @@ namespace cvv8 {
                 Returns true only if (Index < av.Length())
                 and av->Getter() returns true.
             */
-            bool operator()( v8::Arguments const & av ) const
+            inline bool operator()( v8::Arguments const & av ) const
             {
                 return ( av.Length() <= Index )
                     ? false
@@ -455,7 +455,7 @@ namespace cvv8 {
     */
     struct Argv_True : ArgumentsPredicate
     {
-        bool operator()( v8::Arguments const & ) const
+        inline bool operator()( v8::Arguments const & ) const
         {
             return true;
         }
@@ -467,7 +467,7 @@ namespace cvv8 {
     */
     struct Argv_False : ArgumentsPredicate
     {
-        bool operator()( v8::Arguments const & ) const
+        inline bool operator()( v8::Arguments const & ) const
         {
             return false;
         }
@@ -489,7 +489,7 @@ namespace cvv8 {
             Returns true only if ArgPred1()(args) and
             ArgPred2()(args) both return true.
         */
-        bool operator()( v8::Arguments const & args ) const
+        inline bool operator()( v8::Arguments const & args ) const
         {
             return ArgPred1()( args ) && ArgPred2()( args );
         }
@@ -507,7 +507,7 @@ namespace cvv8 {
             Returns true only if one of ArgPred1()(args) or
             ArgPred2()(args) return true.
         */
-        bool operator()( v8::Arguments const & args ) const
+        inline bool operator()( v8::Arguments const & args ) const
         {
             return ArgPred1()( args ) || ArgPred2()( args );
         }
@@ -546,7 +546,7 @@ namespace cvv8 {
             Returns true only if all predicates in PredList
             return true when passed the args object.
         */
-        bool operator()( v8::Arguments const & args ) const
+        inline bool operator()( v8::Arguments const & args ) const
         {
             typedef typename PredList::Head Head;
             typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
@@ -578,7 +578,7 @@ namespace cvv8 {
             Returns true only if one of the predicates in PredList
             returns true when passed the args object.
         */
-        bool operator()( v8::Arguments const & args ) const
+        inline bool operator()( v8::Arguments const & args ) const
         {
             typedef typename PredList::Head P1;
             typedef typename PredList::Tail Tail;
@@ -594,7 +594,7 @@ namespace cvv8 {
         /**
             Always returns false.
         */
-        bool operator()( v8::Arguments const & ) const
+        inline bool operator()( v8::Arguments const & ) const
         {
             return false;
         }
@@ -684,15 +684,22 @@ namespace cvv8 {
 
             If no predicates match then a JS-side exception will be triggered.
         */
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        static inline v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             typedef typename PredList::Head Head;
             typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
                                             Argv_False,
                                             Head>::Type Ftor;
             typedef typename PredList::Tail Tail;
+            typedef char AssertEndOfListCheck[ tmp::SameType<tmp::NilType,Head>::Value
+                                        ? (tmp::SameType<tmp::NilType,Tail>::Value ? 1 : -1)
+                                        : 1
+                                        /* ensures that the Argv_False kludge does not call
+                                           any specialization other than the NilType one.
+                                        */
+                                        ];
             return ( Ftor()( argv ) )
-                ? Detail::ListCallHelper<Head>::Call( argv )
+                ? Detail::OverloadCallHelper<Head>::Call( argv )
                 : PredicatedInCaDispatcher<Tail>::Call(argv);
         }
     };
@@ -705,7 +712,7 @@ namespace cvv8 {
             Triggers a JS-side exception explaining (in English text) that no
             overloads could be matched to the given arguments.
         */
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        static inline v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Toss(StringBuffer()<<"No predicates in the "
                         << "argument dispatcher matched the given "
@@ -736,12 +743,20 @@ namespace cvv8 {
     /**
         The constructor counterpart of PredicatedInCaDispatcher. PredList
         must be a typelist of PredicatedCtorForwarder (or interface-compatible)
-        types.
+        types. Clients must not pass the ContextT parameter - it is required
+        internally for handling the end-of-typelist case.
+        
+        This template instantiates TypeName<PredList::ReturnType>, so
+        if that template is to be specialized by client code, it should
+        be specialized before this template used.
     */
     template <typename PredList, typename ContextT = typename PredList::ReturnType>
     struct PredicatedCtorDispatcher
     {
-        typedef typename TypeInfo<typename PredList::ReturnType>::NativeHandle ReturnType;
+        /**
+            Force the ContextT into a native handle type.
+        */
+        typedef typename TypeInfo<ContextT>::NativeHandle ReturnType;
         /**
             For each PredicatedCtorForwarder (P) in PredList, if P()(argv)
             returns true then P::Call(argv) is returned, else the next
@@ -769,13 +784,16 @@ namespace cvv8 {
         typedef typename TypeInfo<ContextT>::NativeHandle ReturnType;
         /**
             Triggers a native exception explaining (in English text) that no
-            overloads could be matched to the given arguments.
+            overloads could be matched to the given arguments. It's kinda
+            cryptic, but we can't be more specific at this level of
+            the API.
         */
         static ReturnType Call( v8::Arguments const & argv )
         {
             StringBuffer os;
-            os <<"No predicates in the "
-               << "ctor argument dispatcher matched the given "
+            os << "No predicates in the "
+               << TypeName<ContextT>::Value
+               << " ctor argument dispatcher matched the given "
                << "arguments (arg count="<<argv.Length()
                << ").";
             std::string const & str(os.Content());

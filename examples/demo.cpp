@@ -194,7 +194,8 @@ ValueHandle test1_callback( v8::Arguments const & argv )
 
 struct MyType
 {
-    MyType() {
+    MyType()
+    {
         CERR << "MyType::MyType() @ "<<this<<'\n';
     }
     MyType( int i, double d ) {
@@ -211,15 +212,6 @@ struct MyType
     }
     
     
-    // MyType constructors we want to bind to v8 (there are several other ways
-    // to do this): This does NOT need to be a member of this class: it can be
-    // defined anywhere which is convenient for the client.
-    typedef cv::Signature<MyType (
-        cv::CtorForwarder<MyType *()>,
-        cv::CtorForwarder<MyType *(char const *)>,
-        cv::CtorForwarder<MyType *( int, double )>,
-        cv::CtorForwarder<MyType *( v8::Arguments const &)>
-    )> Ctors;
 };
 //-----------------------------------
 // Policies used by cv::ClassCreator
@@ -229,15 +221,32 @@ namespace cvv8 {
     // from its native name).
     // If used, it should be declared (and optionally defined) before other
     // ClassCreator policies.
+#if 1
+    CVV8_TypeName_DECL((MyType));
+    CVV8_TypeName_IMPL((MyType),"MyType");
+#elif 1
+    CVV8_TypeName_IMPL2((MyType),"MyType");
+#else
     template <>
     char const * TypeName< MyType >::Value = "MyType";
+#endif
 
+    // MyType constructors we want to bind to v8 (there are several other ways
+    // to do this): This does NOT need to be a member of this class: it can be
+    // defined anywhere which is convenient for the client. It must come
+    // after TypeName, if TypeName will be specialized.
+    typedef cv::Signature<MyType (
+        cv::CtorForwarder<MyType *()>,
+        cv::CtorForwarder<MyType *(char const *)>,
+        cv::CtorForwarder<MyType *( int, double )>,
+        cv::CtorForwarder<MyType *( v8::Arguments const &)>
+    )> MyTypeCtors;
 
     // The policy which tells ClassCreator how to instantiate and
     // destroy native objects.
     template <>
     class ClassCreator_Factory<MyType>
-     : public ClassCreator_Factory_CtorArityDispatcher< MyType, MyType::Ctors >
+     : public ClassCreator_Factory_CtorArityDispatcher< MyType, MyTypeCtors >
     {};
 
     // A JSToNative specialization which makes use of the plumbing

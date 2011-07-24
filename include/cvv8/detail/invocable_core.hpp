@@ -1828,26 +1828,26 @@ struct InCaCatcher_std :
 
 namespace Detail {
     /**
-        An internal level of indirection for ArityDispatcher.
+        An internal level of indirection for overloading-related
+        dispatchers.
     */
     template <typename InCaT>
-    struct ListCallHelper : InCa
+    struct OverloadCallHelper : InCa
     {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        static inline v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return InCaT::Call(argv);
         }
     };
     //! End-of-list specialization.
     template <>
-    struct ListCallHelper<tmp::NilType> : InCa
+    struct OverloadCallHelper<tmp::NilType> : InCa
     {
-        static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        static inline v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
-            StringBuffer msg;
-            msg << "End of typelist reached. Argument count="
-                <<argv.Length()<<'\n';
-            return Toss( msg.toError() );
+            return Toss( StringBuffer()
+                        << "End of typelist reached. Argument count="
+                        <<argv.Length() );
         }
     };
 }
@@ -1905,7 +1905,7 @@ struct ArityDispatchList : InCa
         typedef typename FwdList::Tail Tail;
         enum { Arity = sl::Arity< FWD >::Value };
         return ( (-1 == Arity) || (Arity == argv.Length()) )
-            ? Detail::ListCallHelper<FWD>::Call(argv)
+            ? Detail::OverloadCallHelper<FWD>::Call(argv)
             : ArityDispatchList<Tail>::Call(argv);
     }
 };
@@ -1914,7 +1914,7 @@ struct ArityDispatchList : InCa
    End-of-list specialization.
 */
 template <>
-struct ArityDispatchList<tmp::NilType> : Detail::ListCallHelper<tmp::NilType>
+struct ArityDispatchList<tmp::NilType> : Detail::OverloadCallHelper<tmp::NilType>
 {
 };    
 

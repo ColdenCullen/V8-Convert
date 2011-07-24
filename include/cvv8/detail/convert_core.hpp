@@ -77,8 +77,8 @@ namespace cvv8 {
         */
         static char const * Value;
     };
-    template <typename T>
-    char const * TypeName<T>::Value = "T";
+    //template <typename T>
+    //char const * TypeName<T>::Value = "T";
 
     /** @def CVV8_TypeName_DECL
 
@@ -86,7 +86,7 @@ namespace cvv8 {
         be a type name with extra wrapping parenthesis, e.g.:
 
         @code
-        CVV8_TypeName_DECL((MyType))
+        CVV8_TypeName_DECL((MyType));
         @endcode
 
         They are required so that we can also support template types with commas
@@ -94,7 +94,7 @@ namespace cvv8 {
 
         It must be called from inside the cvv8 namespace.
     */
-#define CVV8_TypeName_DECL(X) template <> struct TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type > \
+#define CVV8_TypeName_DECL(X) template <> struct TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X) >::Type > \
     { const static char * Value; }
 
     /** @def CVV8_TypeName_IMPL
@@ -106,13 +106,19 @@ namespace cvv8 {
         Example:
 
         @code
-        CVV8_TypeName_IMPL((MyType),"MyType")
+        CVV8_TypeName_IMPL((MyType),"MyType");
         @endcode
     */
-#define CVV8_TypeName_IMPL(X,NAME) char const * TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X)>::Type >::Value = NAME
+#define CVV8_TypeName_IMPL(X,NAME) char const * TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X) >::Type >::Value = NAME
+    /** @def CVV8_TypeName_IMPL2
+    
+        Almost identical to CVV8_TypeName_IMPL(), but can be used without
+        having first explicitly specializing TypeName.
+    */
+#define CVV8_TypeName_IMPL2(X,NAME) template <> CVV8_TypeName_IMPL(X,NAME)
 
 
-#if 0
+#if 1
     template <typename T>
     struct TypeName<T *> : TypeName<T> {};
     template <typename T>

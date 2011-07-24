@@ -212,7 +212,7 @@ function testPredicateOverloads()
 
 function testMyType() {
     print("Testing constructor by-arity dispatcher...");
-    (new MyType()).destroy();
+    assert( (new MyType()).destroy() );
     (new MyType("hi")).destroy();
     (new MyType(1,2.3)).destroy();
     (new MyType(1,2,3,4,5)).destroy();
