@@ -2172,6 +2172,38 @@ struct OneTimeInitInCa : InCa
 };
 
 
+#if 1// i'm not yet decided on these bits...
+struct NativeToJS_InCa_Base
+{
+    typedef v8::InvocationCallback ArgType;
+    template <typename SigT>
+    inline v8::Handle<v8::Value> operator()( SigT const & ) const
+    {
+        return v8::FunctionTemplate::New(SigT::Call)->GetFunction();
+    }
+};
+
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
+struct NativeToJS< FunctionToInCa<Sig, Func> > : NativeToJS_InCa_Base {};
+template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
+struct NativeToJS< FunctionToInCaVoid<Sig, Func> > : NativeToJS_InCa_Base {};
+
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
+struct NativeToJS< MethodToInCa<T, Sig, Func> > : NativeToJS_InCa_Base {};
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
+struct NativeToJS< MethodToInCaVoid<T, Sig, Func> > : NativeToJS_InCa_Base {};
+
+template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func>
+struct NativeToJS< ConstMethodToInCa<T, Sig, Func> > : NativeToJS_InCa_Base {};
+template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Func>
+struct NativeToJS< ConstMethodToInCaVoid<T, Sig, Func> > : NativeToJS_InCa_Base {};
+
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
+struct NativeToJS< ToInCa<T, Sig, Func> > : NativeToJS_InCa_Base {};
+template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func>
+struct NativeToJS< ToInCaVoid<T, Sig, Func> > : NativeToJS_InCa_Base {};
+#endif
+
 #include "invocable_generated.hpp"
 } // namespace
 

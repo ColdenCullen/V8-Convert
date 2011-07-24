@@ -3,11 +3,8 @@
 #include "cvv8/properties.hpp"
 #include <cerrno>
 
-#define TRY_ARGS_CODE 1
-#if TRY_ARGS_CODE
 #include "cvv8/arguments.hpp"
-#endif
-
+#include "cvv8/XTo.hpp"
 
 //char const * cvv8::TypeName< BoundNative >::Value = "BoundNative";
 //char const * cvv8::TypeName< BoundSubNative >::Value = "BoundSubNative";
@@ -499,19 +496,16 @@ namespace cvv8 {
             // We can of course bind them directly to the prototype, instead
             // of via the cc object:
             Handle<ObjectTemplate> const & proto( cc.Prototype() );
-            proto->Set(JSTR("bogo"),
-                       cv::CastToJS(cv::FunctionToInCa<ValueHandle (v8::Arguments const &), bogo_callback>::Call)
-                       );
-            proto->Set(JSTR("bogo2"),
-                       cv::CastToJS(cv::FunctionToInCa<int (v8::Arguments const &),bogo_callback2>::Call)
-                       );
-            proto->Set(JSTR("runGC"),
-                       cv::CastToJS(cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call)
-                       );
+            ObjectPropSetter<ObjectTemplate> setter(proto);
+            setter("bogo",
+                   cv::FunctionToInCa<ValueHandle (v8::Arguments const &), bogo_callback>::Call )
+                  ("bogo2",
+                   cv::FunctionToInCa<int (v8::Arguments const &),bogo_callback2>::Call)
+                  ("runGC",
+                   cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call);
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
             typedef BoundNative T;
-            //typedef ClassAccessor<T> CA;
 
 #if 1 // this is functionally equivalent to the following #else block:
             AccessorAdder acc(proto);
@@ -910,16 +904,44 @@ namespace { // testing ground for some compile-time assertions...
 #undef ASS
     }
 
-#if TRY_ARGS_CODE
-    void test_args_code()
-    {
-        using namespace cvv8;
-        typedef ArgAt<0> AA0;
-    }
-#endif
 } // namespace
+
+int aBoundInt = 3;
+void test_weird_bindings()
+{
+    v8::InvocationCallback cb;
+    v8::AccessorGetter g;
+    v8::AccessorSetter s;
+
+    using namespace cvv8;
+
+    typedef FunctionTo< InCa, int(char const *), ::puts> FPuts;
+    typedef FunctionTo< InCaVoid, int(char const *), ::puts> FPutsVoid;
+    typedef FunctionTo< Getter, int(void), ::getchar> GetChar;
+    typedef FunctionTo< Setter, int(int), ::putchar> SetChar;
+    cb = FPuts::Call;
+    cb = FPutsVoid::Call;
+    g = GetChar::Get;
+    s = SetChar::Set;
+
+    typedef VarTo< Getter, int, &aBoundInt > VarGet;
+    typedef VarTo< Setter, int, &aBoundInt > VarSet;
+    g = VarGet::Get;
+    s = VarSet::Set;
+    typedef VarTo< Accessors, int, &aBoundInt > VarGetSet;
+    g = VarGetSet::Get;
+    s = VarGetSet::Set;
+
+    typedef BoundNative T;
+    typedef MethodTo< InCa, const T, int (), &T::getInt > MemInCa;
+    typedef MethodTo< Getter, const T, int (), &T::getInt > MemGet;
+    typedef MethodTo< Setter, T, void (int), &T::setInt > MemSet;
+    cb = MemInCa::Call;
+    g = MemGet::Get;
+    s = MemSet::Set;
+}
 
 
 #undef CERR
 #undef JSTR
-#undef TRY_ARGS_CODE
+

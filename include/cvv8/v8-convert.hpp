@@ -87,6 +87,7 @@ namespace cvv8 {
 #include "arguments.hpp"
 #include "ClassCreator.hpp"
 #include "properties.hpp"
+#include "XTo.hpp"
 /** LICENSE
 
     This software's source code, including accompanying documentation and
