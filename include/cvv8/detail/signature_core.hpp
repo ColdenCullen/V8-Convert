@@ -402,7 +402,7 @@ template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() > : MethodSignature<T const, RV ()>
 {
 };
-#if 0 // i don't think msvc can distinguish this specialization.
+#if 0 //!msvc
 template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() const > : MethodSignature<T const, RV ()>
 {
@@ -473,6 +473,7 @@ struct ConstMethodPtr : ConstMethodSignature<T,Sig>
 template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType FuncPtr>
 typename ConstMethodPtr<T,Sig,FuncPtr>::FunctionType const ConstMethodPtr<T,Sig,FuncPtr>::Function = FuncPtr;
 
+#if 0 //!msvc
 //! Specialization to treat (const T) as ConstMethodPtr.
 template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType FuncPtr>
 struct MethodPtr<T const, Sig, FuncPtr> : ConstMethodPtr<T,Sig,FuncPtr>
@@ -481,6 +482,7 @@ struct MethodPtr<T const, Sig, FuncPtr> : ConstMethodPtr<T,Sig,FuncPtr>
     typedef typename SignatureType::FunctionType FunctionType;
     static const FunctionType Function;
 };
+#endif
 
 #include "signature_generated.hpp"
 } // namespaces

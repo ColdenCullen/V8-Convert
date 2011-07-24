@@ -1088,11 +1088,7 @@ namespace Detail {
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
         enum { Arity = sl::Arity<SignatureType>::Value };
-        typedef typename tmp::IfElse<
-            sl::IsConstMethod<SignatureType>::Value,
-            ConstMethodForwarder< T, Arity, Sig, UnlockV8 >,
-            MethodForwarder< T, Arity, Sig, UnlockV8 >
-        >::Type Proxy;
+        typedef MethodForwarder< T, Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
@@ -1123,12 +1119,7 @@ namespace Detail {
     {
         typedef MethodPtr<T, Sig, Func> SignatureType;
         enum { Arity = sl::Arity<SignatureType>::Value };
-        typedef typename tmp::IfElse<
-            sl::IsConstMethod<SignatureType>::Value,
-            ConstMethodForwarderVoid< T, Arity, Sig, UnlockV8 >,
-            MethodForwarderVoid< T, Arity, Sig, UnlockV8 >
-        >::Type Proxy;
-        //typedef MethodForwarderVoid< T, sl::Arity<SignatureType>::Value, Sig, UnlockV8 > Proxy;
+        typedef MethodForwarderVoid< T, Arity, Sig, UnlockV8 > Proxy;
         typedef typename SignatureType::ReturnType ReturnType;
         static ReturnType CallNative( T & self, v8::Arguments const & argv )
         {
