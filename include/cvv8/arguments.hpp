@@ -620,6 +620,8 @@ namespace cvv8 {
         is different from its Call() return type. We will possibly
         eventually run into a problem with the lack of a way
         to get Call()'s return type.
+
+        @see PredicatedInCaDispatcher
     */
     template <typename ArgPred, typename CallT>
     struct PredicatedInCaLike : ArgPred, CallT {};
@@ -634,6 +636,8 @@ namespace cvv8 {
 
         This type is primarily intended to be used together with
         PredicatedInCaDispatcher.
+        
+        @see PredicatedInCaLike
 
         Reminder to self: this class is only in arguments.hpp, as opposed to
         invocable_core.hpp, because i want (for pedantic
@@ -642,6 +646,8 @@ namespace cvv8 {
         We might want to move ArgumentsPredicate and
         ValuePredicate into convert_core.hpp and move this class back
         into invocable_core.hpp.
+
+        @see PredicatedInCaDispatcher
     */
     template <typename ArgPred, typename InCaT>
     struct PredicatedInCa : PredicatedInCaLike<ArgPred, InCaT> {};
@@ -725,13 +731,14 @@ namespace cvv8 {
         The constructor counterpart of PredicatedInCa.
         ArgPred must be an ArgumentsPredicate type and
         FactoryT must be CtorForwarder or interface-compatible.
-        
+
         We could probably have this take a signature instead of 
         FactoryT, and wrap that signature in a CtorForwarder. That 
         would which would simplify most client code but:
-        
-        a) ctor signatures are a bit kludgy.
-        
+
+        a) ctor signatures are a bit kludgy to work with at the 
+        templates level.
+
         b) That would preclude the use of ctor-like factories which 
         return subclasses of some base interface type (the 
         parameterized type).

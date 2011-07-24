@@ -52,7 +52,7 @@ namespace cvv8 {
     struct VarToGetter : AccessorGetterType
     {
         /** Implements the v8::AccessorGetter() interface. */
-        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        inline static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             return CastToJS( *SharedVar );
         }
@@ -76,7 +76,7 @@ namespace cvv8 {
     struct VarToSetter : AccessorSetterType
     {
         /** Implements the v8::AccessorSetter() interface. */
-        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        inline static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             *SharedVar = CastFromJS<PropertyType>( value );
         }
@@ -109,7 +109,7 @@ namespace cvv8 {
     struct MemberToGetter : AccessorGetterType
     {
         /** Implements the v8::AccessorGetter() interface. */
-        static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        inline static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -137,7 +137,7 @@ namespace cvv8 {
     struct MemberToSetter : AccessorSetterType
     {
         /** Implements the v8::AccessorSetter() interface. */
-        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        inline static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -169,7 +169,7 @@ namespace cvv8 {
     */
     struct ThrowingSetter : AccessorSetterType
     {
-        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value>, const v8::AccessorInfo &)
+        inline static void Set(v8::Local<v8::String> property, v8::Local<v8::Value>, const v8::AccessorInfo &)
         {
              Toss(StringBuffer() <<
                   "Native member property setter '"
@@ -195,7 +195,7 @@ namespace cvv8 {
     template <typename Sig, typename FunctionSignature<Sig>::FunctionType Getter>
     struct FunctionToGetter : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        inline static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             return CastToJS( (*Getter)() );
         }
