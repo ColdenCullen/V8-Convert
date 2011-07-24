@@ -166,10 +166,10 @@ namespace cvv8 {
     {};
 
     /**
-        Behaves like either FunctorToInCa or FunctorToInCaVoid, depending
-        on the Tag type (InCa or InCaVoid).
+        Behaves like one of the following, depending on the Tag type:
 
-        TODO: Getter/Setter support is missing in the property binding API.
+        FunctorToInCa (Tag=InCa), FunctorToInCaVoid (Tag=InCaVoid),
+        FunctorToGetter (Tag=Getter), FunctorToSetter (Tag=Setter)
     */
     template <typename Tag, typename FtorT, typename Sig,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<FtorT,Sig> >::Value
