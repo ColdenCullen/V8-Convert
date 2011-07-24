@@ -106,6 +106,7 @@ function test1()
     assertThrows( function(){ var x = f.throwingProperty;}, 'f.throwingProperty GETTER throws.' );
     assertThrows( function(){ f.throwingProperty = 3;}, 'f.throwingProperty SETTER throws.' );
 
+    
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );
 
@@ -219,6 +220,17 @@ function testMyType() {
     print("If you got this far, the ctor overloader worked.");
 }
 
+function testFunctors()
+{
+    var f = new BoundNative();
+    assert( f.myFunctor(), 'f.myFunctor()' );
+    assert( f.myFunctor(3), 'f.myFunctor(int)' );
+    asserteq( undefined, f.myFunctor(3.3), 'f.myFunctor(double)' );
+    //assert( f.myFunctor(42), 'f.myFunctor(...)' );
+    //assertThrows( function(){ f.myFunctor(1,2);}, 'myFunctor() does not accept 2 arguments.' );
+    f.destroy();
+}
+
 function testFork() {
     print("About to fork()...");
     assertThrows(function(){fork(1);},'fork() requires a Function argument.');
@@ -265,5 +277,6 @@ if(0) {
     print( JSON.stringify(getCallLocation()) );
 }
 if( 'fork' in this ) testFork();
+testFunctors();
 
 print("Done!");

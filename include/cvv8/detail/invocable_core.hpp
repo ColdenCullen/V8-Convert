@@ -1321,6 +1321,56 @@ struct MethodToInCaVoid
 {
 };
 
+#if !defined(DOXYGEN)
+namespace Detail {
+    template <typename RV, typename Ftor, typename Sig, bool UnlockV8>
+    struct FunctorToInCaSelector : ConstMethodForwarder<Ftor, sl::Arity<Signature<Sig> >::Value, Sig, UnlockV8>
+    {
+    };
+    template <typename Ftor, typename Sig, bool UnlockV8>
+    struct FunctorToInCaSelector<void,Ftor,Sig,UnlockV8> : ConstMethodForwarderVoid<Ftor, sl::Arity<Signature<Sig> >::Value, Sig, UnlockV8>
+    {};
+}
+#endif
+
+/**
+    This class converts a functor to an InvocationCallback. Ftor must
+    be a functor type. Sig must be a signature unambiguously matching 
+    a Ftor::operator() implementation and Ftor::operator() must be
+    const. UnlockV8 is as described for FunctionToInCa.
+*/
+template <typename Ftor, typename Sig,
+        bool UnlockV8 = SignatureIsUnlockable< MethodSignature<Ftor,Sig> >::Value
+        >
+struct FunctorToInCa : InCa
+{
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        typedef Detail::FunctorToInCaSelector<
+            typename Signature<Sig>::ReturnType, Ftor, Sig, UnlockV8
+        > Proxy;
+        return Proxy::Call( Ftor(), &Ftor::operator(), argv );
+    }
+};
+
+/**
+    The functor equivalent of FunctionToInCaVoid. See FunctorToInCa for
+    the requirements of the Ftor and Sig types.
+*/
+template <typename Ftor, typename Sig,
+        bool UnlockV8 = SignatureIsUnlockable< MethodSignature<Ftor,Sig> >::Value
+        >
+struct FunctorToInCaVoid : InCa
+{
+    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    {
+        typedef Detail::FunctorToInCaSelector<
+            void, Ftor, Sig, UnlockV8
+        > Proxy;
+        return Proxy::Call( Ftor(), &Ftor::operator(), argv );
+    }
+};
+
 /**
    Functionally identical to MethodToInCa, but for const member functions.
    

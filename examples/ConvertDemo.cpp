@@ -42,6 +42,24 @@ void throwStdString()
     throw std::string("std::string thrown as an exception.");
 }
 
+struct MyFunctor
+{
+    bool operator()() const
+    {
+        CERR << "MyFunctor()!\n";
+        return true;
+    }
+    bool operator()(int i) const
+    {
+        CERR << "MyFunctor("<<i<<")!\n";
+        return true;
+    }
+    void operator()(double d) const
+    {
+        CERR << "MyFunctor("<<d<<")!\n";
+    }
+};
+
 namespace cvv8 {
     CVV8_TypeName_IMPL((BoundNative),"BoundNative");
     CVV8_TypeName_IMPL((BoundSubNative),"BoundSubNative");
@@ -430,6 +448,16 @@ namespace cvv8 {
                 ("destroy", CC::DestroyObjectCallback )
                 ("message", "hi, world")
                 ("answer", 42)
+                ("myFunctor",
+                    cv::PredicatedInCaDispatcher<CVV8_TYPELIST((
+                        cv::PredicatedInCa< cv::Argv_Length<0>,
+                                            cv::FunctorToInCa<MyFunctor, bool ()> >,
+                        cv::PredicatedInCa< cv::ArgAt_IsInt32<0>,
+                                            cv::FunctorToInCa<MyFunctor, bool (int)> >,
+                        cv::PredicatedInCa< cv::ArgAt_IsA<0,double>,
+                                            cv::FunctorToInCa<MyFunctor, void (double)> >
+                    ))>::Call
+                )
                 ("throwStdString",
                     cv::InCaCatcher<std::string,
                         char const * (),

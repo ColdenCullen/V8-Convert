@@ -741,10 +741,13 @@ namespace cvv8 {
         : PredicatedInCaLike<ArgPred, FactoryT> {};
 
     /**
-        The constructor counterpart of PredicatedInCaDispatcher. PredList
-        must be a typelist of PredicatedCtorForwarder (or interface-compatible)
-        types. Clients must not pass the ContextT parameter - it is required
-        internally for handling the end-of-typelist case.
+        The constructor counterpart of PredicatedInCaDispatcher. 
+        PredList must be a typelist of PredicatedCtorForwarder (or 
+        interface-compatible) types. The ReturnType part of the 
+        typelist must be the base type the constructors in the list 
+        can return (they must all share a common base). Clients must 
+        not pass the ContextT parameter - it is required internally 
+        for handling the end-of-typelist case.
         
         This template instantiates TypeName<PredList::ReturnType>, so
         if that template is to be specialized by client code, it should
