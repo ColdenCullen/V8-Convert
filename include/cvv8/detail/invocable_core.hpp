@@ -1430,7 +1430,45 @@ public:
 template <typename T, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T,Sig> >::Value
         >
-struct ConstMethodForwarder : MethodForwarder<T const, Sig, UnlockV8> {};
+struct ConstMethodForwarder
+#if 0
+: MethodForwarder<T const, Sig, UnlockV8> {};
+#else
+{
+private:
+    typedef typename
+    tmp::IfElse< tmp::SameType<void ,typename ConstMethodSignature<T,Sig>::ReturnType>::Value,
+                 Detail::ConstMethodForwarderVoid< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >,
+                 Detail::ConstMethodForwarder< T, sl::Arity< Signature<Sig> >::Value, Sig, UnlockV8 >
+    >::Type
+    Proxy;
+public:
+    typedef typename Proxy::SignatureType SignatureType;
+    typedef typename Proxy::FunctionType FunctionType;
+
+    /**
+       Passes the given arguments to (self.*func)(), converting them
+       to the appropriate types. If argv.Length() is less than
+       sl::Arity< Signature<Sig> >::Value then a JS exception is thrown, with one
+       exception: if the function has "-1 arity" (i.e. it is
+       InvocationCallback-like) then argv is passed on to it
+       regardless of the value of argv.Length().
+    */
+    static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
+    {
+        return Proxy::Call( self, func, argv );
+    }
+
+    /**
+       Like the 3-arg overload, but tries to extract the (T const *)
+       object using CastFromJS<T>(argv.This()).
+    */
+    static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+    {
+        return Proxy::Call( func, argv );
+    }
+};
+#endif
 
 /**
    Tries to forward the given arguments to the given native 
@@ -2028,7 +2066,8 @@ struct InCaLikeConstMethod : ConstMethodToInCa< T, RV (v8::Arguments const &), F
 {};
 
 
-//! Don't use. Doesn't yet compile.
+#if 0
+//! Don't use. Doesn't yet compile. Trying to consolidate Const/MethodXyz
 template <typename ASig, typename Signature<ASig>::FunctionType Func>
 struct SigToInCa :
     tmp::IfElse<
@@ -2041,7 +2080,7 @@ struct SigToInCa :
         >::Type
     >::Type
 {};
-
+#endif
 
 /**
     This class acts as a proxy for another InCa-compatible class,

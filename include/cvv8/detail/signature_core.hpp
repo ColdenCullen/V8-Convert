@@ -402,10 +402,12 @@ template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() > : MethodSignature<T const, RV ()>
 {
 };
+#if 0 // i don't think msvc can distinguish this specialization.
 template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() const > : MethodSignature<T const, RV ()>
 {
 };
+#endif
 
 template <typename T, typename RV >
 struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
@@ -414,7 +416,7 @@ struct ConstMethodSignature< T, RV () > : Signature< RV (T::*)() const >
     typedef RV (Context::*FunctionType)() const;
 };
 template <typename T, typename RV >
-struct ConstMethodSignature< T, RV (T::*)() const > : MethodSignature<T const, RV ()>
+struct ConstMethodSignature< T, RV (T::*)() const > : ConstMethodSignature<T const, RV ()>
 {
 };
 

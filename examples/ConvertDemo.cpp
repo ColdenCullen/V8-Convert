@@ -859,11 +859,11 @@ namespace { // testing ground for some compile-time assertions...
 
         {
             typedef BoundNative T;
-            typedef cv::MethodSignature<T const, void (T::*)() const> CS0;
+            //!msvc typedef cv::MethodSignature<T const, void (T::*)() const> CS0;
             typedef cv::MethodSignature<T const, void (T::*)()> CS02;
             typedef cv::MethodSignature<T const, void (T::*)(int) const> CS1;
             typedef cv::MethodSignature<T const, void (T::*)(int)> CS2;
-            ASS< sl::IsConstMethod<CS0>::Value >();
+            //!msvc ASS< sl::IsConstMethod<CS0>::Value >();
             ASS< sl::IsConstMethod<CS02>::Value >();
             ASS< sl::IsConstMethod<CS1>::Value >();
             ASS< sl::IsConstMethod<CS2>::Value >();
