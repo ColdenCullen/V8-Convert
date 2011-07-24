@@ -1915,7 +1915,7 @@ namespace cvv8 {
         struct CtorFwdDispatch<T,tmp::NilType>
         {
             typedef typename TypeInfo<T>::NativeHandle ReturnType;
-            static ReturnType Call( v8::Arguments const &  argv )
+            static ReturnType Call( v8::Arguments const & )
             {
                 return 0;
             }

@@ -169,7 +169,7 @@ namespace cvv8 {
     */
     struct ThrowingSetter : AccessorSetterType
     {
-        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        static void Set(v8::Local<v8::String> property, v8::Local<v8::Value>, const v8::AccessorInfo &)
         {
              Toss(StringBuffer() <<
                   "Native member property setter '"

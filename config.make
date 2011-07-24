@@ -16,6 +16,7 @@ DEBUG ?= 1
 ENABLE_DEBUG ?= $(DEBUG)
 
 GCC_CFLAGS := -pedantic -Wall -Werror -fPIC -ansi
+# argh: -Wextra causes build errors b/c v8.h has lots of unused-but-named parameters
 CFLAGS += $(GCC_CFLAGS)
 CXXFLAGS += $(GCC_CFLAGS)
 

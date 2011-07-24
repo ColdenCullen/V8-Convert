@@ -431,7 +431,7 @@ namespace cvv8 {
 
            The default implementation does nothing.
         */
-        static void PreWrap( v8::Persistent<v8::Object> const & jsSelf, v8::Arguments const & argv )
+        static void PreWrap( v8::Persistent<v8::Object> const &, v8::Arguments const & )
         {
             return;
         }
@@ -461,7 +461,7 @@ namespace cvv8 {
 
            The default implementation does nothing.
         */
-        static void Wrap( v8::Persistent<v8::Object> const & jsSelf, NativeHandle nativeSelf )
+        static void Wrap( v8::Persistent<v8::Object> const &, NativeHandle )
         {
             return;
         }
@@ -495,7 +495,7 @@ namespace cvv8 {
            
            The default implementation does nothing.
         */
-        static void Unwrap( v8::Handle<v8::Object> const & jsSelf, NativeHandle nativeSelf )
+        static void Unwrap( v8::Handle<v8::Object> const &, NativeHandle )
         {
             return;
         }
@@ -1199,7 +1199,7 @@ namespace cvv8 {
     public:
         typedef typename TypeInfo<T>::Type Type;
         typedef typename TypeInfo<T>::NativeHandle NativeHandle;
-        static NativeHandle Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv )
+        static NativeHandle Create( v8::Persistent<v8::Object> , v8::Arguments const &  argv )
         {
             typedef CtorArityDispatcher<CtorForwarderList> Proxy;
             return Proxy::Call( argv );

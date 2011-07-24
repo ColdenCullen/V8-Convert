@@ -136,32 +136,32 @@ public:
         CERR << "@"<<(void const *)this<<"->operator()("<<i<<", "<<x<<")!\n";
         return x * i;
     }
-    ValueHandle invo( v8::Arguments const & argv )
+    ValueHandle invo( v8::Arguments const & )
     {
         assert( 0 != this );
         CERR << "@"<<(void const *)this<<"->invo()  (non-static, non-const)\n";
         return ValueHandle();
     }
-    int invoInt( v8::Arguments const & argv )
+    int invoInt( v8::Arguments const & )
     {
         assert( 0 != this );
         CERR << "@"<<(void const *)this<<"->invoInt()  (non-static, non-const)\n";
         return 3;
     }
-    int invoIntConst( v8::Arguments const & argv ) const
+    int invoIntConst( v8::Arguments const & ) const
     {
         assert( 0 != this );
         CERR << "@"<<(void const *)this<<"->invoIntConst()  (non-static, const)\n";
         return 7;
     }
-    ValueHandle invo( v8::Arguments const & argv ) const
+    ValueHandle invo( v8::Arguments const & ) const
     {
         assert( 0 != this );
         CERR << "@"<<(void const *)this<<"->invo()  (const)\n";
         return ValueHandle();
     }
 
-    static ValueHandle invoStatic( v8::Arguments const & argv )
+    static ValueHandle invoStatic( v8::Arguments const & )
     {
         CERR << "invo() (static)\n";
         return ValueHandle();

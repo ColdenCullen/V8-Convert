@@ -447,7 +447,7 @@ namespace Detail {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef typename SignatureType::FunctionType FunctionType;
-        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & )
         {
             V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return func();
@@ -470,7 +470,7 @@ namespace Detail {
         typedef FunctionSignature<Sig> SignatureType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef Sig FunctionType;
-        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( FunctionType func, v8::Arguments const & )
         {
             V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)func()
@@ -616,7 +616,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         typedef T Type;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( Type & self, FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( Type & self, FunctionType func, v8::Arguments const & )
         {
             V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();
@@ -708,7 +708,7 @@ namespace Detail {
         typedef ConstMethodSignature<T,Sig> SignatureType;
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( T const & self, FunctionType func, v8::Arguments const & )
         {
             V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (self.*func)();
@@ -794,7 +794,7 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         typedef typename SignatureType::ReturnType ReturnType;
         typedef typename TypeInfo<T>::Type Type;
-        static ReturnType CallNative( Type const & self, FunctionType func, v8::Arguments const & argv )
+        static ReturnType CallNative( Type const & self, FunctionType func, v8::Arguments const & )
         {
             V8Unlocker<UnlockV8> const & unlocker( V8Unlocker<UnlockV8>() );
             return (ReturnType)(self.*func)();

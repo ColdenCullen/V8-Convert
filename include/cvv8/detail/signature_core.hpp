@@ -402,7 +402,7 @@ template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() > : MethodSignature<T const, RV ()>
 {
 };
-#if 0 //!msvc
+#if 1 //msvc?
 template <typename T, typename RV >
 struct MethodSignature< T const, RV (T::*)() const > : MethodSignature<T const, RV ()>
 {
