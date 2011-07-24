@@ -18,7 +18,7 @@ conversion.
 namespace cvv8 {
 
 /**
-    A concept class, primarily for documentation purposes.
+    A concept class, primarily for documentation and tag-type purposes.
 */
 struct InCa
 {
@@ -126,7 +126,7 @@ namespace Detail {
         A sentry class which instantiates a v8::Unlocker
         if the boolean value is true or is a no-op if it is false.
     */
-    template <bool> struct V8Unlocker;
+    template <bool> struct V8Unlocker {};
     
     /**
         Equivalent to v8::Unlocker.
@@ -135,14 +135,6 @@ namespace Detail {
     struct V8Unlocker<true> : v8::Unlocker
     {
     };
-    /**
-        A no-op specialization.
-    */
-    template <>
-    struct V8Unlocker<false>
-    {
-    };
-    
     
 
 }
@@ -214,35 +206,16 @@ struct IsUnlockable<v8::Arguments> : tmp::BoolVal<false> {};
     API an empty list will refer to a function taking no arguments.
 */
 template <typename TList>
-struct TypeListIsUnlockable;
-
-#if !defined(DOXYGEN)
-namespace Detail
-{
-    template <typename ListType>
-    struct TypeListIsUnlockableImpl : tmp::BoolVal<
-        IsUnlockable<typename ListType::Head>::Value && TypeListIsUnlockableImpl<typename ListType::Tail>::Value
-        >
-    {
-    };
-
-    template <>
-    struct TypeListIsUnlockableImpl< tmp::NilType > : tmp::BoolVal<true>
-    {};
-   
-}
-#endif
-
-/**
-    Given a TypeList, this metatypeplate's Value member evaluates
-    to true if IsUnlockable<T>::Value is true for every type
-    in the typelist.
-*/
-template <typename TList>
-struct TypeListIsUnlockable : Detail::TypeListIsUnlockableImpl<TList>
+struct TypeListIsUnlockable : tmp::BoolVal<
+    IsUnlockable<typename TList::Head>::Value && TypeListIsUnlockable<typename TList::Tail>::Value
+    >
 {
 };
 
+//! End-of-typelist specialization.
+template <>
+struct TypeListIsUnlockable< tmp::NilType > : tmp::BoolVal<true>
+{};
 /**
     Given a Signature, this metafunction's Value member
     evaluates to true if:

@@ -55,6 +55,11 @@ struct MyFunctor
     {
         CERR << "MyFunctor("<<d<<")!\n";
     }
+
+    void operator()(bool b) const
+    {
+        CERR << "MyFunctor("<<b<<")!\n";
+    }
 };
 
 struct CurrentTimeFtor
@@ -917,49 +922,39 @@ namespace { // testing ground for some compile-time assertions...
 int aBoundInt = 3;
 void test_xto_bindings()
 {
-    v8::InvocationCallback cb;
+    v8::InvocationCallback c;
     v8::AccessorGetter g;
     v8::AccessorSetter s;
 
     using namespace cvv8;
 
-    typedef FunctionTo< InCa, int(char const *), ::puts> FPuts;
-    typedef FunctionTo< InCaVoid, int(char const *), ::puts> FPutsVoid;
-    typedef FunctionTo< Getter, int(void), ::getchar> GetChar;
-    typedef FunctionTo< Setter, int(int), ::putchar> SetChar;
-    cb = FPuts::Call;
-    cb = FPutsVoid::Call;
-    g = GetChar::Get;
-    s = SetChar::Set;
+    // Function-to-X conversions:
+    c = FunctionTo< InCa, int(char const *), ::puts>::Call;
+    c = FunctionTo< InCaVoid, int(char const *), ::puts>::Call;
+    g = FunctionTo< Getter, int(void), ::getchar>::Get;
+    s = FunctionTo< Setter, int(int), ::putchar>::Set;
 
-    typedef VarTo< Getter, int, &aBoundInt > VarGet;
-    typedef VarTo< Setter, int, &aBoundInt > VarSet;
-    g = VarGet::Get;
-    s = VarSet::Set;
+    // Var-to-X conversions:
+    g = VarTo< Getter, int, &aBoundInt >::Get;
+    s = VarTo< Setter, int, &aBoundInt >::Set;
     typedef VarTo< Accessors, int, &aBoundInt > VarGetSet;
     g = VarGetSet::Get;
     s = VarGetSet::Set;
 
+    // Method-to-X conversions:
     typedef BoundNative T;
-    
-    typedef MethodTo< InCa, T, void (), &T::doFoo > MemInCa;
-    typedef MethodTo< InCa, const T, int (), &T::getInt > MemInCaConst;
-    typedef MethodTo< InCaVoid, const T, int (), &T::getInt > MemInCaConstVoid;
-    typedef MethodTo< Getter, const T, int (), &T::getInt > MemGet;
-    typedef MethodTo< Setter, T, void (int), &T::setInt > MemSet;
-    cb = MemInCa::Call;
-    cb = MemInCaConst::Call;
-    cb = MemInCaConstVoid::Call;
-    g = MemGet::Get;
-    s = MemSet::Set;
+    c = MethodTo< InCa, T, void (), &T::doFoo >::Call;
+    c = MethodTo< InCa, const T, int (), &T::getInt >::Call;
+    c = MethodTo< InCaVoid, const T, int (), &T::getInt >::Call;
+    g = MethodTo< Getter, const T, int (), &T::getInt >::Get;
+    s = MethodTo< Setter, T, void (int), &T::setInt >::Set;
 
+    // Functor-to-X conversions:
     typedef MyFunctor F;
-    typedef FunctorTo< InCa, F, bool () > F0;
-    typedef FunctorTo< InCa, F, bool (int) > F1i;
-    typedef FunctorTo< InCa, F, void (double) > F1d;
-    cb = F0::Call;
-    cb = F1i::Call;
-    cb = F1d::Call;
+    c = FunctorTo< InCaVoid, F, bool () >::Call;
+    c = FunctorTo< InCa, F, bool (int) >::Call;
+    g = FunctorTo< Getter, F, bool () >::Get;
+    s = FunctorTo< Setter, F, void (bool) >::Set;
 }
 
 

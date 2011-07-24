@@ -74,18 +74,18 @@ namespace cvv8 {
     struct InCaVoid {};
 
     /**
-        Acts as a proxy for FunctionToInCa, FunctionToGetter and
-        FunctionToSetter. Tag must be one of (InCa, InCaVoid,
-        Getter, Setter). The other args are as documented for the
-        aforementioned proxied types.
+        Base (unimplemented) FunctionTo interface.
 
-        Achtung: UnlockingV8 option is currently ignored for Getter
-        and Setter conversions. See FunctionToInCa for more
-        information about that parameter.
+        Specializations act as proxies for FunctionToInCa,
+        FunctionToGetter and FunctionToSetter. Tag must be one of
+        (InCa, InCaVoid, Getter, Setter). The other args are as
+        documented for the aforementioned proxied types.
+
+        See FunctionToInCa for more information about the parameters.
     */
     template <typename Tag, typename Sig, typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionTo;
+    struct FunctionTo {};
 
     //! Behaves like FunctionToInCa.
     template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
@@ -107,13 +107,16 @@ namespace cvv8 {
     struct FunctionTo< Setter, Sig, Func, UnlockV8 > : FunctionToSetter<Sig,Func>
     {};
 
-    /**
+    /** @class VarTo
+
+        Base (unimplemented) VarTo interface.
+
         Acts as a proxy for VarToGetter and VarToSetter. Tag must be
         one of (Getter, Setter, Accessors). The other args are as
         documented for VarToGetter and VarToSetter.
     */
     template <typename Tag, typename PropertyType, PropertyType * const SharedVar>
-    struct VarTo;
+    struct VarTo {};
 
     //! Behaves like VarToGetter.
     template <typename PropertyType, PropertyType * const SharedVar>
@@ -131,19 +134,19 @@ namespace cvv8 {
     {};
 
     /**
+        Base (unimplemented) MethodTo interface.
+
         Acts as a proxy for MethodToInCa, MethodToGetter and
         MethodToSetter (or their const cousins if T is
         const-qualified). Tag must be one of (InCa, InCaVoid,
         Getter, Setter). The other args are as documented for the
         aforementioned proxied types.
 
-        Achtung: UnlockingV8 option is currently ignored for Getter
-        and Setter conversions. See FunctionToInCa for more
-        information about that parameter.
+        See MethodToInCa for more information about the parameters.
     */
     template <typename Tag, typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value>
-    struct MethodTo;
+    struct MethodTo {};
 
     //! Behaves like MethodToInCa. For const methods, const-qualify T.
     template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
@@ -166,15 +169,19 @@ namespace cvv8 {
     {};
 
     /**
+        Base (unimplemented) FunctorTo interface.
+
         Behaves like one of the following, depending on the Tag type:
 
         FunctorToInCa (Tag=InCa), FunctorToInCaVoid (Tag=InCaVoid),
         FunctorToGetter (Tag=Getter), FunctorToSetter (Tag=Setter)
+
+        See FunctorToInCa for more information about the parameters.
     */
     template <typename Tag, typename FtorT, typename Sig,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<FtorT,Sig> >::Value
               >
-    struct FunctorTo;
+    struct FunctorTo {};
 
     //! Behaves like FunctorToInCa.
     template <typename FtorT, typename Sig, bool UnlockV8>

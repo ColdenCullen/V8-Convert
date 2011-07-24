@@ -61,12 +61,28 @@ Converting functions to v8::InvocationCallback:
 - cvv8::MethodToInCa
 - cvv8::ConstMethodToInCa
 - cvv8::ToInCa
+- cvv8::FunctorToInCa
+- cvv8::PredicatedInCa and cvv8::PredicatedInCaDispatcher
+
+Binding JS properties to native properties, functions, methods, or
+functors:
+
+- cvv8::FunctionToGetter, cvv8::FunctionToSetter
+- cvv8::MethodToGetter, cvv8::MethodToSetter
+- cvv8::ConstMethodToGetter, cvv8::ConstMethodToSetter
+- cvv8::FunctorToGetter, cvv8::FunctorToSetter
 
 Other utilities:
 
 - cvv8::CtorForwarder and cvv8::CtorArityDispatcher
-- cvv8::ClassCreator
-- The tmp and sl namespaces hold template metaprogramming bits.
+- cvv8::ClassCreator simplifies binding of C++ classes with v8.
+- cvv8::FunctionTo converts functions to ...
+- cvv8::MethodTo converts methods to ...
+- cvv8::FunctorTo converts functors to ...
+- cvv8::VarTo converts variables to ...
+- cvv8::CallForwarder forwards native arguments to JS functions.
+- The tmp and sl namespaces hold various template metaprogramming bits.
+- ... there's more ...
 
 Most of the code in this library are internal template specializations
 which take care of the dirty work. Typical clients won't typically need
