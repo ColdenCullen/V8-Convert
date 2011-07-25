@@ -374,8 +374,12 @@ namespace cvv8 {
         to any application state (unless that is static/shared within
         the Ftor class).
 
-        Ftor must be a functor. Sig must be a signature matching a
-        const Ftor::operator() implementation.
+        Ftor must be a functor. Sig must be a signature matching a const
+        Ftor::operator() implementation. CastToJS(Signature<Sig>::ReturnType)
+        must be legal.
+
+        The signature's return type may not be void (this is a getter,
+        and getters don't return void).
     */
     template <typename Ftor, typename Sig>
     struct FunctorToGetter
@@ -394,8 +398,15 @@ namespace cvv8 {
         Sig must be a signature matching a Ftor::operator()
         implementation.
 
-        The return value of Ftor::operator() is not evaluated,
-        so it may be void or any non-convertible type.
+        The return value of Ftor::operator() is not evaluated, so it may be
+        void or any non-convertible type. It is semantically illegal to bind
+        a setter which return resources allocated by the setter, if those
+        resources are passed to the caller. In such a case, each access
+        _will_ leak memory. But nobody returns allocated memory from a
+        setter, right?
+
+        CastFromJS<ArgType1>() must be legal, where ArgType1
+        is sl::At<0, Signature<Sig> >::Type.
     */
     template <typename Ftor, typename Sig>
     struct FunctorToSetter
@@ -616,8 +627,10 @@ namespace cvv8 {
         @endcode
         
         Its only real benefit is saving a bit of typing when several T
-        member/method bindings are made and T's real type has a name
-        longer than 'T'.
+        member/method bindings are made and T's real type name is longer
+        than 'T'. e.g. it gets tedious to repeatedly type
+        MyExceedinglyLongClassName in method/member-binding templates.
+        (Function-local typedefs help.)
     */
     template <typename T>
     struct ClassAccessor
