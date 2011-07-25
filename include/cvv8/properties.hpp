@@ -50,6 +50,11 @@ namespace cvv8 {
     typedef AccessorSetterType Setter;
 
     /**
+        A tag type for use with VarTo, MemberTo, MethodTo, and FunctionTo.
+    */
+    struct Accessors : AccessorGetterType, AccessorSetterType {};
+
+    /**
        This template create an v8::AccessorGetter from a static/shared
        variable.
 

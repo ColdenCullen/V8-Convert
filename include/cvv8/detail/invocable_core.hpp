@@ -32,6 +32,12 @@ struct InCa
 };
 
 /**
+    A tag type for use with FunctionTo and MethodTo.
+*/
+struct InCaVoid : InCa {};
+
+
+/**
    Partial specialization for v8::InvocationCallback-like functions
    (differing only in their return type) with an Arity value of -1.
 */
@@ -1312,7 +1318,7 @@ template <typename Ftor, typename Sig,
         >
 struct FunctorToInCa : InCa
 {
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
         typedef Detail::FunctorToInCaSelector<
             typename Signature<Sig>::ReturnType, Ftor, Sig, UnlockV8
@@ -1330,7 +1336,7 @@ template <typename Ftor, typename Sig,
         >
 struct FunctorToInCaVoid : InCa
 {
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
         typedef Detail::FunctorToInCaSelector<
             void, Ftor, Sig, UnlockV8
@@ -1417,7 +1423,7 @@ public:
        (i.e. it is InvocationCallback-like) then argv is passed on 
        to it regardless of the value of argv.Length().
     */
-    static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( T & self, FunctionType func, v8::Arguments const & argv )
     {
         return Proxy::Call( self, func, argv );
     }
@@ -1426,7 +1432,7 @@ public:
        Like the 3-arg overload, but tries to extract the (T*) object using
        CastFromJS<T>(argv.This()).
     */
-    static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
         return Proxy::Call( func, argv );
     }
@@ -1463,7 +1469,7 @@ public:
        InvocationCallback-like) then argv is passed on to it
        regardless of the value of argv.Length().
     */
-    static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( T const & self, FunctionType func, v8::Arguments const & argv )
     {
         return Proxy::Call( self, func, argv );
     }
@@ -1472,7 +1478,7 @@ public:
        Like the 3-arg overload, but tries to extract the (T const *)
        object using CastFromJS<T>(argv.This()).
     */
-    static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
     {
         return Proxy::Call( func, argv );
     }
@@ -1534,7 +1540,7 @@ forwardMethod( T & self,
    the T template parameter - it cannot deduce it.
 */
 template <typename T, typename Sig>
-typename MethodSignature<T,Sig>::ReturnType
+inline typename MethodSignature<T,Sig>::ReturnType
 forwardMethod(Sig func, v8::Arguments const & argv )
 {
     typedef MethodSignature<T,Sig> MSIG;
@@ -1580,7 +1586,7 @@ forwardConstMethod( T const & self,
    the T template parameter - it cannot deduce it.
 */
 template <typename T, typename Sig>
-typename ConstMethodSignature<T,Sig>::ReturnType
+inline typename ConstMethodSignature<T,Sig>::ReturnType
 forwardConstMethod(Sig func, v8::Arguments const & argv )
 {
     typedef ConstMethodSignature<T,Sig> MSIG;
@@ -1606,7 +1612,7 @@ struct InCaToInCa : FunctionToInCa< v8::Handle<v8::Value> (v8::Arguments const &
 };
 
 
-#if 1
+#if 0 // YAGNI
 /**
    "Converts" an InCaToInCa<ICB> instance to JS by treating it as an
    InvocationCallback function. This is primarily useful in
@@ -1669,7 +1675,7 @@ struct ArityDispatch : InCa
 
        Implements the InvocationCallback interface.
     */
-    static v8::Handle<v8::Value> Call( v8::Arguments const & args )
+    inline static v8::Handle<v8::Value> Call( v8::Arguments const & args )
     {
         return ( (-1==Arity) || (Arity == args.Length()) )
             ? InCaT::Call(args)
@@ -1852,7 +1858,7 @@ namespace Detail {
     template <typename InCaT>
     struct OverloadCallHelper : InCa
     {
-        static inline v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        inline static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return InCaT::Call(argv);
         }
@@ -1861,7 +1867,7 @@ namespace Detail {
     template <>
     struct OverloadCallHelper<tmp::NilType> : InCa
     {
-        static inline v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+        inline static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
         {
             return Toss( StringBuffer()
                         << "End of typelist reached. Argument count="
@@ -1917,7 +1923,7 @@ struct ArityDispatchList : InCa
 
        Implements the v8::InvocationCallback interface.
     */
-    static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
+    inline static v8::Handle<v8::Value> Call( v8::Arguments const & argv )
     {
         typedef typename FwdList::Head FWD;
         typedef typename FwdList::Tail Tail;

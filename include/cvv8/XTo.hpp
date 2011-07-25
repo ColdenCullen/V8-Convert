@@ -64,16 +64,6 @@
 namespace cvv8 {
 
     /**
-        A tag type for use with VarTo.
-    */
-    struct Accessors : AccessorGetterType, AccessorSetterType {};
-
-    /**
-        A tag type for use with FunctionTo and friends.
-    */
-    struct InCaVoid {};
-
-    /**
         Base (unimplemented) FunctionTo interface.
 
         Specializations act as proxies for FunctionToInCa,
