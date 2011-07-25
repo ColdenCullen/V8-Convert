@@ -190,19 +190,19 @@ public:
     }
 
 
-    void overload0()
+    void overload()
     {
         CERR << "@"<<(void const *)this<<"->overload0()\n";
     }
-    void overload1(int a)
+    void overload(int a)
     {
         CERR << "@"<<(void const *)this<<"->overload1("<<a<<")\n";
     }
-    void overload2(int a,int b)
+    void overload(int a,int b)
     {
         CERR << "@"<<(void const *)this<<"->overload2("<<a<<", "<<b<<")\n";
     }
-    void overloadN( v8::Arguments const & argv )
+    void overload( v8::Arguments const & argv )
     {
         CERR << "@"<<(void const *)this<<"->overloadN("<<argv.Length()<<" arg(s))\n";
     }
@@ -215,6 +215,12 @@ public:
     
     int throwingGetter() const { throw std::runtime_error("You called throwingGetter()! What did you expect?"); }
     void throwingSetter(int) { throw std::runtime_error("You called throwingSetter()! What did you expect?"); }
+
+    v8::Handle<v8::Value> operator<<( v8::Handle<v8::Value> const & t ) const
+    {
+        return t;
+    }
+
 };
 
 // BoundNative Ctors we want to bind to v8 (there are several other ways to do this):
@@ -271,6 +277,7 @@ struct BoundSubNative : public BoundNative
         static const NonBoundType bob = NonBoundType();
         return bob;
     }
+
 };
 
 

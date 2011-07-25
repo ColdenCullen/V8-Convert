@@ -21,6 +21,7 @@ namespace cvv8 {
             The v8::AccessorGetter() interface.
         */
         static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+        //{ return Toss(StringBuffer()<<"Property '"<<property<<"' getter is unspecialized!");}
     };
 
     /**
@@ -30,7 +31,7 @@ namespace cvv8 {
         XyzToSetter classes inherit this type as a sign that they
         implement this interface.
         
-        This class has no implemention - it only exists for 
+        This class has no useful implemention - it only exists for
         documentation purposes.
     */
     struct AccessorSetterType
@@ -553,6 +554,19 @@ namespace cvv8 {
     {
     private:
         v8::Handle<v8::ObjectTemplate> const & proto;
+
+        /** A "null" setter which does nothing. Used only as default
+            argument to operator(). Its Set() is not actually used
+            but this type is used as a placeholder for a NULL
+            v8::AccessorSetter.
+        */
+        struct NullSetter
+        {
+            /** The v8::AccessorSetter() interface. */
+            static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+            {
+            }
+        };
     public:
         /**
             Initializes this object so that calls to operator() will
@@ -562,7 +576,16 @@ namespace cvv8 {
         explicit AccessorAdder( v8::Handle<v8::ObjectTemplate> const & p )
             : proto(p)
         {}
-
+        AccessorAdder const & operator()( char const * name,
+                                          v8::AccessorGetter g,
+                                          v8::AccessorSetter s = NULL,
+                                          v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
+                                          v8::AccessControl settings=v8::DEFAULT,
+                                          v8::PropertyAttribute attribute=v8::None) const
+        {
+            proto->SetAccessor(v8::String::New(name), g, s, data, settings, attribute);
+            return *this;
+        }
         /**
             Adds GetterT::Get and SetterT::Set as accessors for the 
             given property in the prototype object.
@@ -581,30 +604,18 @@ namespace cvv8 {
             Returns this object, for chaining calls.
         */
         template <typename GetterT, typename SetterT>
-        inline AccessorAdder const & operator()( char const * name,
+        AccessorAdder const & operator()( char const * name,
                                           GetterT const &,
-                                          SetterT const &,
+                                          SetterT const & = NullSetter(),
                                           v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
                                           v8::AccessControl settings=v8::DEFAULT,
                                           v8::PropertyAttribute attribute=v8::None) const
         {
-            proto->SetAccessor(v8::String::New(name), GetterT::Get, SetterT::Set, data, settings, attribute);
-            return *this;
-        }
-
-        /**
-            Like operator(), but only sets a getter - no setter is defined. i can't overload
-            operator() with this due to ambiguities.
-        */
-        template <typename GetterT>
-        inline AccessorAdder const & Getter( char const * name,
-                                      GetterT const &,
-                                      v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
-                                      v8::AccessControl settings=v8::DEFAULT,
-                                      v8::PropertyAttribute attribute=v8::None) const
-        {
-            proto->SetAccessor(v8::String::New(name), GetterT::Get, NULL, data, settings, attribute);
-            return *this;
+            // jump through a small hoop to ensure identical semantics vis-a-vis
+            // the other overload.
+            return this->operator()( name, GetterT::Get,
+                                    tmp::SameType<NullSetter,SetterT>::Value ? NULL : SetterT::Set,
+                                    data, settings, attribute);
         }
     };
 

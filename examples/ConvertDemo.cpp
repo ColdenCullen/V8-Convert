@@ -365,66 +365,28 @@ namespace cvv8 {
         static void Initialize( v8::Handle<v8::Object> const & dest )
         {
             using namespace v8;
-
+            typedef BoundNative BN;
             ////////////////////////////////////////////////////////////
             // Bootstrap class-wrapping code...
-            typedef cv::ClassCreator<BoundNative> CC;
+            typedef cv::ClassCreator<BN> CC;
             CC & cc( CC::Instance() );
             if( cc.IsSealed() )
             {
-                cc.AddClassTo( TypeName<BoundNative>::Value, dest );
+                cc.AddClassTo( TypeName<BN>::Value, dest );
                 bind_BoundSubNative(dest);
                 return;
             }
 
+            // Bind several overloads of BoundNative::overload()
             typedef CVV8_TYPELIST((
-                MethodToInCa<BoundNative, void(), &BoundNative::overload0>,
-                MethodToInCa<BoundNative, void(int), &BoundNative::overload1>,
-                //InCaToInCa< MethodToInvocationCallback<BoundNative, void(int,int), &BoundNative::overload2> >
-                MethodToInCa<BoundNative, void(int,int), &BoundNative::overload2>,
-                MethodToInCa<BoundNative, void(v8::Arguments const &), &BoundNative::overloadN>
+                MethodToInCa<BN, void(), &BN::overload>,
+                MethodToInCa<BN, void(int), &BN::overload>,
+                //InCaToInCa< MethodToInCa<BN, void(int,int), &BN::overload>::Call >,
+                MethodToInCa<BN, void(int,int), &BN::overload>,
+                MethodToInCa<BN, void(v8::Arguments const &), &BN::overload>
             )) OverloadList;
             typedef ArityDispatchList< OverloadList > OverloadInCas;
 
-            if(1) // just an experiment
-            {
-                typedef Signature<void (int,double)> AL2;
-                assert( 2 == sl::Arity<AL2>::Value );
-                assert( 2 == sl::Length<AL2>::Value );
-                assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
-                assert( (tmp::SameType< int, sl::At<0,AL2>::Type >::Value) );
-                assert( (tmp::SameType< double, sl::At<1,AL2>::Type >::Value) );
-                //assert( (tmp::SameType< double, AL2::TypeAt<1>::Type >::Value) );
-                
-                typedef FunctionPtr< int(char const *), ::puts> FPPuts;
-                FPPuts::Function("Hi, world.");
-                typedef Signature< FPPuts::FunctionType > ALPuts;
-                assert( 1 == sl::Arity<ALPuts>::Value );
-                
-                typedef
-                    Signature< int (BoundNative::*)(char const *) const >
-                    BNPutsC;
-                typedef
-                    ConstMethodSignature< BoundNative, int (BoundNative::*)(char const *) const >
-                    BNPutsC2;
-                typedef
-                    MethodSignature< BoundNative, int (char const *) >
-                    BNPutsC3;
-                using tmp::Assertion;
-                Assertion<true> ass;
-#define ASS ass = Assertion
-                ASS<sl::IsConstMethod<BNPutsC>::Value>();
-                ASS<sl::IsConstMethod<BNPutsC2>::Value>();
-                ASS<!sl::IsConstMethod<BNPutsC3>::Value>();
-
-                typedef Signature< int (BoundNative::*)(char const *) > BNPuts;
-                ASS< 1 == sl::Length<BNPutsC>::Value >();
-                ASS< 1 == sl::Length<BNPuts>::Value >();
-                ASS< !sl::IsConstMethod<BNPuts>::Value >();
-                ASS< tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value >();
-                ASS< 0 == sl::Index< char const *, BNPuts >::Value >();
-#undef ASS
-            }
 #define CATCHER InCaCatcher_std
             ////////////////////////////////////////////////////////////
             // Bind some member functions...
@@ -433,36 +395,36 @@ namespace cvv8 {
                 ("overloaded",
                   OverloadInCas::Call )
                 ("doFoo",
-                 MethodToInCa<BoundNative,void (),&BoundNative::doFoo>::Call)
+                 MethodToInCa<BN,void (),&BN::doFoo>::Call)
                 ("doFoo2",
-                 MethodToInCa<BoundNative,double (int,double),&BoundNative::doFoo2>::Call)
+                 MethodToInCa<BN,double (int,double),&BN::doFoo2>::Call)
                 ("toString",
                  FunctionToInCa<ValueHandle (v8::Arguments const &),BoundNative_toString>::Call)
                 ("puts",
-                 MethodToInCa<BoundNative const,void (char const *),&BoundNative::puts>::Call)
+                 MethodToInCa<BN const,void (char const *),&BN::puts>::Call)
                  //Equivalent:
-                 //ConstMethodToInCa<BoundNative,void (char const *),&BoundNative::puts>::Call)
+                 //ConstMethodToInCa<BN,void (char const *),&BN::puts>::Call)
                 ("doFooConst",
-                 MethodToInCa<BoundNative const,void (),&BoundNative::doFooConst>::Call)
+                 MethodToInCa<BN const,void (),&BN::doFooConst>::Call)
                  //Equivalent:
-                 //ConstMethodToInCa<BoundNative,void (),&BoundNative::doFooConst>::Call)
+                 //ConstMethodToInCa<BN,void (),&BN::doFooConst>::Call)
                 ("invoInt",
-                 MethodToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt>::Call)
+                 MethodToInCa<BN, int (v8::Arguments const &), &BN::invoInt>::Call)
                  //Compile error due to final 'true' argument on a signature which cannot be unlocked:
-                 //ToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt,true>::Call) // this must fail to compile
+                 //ToInCa<BN, int (v8::Arguments const &), &BN::invoInt,true>::Call) // this must fail to compile
                 ("nativeParam",
-                 MethodToInCa<BoundNative, void (BoundNative const *), &BoundNative::nativeParam>::Call)
+                 MethodToInCa<BN, void (BN const *), &BN::nativeParam>::Call)
                 ("nativeParamRef",
-                 CATCHER< MethodToInCa<BoundNative, void (BoundNative &), &BoundNative::nativeParamRef> >::Call)
+                 CATCHER< MethodToInCa<BN, void (BN &), &BN::nativeParamRef> >::Call)
                 ("nativeParamConstRef",
                  CATCHER<
-                    ConstMethodToInCa<BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
+                    ConstMethodToInCa<BN, void (BN const &), &BN::nativeParamConstRef>
                     //Equivalent:
-                    //MethodToInCa<const BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
+                    //MethodToInCa<const BN, void (BN const &), &BN::nativeParamConstRef>
                     //Equivalent:
-                    //ToInCa<const BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
+                    //ToInCa<const BN, void (BN const &), &BN::nativeParamConstRef>
                     //Equivalent:
-                    //MethodTo< InCa, const BoundNative, void (BoundNative const &), &BoundNative::nativeParamConstRef>
+                    //MethodTo< InCa, const BN, void (BN const &), &BN::nativeParamConstRef>
                     >::Call)
                 ("cstr",
                  //FunctionToInvocationCallback< char const * (char const *), cstring_test>)
@@ -474,16 +436,16 @@ namespace cvv8 {
                     PredicatedInCaDispatcher<CVV8_TYPELIST((
                         // 0-arity:
                         PredicatedInCa< Argv_Length<0>,
-                                            FunctorToInCa<MyFunctor, bool ()> >,
+                                        FunctorToInCa<MyFunctor, bool ()> >,
                         // 1-arity
                         PredicatedInCa< Argv_Length<1>,
                             PredicatedInCaDispatcher<CVV8_TYPELIST((
                                 // operator()(int):
                                 PredicatedInCa< ArgAt_IsInt32<0>,
-                                                    FunctorToInCa<MyFunctor, bool (int)> >,
+                                                FunctorToInCa<MyFunctor, bool (int)> >,
                                 // operator()(double):
                                 PredicatedInCa< ArgAt_IsA<0,double>,
-                                                    FunctorToInCa<MyFunctor, void (double)> >
+                                                FunctorToInCa<MyFunctor, void (double)> >
                             ))>
                         >
                     ))>::Call
@@ -494,25 +456,27 @@ namespace cvv8 {
                         &std::string::c_str,
                         FunctionToInCa< void (), throwStdString >
                     >::Call)
+                ("operatorLeftShift",
+                    MethodToInCa<const BN, v8::Handle<v8::Value> (v8::Handle<v8::Value> const &), &BN::operator<< >::Call)
 #if 1 // converting natives to JS requires more lower-level plumbing than converting from JS to native...
                  ("nativeReturn",
-                 MethodToInCa<BoundNative, BoundNative * (), &BoundNative::nativeReturn, true>::Call)
+                 MethodToInCa<BN, BN * (), &BN::nativeReturn, true>::Call)
                  ("nativeReturnConst",
-                 //ConstMethodToInCa<BoundNative, BoundNative const * (), &BoundNative::nativeReturnConst, true>::Call
+                 //ConstMethodToInCa<BN, BN const * (), &BN::nativeReturnConst, true>::Call
                  // Equivalent:
-                 MethodToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call
+                 MethodToInCa<BN const, BN const * (), &BN::nativeReturnConst>::Call
                  // Equivalent:
-                 //ToInCa<BoundNative const, BoundNative const * (), &BoundNative::nativeReturnConst>::Call
+                 //ToInCa<BN const, BN const * (), &BN::nativeReturnConst>::Call
                  )
                  ("nativeReturnRef",
                  CATCHER<
-                    //MethodToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>
-                    ToInCa<BoundNative, BoundNative & (), &BoundNative::nativeReturnRef, true>
+                    //MethodToInCa<BN, BN & (), &BN::nativeReturnRef, true>
+                    ToInCa<BN, BN & (), &BN::nativeReturnRef, true>
                     >::Call)
                  ("nativeReturnConstRef",
-                 //CATCHER< ConstMethodToInCa<BoundNative, BoundNative const & (), &BoundNative::nativeReturnConstRef, true> >::Call
+                 //CATCHER< ConstMethodToInCa<BN, BN const & (), &BN::nativeReturnConstRef, true> >::Call
                  // Equivalent:
-                 CATCHER< MethodToInCa<BoundNative const, BoundNative const & (), &BoundNative::nativeReturnConstRef> >::Call
+                 CATCHER< MethodToInCa<BN const, BN const & (), &BN::nativeReturnConstRef> >::Call
                  )
 #endif
                 ;
@@ -530,7 +494,7 @@ namespace cvv8 {
                    FunctionToInCa<bool (),v8::V8::IdleNotification>::Call);
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
-            typedef BoundNative T;
+            typedef BN T;
 
             AccessorAdder acc(proto);
             acc("self",
@@ -566,21 +530,17 @@ namespace cvv8 {
             ("theIntNC",
                 MethodToGetter<T, int (), &T::getIntNonConst>(),
                 MethodTo< Setter, T, void (int), &T::setInt>() )
+            ("publicStaticIntRO", VarToGetter<int,&T::publicStaticInt>::Get )
+            ("publicIntRO",
+                MemberToGetter<T,int,&T::publicInt>(),
+                ThrowingSetter() )
             ;
-
             typedef MemberToAccessors<T,int,&T::publicInt> acc_publicInt;
-            proto->SetAccessor( JSTR("publicIntRW"),
-                    acc_publicInt::Get,
-                    acc_publicInt::Set );
-            proto->SetAccessor( JSTR("publicIntRO"),
-                    MemberToGetter<T,int,&T::publicInt>::Get,
-                    ThrowingSetter::Set );
+            acc("publicIntRW", acc_publicInt(), acc_publicInt() );
             typedef VarToAccessors<int,&T::publicStaticInt> acc_publicStaticInt;
-            proto->SetAccessor( JSTR("publicStaticIntRW"),
-                    acc_publicStaticInt::Get,
-                    acc_publicStaticInt::Set );
-            proto->SetAccessor( JSTR("publicStaticIntRO"),
-                    VarToGetter<int,&T::publicStaticInt>::Get );
+            acc("publicStaticIntRW",
+                acc_publicStaticInt::Get,
+                acc_publicStaticInt::Set );
 
 #if 0 /* why? "template argument 2 is invalid" */
     /*
@@ -591,11 +551,11 @@ namespace cvv8 {
                     VarToSetter<int,&errno>::Set
                     );
 #endif // but this is legal:
-            proto->SetAccessor( JSTR("nsInt"),
-                    VarToGetter<int,&namespaceScopeInt>::Get,
-                    VarToSetter<int,&namespaceScopeInt>::Set
-                    );
+            acc("nsInt",
+                VarToGetter<int,&namespaceScopeInt>::Get,
+                VarToSetter<int,&namespaceScopeInt>::Set );
             v8::Handle<v8::Function> ctor( cc.CtorFunction() );
+            ObjectPropSetter<v8::Object> ctorProps(ctor);
             ctor->Set(JSTR("testLocker"),
                 CastToJS(FunctionToInCa<void (), test_using_locker<true>, true >::Call)
             );
@@ -605,14 +565,14 @@ namespace cvv8 {
 
             ////////////////////////////////////////////////////////////
             // Add class to the destination object...
-            //dest->Set( JSTR("BoundNative"), cc.CtorFunction() );
-            cc.AddClassTo( TypeName<BoundNative>::Value, dest );
+            //dest->Set( JSTR("BN"), cc.CtorFunction() );
+            cc.AddClassTo( TypeName<BN>::Value, dest );
 
-            CERR << "Added BoundNative to JS.\n";
+            CERR << "Added BN to JS.\n";
             if(1)
             { // sanity checking. This code should crash if the basic stuff is horribly wrong
                 Handle<Value> vinst = cc.NewInstance(0,NULL);
-                BoundNative * native = CastFromJS<BoundNative>(vinst);
+                BN * native = CastFromJS<BN>(vinst);
                 assert( 0 != native );
                 CERR << "Instantiated native BoundNative@"<<(void const *)native
                      << " via JS.\n";
@@ -632,30 +592,31 @@ void BoundNative::SetupBindings( v8::Handle<v8::Object> const & dest )
 v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
 {
     using namespace v8;
-    typedef cv::ClassCreator<BoundSubNative> CC;
+    typedef BoundSubNative BSN;
+    typedef cv::ClassCreator<BSN> CC;
     CC & cc( CC::Instance() );
     if( cc.IsSealed() )
     {
-        cc.AddClassTo( cv::TypeName<BoundSubNative>::Value, dest );
+        cc.AddClassTo( cv::TypeName<BSN>::Value, dest );
         return cc.CtorFunction();
     }
 
     cc
         ("subFunc",
-         cv::ConstMethodToInCa<BoundSubNative,void (),&BoundSubNative::subFunc>::Call)
+         cv::ConstMethodToInCa<BSN,void (),&BSN::subFunc>::Call)
         ("toString",
-         cv::MethodToInCa<const BoundSubNative,ValueHandle (),&BoundSubNative::toString>::Call)
-         //cv::SigToInCa<ValueHandle (BoundSubNative::*)() const,&BoundSubNative::toString>::Call)
+         cv::MethodToInCa<const BSN,ValueHandle (),&BSN::toString>::Call)
+         //cv::SigToInCa<ValueHandle (BSN::*)() const,&BSN::toString>::Call)
          ("nonBoundNative",
-         cv::MethodToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType & (), &BoundSubNative::nonBoundNative>::Call)
+         cv::MethodToInCaVoid<BSN, BSN::NonBoundType & (), &BSN::nonBoundNative>::Call)
          ("nonBoundNativeConst",
-         //cv::ConstMethodToInCaVoid<BoundSubNative, BoundSubNative::NonBoundType const& (), &BoundSubNative::nonBoundNative>::Call
+         //cv::ConstMethodToInCaVoid<BSN, BSN::NonBoundType const& (), &BSN::nonBoundNative>::Call
          //Equivalent:
-         //cv::MethodToInCaVoid<const BoundSubNative, BoundSubNative::NonBoundType const& (), &BoundSubNative::nonBoundNative>::Call
+         //cv::MethodToInCaVoid<const BSN, BSN::NonBoundType const& (), &BSN::nonBoundNative>::Call
          //Equivalent:
-         cv::MethodTo<cv::InCaVoid, const BoundSubNative, BoundSubNative::NonBoundType const& (), &BoundSubNative::nonBoundNative>::Call
+         cv::MethodTo<cv::InCaVoid, const BSN, BSN::NonBoundType const& (), &BSN::nonBoundNative>::Call
          //Error: must fail to compile OR link (likely a link error):
-         //cv::ToInCa<BoundSubNative, BoundSubNative::NonBoundType &(), &BoundSubNative::nonBoundNative>::Call
+         //cv::ToInCa<BSN, BSN::NonBoundType &(), &BSN::nonBoundNative>::Call
          )
          ("puts",
          cv::FunctionToInCa<int (char const *),::puts>::Call)
@@ -666,7 +627,7 @@ v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )
     //Equivalent:
     cc.Inherit<BoundNative>();
 
-    cc.AddClassTo(cv::TypeName<BoundSubNative>::Value,dest);
+    cc.AddClassTo(cv::TypeName<BSN>::Value,dest);
     return dest;
 }
 #undef JSTR
@@ -809,6 +770,45 @@ namespace { // testing ground for some compile-time assertions...
         ASS< 1 == sl::Arity< cv::Signature<PutsInCa::FunctionType> >::Value >();
         ASS< -1 == sl::Arity< cv::Signature<v8::InvocationCallback> >::Value >();
 #undef SIU
+
+        {
+            using namespace cvv8;
+            typedef Signature<void (int,double)> AL2;
+            assert( 2 == sl::Arity<AL2>::Value );
+            assert( 2 == sl::Length<AL2>::Value );
+            assert( (tmp::SameType< void, AL2::ReturnType >::Value) );
+            assert( (tmp::SameType< int, sl::At<0,AL2>::Type >::Value) );
+            assert( (tmp::SameType< double, sl::At<1,AL2>::Type >::Value) );
+            //assert( (tmp::SameType< double, AL2::TypeAt<1>::Type >::Value) );
+            
+            typedef FunctionPtr< int(char const *), ::puts> FPPuts;
+            FPPuts::Function("Hi, world.");
+            typedef Signature< FPPuts::FunctionType > ALPuts;
+            assert( 1 == sl::Arity<ALPuts>::Value );
+
+            typedef BoundNative BN;
+            typedef
+                Signature< int (BN::*)(char const *) const >
+                BNPutsC;
+            typedef
+                ConstMethodSignature< BN, int (BN::*)(char const *) const >
+                BNPutsC2;
+            typedef
+                MethodSignature< BN, int (char const *) >
+                BNPutsC3;
+            using tmp::Assertion;
+            Assertion<true> ass;
+            ASS<sl::IsConstMethod<BNPutsC>::Value>();
+            ASS<sl::IsConstMethod<BNPutsC2>::Value>();
+            ASS<!sl::IsConstMethod<BNPutsC3>::Value>();
+
+            typedef Signature< int (BN::*)(char const *) > BNPuts;
+            ASS< 1 == sl::Length<BNPutsC>::Value >();
+            ASS< 1 == sl::Length<BNPuts>::Value >();
+            ASS< !sl::IsConstMethod<BNPuts>::Value >();
+            ASS< tmp::SameType< char const *, sl::At<0,BNPuts>::Type >::Value >();
+            ASS< 0 == sl::Index< char const *, BNPuts >::Value >();
+        }
 #undef ASS
     }
 

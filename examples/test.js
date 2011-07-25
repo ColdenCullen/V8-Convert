@@ -106,7 +106,7 @@ function test1()
     assertThrows( function(){ var x = f.throwingProperty;}, 'f.throwingProperty GETTER throws.' );
     assertThrows( function(){ f.throwingProperty = 3;}, 'f.throwingProperty SETTER throws.' );
 
-    
+    asserteq( 3, f.operatorLeftShift(3), 'f.operatorLeftShift() appears to work.');
     assert( f.destroy(), 'f.destroy() seems to work');
     assertThrows( function(){ f.doFoo();} );
 
