@@ -8,7 +8,6 @@ test "$count" -gt 0 || {
 cat <<EOF
 Commands:
   CtorForwarder
-  FunctionSignature
   MethodSignature
   ConstMethodSignature
   MethodForwarder
@@ -109,24 +108,6 @@ EOF
 
 } # makeCtorForwarder
 
-
-########################################################################
-# Create FunctionSignature<> and friends...
-function makeFunctionSignature()
-{
-    return # this code is no longer needed
-    mycat <<EOF
-template <typename RV, ${aTDecl} >
-struct FunctionSignature< RV (${aTParam}) > : SignatureBase< RV (${aTParam}) >
-{
-};
-
-template <typename RV, ${aTDecl} >
-struct FunctionSignature< RV (*)(${aTParam}) >
-  : FunctionSignature< RV (${aTParam}) >
-{};
-EOF
-}
 
 ########################################################################
 # Create MethodSignature<> and friends...
