@@ -1064,7 +1064,7 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
     char const * fname = "jspdo-init.js";
     v8::Handle<v8::String> source( v8::String::New(jspdoInitCode, sizeof(jspdoInitCode)-1) );
     v8::TryCatch tc;
-    v8::Handle<v8::Script> script = v8::Script::Compile(source, JSTR(fname));
+    v8::Handle<v8::Script> script = v8::Script::New(source, JSTR(fname));
     if (script.IsEmpty()) {
         std::ostringstream msg;
         msg << "Compilation of "<<JSPDO_CLASS_NAME<<" JS extensions failed: ";
