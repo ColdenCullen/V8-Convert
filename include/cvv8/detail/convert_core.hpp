@@ -1672,7 +1672,7 @@ namespace cvv8 {
         serious internal error like OOM, i'm told by the v8 devs).
     */
     template <typename ValT>
-    static inline v8::Handle<v8::Value> Toss( ValT const & msg )
+    inline v8::Handle<v8::Value> Toss( ValT const & msg )
     {
         return v8::ThrowException((StringBuffer() << msg).toError());
     }
@@ -1681,7 +1681,7 @@ namespace cvv8 {
         Overload to avoid an ambiguity (and it's more efficient than
         the default impl).
     */
-    static inline v8::Handle<v8::Value> Toss( char const * msg )
+    inline v8::Handle<v8::Value> Toss( char const * msg )
     {
         return v8::ThrowException(v8::Exception::Error(v8::String::New( msg ? msg : "Unspecified error.")));
     }
@@ -1696,7 +1696,7 @@ namespace cvv8 {
         This function is primarily intended to be passed the results of
         CastToJS(std::exception), which generates Error objects.
     */
-    static inline v8::Handle<v8::Value> Toss( v8::Handle<v8::Value> const & err )
+    inline v8::Handle<v8::Value> Toss( v8::Handle<v8::Value> const & err )
     {
         return v8::ThrowException(err);
     }
@@ -1704,7 +1704,7 @@ namespace cvv8 {
     /**
         Efficiency overload.
     */
-    static inline v8::Handle<v8::Value> Toss( StringBuffer const & msg )
+    inline v8::Handle<v8::Value> Toss( StringBuffer const & msg )
     {
         return v8::ThrowException(msg.toError());
     }
@@ -1712,7 +1712,7 @@ namespace cvv8 {
         Like Toss(Handle<Value>), but converts err to a string and creates an
         Error object, which is then thrown.
     */
-    static inline v8::Handle<v8::Value> TossAsError( v8::Handle<v8::Value> const & err )
+    inline v8::Handle<v8::Value> TossAsError( v8::Handle<v8::Value> const & err )
     {
         return Toss(v8::Exception::Error(err->ToString()));
     }
