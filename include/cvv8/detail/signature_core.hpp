@@ -314,9 +314,9 @@ struct FunctionSignature : Signature< FunctionSig > {};
 
 /** @class MethodSignature
    Base (unimplemented) signature for MethodSignature
-   specializations. The Sig type passed to it must be a member method
+   specializations. The Sig type passed to it must match a member method
    signature of a function from the class T.
-   e.g. (void (T::*)(int))
+   e.g. (void (T::*)(int)) or its equivalent (void (int)).
 
    All implementations must have the interface called for by Signature
    and the Context typedef must be non-cvp-qualified T.
