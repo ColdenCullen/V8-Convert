@@ -24,7 +24,7 @@ $(sig_gen_h): $(TMPL_GENERATOR) createSignatureTypeList.sh $(MAKEFILE_DEPS_LIST)
 		echo "#if !defined(DOXYGEN)"; \
 		bash ./createSignatureTypeList.sh 0 $(TYPELIST_LENGTH); \
 		i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
-		bash $(TMPL_GENERATOR) $$i FunctionSignature MethodSignature ConstMethodSignature  || exit $$?; \
+		bash $(TMPL_GENERATOR) $$i MethodSignature ConstMethodSignature  || exit $$?; \
 		i=$$((i + 1)); \
 		done; \
 		echo "#endif // if !defined(DOXYGEN)"; \
@@ -45,7 +45,7 @@ $(sig_gen_h): $(SIG_GEN_BOOST) $(TMPL_GENERATOR) $(MAKEFILE_DEPS_LIST)
 		gcc -E -P -I. -DCVV8_PP_ITER_MAX=$(TYPELIST_LENGTH) $(SIG_GEN_BOOST); \
 		cd - >/dev/null; \
 		i=1; while [ $$i -le $(TMPL_GENERATOR_COUNT) ]; do \
-			bash $(TMPL_GENERATOR) $$i FunctionSignature MethodSignature ConstMethodSignature  || exit $$?; \
+			bash $(TMPL_GENERATOR) $$i MethodSignature ConstMethodSignature  || exit $$?; \
 		i=$$((i + 1)); \
 		done; \
 		echo "#endif // if !defined(DOXYGEN)"; \
