@@ -75,7 +75,7 @@ namespace cvv8 {
     */
     template <typename Tag, typename Sig, typename FunctionSignature<Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< FunctionSignature<Sig> >::Value >
-    struct FunctionTo;
+    struct FunctionTo DOXYGEN_FWD_DECL_KLUDGE;
 
     //! Behaves like FunctionToInCa.
     template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func, bool UnlockV8>
@@ -106,7 +106,7 @@ namespace cvv8 {
         documented for VarToGetter and VarToSetter.
     */
     template <typename Tag, typename PropertyType, PropertyType * const SharedVar>
-    struct VarTo;
+    struct VarTo DOXYGEN_FWD_DECL_KLUDGE;
 
     //! Behaves like VarToGetter.
     template <typename PropertyType, PropertyType * const SharedVar>
@@ -132,7 +132,7 @@ namespace cvv8 {
         MemberToSetter.
     */
     template <typename Tag, typename T, typename PropertyType, PropertyType T::*MemVar>
-    struct MemberTo;
+    struct MemberTo DOXYGEN_FWD_DECL_KLUDGE;
 
     //! Behaves like MemberToGetter.
     template <typename T, typename PropertyType, PropertyType T::*MemVar>
@@ -159,7 +159,7 @@ namespace cvv8 {
     */
     template <typename Tag, typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T,Sig> >::Value>
-    struct MethodTo;
+    struct MethodTo DOXYGEN_FWD_DECL_KLUDGE;
 
     //! Behaves like MethodToInCa. For const methods, const-qualify T.
     template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Func, bool UnlockV8>
@@ -194,7 +194,7 @@ namespace cvv8 {
     template <typename Tag, typename FtorT, typename Sig,
               bool UnlockV8 = SignatureIsUnlockable< MethodSignature<FtorT,Sig> >::Value
               >
-    struct FunctorTo;
+    struct FunctorTo DOXYGEN_FWD_DECL_KLUDGE;
 
     //! Behaves like FunctorToInCa.
     template <typename FtorT, typename Sig, bool UnlockV8>

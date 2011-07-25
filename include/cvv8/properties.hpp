@@ -39,12 +39,16 @@ namespace cvv8 {
         static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
     };
 
-    /** Convenience typedef, primarily to simplify usage of
+    /** @typedef AccessorGetterType Getter
+
+        Convenience typedef, primarily to simplify usage of
         FunctionTo and friends.
     */
     typedef AccessorGetterType Getter;
 
-    /** Convenience typedef, primarily to simplify usage of
+    /** @typedef AccessorSetterType Setter
+
+        Convenience typedef, primarily to simplify usage of
         FunctionTo and friends.
     */
     typedef AccessorSetterType Setter;

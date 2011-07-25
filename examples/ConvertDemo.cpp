@@ -587,8 +587,8 @@ namespace cvv8 {
         Doh: C allows errno to be a macro, which we of course can't bind to.
     */
             proto->SetAccessor( JSTR("errno"),
-                    VarToGetter<int,&std::errno>::Get,
-                    VarToSetter<int,&std::errno>::Set
+                    VarToGetter<int,&errno>::Get,
+                    VarToSetter<int,&errno>::Set
                     );
 #endif // but this is legal:
             proto->SetAccessor( JSTR("nsInt"),
