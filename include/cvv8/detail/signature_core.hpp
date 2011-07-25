@@ -43,12 +43,15 @@ function/method signatures as full-fleged types.
     Required interface for specializations:
 
     @code
+    typedef functionSignature FunctionType; // e.g. void () or void (T::*)() const.
     typedef functionReturnType ReturnType;
-    typedef T Context; // void for non-member functions, non-cvp T for all T members
+    typedef T Context; // void for non-member functions, non-vp-qualified T
+                       // for all T members. const-qualified T for const members.
     typedef firstArgType Head; // head type of type-list.
     typedef Signature< RV (...)> Tail; // tail of type-list. (...)==arg types 2..N.
     // When Arity==0, Head and Tail must both be tmp::NilType. For Arity==1
     // Tail is Signature<RV()> but one could argue that it should be tmp::NilType.
+    
     @endcode
 
     It is intended to be used like this:
@@ -61,6 +64,10 @@ function/method signatures as full-fleged types.
     assert( (tmp::SameType< double, sl::At<1,Sig>::Type >::Value) );
     assert( 1 == sl::Index< double, Sig >::Value) );
     assert( !sl::Contains< int, Sig >::Value) ); // Sig::ReturnType doesn't count here!
+    assert( sl::IsConstMethod< Signature< void (MyType::*)() const > >::Value );
+    assert( sl::IsMethod< Signature< void (MyType::*)() const > >::Value );
+    assert( !sl::IsConstMethod< Signature< void (MyType::*)() > >::Value );
+    // Those can all be made into static assertions, by the way.
     @endcode
     
     Note that the length of the typelist does not include the return value
