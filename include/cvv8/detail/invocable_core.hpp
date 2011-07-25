@@ -371,20 +371,15 @@ namespace Detail {
     UnlockV8 is true and SignatureIsUnlockable<Sig>::Value is false. 
     This is to prohibit that someone accidentally enables locking 
     when using a function type which we know (based on its 
-    signature's types) cannot obey the locking rules.
+    signature's types) cannot obey the (un)locking rules.
 */
 #define ASSERT_UNLOCK_SANITY_CHECK typedef char AssertCanEnableUnlock[ \
     !UnlockV8 ? 1 : (SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
     ]
 
-    /*
-        FIXME: FunctionForwarder doesn't really need the Arity
-        template parameter anymore, i think. Or maybe it does.
-    */
-
     template <int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value >
-    struct FunctionForwarder;
+    struct FunctionForwarder {};
     
     template <int Arity, typename RV, bool UnlockV8>
     struct FunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
@@ -435,7 +430,7 @@ namespace Detail {
 
     template <int Arity_, typename Sig,
                 bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
-    struct FunctionForwarderVoid;
+    struct FunctionForwarderVoid {};
 
     template <typename Sig, bool UnlockV8>
     struct FunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
@@ -490,7 +485,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
      >
-    struct MethodForwarder;
+    struct MethodForwarder {};
 
 
     template <typename T, typename Sig, bool UnlockV8>
@@ -578,7 +573,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
     >
-    struct MethodForwarderVoid;
+    struct MethodForwarderVoid {};
 
     template <typename T, typename Sig, bool UnlockV8>
     struct MethodForwarderVoid<T,0,Sig, UnlockV8>
@@ -672,7 +667,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
-    struct ConstMethodForwarder;
+    struct ConstMethodForwarder {};
 
     template <typename T, typename Sig, bool UnlockV8>
     struct ConstMethodForwarder<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
@@ -757,7 +752,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
-    struct ConstMethodForwarderVoid;
+    struct ConstMethodForwarderVoid {};
 
     template <typename T, typename Sig, bool UnlockV8>
     struct ConstMethodForwarderVoid<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
