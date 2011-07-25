@@ -134,6 +134,29 @@ namespace cvv8 {
     {};
 
     /**
+        Base (unimplemented) type for MemberTo-xxx conversions.
+
+        Acts as a proxy for MemberToGetter, MemberToSetter and
+        MemberToAccessors. Tag must be one of (Getter, Setter, Accessors).
+        The other args are as documented for MemberToGetter and
+        MemberToSetter.
+    */
+    template <typename Tag, typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberTo {};
+
+    //! Behaves like MemberToGetter.
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberTo<Getter, T, PropertyType, MemVar > : MemberToGetter< T, PropertyType, MemVar > {};
+
+    //! Behaves like MemberToSetter.
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberTo<Setter, T, PropertyType, MemVar > : MemberToSetter< T, PropertyType, MemVar > {};
+
+    //! Behaves like MemberToAccessors.
+    template <typename T, typename PropertyType, PropertyType T::*MemVar>
+    struct MemberTo<Accessors, T, PropertyType, MemVar > : MemberToAccessors< T, PropertyType, MemVar > {};
+
+    /**
         Base (unimplemented) MethodTo interface.
 
         Acts as a proxy for MethodToInCa, MethodToGetter and

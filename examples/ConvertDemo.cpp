@@ -941,8 +941,17 @@ void test_xto_bindings()
     g = VarGetSet::Get;
     s = VarGetSet::Set;
 
-    // Method-to-X conversions:
     typedef BoundNative T;
+
+    // Member Var-to-X conversions:
+    g = MemberTo< Getter, T, int, &T::publicInt >::Get;
+    s = MemberTo< Setter, T, int, &T::publicInt >::Set;
+    typedef MemberTo< Accessors, T, int, &T::publicInt > MemAcc;
+    g = MemAcc::Get;
+    s = MemAcc::Set;
+    
+
+    // Method-to-X conversions:
     c = MethodTo< InCa, T, void (), &T::doFoo >::Call;
     c = MethodTo< InCa, const T, int (), &T::getInt >::Call;
     c = MethodTo< InCaVoid, const T, int (), &T::getInt >::Call;
