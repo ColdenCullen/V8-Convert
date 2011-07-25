@@ -1,6 +1,7 @@
 #if !defined(CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED)
 #define CODE_GOOGLE_COM_V8_CONVERT_SIGNATURE_CORE_HPP_INCLUDED 1
 #include "tmp.hpp"
+#include "doxygen_hack.hpp"
 
 namespace cvv8 {
 /** @file signature_core.hpp
@@ -74,7 +75,7 @@ function/method signatures as full-fleged types.
     directly from C++, only indirectly via Call()ing or Apply()ing a 
     v8::Function).
 */
-template <typename Sig> struct Signature;
+template <typename Sig> struct Signature DOXYGEN_FWD_DECL_KLUDGE;
 
 /** @def CVV8_TYPELIST
 
@@ -348,7 +349,7 @@ struct FunctionSignature : Signature< FunctionSig > {};
    at this level.
 */
 template <typename T, typename Sig>
-struct MethodSignature;
+struct MethodSignature DOXYGEN_FWD_DECL_KLUDGE;
 
 /** @class ConstMethodSignature
    Base (unimplemented) signature for ConstMethodSignature
@@ -377,7 +378,7 @@ struct MethodSignature;
     ConstMethodSignature<T,...> are equivalent.
 */
 template <typename T, typename Sig>
-struct ConstMethodSignature;
+struct ConstMethodSignature DOXYGEN_FWD_DECL_KLUDGE;
 //template <typename T, typename Sig>
 //struct ConstMethodSignature<T const, Sig> : ConstMethodSignature<T,Sig> {};
 

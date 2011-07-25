@@ -385,7 +385,7 @@ namespace Detail {
 
     template <int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value >
-    struct FunctionForwarder;
+    struct FunctionForwarder DOXYGEN_FWD_DECL_KLUDGE;
     
     template <int Arity, typename RV, bool UnlockV8>
     struct FunctionForwarder<Arity,RV (v8::Arguments const &), UnlockV8>
@@ -436,7 +436,7 @@ namespace Detail {
 
     template <int Arity_, typename Sig,
                 bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value>
-    struct FunctionForwarderVoid;
+    struct FunctionForwarderVoid DOXYGEN_FWD_DECL_KLUDGE;
 
     template <typename Sig, bool UnlockV8>
     struct FunctionForwarderVoid<0,Sig, UnlockV8> : FunctionSignature<Sig>
@@ -491,7 +491,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
              bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
      >
-    struct MethodForwarder;
+    struct MethodForwarder DOXYGEN_FWD_DECL_KLUDGE;
 
 
     template <typename T, typename Sig, bool UnlockV8>
@@ -579,7 +579,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
         bool UnlockV8 = SignatureIsUnlockable< MethodSignature<T, Sig> >::Value
     >
-    struct MethodForwarderVoid;
+    struct MethodForwarderVoid DOXYGEN_FWD_DECL_KLUDGE;
 
     template <typename T, typename Sig, bool UnlockV8>
     struct MethodForwarderVoid<T,0,Sig, UnlockV8>
@@ -673,7 +673,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
-    struct ConstMethodForwarder;
+    struct ConstMethodForwarder DOXYGEN_FWD_DECL_KLUDGE;
 
     template <typename T, typename Sig, bool UnlockV8>
     struct ConstMethodForwarder<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
@@ -758,7 +758,7 @@ namespace Detail {
     template <typename T, int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< ConstMethodSignature<T, Sig> >::Value
     >
-    struct ConstMethodForwarderVoid;
+    struct ConstMethodForwarderVoid DOXYGEN_FWD_DECL_KLUDGE;
 
     template <typename T, typename Sig, bool UnlockV8>
     struct ConstMethodForwarderVoid<T,0,Sig, UnlockV8> : ConstMethodSignature<T,Sig>
