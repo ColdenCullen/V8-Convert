@@ -1269,20 +1269,22 @@ namespace cvv8 {
     static const JSToNative<std::string> JSToStdString = JSToNative<std::string>();
 
     /**
-       A utility to append entries to a JS array or add properties
-       to a JS Object or ObjectTemplate. ObjectType must be
-       either v8::Object or v8::ObjectTemplate. It _might_ work
-       in limited context with v8::Array, but that is untested.
+       A utility to add properties to a JS v8::Object or v8::ObjectTemplate.
+       ObjectType must be either v8::Object or v8::ObjectTemplate. It
+       _might_ work in limited context with v8::Array, but that is untested.
+       ObjectType is intended to be v8::Object or v8::ObjectTemplate,
+       but Object subclasses, e.g. v8::Array and v8::Function, "should" work
+       as well.
 
        It is intended to be used like this:
 
        \code
-       Handle<Object> obj = ...;
-       ObjectPropSetter<Object> set(obj);
+       v8::Handle<v8::Object> obj = ...;
+       ObjectPropSetter<v8::Object> set(obj);
        set("propOne", CastToJS(32) )
-       ("propTwo", ... )
-       (32, ... )
-       ("func1", CastToJS( anInvocationCallback ) )
+         ("propTwo", ... )
+         (32, ... )
+         ("func1", anInvocationCallback )
        ;
        \endcode
     */
