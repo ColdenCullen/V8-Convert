@@ -956,10 +956,13 @@ void test_xto_bindings()
 
     // Method-to-X conversions:
     c = MethodTo< InCa, T, void (), &T::doFoo >::Call;
-    c = MethodTo< InCa, const T, int (), &T::getInt >::Call;
-    c = MethodTo< InCaVoid, const T, int (), &T::getInt >::Call;
+    c = MethodTo< InCaVoid, T, void (), &T::doFoo >::Call;
     g = MethodTo< Getter, const T, int (), &T::getInt >::Get;
     s = MethodTo< Setter, T, void (int), &T::setInt >::Set;
+    // Const methods:
+    c = MethodTo< InCa, const T, int (), &T::getInt >::Call;
+    c = MethodTo< InCaVoid, const T, int (), &T::getInt >::Call;
+    
 
     // Functor-to-X conversions:
     typedef MyFunctor F;
