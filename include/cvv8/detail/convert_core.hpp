@@ -76,6 +76,7 @@ namespace cvv8 {
         */
         static char const * Value;
     };
+#if 0
     /**
         This default implementation is unfortunate, but quite a bit 
         of error-reporting code uses this, with the assumption that 
@@ -89,6 +90,7 @@ namespace cvv8 {
     */
     template <typename T>
     char const * TypeName<T>::Value = "T";
+#endif
 
     /** @def CVV8_TypeName_DECL
 

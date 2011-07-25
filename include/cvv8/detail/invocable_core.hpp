@@ -335,11 +335,26 @@ public:
         ...
     }
     @endcode
+
+    BUG: TypeName<T>::Value is NOT used here because... If we instantiate
+    TypeName<> from here then we require a value for TypeName<>::Value or we
+    break FunctorTo and friends (because TypeName'ing functors isn't always
+    possible). The problem with that is that i want to use TypeName::Value's
+    address as a type key and that can't work cross-DLL on Windows (and
+    possibly other platforms) if we have a default value for TypeName::Value.
+    i hope to eventually find a solution which is both cross-platform and
+    allows us to invoke TypeName<T>::Value from here.
 */  
 template <typename T>
 v8::Handle<v8::Value> TossMissingThis()
 {
-    return Toss(StringBuffer()<<"CastFromJS<"<<TypeName<T>::Value<<">() returned NULL! Cannot find 'this' pointer!");
+    return Toss(StringBuffer()<<"CastFromJS<"
+#if 0
+        <<TypeName<T>::Value
+#else
+        <<'T'
+#endif
+        <<">() returned NULL! Cannot find 'this' pointer!");
 }
 
 #if !defined(DOXYGEN)
