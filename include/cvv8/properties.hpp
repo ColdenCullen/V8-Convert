@@ -243,7 +243,7 @@ namespace cvv8 {
     template <typename Sig, typename FunctionSignature<Sig>::FunctionType Func>
     struct FunctionToSetter : AccessorSetterType
     {
-        static void Set( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
+        inline static void Set( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             typedef FunctionSignature<Sig> FT;
             (*Func)( CastFromJS<typename sl::At<0,FT>::Type>( value ) );
@@ -266,7 +266,7 @@ namespace cvv8 {
     template <typename T, typename Sig, typename MethodSignature<T,Sig>::FunctionType Getter>
     struct MethodToGetter : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        inline static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -284,7 +284,7 @@ namespace cvv8 {
     template <typename T, typename Sig, typename ConstMethodSignature<T,Sig>::FunctionType Getter>
     struct ConstMethodToGetter : AccessorGetterType
     {
-        static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
+        inline static v8::Handle<v8::Value> Get( v8::Local< v8::String > property, const v8::AccessorInfo & info )
         {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
@@ -577,7 +577,7 @@ namespace cvv8 {
             Returns this object, for chaining calls.
         */
         template <typename GetterT, typename SetterT>
-        AccessorAdder const & operator()( char const * name,
+        inline AccessorAdder const & operator()( char const * name,
                                           GetterT const &,
                                           SetterT const &,
                                           v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
@@ -593,7 +593,7 @@ namespace cvv8 {
             operator() with this due to ambiguities.
         */
         template <typename GetterT>
-        AccessorAdder const & Getter( char const * name,
+        inline AccessorAdder const & Getter( char const * name,
                                       GetterT const &,
                                       v8::Handle< v8::Value > data=v8::Handle< v8::Value >(),
                                       v8::AccessControl settings=v8::DEFAULT,
