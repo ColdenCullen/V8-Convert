@@ -74,7 +74,7 @@ function/method signatures as full-fleged types.
     directly from C++, only indirectly via Call()ing or Apply()ing a 
     v8::Function).
 */
-template <typename Sig> struct Signature {};
+template <typename Sig> struct Signature;
 
 /** @def CVV8_TYPELIST
 
@@ -348,7 +348,7 @@ struct FunctionSignature : Signature< FunctionSig > {};
    at this level.
 */
 template <typename T, typename Sig>
-struct MethodSignature {};
+struct MethodSignature;
 
 /** @class ConstMethodSignature
    Base (unimplemented) signature for ConstMethodSignature
@@ -377,7 +377,7 @@ struct MethodSignature {};
     ConstMethodSignature<T,...> are equivalent.
 */
 template <typename T, typename Sig>
-struct ConstMethodSignature {};
+struct ConstMethodSignature;
 //template <typename T, typename Sig>
 //struct ConstMethodSignature<T const, Sig> : ConstMethodSignature<T,Sig> {};
 

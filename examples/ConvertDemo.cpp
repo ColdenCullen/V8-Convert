@@ -5,7 +5,7 @@
 
 #include "cvv8/arguments.hpp"
 #include "cvv8/XTo.hpp"
-
+#include <time.h>
 //char const * cvv8::TypeName< BoundNative >::Value = "BoundNative";
 //char const * cvv8::TypeName< BoundSubNative >::Value = "BoundSubNative";
 
@@ -583,6 +583,9 @@ namespace cvv8 {
                     VarToGetter<int,&T::publicStaticInt>::Get );
 
 #if 0 /* why? "template argument 2 is invalid" */
+    /*
+        Doh: C allows errno to be a macro, which we of course can't bind to.
+    */
             proto->SetAccessor( JSTR("errno"),
                     VarToGetter<int,&std::errno>::Get,
                     VarToSetter<int,&std::errno>::Set
