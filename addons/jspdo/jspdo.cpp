@@ -1095,7 +1095,7 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 
 namespace cvv8 {
 
-    v8::Handle<v8::Value> readFileContents( char const * fname )
+    v8::Handle<v8::Value> readFileContents( char const * fname, bool asByteArray )
     {
         if( ! fname || !*fname ) return Toss("File name may not be empty.");
         std::ifstream istr(fname, std::ios_base::binary/*needed(?) for Windows?*/);
@@ -1108,9 +1108,29 @@ namespace cvv8 {
                     std::ostream_iterator<char>(buf) );
         std::string const & s( buf.str() );
         if( s.empty() ) return v8::Null();
-        else return v8::String::New(s.c_str());
+        else
+        {
+            if( asByteArray )
+            {
+                typedef cv::ClassCreator<JSByteArray> BAC;
+                JSByteArray * ba = NULL;
+                v8::Handle<v8::Object> baObj( BAC::Instance().NewInstance( 0, NULL, ba ) );
+                if( baObj.IsEmpty() ) return v8::Undefined() /* assume exception is propagating. */;
+                if( ! ba ) return cv::Toss("Allocation of ByteArray failed.");
+                ba->append( s.data(), s.size() );
+                return baObj;
+            }
+            else
+            {
+                return v8::String::New(s.c_str());
+            }
+        }
     }
-    
+
+    v8::Handle<v8::Value> readFileContents( char const * fname )
+    {
+        return readFileContents( fname, false );
+    }
 
     template <>
     struct ClassCreator_SetupBindings<cpdo::driver>
@@ -1239,10 +1259,15 @@ namespace cvv8 {
             dCtor->Set( JSTR("enableDebug"), v8::False() );
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
             dCtor->Set(JSTR("enableDestructorDebug"),
-                    cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
+                    cv::CastToJS(FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
             dCtor->Set(JSTR("readFileContents"),
-                       cv::CastToJS(cv::FunctionToInCa< v8::Handle<v8::Value> (char const *),
-                                                        readFileContents>::Call) );
+                        CastToJS(
+                        ArityDispatchList< CVV8_TYPELIST((
+                            FunctionToInCa< v8::Handle<v8::Value> (char const *),
+                                            readFileContents>,
+                            FunctionToInCa< v8::Handle<v8::Value> (char const *, bool),
+                                            readFileContents>
+                        ))>::Call) );
                     
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
