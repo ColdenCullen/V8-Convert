@@ -875,21 +875,52 @@ namespace cvv8 {
         }
 
         /**
-           Creates a new instanced of the object via the JS API.
-           It calls ClassCreator_Factory<T>::Create(), passing it argv,
-           to instantiate the object. On success a JS handle to the object
-           is returned, and the caller can do:
+           Creates a new instanced of the object via the JS API. It calls
+           ClassCreator_Factory<T>::Create(), passing it argv, to
+           instantiate the object. On success a JS handle to the object is
+           returned (it is owned by v8), and the caller can get the native
+           pointer with:
 
            @code
            T * t = CastFromJS<T>(theHandle);
            @endcode
-
-           To get the native object (which is owned by v8).
         */
         inline v8::Handle<v8::Object> NewInstance( int argc, v8::Handle<v8::Value> argv[] )
         {
             return this->CtorFunction()->NewInstance(argc, argv);
         }
+
+        /**
+            A convenience form of NewInstance() which returns the JS version
+            of the object and assigns tgt to the native pointer (which will
+            be NULL on error).
+
+            If tgt is NULL when this function returns, or
+            returnedObj.IsEmpty(), then we assume that a v8 exception is
+            propagating, and the caller should return to v8 as soon as
+            possible so the exception can be triggered JS-side (it is not
+            actually triggered until we return to v8).
+
+            The returned object is owned by v8.
+        */
+        v8::Handle<v8::Object> NewInstance( int argc, v8::Handle<v8::Value> argv[], T * & tgt )
+        {
+            v8::Handle<v8::Object> const & obj( this->CtorFunction()->NewInstance(argc, argv) );
+            if( obj.IsEmpty() ) return obj /* assume exception is propagating. */;
+            else
+            {
+                tgt = CastFromJS<T>(obj);
+                if( !tgt ) {
+                    Toss(StringBuffer()<<"Internal error: NewInstance() returned a non-empty "
+                        << "Handle but CastFromJS<"<<TypeName<T>::Value<<">() failed. "
+                        << "This is either a serious cvv8 bug or the JSToNative specialization "
+                        << "is not working properly.");
+                    return v8::Handle<v8::Object>();
+                }
+                else return obj;
+            }
+        }
+
         /**
            Convenience method to add the given property to the
            prototype. Returns this object, for call chaining.
