@@ -1,7 +1,7 @@
 
 arguments.parseArgs = function() {
     var i, m, l;
-    var rxNonFlag = /^[^-]+$/; /* -arg */
+    var rxNonFlag = /^[^-][^=]+?$/; /* -arg */
 
     var rx0a = /^--?([^=]+)$/; /* -[-]arg */
     var rx1a = /^--?([^=]+)=(.*)$/; /* -[-]arg=val */
