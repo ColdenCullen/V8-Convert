@@ -34,6 +34,7 @@ clause).
 #include <iterator>
 #include <algorithm>
 #include <map>
+#include <sstream>
 
 #ifndef CERR
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << ":" <<__FUNCTION__ << "(): "
@@ -1094,6 +1095,23 @@ static void JSPDO_extendCtor( v8::Handle<v8::Function> & ctor )
 
 namespace cvv8 {
 
+    v8::Handle<v8::Value> readFileContents( char const * fname )
+    {
+        if( ! fname || !*fname ) return Toss("File name may not be empty.");
+        std::ifstream istr(fname, std::ios_base::binary/*needed(?) for Windows?*/);
+        if( ! istr.good() ) return Toss(StringBuffer()<<
+            "Could not open file ["
+            << fname << "] for reading.");
+        istr >> std::noskipws;
+        std::ostringstream buf;
+        std::copy( std::istream_iterator<char>(istr), std::istream_iterator<char>(),
+                    std::ostream_iterator<char>(buf) );
+        std::string const & s( buf.str() );
+        if( s.empty() ) return v8::Null();
+        else return v8::String::New(s.c_str());
+    }
+    
+
     template <>
     struct ClassCreator_SetupBindings<cpdo::driver>
     {
@@ -1222,6 +1240,10 @@ namespace cvv8 {
             dCtor->SetName( JSTR(JSPDO_CLASS_NAME) );
             dCtor->Set(JSTR("enableDestructorDebug"),
                     cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
+            dCtor->Set(JSTR("readFileContents"),
+                       cv::CastToJS(cv::FunctionToInCa< v8::Handle<v8::Value> (char const *),
+                                                        readFileContents>::Call) );
+                    
             if(0)
             { /* the C++ API hides the cpdo_step_code values from the
                  client, changing the semantics of step()'s return value
