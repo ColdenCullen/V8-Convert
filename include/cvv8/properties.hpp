@@ -60,6 +60,38 @@ namespace cvv8 {
     struct Accessors : AccessorGetterType, AccessorSetterType {};
 
     /**
+        Wraps a v8:::AccessorGetter into the AccessorGetterType
+        interface, so that we can use plain AccessorGetters in certain
+        templating contexts. e.g. this can be useful if we want to
+        wrap a custom v8::AccessorGetter in a GetterCatcher.
+    */
+    template <v8::AccessorGetter G>
+    struct GetterToGetter : AccessorGetterType
+    {
+        /** Implements the v8::AccessorGetter() interface. */
+        inline static v8::Handle<v8::Value> Get(v8::Local<v8::String> property, const v8::AccessorInfo &info)
+        {
+            return G(property, info);
+        }
+    };
+
+    /**
+        Wraps a v8:::AccessorSetter into the AccessorSetterType
+        interface, so that we can use plain AccessorSetters in certain
+        templating contexts. e.g. this can be useful if we want to
+        wrap a custom v8::AccessorSetter in a SetterCatcher.
+    */
+    template <v8::AccessorSetter S>
+    struct SetterToSetter : AccessorSetterType
+    {
+        /** Implements the v8::AccessorSetter() interface. */
+        inline static void Set(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+        {
+            S(property, value, info);
+        }
+    };
+
+    /**
        This template create an v8::AccessorGetter from a static/shared
        variable.
 
@@ -544,7 +576,7 @@ namespace cvv8 {
         AccessorAdder acc(myPrototype);
         acc("foo", MemberToGetter<MyType,int,&MyType::anInt>(),
                    MemberToSetter<MyType,int,&MyType::anInt>())
-           ("bar", ConstMethodToGetter<MyType,int(),&MyType:getInt>(),
+           ("bar", MethodToGetter<const MyType,int(),&MyType:getInt>(),
                    MethodToSetter<MyType,void(int),&MyType:setInt>())
            ...
            ;
