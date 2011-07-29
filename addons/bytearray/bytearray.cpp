@@ -21,7 +21,11 @@ by Ondrej Zara
 #include "bytearray.hpp"
 
 #if !defined(ByteArray_CONFIG_ENABLE_ZLIB)
-#  define ByteArray_CONFIG_ENABLE_ZLIB 1
+#  if defined(_WIN32) || defined(_WIN64)
+#    define ByteArray_CONFIG_ENABLE_ZLIB 0
+#  else
+#    define ByteArray_CONFIG_ENABLE_ZLIB 1
+#  endif
 #endif
 
 #include <cvv8/convert.hpp>
