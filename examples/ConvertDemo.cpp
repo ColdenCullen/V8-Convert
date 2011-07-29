@@ -1,3 +1,11 @@
+/************************************************************************
+This file provides a relatively detailed example of using the cvv8 API
+for binding a C++ class to v8. This demo is large and ugly, but it
+demonstrates just about every public API call that cvv8 provides. It
+also houses lots of "pure test code," and this is where the vast
+majority of the cvv8 testing and debugging happens.
+
+************************************************************************/
 #include "ConvertDemo.hpp"
 #include "cvv8/ClassCreator.hpp"
 #include "cvv8/properties.hpp"
