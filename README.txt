@@ -18,9 +18,13 @@ Building the demo code:
 
 The basic demo code can be built with:
 
+   cd examples
    make
 
 It requires GNU Make and gcc (or hack it to suit your system).
+
+Project files for MS Visual Studio 2010 can be found under
+./build/vs_10.
 
 There are several full-featured demonstrations in the 'addons' directory.
 
