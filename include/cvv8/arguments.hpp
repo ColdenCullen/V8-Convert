@@ -126,6 +126,20 @@ namespace cvv8 {
         }
     };
 
+    template <>
+    struct ValIs<v8::Value>
+    {
+        typedef v8::Value Type;
+        /**
+            Returns true.
+        */
+        inline bool operator()( v8::Handle<v8::Value> const & ) const
+        {
+            return true;
+        }
+    };
+
+
 #if !defined(DOXYGEN)    
     namespace Detail {
         /**
@@ -812,6 +826,94 @@ namespace cvv8 {
         }
 
     };
+
+#if !defined(DOXYGEN)
+    namespace Detail {
+        /**
+            Internal implementation detail for Argv_TypesMatch.
+
+            The caller must pass an Index value of 0.
+            TypeListT must be a Signature-compatible typelist, but
+            only the length and argument types are evaluated.
+        */
+        template <int Index, typename TypeListT>
+        struct Argv_TypesCheck : ArgumentsPredicate
+        {
+            /**
+                Returns true if all arguments in argv
+                have the types described in the TypeListT typelist.
+                Comparison for type equality is done using
+                ArgAt_IsA.
+
+                The caller is assumed to have verified argv.Length()
+                in advance. We do not do it here because it's a waste
+                of cycles for all recursions after the first one.
+            */
+            inline bool operator()( v8::Arguments const & argv ) const
+            {
+                enum {  Arity = sl::Arity<TypeListT>::Value };
+                /**
+                    This might seem a bit backwards, but it's correct:
+
+                    We start at the 0th index and work UP, but at
+                    each iteration we pass on TypeListT::Tail, which
+                    has a length of (Arity-1). Thus on each
+                    iteration we increase Index but always check the
+                    0th position of the list (the Head of the Tail!).
+
+                    We special-case for the end-of-list, which we
+                    hit at the Tail of 1-arity typelists. This is
+                    slightly unsightly but seems simpler/clearer
+                    than adding another internal level of
+                    indirection for the 0-arity case.
+                */
+                typedef ArgAt_IsA<Index, typename sl::At<0,TypeListT>::Type > P1;
+                typedef typename tmp::IfElse< 1==Arity,
+                    Argv_True,
+                    Argv_TypesCheck<Index+1, typename TypeListT::Tail >
+                >::Type P2;
+                return P1()(argv) && P2()(argv);
+            }
+        };
+    }
+#endif /* DOXYGEN */
+
+    /**
+        This ArgumentsPredicate implementation expects a typelist
+        parameter which describes a list of argument types
+        to match against at runtime.
+
+        TypeListT may be "empty", in which case this type is
+        functionally equivalent to Argv_Length<0>.
+
+        See the operator() docs for more details.
+    */
+    template <typename TypeListT>
+    struct Argv_TypesMatch : ArgumentsPredicate
+    {
+        /**
+            Returns true if all of the following apply:
+
+            - (argv.Length() == sl::Length<TypeListT>::Value)
+
+            - Argv_IsA<N,X>()(argv) returns true for each argument,
+            where N is the current argument index and X is the Nth
+            type from TypeListT (== sl::At<N,TypeListT>::Type).
+
+            As a special case, for 0-length typelists this function
+            returns true if only the first condition applies.
+        */
+        bool operator()( v8::Arguments const & argv ) const
+        {
+            enum { Arity = sl::Length<TypeListT>::Value };
+            typedef typename tmp::IfElse< 0==Arity,
+                    Argv_True,
+                    Detail::Argv_TypesCheck< 0, TypeListT >
+                >::Type P;
+            return (argv.Length() == Arity) && P()(argv);
+        }
+    };
+
 }
 
 #endif

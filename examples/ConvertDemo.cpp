@@ -255,11 +255,19 @@ ValueHandle bogo_callback( v8::Arguments const & argv )
     > PredFSF;
 
     // Special case for the weird (Function, Value, Function) overload...
+#if 0
     typedef Argv_AndN< CVV8_TYPELIST((
         Argv_Length<3>,
         ArgAt_IsFunction<0>,
         ArgAt_IsFunction<2>
     ))> Is_Func_Value_Func;
+#else
+    typedef Argv_TypesMatch< CVV8_TYPELIST((
+        v8::Function,
+        v8::Value,
+        v8::Function
+    ))> Is_Func_Value_Func;
+#endif
     typedef PredicatedInCa< Is_Func_Value_Func,
                             FunctionToInCa< v8::Handle<v8::Value> (
                                 v8::Handle<v8::Function> const &,
