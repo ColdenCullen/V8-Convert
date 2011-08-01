@@ -972,9 +972,8 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
         if( binary )
         {
             typedef cv::ClassCreator<JSByteArray> CW;
-            v8::Handle<v8::Object> jba =
-                CW::Instance().NewInstance( 0, NULL );
-            JSByteArray * ba = cv::CastFromJS<JSByteArray>( jba );
+            JSByteArray * ba = NULL;
+            v8::Handle<v8::Object> jba = CW::Instance().NewInstance( 0, NULL, ba );
             if( ! ba )
             {
                 cv::StringBuffer msg;
