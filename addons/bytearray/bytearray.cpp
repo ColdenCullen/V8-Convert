@@ -30,6 +30,7 @@ by Ondrej Zara
 
 #include <cvv8/convert.hpp>
 #include <cvv8/properties.hpp>
+#include <cvv8/XTo.hpp>
 
 #include <sstream>
 #include <vector>
@@ -53,7 +54,7 @@ using cv::JSByteArray;
 #define BA_JS_CLASS_NAME "ByteArray"
 
 namespace cvv8 {
-    char const * TypeName<JSByteArray>::Value = "ByteArray";
+    char const * TypeName<JSByteArray>::Value = BA_JS_CLASS_NAME;
 
     //! Internal impl of JSByteArray::gzipTo().
     static int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level = 3 );
@@ -126,7 +127,7 @@ JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
             if( x < 0 )
             {
                 std::ostringstream msg;
-                msg << BA_JS_CLASS_NAME
+                msg << TypeName<JSByteArray>::Value
                     << " ctor argument may not be a negative number.";
                 throw std::runtime_error( msg.str().c_str() );
             }
@@ -144,8 +145,8 @@ JSByteArray::JSByteArray( v8::Handle<v8::Value> const & val, unsigned int len )
             else
             {
                 std::ostringstream msg;
-                msg << BA_JS_CLASS_NAME
-                    << " ctor argument is not a "<<BA_JS_CLASS_NAME<<" object.";
+                msg << TypeName<JSByteArray>::Value
+                    << " ctor argument is not a "<<TypeName<JSByteArray>::Value<<" object.";
                 throw std::range_error( msg.str().c_str() );
             }
         }
@@ -200,7 +201,7 @@ v8::Handle<v8::Value> JSByteArray::indexedPropertySetter(uint32_t index, v8::Loc
 #if 1
         cv::StringBuffer msg;
         msg << "Index "<<index<<" is out of bounds for "
-            <<BA_JS_CLASS_NAME
+            <<TypeName<JSByteArray>::Value
             << " of length "<<ar->length()<<'!';
         return v8::ThrowException(msg);
 #else
@@ -275,7 +276,7 @@ std::string JSByteArray::toString() const
 {
     std::ostringstream os;
     os << "[object "
-       << BA_JS_CLASS_NAME
+       << TypeName<JSByteArray>::Value
        << "@"<<(void const *)this
        << ", length="<<this->length()
        << ']';
@@ -311,11 +312,10 @@ void const * JSByteArray::rawBuffer() const
 
 uint32_t JSByteArray::length( uint32_t sz )
 {
-    //CERR << "length("<<sz<<")!\n";
     if( sz > this->vec.max_size() )
     {
         cv::StringBuffer msg;
-        msg << BA_JS_CLASS_NAME
+        msg << TypeName<JSByteArray>::Value
             << " length "<<sz << " is too large to store "
             << "in std::vector! Max size is "<< this->vec.max_size()<<".";
         throw std::runtime_error( msg.Content().c_str() );
@@ -440,32 +440,32 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
     typedef JSByteArray N;
     typedef cv::ClassCreator<N> CW;
     CW & cw( CW::Instance() );
-    //CERR <<"Binding class "<<BA_JS_CLASS_NAME<<"...\n";
+    //CERR <<"Binding class "<<TypeName<JSByteArray>::Value<<"...\n";
     if( cw.IsSealed() )
     {
-        cw.AddClassTo( BA_JS_CLASS_NAME, dest );
+        cw.AddClassTo( TypeName<JSByteArray>::Value, dest );
         return;
     }
 
     cw
         ( "destroy", CW::DestroyObjectCallback )
-        ( "append", cv::MethodToInCa<N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
-        ( "stringValue", cv::ConstMethodToInCa<N, std::string (),&N::stringValue>::Call )
-        ( "toString", cv::ConstMethodToInCa<N, std::string (),&N::toString>::Call )
+        ( "append", cv::MethodTo<InCa, N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
+        ( "stringValue", cv::MethodTo<InCa, const N, std::string (),&N::stringValue>::Call )
+        ( "toString", cv::MethodTo<InCa, const N, std::string (),&N::toString>::Call )
         // i don't like these next two...
         //( "gzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gzipTo>::Call )
         //( "gunzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gunzipTo>::Call )
-        ( "gzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gzip>::Call )
-        ( "gunzip", cv::ConstMethodToInCa<N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
+        ( "gzip", cv::MethodTo<InCa, const N, v8::Handle<v8::Value> (), &N::gzip>::Call )
+        ( "gunzip", cv::MethodTo<InCa, const N, v8::Handle<v8::Value> (), &N::gunzip>::Call )
         ;
     v8::Handle<v8::ObjectTemplate> const & proto( cw.Prototype() );
     AccessorAdder acc(proto);
     acc( "length",
-        ConstMethodToGetter<N,uint32_t(),&N::length>(),
-        MethodToSetter<N, uint32_t (uint32_t), &N::length>()
+            MethodTo< Getter, const N,uint32_t(),&N::length>(),
+            SetterCatcher_std< MethodTo< Setter, N, uint32_t (uint32_t), &N::length> >()
         )
         ( "isGzipped",
-            ConstMethodToGetter<N, bool(),&N::isGzipped>(),
+            MethodTo< Getter, const N, bool(),&N::isGzipped>(),
             ThrowingSetter()
         )
         ;
@@ -482,9 +482,9 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
                                                              NULL/*JSByteArray::indexedPropertyEnumerator*/
                                                             );
     v8::Handle<v8::Function> ctor = cw.CtorFunction();
-    
+
     ctor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
-    cw.AddClassTo( BA_JS_CLASS_NAME, dest );
+    cw.AddClassTo( TypeName<JSByteArray>::Value, dest );
     //CERR <<"Binding done.\n";
     return;
 }
