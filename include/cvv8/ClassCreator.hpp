@@ -1040,7 +1040,11 @@ namespace cvv8 {
             PT & p(PT::Instance());
             if( ! p.IsSealed() )
             {
-                throw std::runtime_error("ClassCreator<ParentType> has not been sealed yet!");
+                std::ostringstream os;
+                os << "ClassCreator<"
+                   << TypeName<ParentType>::Value
+                   << "> has not been sealed yet!";
+                throw std::runtime_error(os.str());
             }
             this->CtorTemplate()->Inherit( p.CtorTemplate() );
         }
@@ -1280,6 +1284,26 @@ namespace cvv8 {
         }
     };
 
+    /**
+       A special-case factory implementation for use when T
+       is abstract or otherwise should not be instantiable
+       from JS code. It has one or two obscure uses when binding
+       certain class hierarchies.
+    */
+    template <typename T>
+    struct ClassCreator_Factory_Abstract : Detail::Factory_CtorForwarder_Base<T>
+    {
+    public:
+        typedef typename TypeInfo<T>::Type Type;
+        typedef typename TypeInfo<T>::NativeHandle NativeHandle;
+        /**
+           Always returns NULL.
+        */
+        static NativeHandle Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv )
+        {
+            return NULL;
+        }
+    };
 
 }// namespaces
 
