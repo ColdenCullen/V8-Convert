@@ -317,6 +317,8 @@ namespace cvv8 {
         };
     }
 #endif // if !defined(DOXYGEN)
+    template <>
+    struct NativeToJS<unsigned char> : Detail::NativeToJS_uint_small<uint8_t> {};
 
     template <>
     struct NativeToJS<int16_t> : Detail::NativeToJS_int_small<int16_t> {};
