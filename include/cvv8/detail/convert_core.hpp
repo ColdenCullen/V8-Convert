@@ -62,11 +62,20 @@ namespace cvv8 {
     };
 
     /**
-        This may optionally be specialized for client-defined types
-        to define the type name used by some error reporting
-        code.
-        
-        The default implementation is usable but not all that useful.
+        This may optionally be specialized for client-defined types to
+        define the type name used by some error reporting code. Well,
+        we say "optionally", but some specific use cases might
+        actually require (if their template-generated code
+        instantiates this template).
+
+        There is no default implementation because providing one
+        misbehaves when dynamically linking on some platforms (we get
+        multiple copies at different addresses).
+
+
+        BUG? When specializing, it is illegal for T to be an abstract
+        type (with pure virtual functions), and i'm not at all certain
+        why.
     */
     template <typename T>
     struct TypeName
@@ -1061,6 +1070,19 @@ namespace cvv8 {
         {
             return h->IsNumber()
                 ? h->NumberValue()
+                : 0;
+        }
+    };
+
+    /** Specialization to convert JS values to float. */
+    template <>
+    struct JSToNative<float>
+    {
+        typedef double ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const
+        {
+            return h->IsNumber()
+                ? static_cast<float>(h->NumberValue())
                 : 0;
         }
     };

@@ -1,6 +1,7 @@
 #if !defined(V8_CONVERT_ARGUMENTS_HPP_INCLUDED)
 #define V8_CONVERT_ARGUMENTS_HPP_INCLUDED
 #include "convert.hpp"
+#include "invocable.hpp"
 #include <limits>
 
 namespace cvv8 {
@@ -252,6 +253,9 @@ namespace cvv8 {
     /** A Value predicate which returns true if its argument is a number capable
         of fitting in an uint64_t. */
     template <> struct ValIs<uint64_t> : Detail::ValIs_NumberStrictRange<uint64_t> {};
+    /** A Value predicate which returns true if its argument is a number capable
+        of fitting in a float. */
+    template <> struct ValIs<float> : Detail::ValIs_NumberStrictRange<float> {};
     /** A Value predicate which returns true if its argument is-a Number value. */
     template <> struct ValIs<double> : ValIs_Number {};
     //! Special-case specialization to treat C strings as JS strings.
@@ -594,7 +598,10 @@ namespace cvv8 {
         */
         inline bool operator()( v8::Arguments const & args ) const
         {
-            typedef typename PredList::Head P1;
+            typedef typename PredList::Head Head;
+            typedef typename tmp::IfElse< tmp::SameType<tmp::NilType,Head>::Value,
+                                          Argv_False,
+                                          Head>::Type P1;
             typedef typename PredList::Tail Tail;
             typedef Argv_OrN<Tail> P2;
             return P1()( args ) || P2()(args);
@@ -603,16 +610,7 @@ namespace cvv8 {
 
     //! End-of-list specialization.
     template <>
-    struct Argv_OrN<tmp::NilType> : ArgumentsPredicate
-    {
-        /**
-            Always returns false.
-        */
-        inline bool operator()( v8::Arguments const & ) const
-        {
-            return false;
-        }
-    };
+    struct Argv_OrN<tmp::NilType> : Argv_False {};
 
     /**
         Intended as a base class for a couple other
@@ -796,7 +794,7 @@ namespace cvv8 {
                                             Head>::Type Ftor;
             typedef typename PredList::Tail Tail;
             return ( Ftor()( argv ) )
-                ? Detail::CtorFwdDispatch<typename PredList::ReturnType,Head>::Call( argv )
+                ? Detail::CtorFwdDispatch<ContextT,Head>::Call( argv )
                 : PredicatedCtorDispatcher<Tail,ContextT>::Call(argv);
         }
     };
