@@ -974,9 +974,7 @@ v8::Handle<v8::Value> cv::JSSocket::read( unsigned int n, bool binary )
             v8::Handle<v8::Object> jba = CW::Instance().NewInstance( 0, NULL, ba );
             if( ! ba )
             {
-                cv::StringBuffer msg;
-                msg << "Creation of ByteArray object failed!";
-                return Toss( msg.toError() );
+                return Toss("Creation of ByteArray object failed!");
             }
             ba->swapBuffer( vec );
             return jba;
