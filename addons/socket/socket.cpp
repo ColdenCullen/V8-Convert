@@ -863,9 +863,7 @@ v8::Handle<v8::Value> cv::JSSocket::writeN( v8::Arguments const & argv )
         JSByteArray * ba = cv::CastFromJS<JSByteArray>( argv[0] );
         if( ! ba )
         {
-            cv::StringBuffer msg;
-            msg << "The first argument must be a String or ByteArray.";
-            return Toss(msg.toError());
+            return Toss("The first argument must be a String or ByteArray.");
         }
         if( argv.Length() > 1 )
         {
