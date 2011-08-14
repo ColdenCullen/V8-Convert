@@ -127,7 +127,7 @@ namespace cvv8 {
     struct Opt_ConstVal
     {
         typedef ValT Type;
-        const static Type Value = Val;
+        static const Type Value = Val;
     };
 
     /**
@@ -211,7 +211,7 @@ namespace cvv8 {
     template <typename T>
     struct ClassCreator_TypeID
     {
-        const static void * Value;
+        static const void * Value;
     };
     template <typename T>
     const void * ClassCreator_TypeID<T>::Value = TypeName<T>::Value;
