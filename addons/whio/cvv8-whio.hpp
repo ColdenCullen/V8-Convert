@@ -29,27 +29,68 @@ namespace cvv8 {
 
     CVV8_TypeName_DECL((whio::EPFS));
 
-    
+
+    /**
+       whio/v8 bindings.
+    */
     namespace io {
+
+        /**
+           Sets up all of the various whio bindings in the dest
+           object. Throws a native exception for serious errors.
+        */
         void SetupBindings( v8::Handle<v8::Object> dest );
+
+        //! Internal.
         template <typename T>
         struct ClassCreator_InternalFields_whio
             : ClassCreator_InternalFields_Base< T, 1, -1, 0 >
         {
         };
 
+        /**
+           whio::MemoryIODev constructor wrapper.
+
+           Accepts calls in these forms:
+
+           (uint size [, float expansionFactor=some value >1.0])
+        */
         struct Ctor_IODev_Memory
-            : Argv_TypesMatch< CVV8_TYPELIST((whio_size_t,float)) >
+            : Argv_OrN< CVV8_TYPELIST((
+                                       Argv_TypesMatch< CVV8_TYPELIST((whio_size_t,float)) >,
+                                       Argv_TypesMatch< CVV8_TYPELIST((whio_size_t)) >
+                                       )) >
         {
             static whio::IODev * Call( v8::Arguments const & );
         };
 
+        /**
+           whio::Subdevice constructor wrapper.
+
+           Accepts calls in this form:
+
+           (IODev parent, uint low, uint high)
+
+        */
         struct Ctor_IODev_Subdev
             : Argv_TypesMatch< CVV8_TYPELIST((whio::IODev *,whio_size_t, whio_size_t)) >
         {
             static whio::IODev * Call( v8::Arguments const & );
         };
 
+        /**
+           whio::FileIODev constructor wrapper.
+
+           Accepts calls in these forms:
+
+           (String fname, String mode)
+
+           (String fname, int mode [,int unixPermissions] )
+
+           The String mode should be as for fopen(3). The int mode
+           must be a mask of WHIO_MODE_xxx flags (available in JS via
+           whio.iomode).
+        */
         struct Ctor_IODev_File
             : Argv_OrN< CVV8_TYPELIST((
                                        Argv_TypesMatch< CVV8_TYPELIST((v8::String,v8::String/*mode string*/)) >,
@@ -59,6 +100,59 @@ namespace cvv8 {
         {
             static whio::IODev * Call( v8::Arguments const & );
         };
+
+        /**
+           whio::InStream constructor wrapper.
+
+           Accepts calls in these forms:
+
+           (String fname)
+
+           (IODev dev, bool takeOwnership)
+
+           For the (IODev,bool) form, if takeOwnership is true,
+           ownership of the underlying device handle is passed to the
+           new stream object and the "origin" device (which is just a
+           thin wrapper around the underlying handle) is destroyed
+           immediately (to keep the client from having to
+           (non-intuitively) close() it after passing on ownership).
+           Note that this behaviour is different from the C++ API.
+        */
+        struct Ctor_InStream
+            : Argv_OrN< CVV8_TYPELIST((
+                                       Argv_TypesMatch< CVV8_TYPELIST((v8::String)) >,
+                                       Argv_TypesMatch< CVV8_TYPELIST((whio::IODev *,bool)) >
+                                       )) >
+        {
+            static whio::InStream * Call( v8::Arguments const & );
+        };
+
+        /**
+           whio::OutStream constructor wrapper.
+
+           Accepts calls in these forms:
+
+           (String fname, bool truncate)
+
+           (IODev dev, bool takeOwnership)
+
+           For the (IODev,bool) form, if takeOwnership is true,
+           ownership of the underlying device handle is passed to the
+           new stream object and the "origin" device (which is just a
+           thin wrapper around the underlying handle) is destroyed
+           immediately (to keep the client from having to
+           (non-intuitively) close() it after passing on ownership).
+           Note that this behaviour is different from the C++ API.
+        */
+        struct Ctor_OutStream
+            : Argv_OrN< CVV8_TYPELIST((
+                                       Argv_TypesMatch< CVV8_TYPELIST((v8::String, bool)) >,
+                                       Argv_TypesMatch< CVV8_TYPELIST((whio::IODev *,bool)) >
+                                       )) >
+        {
+            static whio::OutStream * Call( v8::Arguments const & );
+        };
+
     } /* namespace io */
 
 #define WHIO_INTERNAL_FIELDS(T) template <> \
@@ -87,18 +181,87 @@ namespace cvv8 {
     };
 #endif
 
-
     template <>
     struct ClassCreator_Factory<whio::IODev>
-        : Detail::Factory_CtorForwarder_Base<whio::IODev>
-    {
-        static whio::IODev * Create( v8::Persistent<v8::Object> jself, v8::Arguments const &  argv );
-    };
+        : ClassCreator_Factory_Dispatcher<
+        whio::IODev,
+        PredicatedCtorDispatcher<
+            Signature< whio::IODev *(
+                                     io::Ctor_IODev_Memory,
+                                     io::Ctor_IODev_Subdev,
+                                     io::Ctor_IODev_File
+                                     )
+                >
+            >
+        >
+    {};
 
     template <>
     struct JSToNative<whio::IODev>
         : JSToNative_ClassCreator<whio::IODev>
     {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::IODev>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
+    template <>
+    struct ClassCreator_Factory<whio::StreamBase>
+        : ClassCreator_Factory_Abstract<whio::StreamBase>
+    {};
+
+    template <>
+    struct JSToNative<whio::StreamBase>
+        : JSToNative_ClassCreator<whio::StreamBase>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::StreamBase>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+    
+    template <>
+    struct ClassCreator_Factory<whio::InStream>
+        : ClassCreator_Factory_Dispatcher<
+        whio::InStream,
+        PredicatedCtorDispatcher< Signature<whio::InStream *(io::Ctor_InStream)> >
+        >
+    {};
+
+    template <>
+    struct JSToNative<whio::InStream>
+        : JSToNative_ClassCreator<whio::InStream>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::InStream>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
+
+    template <>
+    struct ClassCreator_Factory<whio::OutStream>
+        : ClassCreator_Factory_Dispatcher<
+        whio::OutStream,
+        PredicatedCtorDispatcher< Signature<whio::OutStream *(io::Ctor_OutStream)> >
+        >
+    {};
+
+    template <>
+    struct JSToNative<whio::OutStream>
+        : JSToNative_ClassCreator<whio::OutStream>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::OutStream>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
     
 } /* namespace cvv8 */
 

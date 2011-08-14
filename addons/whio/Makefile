@@ -17,7 +17,7 @@ bytearray.o socket.o: bytearray.cpp
 whio_amalgamation.c: CFLAGS+=-std=c89
 whio_amalgamation.c: CPPFLAGS+=-DWHIO_CONFIG_ENABLE_ZLIB=1
 #whio_amalgamation.c: CPPFLAGS+=-DWHIO_CONFIG_USE_FCNTL=1
-libwhio_v8.LIB.OBJECTS := whio_amalgamation.o whio_amalgamation_cpp.o cvv8-whio.o
+libwhio_v8.LIB.OBJECTS := whio_amalgamation.o whio_amalgamation_cpp.o cvv8-whio.o bytearray.o
 libwhio_v8.DLL.LDFLAGS += -lz
 libwhio_v8.DLL.OBJECTS := $(libwhio_v8.LIB.OBJECTS)
 libwhio_v8.DLL: $(libwhio_v8.LIB.OBJECTS)
