@@ -107,7 +107,7 @@ namespace cvv8 {
         It must be called from inside the cvv8 namespace.
     */
 #define CVV8_TypeName_DECL(X) template <> struct TypeName< cvv8::sl::At<0,CVV8_TYPELIST(X) >::Type > \
-    { const static char * Value; }
+    { static const char * Value; }
 
     /** @def CVV8_TypeName_IMPL
 
