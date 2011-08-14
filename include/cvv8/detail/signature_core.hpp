@@ -106,7 +106,7 @@ template <typename Sig> struct Signature DOXYGEN_FWD_DECL_KLUDGE;
     The maximum number of types the typelist can hold is limited
     to some build-time configuration option.
 */
-#define CVV8_TYPELIST(X) ::cvv8::Signature< void (*)X >
+#define CVV8_TYPELIST(X) ::cvv8::Signature< void X >
 
 /** \namespace cvv8::sl
 
