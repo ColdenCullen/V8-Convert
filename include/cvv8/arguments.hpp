@@ -284,6 +284,8 @@ namespace cvv8 {
     template <> struct ValIs<v8::RegExp> : ValIs_RegExp {};
     //! A Value predicate which returns true if its argument is-a String. */
     template <> struct ValIs<v8::String> : ValIs_String {};
+    //! A Value predicate which returns true if its argument is-a Boolean. */
+    template <> struct ValIs<bool> : ValIs<v8::Boolean> {};
     //! Specialization to treat Handle<T> as T. */
     template <typename T> struct ValIs< v8::Handle<T> > : ValIs< T > {};
     //! Specialization to treat Local<T> as T. */
