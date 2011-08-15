@@ -102,6 +102,8 @@ namespace cvv8 {
     template <typename T> struct ValIs<T const> : ValIs<T> {};
     //! Specialization to treat (T const &) as T.
     template <typename T> struct ValIs<T const &> : ValIs<T> {};
+    //! Specialization to treat (T &) as T.
+    template <typename T> struct ValIs<T &> : ValIs<T> {};
     //! Specialization to treat (T *) as T.
     template <typename T> struct ValIs<T *> : ValIs<T> {};
     //! Specialization to treat (T const *) as T.
