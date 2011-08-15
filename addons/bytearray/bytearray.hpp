@@ -69,7 +69,10 @@ namespace cvv8 {
            replaces the buffer (e.g. swapBuffer()).
         */
         void const * rawBuffer() const;
-        //void * rawBuffer();
+        /**
+           With great power comes great responsibility.
+        */
+        void * rawBuffer();
 
         /**
            Adds the ByteArray class to the given destination object.

@@ -294,14 +294,12 @@ bool JSByteArray::isGzipped() const
     }
 }
 
-#if 0
 void * JSByteArray::rawBuffer()
 {
     return this->vec.empty()
         ? NULL
         : &this->vec[0];
 }
-#endif
 
 void const * JSByteArray::rawBuffer() const
 {
