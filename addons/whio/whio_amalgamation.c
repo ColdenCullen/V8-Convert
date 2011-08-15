@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Mon Aug 15 01:27:32 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:02 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6464,6 +6464,13 @@ typedef struct whio_dev_membuf_meta
        Current position within the buffer.
     */
     whio_size_t pos;
+
+    /**
+       "Virtual EOF" - the highest position we have ever written to.
+       truncate() may decrease this.
+    */
+    whio_size_t vsize;
+
     /**
        If true, the buffer will be grown as needed.
     */
@@ -6490,6 +6497,7 @@ typedef struct whio_dev_membuf_meta
     0, /* alloced */ \
     0, /* buffer */ \
     0, /* pos */ \
+    0, /* vsize */        \
     false, /* expandable */ \
     1.5 /* expfactor */ \
     }
@@ -6634,6 +6642,7 @@ static whio_size_t whio_dev_membuf_write( whio_dev * dev, void const * src, whio
 	mb->pos += wlen;
 	if( mb->size < mb->pos ) mb->size = mb->pos;
     }
+    if( mb->vsize < mb->pos ) mb->vsize = mb->pos;
     return wlen;
 }
 
@@ -6719,6 +6728,7 @@ static int whio_dev_membuf_trunc( whio_dev * dev, whio_off_t _len )
 	    mb->alloced = 0;
 	}
 #endif
+        mb->vsize = 0;
 	mb->size = 0;
 	return 0;
     }
@@ -6762,6 +6772,7 @@ static int whio_dev_membuf_trunc( whio_dev * dev, whio_off_t _len )
 	    {
 		mb->buffer = b;
 		mb->alloced = alen;
+                if( mb->vsize > ulen ) mb->vsize = ulen;
 		/*WHIO_DEBUG("Shrunk buffer from %u to %u bytes\n", oldAlloc, mb->alloced); */
 	    }
 	    /* ignore realloc failure if we're shrinking - just keep the old block. */
@@ -6802,7 +6813,7 @@ static int whio_dev_membuf_ioctl( whio_dev * dev, int arg, va_list vargs )
           if( x )
           {
               rc = whio_rc.OK;
-              *x = mb->size;
+              *x = mb->vsize;
           }
           else
           {
@@ -8471,7 +8482,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Mon Aug 15 01:27:33 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:03 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15728,7 +15739,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Mon Aug 15 01:27:33 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:04 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif

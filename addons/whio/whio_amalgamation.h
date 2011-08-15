@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 01:27:32 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:02 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -5368,9 +5368,11 @@ whio_dev * whio_dev_for_fileno( int filedescriptor, char const * mode );
 
 /**
    Creates a new whio_dev object which wraps an in-memory buffer. The
-   initial memory allocated by the buffer is allocated by this call.
-   Whether or not the buffer is allowed to be expanded by write()
-   operations is defined by the remaining parameters.
+   initial memory allocated by the buffer is allocated by this call,
+   and this size represents its initial buffer capacity (its virtual
+   size starts at 0). Whether or not the buffer is allowed to be
+   expanded by write() operations is defined by the remaining
+   parameters.
 
    The expFactor specifies a growth expansion value, as follows. If
    expFactor is less than 1.0 then the buffer will never be allowed to
@@ -5453,10 +5455,13 @@ whio_dev * whio_dev_for_fileno( int filedescriptor, char const * mode );
 
    - ioctl(): all of the ictl operations listed in the whio_dev_ioctls
    enum and marked with whio_dev_ioctl_mask_BUFFER are supported, as
-   documented in that enum. The whio_dev_ioctl_GENERAL_size ioctl
-   is also supported (from the whio_dev_ioctls enum), but it returns
-   the size to the virtual EOF, whereas whio_dev_ioctl_BUFFER_size
-   returns the allocated size of the buffer.
+   documented in that enum. The whio_dev_ioctl_GENERAL_size ioctl is
+   also supported (from the whio_dev_ioctls enum), but it returns the
+   size vis-a-vis the virtual EOF (highest position we have written
+   to, perhaps modified by shrinking truncate()s), whereas
+   whio_dev_ioctl_BUFFER_size returns the allocated size of the
+   buffer. Unlike the cursor position, the "virtual EOF" can be
+   changed by truncate() operations.
 
    - iomode() will always indicate that the device is writable.
 */
@@ -6466,7 +6471,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Mon Aug 15 01:27:33 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:03 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12039,7 +12044,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Mon Aug 15 01:27:33 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:04 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif

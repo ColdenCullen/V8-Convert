@@ -66,6 +66,30 @@ function testInStream()
                   'Use after close() throws.');
 }
 
+function testGZip()
+{
+    print("GZip tests...");
+    var buf = new whio.IODev(1024*4);
+    print("buf.size() = "+buf.size());
+    var src = new whio.InStream("/etc/hosts");
+    var fname = "foo.gz";
+    var dest = new whio.OutStream(buf,false);
+    src.gzipTo( dest );
+    src.close();
+    dest.close();
+    buf.seek(0,whio.SEEK_SET);
+    print("Compressed size = "+buf.size());
+
+    src = new whio.InStream(buf,true);
+    dest = new whio.OutStream("/dev/stdout",false);
+    var banner = '****************************************';
+    print("DECOMPRESSED: "+banner);
+    src.gunzipTo(dest);
+    print("/DECOMPRESSED "+banner);
+    src.close();
+    dest.close();
+}
+
 function testEPFS()
 {
     print("Testing EPFS...");
@@ -145,6 +169,7 @@ try {
     testOutStream();
     testInStream();
     testEPFS();
+    testGZip();
     print("If you got this far then it seems to work.");
 }
 catch(e) {

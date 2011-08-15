@@ -221,6 +221,75 @@ namespace io {
         }
     }
 
+    v8::Handle<v8::Value> InStream_GZipTo( v8::Arguments const & argv )
+    {
+        typedef whio::InStream ST;
+        char const * fname = "gzipTo";
+        if( argv.Length() < 1 )
+        {
+            Toss(StringBuffer()<<fname<<"() requires one OutStream argument.");
+        }
+        ST * src = CastFromJS<ST>(argv.This());
+        if( ! src )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() could not find native 'this' pointer.");
+        }
+        whio::OutStream * dest = CastFromJS<whio::OutStream>(argv[0]);
+        if( ! dest )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() requires one OutStream argument.");
+        }
+        int const level = (argv.Length()>1)
+            ? CastFromJS<int>(argv[1])
+            : 3;
+        int const rc = whio_stream_gzip( src->handle(), dest->handle(), level );
+        if( rc )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() gzip failed with rc "
+                        << rc << " ("<<whio_rc_string(rc)<<")");
+        }
+        else return v8::Undefined();
+    }
+
+    v8::Handle<v8::Value> InStream_GUnzipTo( v8::Arguments const & argv )
+    {
+        typedef whio::InStream ST;
+        char const * fname = "gunzipTo";
+        if( argv.Length() < 1 )
+        {
+            Toss(StringBuffer()<<fname<<"() requires one OutStream argument.");
+        }
+        ST * src = CastFromJS<ST>(argv.This());
+        if( ! src )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() could not find native 'this' pointer.");
+        }
+        whio::OutStream * dest = CastFromJS<whio::OutStream>(argv[0]);
+        if( ! dest )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() requires one OutStream argument.");
+        }
+        int const rc = whio_stream_gunzip( src->handle(), dest->handle() );
+        if( rc )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() gzip failed with rc "
+                        << rc << " ("<<whio_rc_string(rc)<<")");
+        }
+        else return v8::Undefined();
+    }
+
     
 }// namespace io
 
@@ -363,6 +432,8 @@ namespace io {
         cc.Inherit<whio::StreamBase>();
 #define CATCHER InCaCatcher_std
         cc
+            ("gzipTo", io::InStream_GZipTo )
+            ("gunzipTo", io::InStream_GUnzipTo )
             ("read",
              CATCHER< InCaToInCa< io::read_impl<ST> > >::Call )
             ("toString",

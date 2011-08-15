@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 01:27:35 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 09:44:06 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
