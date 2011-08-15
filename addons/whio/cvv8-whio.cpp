@@ -63,8 +63,38 @@ namespace {
 #undef USE_SIGNALS
 
 namespace cvv8 { 
+
+    //CVV8_TypeName_IMPL((whio::IOBase),"IOBase");
+
+    CVV8_TypeName_IMPL((whio::StreamBase),"StreamBase");
+    CVV8_TypeName_IMPL((whio::InStream),"InStream");
+    //CVV8_TypeName_IMPL((whio::FileInStream),"FileInStream");
+    CVV8_TypeName_IMPL((whio::OutStream),"OutStream");
+    //CVV8_TypeName_IMPL((whio::FileOutStream),"FileOutStream");
+
+    CVV8_TypeName_IMPL((whio::IODev),"IODev");
+    //CVV8_TypeName_IMPL((whio::FileIODev),"FileIODev");
+    //CVV8_TypeName_IMPL((whio::MemoryIODev),"MemoryIODev");
+    //CVV8_TypeName_IMPL((whio::Subdevice),"Subdevice");
+    CVV8_TypeName_IMPL((whio::EPFS::PseudoFile),"PseudoFile");
+
+    CVV8_TypeName_IMPL((whio::EPFS),"EPFS");
+
 namespace io {
 
+    /**
+       toString() impl for our various bound classes.
+     */
+    template <typename T>
+    v8::Handle<v8::Value> toString_generic( v8::Arguments const & argv )
+    {
+        T const * self = CastFromJS<T>(argv.This());
+        StringBuffer s;
+        s << "[object "<<TypeName<T>::Value<<'@'
+          << (void const *)self << ']';
+        return s;
+    }
+    
     /**
        write() impl for whio::OutStream and whio::IODev.
      */
@@ -102,7 +132,6 @@ namespace io {
                 ;
             if( n > blen ) n = blen;
             {
-                v8::Unlocker unl;
                 errno = 0;
                 CSignalSentry sigSentry;
                 n = os->write( *bytes, n );
@@ -191,24 +220,10 @@ namespace io {
             return v8::String::New( (char const *)&vec[0], static_cast<int>( vec.size() ) );
         }
     }
-        
+
+    
 }// namespace io
 
-    //CVV8_TypeName_IMPL((whio::IOBase),"IOBase");
-
-    CVV8_TypeName_IMPL((whio::StreamBase),"StreamBase");
-    CVV8_TypeName_IMPL((whio::InStream),"InStream");
-    //CVV8_TypeName_IMPL((whio::FileInStream),"FileInStream");
-    CVV8_TypeName_IMPL((whio::OutStream),"OutStream");
-    //CVV8_TypeName_IMPL((whio::FileOutStream),"FileOutStream");
-
-    CVV8_TypeName_IMPL((whio::IODev),"IODev");
-    //CVV8_TypeName_IMPL((whio::FileIODev),"FileIODev");
-    //CVV8_TypeName_IMPL((whio::MemoryIODev),"MemoryIODev");
-    //CVV8_TypeName_IMPL((whio::Subdevice),"Subdevice");
-    CVV8_TypeName_IMPL((whio::EPFS::PseudoFile),"PseudoFile");
-
-    CVV8_TypeName_IMPL((whio::EPFS),"EPFS");
 
 #if 0
     const void * ClassCreator_TypeID<whio::IODev>::Value = TypeName<whio::IODev>::Value;
@@ -241,16 +256,27 @@ namespace io {
              CATCHER< MethodTo<InCa, IOD, whio_iomode_mask (), &IOD::iomode> >::Call )
             ("isClosed",
              MethodTo<InCa, const IOD, bool (), &IOD::isClosed>::Call )
+            ("read",
+             CATCHER< InCaToInCa< io::read_impl<IOD> > >::Call )
             ("size",
              CATCHER< MethodTo<InCa, IOD, whio_size_t (), &IOD::size> >::Call )
             ("tell",
              CATCHER< MethodTo<InCa, IOD, whio_size_t (), &IOD::tell> >::Call )
+            ("toString",
+#if 0
+            /* WTF?
+
+               Error: symbol `_ZN4cvv86Detail14FunctionToInCaIFN2v86HandleINS2_5ValueEEERKNS2_9ArgumentsEEXadL_ZNS9_IN4whio5IODevEEES5_S8_EELb0EE4CallES8_' is already defined
+            */
+             InCaToInCa< io::toString_generic<IOD> >::Call
+#else
+             io::toString_generic<IOD>
+#endif
+             )
             ("truncate",
              CATCHER< MethodTo<InCa, IOD, int (whio_off_t), &IOD::truncate> >::Call )
             ("write",
              CATCHER< InCaLikeFunction<whio_size_t, io::write_impl<IOD> > >::Call )
-            ("read",
-             CATCHER< InCaToInCa< io::read_impl<IOD> > >::Call )
             ;
         v8::Handle<v8::Function> seek =
             v8::FunctionTemplate::New(CATCHER<
@@ -289,6 +315,8 @@ namespace io {
              CATCHER< MethodTo<InCa, ST, whio_iomode_mask (), &ST::iomode> >::Call )
             ("isClosed",
              MethodTo<InCa, const ST, bool (), &ST::isClosed>::Call )
+            ("toString",
+             io::toString_generic<ST>)
             ;
 #undef CATCHER
         cc.AddClassTo(TypeName<ST>::Value, dest);
@@ -312,6 +340,8 @@ namespace io {
         cc
             ("flush",
              CATCHER< MethodTo<InCa, ST, int (), &ST::flush> >::Call )
+            ("toString",
+             io::toString_generic<ST>)
             ("write",
              CATCHER< InCaLikeFunction<whio_size_t, io::write_impl<ST> > >::Call )
             ;
@@ -335,6 +365,8 @@ namespace io {
         cc
             ("read",
              CATCHER< InCaToInCa< io::read_impl<ST> > >::Call )
+            ("toString",
+             io::toString_generic<ST>)
             ;
 #undef CATCHER
         cc.AddClassTo(TypeName<ST>::Value, dest);
@@ -396,7 +428,86 @@ namespace io {
             return CC::Instance().NewInstance(3, av);
         }
     }
-    
+
+    struct ForeachInode
+    {
+        v8::Local<v8::Function> func;
+        v8::Handle<v8::Object> self;
+        v8::Handle<v8::Value> data;
+        whio::EPFS * fs;
+        ForeachInode() : func(),
+                         self(),
+                         data(v8::Undefined()),
+                         fs(NULL)
+        {}
+    };
+
+    static v8::Handle<v8::Object> InodeToObject( whio_epfs_inode const * i )
+    {
+        v8::Handle<v8::Object> o( v8::Object::New() );
+#define SET(K,V) o->Set(v8::String::NewSymbol(K), V)
+        SET("id",CastToJS(i->id));
+        SET("mtime",CastToJS(i->mtime));
+        SET("size",CastToJS(i->size));
+        //SET("flags",CastToJS(i->flags));
+        SET("clientFlags",CastToJS(i->cflags));
+        //SET("firstBlock",CastToJS(i->firstBlock));
+#undef SET
+        return o;
+    }
+
+    static int ForeachInode_callback( whio_epfs * fs, whio_epfs_inode const * ent, void * clientData )
+    {
+        ForeachInode * fi = (ForeachInode *)clientData;
+        v8::Handle<v8::Object> idata = InodeToObject(ent);
+        if( whio_epfs_has_namer(fs) )
+        {
+            idata->Set(v8::String::NewSymbol("name"),
+                       CastToJS( fi->fs->name( ent->id ) ) );
+        }
+        v8::Handle<v8::Value> av[] = {
+            idata,
+            fi->data
+        };
+        v8::Handle<v8::Value> const & rc( fi->func->Call( fi->self, 2, av ) );
+        // How to tell if v8 threw here?
+        return CastFromJS<int>(rc);
+    }
+
+    v8::Handle<v8::Value> EPFS_ForEachInode( v8::Arguments const & argv )
+    {
+        /**
+           foreachInode( function(inode,data) {} )
+        */
+        typedef whio::EPFS FS;
+        FS * fs = CastFromJS<FS>(argv.This());
+        if( ! fs )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<FS>::Value
+                        << "::foreachInode() could not find native 'this' pointer.");
+        }
+        ForeachInode fi;
+        v8::Handle<v8::Function> jf;
+        v8::Handle<v8::Value> a1(argv[0]);
+        if( (argv.Length()<1) || !a1->IsFunction() )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<FS>::Value
+                        << "::foreachInode() requires a Function as its first argument.");
+        }
+        else
+        {
+            fi.func = v8::Function::Cast(*a1);
+        }
+        fi.fs = fs;
+        fi.self = argv.This();
+        if( argv.Length() > 1 ) fi.data = argv[1];
+        int const rc = whio_epfs_foreach_inode( fs->handle(), NULL, NULL,
+                                                ForeachInode_callback, &fi );
+        return CastToJS( rc );
+    }
+
     void ClassCreator_SetupBindings<whio::EPFS>::Initialize( v8::Handle<v8::Object> const & dest )
     {
         typedef whio::EPFS T;
@@ -415,6 +526,8 @@ namespace io {
              CATCHER< MethodTo<InCa, const T, bool (), &T::isRW> >::Call )
             ("isClosed",
              MethodTo<InCa, const T, bool (), &T::isClosed>::Call )
+            ("foreachInode",
+             InCaToInCa< EPFS_ForEachInode >::Call)
             ("fsOptions",
              MethodTo<InCa, const T, whio_epfs_fsopt const * (), &T::fsopt >::Call )
             ("hasNamer",
@@ -440,6 +553,8 @@ namespace io {
              >::Call)
             ("size",
              CATCHER< MethodTo<InCa, T, whio_size_t (), &T::size> >::Call )
+            ("toString",
+             io::toString_generic<T>)
             ("unlink",
              CATCHER< PredicatedInCaDispatcher< CVV8_TYPELIST((
                 // unlink(id):
@@ -641,6 +756,8 @@ namespace io {
         cc.Inherit<whio::IODev>();
 #define CATCHER InCaCatcher_std
         cc
+            ("toString",
+             io::toString_generic<T>)
             ("touch",
              InCaLikeFunction< uint32_t, PseudoFile_touch >::Call)
             ;
@@ -670,7 +787,7 @@ namespace io {
     
     
 namespace io {
-
+    
     whio::IODev * Ctor_IODev_Memory::Call( v8::Arguments const &argv )
     {
         assert( Ctor_IODev_Memory()(argv) );

@@ -7,6 +7,7 @@ function testIODev()
     assert( d instanceof whio.IODev, 'd is-a IODev' );
     assertThrows(function(){new whio.IODev(d,0);}, 'Invalid ctor args.');
 
+    assert( /IODev/.test( d ), 'toString() appears to work.' );
     var s = new whio.IODev(d,10,50);
     assert( s instanceof whio.IODev, 's is-a IODev.' );
     assert( s.iomode(), 's.iomode() seems to work' );
@@ -24,6 +25,8 @@ function testOutStream()
     var d = new whio.OutStream("/dev/stdout",false);
     assert( d instanceof whio.OutStream, 'd is-a OutStream' );
     assert( d instanceof whio.StreamBase, 'd is-a StreamBase' );
+    assert( /OutStream/.test( d ), 'toString() appears to work.' );
+
     asserteq( 10, d.write("hi, world\n"), 'write(String) seems to work.');
 
     var ba = new whio.ByteArray("hi, world\n");
@@ -45,6 +48,7 @@ function testInStream()
 
     assert( d instanceof whio.InStream, 'd is-a InStream' );
     assert( d instanceof whio.StreamBase, 'd is-a StreamBase' );
+    assert( /InStream/.test( d ), 'toString() appears to work.' );
     assertThrows(function(){new whio.InStream(true);}, 'Invalid ctor args.');
     assert( d.iomode(), 'd.iomode() seems to work' );
 
@@ -72,11 +76,13 @@ function testEPFS()
         maxBlocks:13
     };
     var fs = new whio.EPFS(fname,true,opt);
+    assert( fs instanceof whio.EPFS, 'fs is-a EPFS.' );
+    assert( /EPFS/.test( fs ), 'toString() appears to work.' );
     var fsOpt = fs.fsOptions();
-    var label = "Test from JavaScript "+(new Date());
     asserteq( fsOpt.inodeCount, opt.inodeCount );
     asserteq( fsOpt.maxBlocks, opt.maxBlocks );
     asserteq( fsOpt.blockSize, opt.blockSize );
+    var label = "Test from JavaScript "+(new Date());
     fs.label(label);
     fs.installNamer("ht");
     asserteq( fs.label(), label );
@@ -84,6 +90,8 @@ function testEPFS()
     var inodeId = 3;
     var d = fs.open(inodeId, whio.iomode.RWC);
     assert( d instanceof whio.EPFS.PseudoFile, 'd is-a whio.EPFS.PseudoFile' );
+    assert( /PseudoFile/.test( d ), 'toString() appears to work.' );
+
     var hiMsg = "hi, world.";
     var msg = hiMsg;
     asserteq( msg.length, d.write(msg), 'PseudoFile.write() appears to work.' );
@@ -117,8 +125,14 @@ function testEPFS()
     assert( d instanceof whio.IODev, 'is-a IODev' );
     gotMsg = d.read( hiMsg.length, false );
     asserteq( hiMsg, gotMsg );
-
     d.close();
+
+    var inodeList = [];
+    fs.foreachInode( function(i,li) {
+                         print(JSON.stringify(i));
+                         li.push( i.id );
+                     }, inodeList);
+    asserteq( 2, inodeList.length, 'Inode count matches expectations.' );
     fs.close();
 }
 
