@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 09:44:06 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 10:10:15 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -291,7 +291,12 @@ namespace whio {
     whio_size_t IODev::seek( whio_off_t off, int whence )
     {
         this->assertOpen();
-        return this->m_io->api->seek(this->m_io, off, whence);
+        whio_size_t const rc = this->m_io->api->seek(this->m_io, off, whence);
+        if( whio_rc.SizeTError == rc )
+        {
+            throw new Exception("seek() returned whio_rc.SizeTError.");
+        }
+        else return rc;
     }
 
     int IODev::truncate( whio_off_t sz )

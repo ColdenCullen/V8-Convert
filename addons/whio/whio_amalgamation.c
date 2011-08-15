@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Mon Aug 15 09:44:02 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 10:10:11 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6649,9 +6649,13 @@ static whio_size_t whio_dev_membuf_write( whio_dev * dev, void const * src, whio
 static int whio_dev_membuf_error( whio_dev * dev )
 {
     WHIO_MEMBUF_DECL(whio_rc.ArgError);
+#if 0 /* what was this for? */
     return (mb->pos <= mb->size)
 	? whio_rc.OK
 	: whio_rc.RangeError;
+#else
+    return 0;
+#endif
 }
 
 static int whio_dev_membuf_clear_error( whio_dev * dev )
@@ -6685,9 +6689,9 @@ static whio_size_t whio_dev_membuf_seek( whio_dev * dev, whio_off_t pos, int whe
 	  too = (whio_size_t)pos;
 	  break;
       case SEEK_END:
-	  too = mb->size + pos;
-	  if( (pos>0) && (too < mb->size) )  /* overflow! */ return whio_rc.SizeTError;
-	  else if( (pos<0) && (too > mb->size) )  /* underflow! */ return whio_rc.SizeTError;
+	  too = mb->vsize + pos;
+	  if( (pos>0) && (too < mb->vsize) )  /* overflow! */ return whio_rc.SizeTError;
+	  else if( (pos<0) && (too > mb->vsize) )  /* underflow! */ return whio_rc.SizeTError;
 	  break;
       case SEEK_CUR:
 	  too += pos;
@@ -6772,13 +6776,13 @@ static int whio_dev_membuf_trunc( whio_dev * dev, whio_off_t _len )
 	    {
 		mb->buffer = b;
 		mb->alloced = alen;
-                if( mb->vsize > ulen ) mb->vsize = ulen;
 		/*WHIO_DEBUG("Shrunk buffer from %u to %u bytes\n", oldAlloc, mb->alloced); */
 	    }
 	    /* ignore realloc failure if we're shrinking - just keep the old block. */
 	}
     }
     mb->size = ulen;
+    if( mb->vsize > ulen ) mb->vsize = ulen;
     return whio_rc.OK;
 }
 
@@ -8482,7 +8486,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Mon Aug 15 09:44:03 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 10:10:12 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15739,7 +15743,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Mon Aug 15 09:44:04 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 10:10:13 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
