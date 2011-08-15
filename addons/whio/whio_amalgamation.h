@@ -1,4 +1,4 @@
-/* auto-generated on Sun Aug 14 17:42:23 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 01:27:32 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -3142,8 +3142,8 @@ extern "C" {
     /** Signifies write-only mode. */
     WHIO_MODE_WO = WHIO_MODE_WRITE | WHIO_MODE_FLAG_ONLY,
     /**
-       When masked with WHIO_MODE_WRITE, works equivalently to to
-       open(2)'s O_CREAT flag (except that we add the missing 'E').
+       When masked with WHIO_MODE_WRITE, is semantically equivalent to
+       to open(2)'s O_CREAT flag (except that we add the missing 'E').
     */
     WHIO_MODE_FLAG_CREATE = 0x10,
     /**
@@ -3151,13 +3151,13 @@ extern "C" {
     */
     WHIO_MODE_RWC = WHIO_MODE_RW | WHIO_MODE_FLAG_CREATE,
     /**
-       Equivalent to O_EXCL used by open(2).
+       Semantically equivalent to O_EXCL used by open(2).
     */
     WHIO_MODE_FLAG_FAIL_IF_EXISTS = 0x20,
     /**
        Signifies that the device should be truncated to 0 bytes after
-       opening. Only applicable in write mode, as truncating a read-only
-       device would leave one with nothing left to read.
+       opening. Only applicable in write mode, as truncating a
+       read-only device would leave one with nothing left to read.
     */
     WHIO_MODE_FLAG_TRUNCATE = 0x40,
     /**
@@ -6466,7 +6466,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Sun Aug 14 17:42:24 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 01:27:33 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12039,7 +12039,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Sun Aug 14 17:42:24 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 01:27:33 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif

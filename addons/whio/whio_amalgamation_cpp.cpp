@@ -1,4 +1,4 @@
-/* auto-generated on Sun Aug 14 17:42:26 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 01:27:35 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -270,6 +270,12 @@ namespace whio {
     {
         this->assertOpen();
         return this->m_io->api->clear_error(this->m_io);
+    }
+
+    int IODev::error()
+    {
+        this->assertOpen();
+        return this->m_io->api->error(this->m_io);
     }
 
     bool IODev::eof()

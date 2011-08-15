@@ -10,7 +10,8 @@ bytearray.hpp: $(BA.DIR)/bytearray.hpp
 	cp $(BA.DIR)/$@ .
 bytearray.cpp: $(BA.DIR)/bytearray.cpp bytearray.hpp
 	cp $(BA.DIR)/$@ .
-bytearray.o: bytearray.cpp
+bytearray.o: bytearray.cpp bytearray.hpp
+cvv8-whio.cpp: bytearray.hpp
 CLEAN_FILES += bytearray.cpp bytearray.hpp
 bytearray.o socket.o: bytearray.cpp
 

@@ -25,7 +25,7 @@ namespace cvv8 {
     //CVV8_TypeName_DECL((whio::FileIODev));
     //CVV8_TypeName_DECL((whio::MemoryIODev));
     //CVV8_TypeName_DECL((whio::Subdevice));
-    //CVV8_TypeName_DECL((whio::EPFS::PseudoFile));
+    CVV8_TypeName_DECL((whio::EPFS::PseudoFile));
 
     CVV8_TypeName_DECL((whio::EPFS));
 
@@ -44,7 +44,7 @@ namespace cvv8 {
         //! Internal.
         template <typename T>
         struct ClassCreator_InternalFields_whio
-            : ClassCreator_InternalFields_Base< T, 1, -1, 0 >
+            : ClassCreator_InternalFields_Base< T, 2, -1, 1 >
         {
         };
 
@@ -152,6 +152,7 @@ namespace cvv8 {
         {
             static whio::OutStream * Call( v8::Arguments const & );
         };
+
 
     } /* namespace io */
 
@@ -263,7 +264,79 @@ namespace cvv8 {
     };
 
     
+    template <>
+    class ClassCreator_Factory<whio::EPFS>
+    {
+    public:
+        typedef whio::EPFS * ReturnType;
+        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv );
+        static void Delete( whio::EPFS * obj );
+    };
+
+    template <>
+    struct JSToNative<whio::EPFS>
+        : JSToNative_ClassCreator<whio::EPFS>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::EPFS>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
+    template <>
+    class ClassCreator_Factory<whio::EPFS::PseudoFile>
+    {
+    public:
+        typedef whio::EPFS::PseudoFile * ReturnType;
+        static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv );
+        static void Delete( whio::EPFS::PseudoFile * obj );
+    };
+
+    template <>
+    struct JSToNative<whio::EPFS::PseudoFile>
+        : JSToNative_ClassCreator<whio::EPFS::PseudoFile>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::EPFS::PseudoFile>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
+    
+    template <>
+    struct NativeToJS<whio_epfs_fsopt>
+    {
+        /**
+           Creates a new Object containing the properties (inodeCount,
+           maxBlocks, blockSize), taken from opt. Note that changes to
+           the returned object do not modify the native copy.
+        */
+        v8::Handle<v8::Value> operator()( whio_epfs_fsopt const & opt ) const;
+        v8::Handle<v8::Value> operator()( whio_epfs_fsopt const * opt ) const
+        {
+            if( opt ) return this->operator()( *opt );
+            else return v8::Null();
+        }
+    };
+
+    template <>
+    struct JSToNative<whio_epfs_fsopt>
+    {
+        typedef whio_epfs_fsopt ResultType;
+        /**
+           If h is-a Object then the properties (inodeCount,
+           maxBlocks, blockSize) are extracted and copied into a
+           whio_epfs_fsopt object, which is returned. Remember that a
+           value of 0 for either the whio_epfs_fsopt::inodeCount or
+           the whio_epfs_fsopt::blockSize is illegal, and probably
+           means that the given handle did not contain the given
+           properties.
+        */
+        ResultType operator()( v8::Handle<v8::Value> const & h ) const;
+    };
+    
 } /* namespace cvv8 */
 
 #endif /* include guard */
-

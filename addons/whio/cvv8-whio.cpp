@@ -1,8 +1,199 @@
 #include "cvv8-whio.hpp"
-#include <cassert>
+#include "bytearray.hpp"
 #include "cvv8/XTo.hpp"
+#include <cassert>
+#include <cerrno>
+#include <sstream>
+
+#if defined(WIN32)
+#  define USE_SIGNALS 0
+#else
+#  define USE_SIGNALS 1
+#endif
+
+#if USE_SIGNALS
+#include <signal.h>
+static void signal_ignore(int)
+{
+    /*
+      Weird: if i don't install a signal handler, ctrl-c (SIGINT)
+      kills my app violently during Socket.accept(), as would be expected. If
+      i do install a handler then accept() returns with errno=EINTR.
+    */
+    //Toss("C signal caught!");
+}
+#endif
+namespace {
+    /**
+       A sentry type to set a no-op signal handler for certain signals
+       for its lifetime.  When it destructs, it restores the original
+       signal handler.
+
+       Re-maps the following signals: SIGINT, SIGPIPE
+       
+       The purpose of this is to allow low-level calls like ::accept()
+       and ::bind() to fail with a EINTR when interrupted, instead of
+       having the signal handler kill the app.
+
+       FIXME: check into using sigprocmask() instead of signal()
+       internally.
+    */
+    struct CSignalSentry
+    {
+#if USE_SIGNALS
+        sighandler_t oldInt;
+        sighandler_t oldPipe;
+        CSignalSentry()
+            : oldInt(signal(SIGINT, signal_ignore)),
+              oldPipe(signal(SIGPIPE, signal_ignore))
+        {
+        }
+        ~CSignalSentry()
+        {
+            signal( SIGINT, oldInt );
+            signal( SIGPIPE, oldPipe );
+        }
+#else
+        CSignalSentry() {}
+        ~CSignalSentry(){}
+#endif /*USE_SIGNALS*/
+    };
+}
+
+#undef USE_SIGNALS
 
 namespace cvv8 { 
+namespace io {
+
+    /**
+       write() impl for whio::OutStream and whio::IODev.
+     */
+    template <typename OutType>
+    whio_size_t write_impl( v8::Arguments const & argv )
+    {
+        int const argc = argv.Length();
+        if( (0==argc) || (2 < argc) )
+        {
+            Toss("write() requires 1 or 2 arguments!");
+            return 0;
+        }
+        OutType * os = CastFromJS<OutType>(argv.This());
+        if( ! os )
+        {
+            std::ostringstream msg;
+            msg << TypeName<OutType>::Value << "::write() could not find its native 'this' pointer.";
+            throw std::runtime_error(msg.str());
+        }
+        v8::Handle<v8::Value> arg(argv[0]);
+        if( arg->IsString() )
+        {
+            /*
+              If we want to unlock while writing we have to copy the bytes
+              somewhere outside of v8. We could theoretically get away
+              with calling (*bytes) and passing that ref during our
+              unlocked time, but that officially invokes undefined
+              behaviour b/c v8 may move the memory around during gc.
+            */
+            v8::String::Utf8Value bytes(argv[0]);
+            whio_size_t const blen = static_cast<whio_size_t>( bytes.length() );
+            whio_size_t n = (argv.Length()>1)
+                ? CastFromJS<whio_size_t>(argv[1])
+                : blen
+                ;
+            if( n > blen ) n = blen;
+            {
+                v8::Unlocker unl;
+                errno = 0;
+                CSignalSentry sigSentry;
+                n = os->write( *bytes, n );
+                // TODO: if errno indicates an interrupt,
+                // Toss() here.
+            }
+            return n;
+        }
+        else
+        {
+            JSByteArray * ba = CastFromJS<JSByteArray>( arg );
+            if( ! ba )
+            {
+                Toss("The first argument must be a String or ByteArray.");
+                return 0;
+            }
+            whio_size_t const blen = static_cast<whio_size_t>( ba->length() );
+            whio_size_t n;
+            if( argv.Length() > 1 )
+            {
+                n = CastFromJS<whio_size_t>(argv[1]);
+                if( n > blen ) n = blen;
+            }
+            else n = ba->length();
+            {
+                v8::Unlocker unl;
+                errno = 0;
+                CSignalSentry sigSentry;
+                n = os->write( ba->rawBuffer(), n );
+                // TODO: if errno indicates an interrupt,
+                // Toss() here.
+            }
+            return n;
+        }
+    }
+
+    /**
+       read() impl for whio::InStream and whio::IODev.
+    */
+    template <typename InType>
+    v8::Handle<v8::Value> read_impl( v8::Arguments const & argv )
+    {
+        int const argc = argv.Length();
+        if( 2 != argc)
+        {
+            return Toss("read() requires exactly 2 arguments!");
+        }
+        InType * is = CastFromJS<InType>(argv.This());
+        if( ! is )
+        {
+            std::ostringstream os;
+            os << TypeName<InType>::Value << "::read() could not find its native 'this' pointer.";
+            throw std::runtime_error(os.str());
+        }
+        whio_size_t n = CastFromJS<whio_size_t>(argv[0]);
+        if( ! n ) return v8::Integer::New(0);
+        typedef std::vector<unsigned char> VT;
+        VT vec(n,'\0');
+        whio_size_t rc;
+        {
+            v8::Unlocker unl;
+            CSignalSentry csig;
+            errno = 0;
+            rc = is->read( &vec[0], static_cast<whio_size_t>(vec.size()) );
+            /*
+              TODO: if errno indicates an interrupt, throw here.
+            */
+        }
+        if( ! rc ) return v8::Integer::New(0);
+        vec.resize(rc);
+        bool const binary = argv[1]->BooleanValue();
+        if( binary )
+        {
+            typedef ClassCreator<JSByteArray> CW;
+            JSByteArray * ba = NULL;
+            v8::Handle<v8::Object> jba = CW::Instance().NewInstance( 0, NULL, ba );
+            if( ! ba )
+            {
+                return Toss("Creation of ByteArray object failed!");
+            }
+            ba->swapBuffer( vec );
+            return jba;
+        }
+        else
+        {
+            return v8::String::New( (char const *)&vec[0], static_cast<int>( vec.size() ) );
+        }
+    }
+        
+}// namespace io
+
     //CVV8_TypeName_IMPL((whio::IOBase),"IOBase");
 
     CVV8_TypeName_IMPL((whio::StreamBase),"StreamBase");
@@ -15,7 +206,7 @@ namespace cvv8 {
     //CVV8_TypeName_IMPL((whio::FileIODev),"FileIODev");
     //CVV8_TypeName_IMPL((whio::MemoryIODev),"MemoryIODev");
     //CVV8_TypeName_IMPL((whio::Subdevice),"Subdevice");
-    //CVV8_TypeName_IMPL((whio::EPFS::PseudoFile),"PseudoFile");
+    CVV8_TypeName_IMPL((whio::EPFS::PseudoFile),"PseudoFile");
 
     CVV8_TypeName_IMPL((whio::EPFS),"EPFS");
 
@@ -37,9 +228,11 @@ namespace cvv8 {
 
 #define CATCHER InCaCatcher_std
         cc
+            ("close", CCDev::DestroyObjectCallback )
             ("clearError",
              CATCHER< MethodTo<InCa, IOD, int (), &IOD::clearError> >::Call )
-            ("close", CCDev::DestroyObjectCallback )
+            ("error",
+             CATCHER< MethodTo<InCa, IOD, int (), &IOD::error> >::Call )
             ("eof",
              CATCHER< MethodTo<InCa, IOD, bool (), &IOD::eof> >::Call )
             ("flush",
@@ -56,28 +249,14 @@ namespace cvv8 {
              CATCHER< MethodTo<InCa, IOD, whio_size_t (), &IOD::tell> >::Call )
             ("truncate",
              CATCHER< MethodTo<InCa, IOD, int (whio_off_t), &IOD::truncate> >::Call )
+            ("write",
+             CATCHER< InCaLikeFunction<whio_size_t, io::write_impl<IOD> > >::Call )
+            ("read",
+             CATCHER< InCaToInCa< io::read_impl<IOD> > >::Call )
+            ;
             ;
 #undef CATCHER
         cc.AddClassTo(TypeName<IOD>::Value, dest);
-        return;
-    }
-
-    template <typename StreamT>
-    void SetupStreamBase(ClassCreator<StreamT> & cc)
-    {
-        typedef whio::StreamBase ST;
-        typedef ClassCreator<ST> CC;
-#define CATCHER InCaCatcher_std
-        cc
-            ("close", CC::DestroyObjectCallback )
-            ("isGood",
-             CATCHER< MethodTo<InCa, ST, bool (), &ST::isGood> >::Call )
-            ("iomode",
-             CATCHER< MethodTo<InCa, ST, whio_iomode_mask (), &ST::iomode> >::Call )
-            ("isClosed",
-             MethodTo<InCa, const ST, bool (), &ST::isClosed>::Call )
-            ;
-#undef CATCHER
         return;
     }
 
@@ -107,7 +286,7 @@ namespace cvv8 {
         return;
     }
     
-    
+
     void ClassCreator_SetupBindings<whio::OutStream>::Initialize( v8::Handle<v8::Object> const & dest )
     {
         typedef whio::OutStream ST;
@@ -124,7 +303,8 @@ namespace cvv8 {
         cc
             ("flush",
              CATCHER< MethodTo<InCa, ST, int (), &ST::flush> >::Call )
-            // TODO: write()
+            ("write",
+             CATCHER< InCaLikeFunction<whio_size_t, io::write_impl<ST> > >::Call )
             ;
 #undef CATCHER
         cc.AddClassTo(TypeName<ST>::Value, dest);
@@ -143,14 +323,344 @@ namespace cvv8 {
         }
         cc.Inherit<whio::StreamBase>();
 #define CATCHER InCaCatcher_std
-        // TODO: read()
+        cc
+            ("read",
+             CATCHER< InCaToInCa< io::read_impl<ST> > >::Call )
+            ;
 #undef CATCHER
         cc.AddClassTo(TypeName<ST>::Value, dest);
+        return;
+    }
+
+    
+    v8::Handle<v8::Value> NativeToJS<whio_epfs_fsopt>::operator()( whio_epfs_fsopt const & opt ) const
+    {
+        v8::Handle<v8::Object> const & obj( v8::Object::New() );
+#define JSTR v8::String::NewSymbol
+        obj->Set(JSTR("blockSize"), v8::Integer::NewFromUnsigned(opt.blockSize));
+        obj->Set(JSTR("inodeCount"), v8::Integer::NewFromUnsigned(opt.inodeCount));
+        obj->Set(JSTR("maxBlocks"), v8::Integer::NewFromUnsigned(opt.maxBlocks));
+#undef JSTR
+        return obj;
+    }
+
+    whio_epfs_fsopt JSToNative<whio_epfs_fsopt>::operator()( v8::Handle<v8::Value> const & h ) const
+    {
+        whio_epfs_fsopt rc = whio_epfs_fsopt_empty;
+        if( ! h->IsObject() ) return rc;
+        else
+        {
+#define JSTR v8::String::NewSymbol
+            v8::Handle<v8::Object> obj( v8::Object::Cast(*h) );
+            v8::Handle<v8::Value> v;
+#define GET(K,T) v = obj->Get(JSTR(#K));                 \
+            if( !v.IsEmpty() ) rc.K = static_cast< T >(v->Uint32Value())
+
+            GET(blockSize,whio_size_t);
+            GET(inodeCount,whio_epfs_id_t);
+            GET(maxBlocks,whio_epfs_id_t);
+#undef GET
+#undef JSTR
+            return rc;
+        }
+    }
+
+
+
+    v8::Handle<v8::Value> EPFS_OpenPseudoFile( v8::Arguments const & argv )
+    {
+        if( argv.Length() != 2 )
+        {
+            StringBuffer msg;
+            msg << TypeName<whio::EPFS>::Value<< "::open() "
+                << "requires exactly 2 arguments.";
+            return Toss(msg.toError());
+        }
+        else
+        {
+            v8::Handle<v8::Value> av[] = {
+            argv.This(),
+            argv[0],
+            argv[1]
+            };
+            typedef ClassCreator<whio::EPFS::PseudoFile> CC;
+            return CC::Instance().NewInstance(3, av);
+        }
+    }
+    
+    void ClassCreator_SetupBindings<whio::EPFS>::Initialize( v8::Handle<v8::Object> const & dest )
+    {
+        typedef whio::EPFS T;
+        typedef ClassCreator<T> CC;
+        CC & cc(CC::Instance());
+        if( cc.IsSealed() )
+        {
+            cc.AddClassTo(TypeName<T>::Value, dest);
+            return;
+        }
+
+#define CATCHER InCaCatcher_std
+        cc
+            ("close", CC::DestroyObjectCallback )
+            ("isRW",
+             CATCHER< MethodTo<InCa, const T, bool (), &T::isRW> >::Call )
+            ("isClosed",
+             MethodTo<InCa, const T, bool (), &T::isClosed>::Call )
+            ("fsOptions",
+             MethodTo<InCa, const T, whio_epfs_fsopt const * (), &T::fsopt >::Call )
+            ("hasNamer",
+             CATCHER< MethodTo<InCa, const T, bool (), &T::hasNamer> >::Call )
+            ("inodeId",
+             CATCHER< MethodTo<InCa, T, whio_epfs_id_t (char const *name), &T::inodeId> >::Call )
+            ("installNamer",
+             CATCHER< MethodTo<InCa, T, void (char const *name), &T::installNamer> >::Call )
+            ("label",
+             CATCHER< ArityDispatchList< CVV8_TYPELIST((
+                      // label getter
+                      MethodTo<InCa, T, std::string (), &T::label>,
+                      // label setter
+                      MethodTo<InCa, T, void (char const *), &T::label>
+                      )) >
+             >::Call)
+            ("name",
+             CATCHER< ArityDispatchList<
+             CVV8_TYPELIST((
+                            MethodTo<InCa, T, std::string (whio_epfs_id_t), &T::name>,
+                            MethodTo<InCa, T, void (whio_epfs_id_t, char const *), &T::name>
+                            )) >
+             >::Call)
+            ("size",
+             CATCHER< MethodTo<InCa, T, whio_size_t (), &T::size> >::Call )
+            ("unlink",
+             CATCHER< PredicatedInCaDispatcher< CVV8_TYPELIST((
+                // unlink(id):
+                PredicatedInCa< ArgAt_IsA<0,whio_epfs_id_t>,
+                                MethodTo< InCa, T, void (whio_epfs_id_t), &T::unlink> >,
+                // unlink(name):
+                PredicatedInCa< ArgAt_IsA<0,v8::String>,
+                                MethodTo< InCa, T, void (char const *), &T::unlink> >
+                ))> >::Call)
+            ("open",
+             CATCHER< InCaToInCa<EPFS_OpenPseudoFile> >::Call)
+            ;
+#undef CATCHER
+        v8::Handle<v8::Function> ctor( cc.CtorFunction() );
+        ClassCreator<whio::EPFS::PseudoFile>::SetupBindings( ctor );
+        cc.AddClassTo(TypeName<T>::Value, dest);
+        return;
+    }
+
+    whio::EPFS * ClassCreator_Factory<whio::EPFS>::Create( v8::Persistent<v8::Object> &, v8::Arguments const & argv )
+    {
+        int const argc = argv.Length();
+        if( (argc != 2) && (argc != 3) )
+        {
+            std::ostringstream os;
+            os << TypeName<whio::EPFS>::Value
+               << " ctor requires 2 or 3 arguments.";
+            throw std::runtime_error(os.str());
+        }
+        bool const a2 = argv[1]->BooleanValue();
+        v8::Handle<v8::Value> a1( argv[0] );
+        ArgCaster<char const *> acName;
+        char const * fname = NULL;
+        whio::IODev * dev = NULL;
+        whio::EPFS * fs = NULL;
+        if( a1->IsString() )
+        {
+            v8::Handle<v8::String> fnStr( a1->ToString() );
+            fname = acName.ToNative( a1 );
+        }
+        else
+        {
+            dev = CastFromJS<whio::IODev>(a1);
+        }
+        if( (!fname || !*fname) && !dev )
+        {
+            std::ostringstream os;
+            os << TypeName<whio::EPFS>::Value
+               << " ctor requires either a String or "
+               << TypeName<whio::IODev>::Value
+               << " as its first argument.";
+            throw std::runtime_error(os.str());
+        }
+        typedef ClassCreator<whio::IODev> CCDev;
+        if( 2 == argc )
+        {/* openfs() */
+            if( dev )
+            {/* (IODev,bool) */
+                fs = new whio::EPFS( dev->handle(), a2/*take ownership*/ );
+                if( a2 )
+                {
+                    CCDev::DestroyObject(a1);
+                }
+            }
+            else
+            { /* (String,bool) */
+                fs = new whio::EPFS(fname, a2/* write mode */);
+            }
+            return fs;
+        }
+        else
+        { /* mkfs() */
+            assert( 3 == argc );
+            whio_epfs_fsopt fopt = CastFromJS<whio_epfs_fsopt>(argv[2]);
+            if( ! fopt.inodeCount ) fopt.inodeCount = 512;
+            if( ! fopt.blockSize ) fopt.blockSize = 1024 * 16;
+            if( dev )
+            {
+                fs = new whio::EPFS( dev->handle(), a2/*take ownership*/, &fopt );
+                if( a2 )
+                {
+                    CCDev::DestroyObject(a1);
+                }
+            }
+            else
+            {
+                fs = new whio::EPFS(fname, a2/*allowOverwrite*/, &fopt);
+            }
+            return fs;
+        }
+    }
+
+    void ClassCreator_Factory<whio::EPFS>::Delete( whio::EPFS * obj )
+    {
+        delete obj;
+    }
+
+    whio::EPFS::PseudoFile * ClassCreator_Factory<whio::EPFS::PseudoFile>::Create( v8::Persistent<v8::Object> &, v8::Arguments const & argv )
+    {
+        typedef whio::EPFS::PseudoFile T;
+        if( 3 != argv.Length() )
+        {
+            std::ostringstream os;
+            os << TypeName<T>::Value << " ctor requires 3 arguments.";
+            throw std::runtime_error(os.str());
+        }
+        whio::EPFS * fs = CastFromJS<whio::EPFS>(argv[0]);
+        if( !fs )
+        {
+            std::ostringstream os;
+            os << TypeName<T>::Value << " ctor was passed a non-"
+               << TypeName<whio::EPFS>::Value << " as the first argument.";
+            throw std::runtime_error(os.str());
+        }
+        v8::Handle<v8::Value> a2( argv[1] );
+        whio_iomode_mask mask = CastFromJS<whio_iomode_mask>(argv[2]);
+        if( a2->IsString() )
+        {
+            ArgCaster<char const *> ac;
+            return fs->openByName( ac.ToNative(a2), mask );
+        }
+        else
+        {
+            return fs->openById( CastFromJS<whio_epfs_id_t>(a2), mask );
+        }
+    }
+
+    void ClassCreator_Factory<whio::EPFS::PseudoFile>::Delete( whio::EPFS::PseudoFile * obj )
+    {
+        delete obj;
+    }
+
+
+
+    void PseudoFile_mtimeSetter( v8::Local< v8::String >, v8::Local< v8::Value > time, const v8::AccessorInfo &info)
+    {
+        typedef whio::EPFS::PseudoFile T;
+        uint32_t tv = (uint32_t)-1;
+        T * p = CastFromJS<T>(info.This());
+        if( ! p )
+        {
+            Toss(StringBuffer()
+                 <<"Could not find native "
+                 << TypeName<T>::Value
+                 << " 'this' pointer.");
+        }
+        if( time->IsDate() )
+        {
+            v8::Handle<v8::Date> d( v8::Date::Cast(*time) );
+            tv = static_cast<uint32_t>( d->NumberValue() / 1000 );
+        }
+        else if( time->IsNumber() )
+        {
+            tv = time->Uint32Value();
+        }
+        p->touch( tv );
+    }
+
+    void PseudoFile_touch( v8::Arguments const & argv )
+    {
+        typedef whio::EPFS::PseudoFile T;
+        uint32_t tv = (uint32_t)-1;
+        v8::Handle<v8::Value> time;
+        if( argv.Length() ) time = argv[0];
+        T * p = CastFromJS<T>(argv.This());
+        if( ! p )
+        {
+            Toss(StringBuffer()
+                 <<"Could not find native "
+                 << TypeName<T>::Value
+                 << " 'this' pointer.");
+        }
+        if( ! time.IsEmpty() )
+        {
+            if( time->IsDate() )
+            {
+                v8::Handle<v8::Date> d( v8::Date::Cast(*time) );
+                tv = static_cast<uint32_t>( d->NumberValue() / 1000 );
+            }
+            else if( time->IsNumber() )
+            {
+                tv = time->Uint32Value();
+            }
+        }
+        p->touch( tv );
+    }
+    
+    void ClassCreator_SetupBindings<whio::EPFS::PseudoFile>::Initialize( v8::Handle<v8::Object> const & dest )
+    {
+        typedef whio::EPFS::PseudoFile T;
+        typedef ClassCreator<T> CC;
+        CC & cc(CC::Instance());
+        if( cc.IsSealed() )
+        {
+            cc.AddClassTo(TypeName<T>::Value, dest);
+            return;
+        }
+        cc.Inherit<whio::IODev>();
+#define CATCHER InCaCatcher_std
+        cc
+            ("touch",
+             InCaLikeFunction< void, PseudoFile_touch >::Call)
+            ;
+#undef CATCHER
+        AccessorAdder acc( cc.Prototype() );
+#define GCATCH GetterCatcher_std
+#define SCATCH SetterCatcher_std
+        acc
+            ("clientFlags",
+             GCATCH< MethodTo<Getter, T const, uint32_t (), &T::clientFlags> >::Get,
+             SCATCH< MethodTo<Setter, T, void (uint32_t), &T::clientFlags> >::Set)
+            ("mtime",
+             GCATCH< MethodTo<Getter, T const, uint32_t (), &T::mtime> >::Get,
+             SCATCH< SetterToSetter<PseudoFile_mtimeSetter> >::Set )
+            ("inodeId",
+             GCATCH< MethodTo<Getter, T const, whio_epfs_id_t (), &T::inodeId> >::Get,
+             ThrowingSetter::Set)
+            ("name",
+             GCATCH< MethodTo<Getter, T, std::string (), &T::name> >::Get,
+             SCATCH< MethodTo<Setter, T, void (char const *), &T::name> >::Set)
+            ;
+#undef GCATCH
+#undef SCATCH
+        cc.AddClassTo(TypeName<T>::Value, dest);
         return;
     }
     
     
 namespace io {
+
     whio::IODev * Ctor_IODev_Memory::Call( v8::Arguments const &argv )
     {
         assert( Ctor_IODev_Memory()(argv) );
@@ -274,12 +784,18 @@ namespace io {
     {
         char const * nsName = "whio";
         v8::Handle<v8::Object> ioObj( v8::Object::New() );
+#define JSTR(X) v8::String::NewSymbol(X)
+#define JINT(X) v8::Integer::New(X)
+#define SET(OBJ,K,V) OBJ->Set(JSTR(K), V)
+
+        SET(ioObj,"SEEK_SET",JINT(SEEK_SET));
+        SET(ioObj,"SEEK_CUR",JINT(SEEK_CUR));
+        SET(ioObj,"SEEK_END",JINT(SEEK_END));
+
+        // WHIO_MODE_xxx flags...
         v8::Handle<v8::Object> ioModes( v8::Object::New() );
-#define JSTR(X) v8::String::New(X)
-
         ioObj->Set(JSTR("iomode"),ioModes);
-
-#define M(X) ioObj->Set(JSTR(#X), v8::Integer::New(WHIO_MODE_ ## X))
+#define M(X) SET(ioModes,#X,(JINT(WHIO_MODE_ ## X)))
         M(INVALID);
         M(UNKNOWN);
         M(READ);
@@ -295,17 +811,18 @@ namespace io {
         M(FLAG_FAIL_IF_EXISTS);
         M(FLAG_APPEND);
 #undef M
+        JSByteArray::SetupBindings( ioObj );
         ClassCreator<whio::StreamBase>::SetupBindings(ioObj);
         ClassCreator<whio::OutStream>::SetupBindings(ioObj);
         ClassCreator<whio::InStream>::SetupBindings(ioObj);
         ClassCreator<whio::IODev>::SetupBindings(ioObj);
-#undef JSTR
+        ClassCreator<whio::EPFS>::SetupBindings(ioObj);
         dest->Set( JSTR(nsName), ioObj );
+#undef JSTR
+#undef JINT
         return;
     }
 
-    
 } // io namespace
 } // cvv8 namespace
-
 
