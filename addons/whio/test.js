@@ -186,12 +186,31 @@ function testEPFS()
     fs.close();
 }
 
+function testByteArrayDev()
+{
+    print("ByteArrayIODev tests...");
+    var ba = new whio.ByteArray( 2000 );
+    var d = new whio.ByteArrayIODev(ba,true);
+    assert( whio.iomode.WRITE & d.iomode(), 'Opened in read/write mode.' );
+    asserteq( ba.length, d.size(), 'ByteArray and dev are same size.' );
+    asserteq( 3, d.write("hi!"), 'write() reported success.' );
+    asserteq( ba[2], "!".charCodeAt(0), "write()n date landed in the ByteArray.");
+
+    /** no workie: ByteArrayIODev::assertOpen() is never being called :(
+        ba.length = 0;
+        assertThrows( function(){d.flush();}, 'We expect the dev to notice the changed byte array.' );
+    */
+    d.close();
+    ba.destroy();
+}
+
 try {
     testIODev();
     testOutStream();
     testInStream();
     testGZip();
     testEPFS();
+    testByteArrayDev();
     print("If you got this far then it seems to work.");
 }
 catch(e) {

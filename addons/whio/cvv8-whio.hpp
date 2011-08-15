@@ -21,6 +21,7 @@
 #include "cvv8/convert.hpp"
 #include "cvv8/arguments.hpp"
 #include "cvv8/ClassCreator.hpp"
+#include "bytearray.hpp"
 namespace cvv8 {
 
     //CVV8_TypeName_DECL((whio::IOBase));
@@ -159,8 +160,57 @@ namespace cvv8 {
         };
 
 
+        /**
+           EXPERIMENTAL.
+
+           An IODev implementation which proxies the memory range used
+           by a JSByteArray.
+        */
+        class ByteArrayIODev : public whio::MemoryIODev
+        {
+        private:
+            JSByteArray const * m_ba;
+            void const * m_origMem;
+        protected:
+            /**
+               WTF is this never being called?
+             */
+            virtual void assertOpen() const;
+        public:
+            virtual ~ByteArrayIODev();
+
+            /**
+               Maps this object to ba.rawBuffer(). If writeMode is
+               true then read/write access is enabled, else read-only.
+
+               ba must outlive this object.
+               
+               If ba's buffer is reallocated/moved while this object
+               is using it, results are undefined.
+            */
+            ByteArrayIODev( JSByteArray & ba, bool writeMode );
+
+            /**
+               Equivalent to the 2-arg ctor with false
+               as the second parameter.
+            */
+            ByteArrayIODev( JSByteArray const & ba );
+        };
+
+        struct Ctor_ByteArrayIODev
+            : Argv_OrN< CVV8_TYPELIST((
+                                       Argv_TypesMatch< CVV8_TYPELIST((JSByteArray)) >,
+                                       Argv_TypesMatch< CVV8_TYPELIST((JSByteArray,bool)) >
+                                       )) >
+        {
+            static ByteArrayIODev * Call( v8::Arguments const & );
+        };
+
     } /* namespace io */
 
+    CVV8_TypeName_DECL((io::ByteArrayIODev));
+
+    
     template <>
     struct ClassCreator_InternalFields< whio::IODev >
         : ClassCreator_InternalFields_Base< whio::IODev, 1, -1, 0 >
@@ -206,6 +256,10 @@ namespace cvv8 {
         : ClassCreator_InternalFields< whio::IODev >
     {};
 
+    template <>
+    struct ClassCreator_InternalFields< io::ByteArrayIODev >
+        : ClassCreator_InternalFields< whio::IODev >
+    {};
 
 #if 0
     template <>
@@ -278,6 +332,27 @@ namespace cvv8 {
         static void Initialize( v8::Handle<v8::Object> const & target );
     };
 
+
+    template <>
+    struct ClassCreator_Factory<io::ByteArrayIODev>
+        : ClassCreator_Factory_Dispatcher<
+            io::ByteArrayIODev,
+            PredicatedCtorDispatcher<
+                Signature< io::ByteArrayIODev *(io::Ctor_ByteArrayIODev) >
+            >
+          >
+    {};
+
+    template <>
+    struct JSToNative<io::ByteArrayIODev>
+        : JSToNative_ClassCreator<io::ByteArrayIODev>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<io::ByteArrayIODev>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
 
     template <>
     struct ClassCreator_Factory<whio::Subdevice>

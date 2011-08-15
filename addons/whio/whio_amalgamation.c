@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Mon Aug 15 18:10:02 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 20:42:26 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8498,7 +8498,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Mon Aug 15 18:10:02 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 20:42:27 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15754,7 +15754,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Mon Aug 15 18:10:03 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 20:42:27 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif

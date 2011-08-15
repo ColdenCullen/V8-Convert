@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 18:10:05 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 20:42:29 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -119,8 +119,10 @@ namespace whio {
         bool m_ownsDevice;
         /**
            Throws if !this->m_io.
+
+           May be overridden to check other logic.
          */
-        void assertOpen() const;
+        virtual void assertOpen() const;
         StreamBase();
         /**
            Sets m_io and m_ownsDevice to the given arguments.

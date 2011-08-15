@@ -79,6 +79,7 @@ namespace cvv8 {
     CVV8_TypeName_IMPL((whio::EPFS::PseudoFile),"PseudoFile");
 
     CVV8_TypeName_IMPL((whio::EPFS),"EPFS");
+    CVV8_TypeName_IMPL((io::ByteArrayIODev),"ByteArrayIODev");
 
 namespace io {
 
@@ -370,6 +371,38 @@ namespace io {
         else return v8::Undefined();
     }
 
+
+    void ByteArrayIODev::assertOpen() const
+    {
+        /** this function is never being called??? */
+        this->MemoryIODev::assertOpen();
+        if( ! m_ba ) throw std::runtime_error("Not connected to a ByteArray.");
+        else if( m_origMem != m_ba->rawBuffer() )
+        {
+            throw std::runtime_error("ByteArray's buffer appears to have moved since this device was initialized.");
+        }
+    }
+
+    ByteArrayIODev::~ByteArrayIODev()
+    {}
+
+    ByteArrayIODev::ByteArrayIODev( JSByteArray & ba, bool writeMode )
+        : MemoryIODev( ba.rawBuffer(), ba.length() ),
+          m_ba(&ba),
+          m_origMem( ba.rawBuffer() )
+    {
+        if( writeMode )
+        {
+            whio_dev_memmap_remap( m_io, ba.rawBuffer(), ba.rawBuffer(), ba.length() );
+        }
+    }
+
+    ByteArrayIODev::ByteArrayIODev( JSByteArray const & ba )
+        : MemoryIODev( ba.rawBuffer(), ba.length() ),
+          m_ba(&ba),
+          m_origMem( ba.rawBuffer() )
+    {
+    }
     
 }// namespace io
 
@@ -442,6 +475,7 @@ namespace io {
 #undef CATCHER
         cc.AddClassTo(TypeName<IOD>::Value, dest);
         ClassCreator_SetupBindings<whio::MemoryIODev>::Initialize( dest );
+        ClassCreator_SetupBindings<io::ByteArrayIODev>::Initialize( dest );
         ClassCreator_SetupBindings<whio::Subdevice>::Initialize( dest );
         return;
     }
@@ -466,6 +500,25 @@ namespace io {
         cc.AddClassTo(TypeName<IOD>::Value, dest);
     }
 
+    void ClassCreator_SetupBindings<io::ByteArrayIODev>::Initialize( v8::Handle<v8::Object> const & dest )
+    {
+        typedef io::ByteArrayIODev IOD;
+        typedef ClassCreator<IOD> CC;
+        CC & cc(CC::Instance());
+        if( cc.IsSealed() )
+        {
+            cc.AddClassTo(TypeName<IOD>::Value, dest);
+            return;
+        }
+        cc.Inherit<whio::MemoryIODev>();
+        cc
+            ("toString",
+             io::toString_generic<IOD> )
+            ;
+        cc.AddClassTo(TypeName<IOD>::Value, dest);
+    }
+
+    
     void ClassCreator_SetupBindings<whio::Subdevice>::Initialize( v8::Handle<v8::Object> const & dest )
     {
         typedef whio::Subdevice IOD;
@@ -1134,6 +1187,38 @@ namespace io {
         }
     }
 
+    ByteArrayIODev * Ctor_ByteArrayIODev::Call( v8::Arguments const & argv )
+    {
+        assert( Ctor_ByteArrayIODev()(argv) );
+        int const argc = argv.Length();
+        typedef ByteArrayIODev T;
+        if( argc < 1 )
+        {
+            invalid_arg:
+            std::ostringstream os;
+            os << TypeName<T>::Value << " ctor signature: ("
+               << TypeName<JSByteArray>::Value
+               << "[, bool writeMode])";
+            throw std::runtime_error(os.str());
+        }
+        JSByteArray * ba = CastFromJS<JSByteArray>(argv[0]);
+        if(!ba) goto invalid_arg;
+        if( 1 == argc )
+        {
+            return new ByteArrayIODev( *ba );
+        }
+        else if( 2 == argv.Length() )
+        {// (ByteArray, bool)
+            return new ByteArrayIODev( *ba, argv[1]->BooleanValue() );
+        }
+        else
+        {
+            goto invalid_arg;
+        }
+        //return NULL /* cannot be reached but gcc apparently cannot see that. */;
+    }
+
+    
     void SetupBindings( v8::Handle<v8::Object> dest )
     {
         char const * nsName = "whio";
