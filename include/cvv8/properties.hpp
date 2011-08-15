@@ -283,7 +283,8 @@ namespace cvv8 {
         inline static void Set( v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             typedef FunctionSignature<Sig> FT;
-            (*Func)( CastFromJS<typename sl::At<0,FT>::Type>( value ) );
+            ArgCaster<typename sl::At<0,FT>::Type> ac;
+            (*Func)( ac.ToNative( value ) );
         }
     };
 
@@ -371,7 +372,8 @@ namespace cvv8 {
             {
 
                 typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
-                (self->*Setter)( CastFromJS<ArgT>( value ) );
+                ArgCaster<ArgT> ac;
+                (self->*Setter)( ac.ToNative( value ) );
             }
             return;
         }
@@ -399,7 +401,8 @@ namespace cvv8 {
             else
             {
                 typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
-                (self->*Setter)( CastFromJS<ArgT>( value ) );
+                ArgCaster<ArgT> ac;
+                (self->*Setter)( ac.ToNative( value ) );
             }
         }
     };
@@ -451,7 +454,8 @@ namespace cvv8 {
         inline static void Set(v8::Local< v8::String > property, v8::Local< v8::Value > value, const v8::AccessorInfo &info)
         {
             typedef typename sl::At< 0, Signature<Sig> >::Type ArgT;
-            Ftor()( CastFromJS<ArgT>( value ) );
+            ArgCaster<ArgT> ac;
+            Ftor()( ac.ToNative( value ) );
         }
     };
     
