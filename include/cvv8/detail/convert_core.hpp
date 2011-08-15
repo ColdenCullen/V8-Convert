@@ -617,7 +617,26 @@ namespace cvv8 {
         }
     };
 
+    
+    /**
+       A base type for JSToNative implementations which
+       always want to return NULL (as is the case when
+       inheriting bound abstract native types).
+    */
+    template <typename JST>
+    struct JSToNative_Abstract
+    {
+        typedef typename TypeInfo<JST>::NativeHandle ResultType;
+        /**
+           Always returns NULL;
+        */
+        ResultType operator()( v8::Handle<v8::Value> const & ) const
+        {
+            return NULL;
+        }
+    };
 
+    
     
     /** Specialization which passes on v8 Handles as-is. */
     template <typename T>
@@ -1154,6 +1173,22 @@ namespace cvv8 {
 #endif
 #endif
 
+
+    /**
+       Specialization to treat unsigned char as a small
+       number. It does not check for under/overflow, and
+       flows freely.
+    */
+    template <>
+    struct JSToNative<unsigned char>
+    {
+        typedef unsigned char ResultType;
+        ResultType operator()( v8::Handle<v8::Value> const & h )
+        {
+            if( h->IsUint32() ) return static_cast<unsigned char>(  h->Uint32Value() );
+            else return static_cast<unsigned char>(  h->Int32Value() );
+        }
+    };
     namespace Detail
     {
         /** A kludge placeholder type for a ulong-is-not-uint64
