@@ -70,18 +70,16 @@ function testGZip()
 {
     print("GZip tests...");
     var buf = new whio.IODev(1024*4);
-    print("buf.size() = "+buf.size());
+    asserteq( 0, buf.size(), 'MemBuf initialize size problem has been solved.' )
     var src = new whio.InStream("/etc/hosts");
-    var fname = "foo.gz";
-    var dest = new whio.OutStream(buf,false);
-    src.gzipTo( dest );
+    src.gzipTo( buf );
     src.close();
-    dest.close();
     buf.seek(0,whio.SEEK_SET);
+    assert( buf.size() > 0, 'Buffer grew.' );
     print("Compressed size = "+buf.size());
 
     src = new whio.InStream(buf,true);
-    dest = new whio.OutStream("/dev/stdout",false);
+    var dest = new whio.OutStream("/dev/stdout",false);
     var banner = '****************************************';
     print("DECOMPRESSED: "+banner);
     src.gunzipTo(dest);
@@ -112,7 +110,6 @@ function testEPFS()
     fs.installNamer("ht");
     ++inodeCount /* namer uses 1 inode. */;
     asserteq( fs.label(), label );
-
     
     var inodeId = 3;
     var d = fs.open(inodeId, whio.iomode.RWC);
@@ -141,6 +138,18 @@ function testEPFS()
     d.name = pname;
     asserteq( d.name, pname );
 
+    if(1) {
+        var infile = "test.js";
+        var ist = new whio.InStream(infile);
+        var zf = fs.open(infile+".gz",whio.iomode.RWC|whio.iomode.TRUNCATE);
+        assert( zf instanceof whio.IODev, 'zf is-a IODev' );
+        ist.gzipTo(zf);
+        print("Compressed "+infile+" to "+zf.size()+" bytes.");
+        ist.close();
+        zf.close();
+        ++inodeCount;
+    }
+    
     assert( d.close(), 'PseudoFile.close() appears to work.' );
     assert( fs.close(), 'EPFS.close() appears to work.' );
     d = fs = null;
@@ -153,6 +162,7 @@ function testEPFS()
     assert( d instanceof whio.IODev, 'is-a IODev' );
     gotMsg = d.read( hiMsg.length, false );
     asserteq( hiMsg, gotMsg );
+    assert( d.size() >= gotMsg.length, 'd.size() appears to work.' );
     d.close();
 
     var gotInodeCount = 0;
@@ -168,8 +178,8 @@ try {
     testIODev();
     testOutStream();
     testInStream();
-    testEPFS();
     testGZip();
+    testEPFS();
     print("If you got this far then it seems to work.");
 }
 catch(e) {

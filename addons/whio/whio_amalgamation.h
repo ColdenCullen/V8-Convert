@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 10:10:11 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 11:03:19 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6471,7 +6471,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Mon Aug 15 10:10:12 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12044,7 +12044,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Mon Aug 15 10:10:13 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif

@@ -162,7 +162,7 @@ namespace cvv8 {
 
     template <>
     struct ClassCreator_InternalFields< whio::IODev >
-        : ClassCreator_InternalFields_Base< whio::IODev, 2,-1,1 >
+        : ClassCreator_InternalFields_Base< whio::IODev, 1, -1, 0 >
     {};
 
     template <>

@@ -227,7 +227,13 @@ namespace io {
         char const * fname = "gzipTo";
         if( argv.Length() < 1 )
         {
-            Toss(StringBuffer()<<fname<<"() requires one OutStream argument.");
+            invalid_arg:
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() signature: "
+                        << "("<<TypeName<whio::OutStream>::Value
+                        << "|"<<TypeName<whio::IODev>::Value
+                        <<" [, int level=3])");
         }
         ST * src = CastFromJS<ST>(argv.This());
         if( ! src )
@@ -236,23 +242,33 @@ namespace io {
                         << TypeName<ST>::Value
                         << "::"<<fname<<"() could not find native 'this' pointer.");
         }
-        whio::OutStream * dest = CastFromJS<whio::OutStream>(argv[0]);
-        if( ! dest )
+        whio::OutStream * destS = CastFromJS<whio::OutStream>(argv[0]);
+        whio::IODev * destD = destS ? NULL : CastFromJS<whio::IODev>(argv[0]);
+        if( !destS && !destD )
         {
-            return Toss(StringBuffer()
-                        << TypeName<ST>::Value
-                        << "::"<<fname<<"() requires one OutStream argument.");
+            goto invalid_arg;
         }
         int const level = (argv.Length()>1)
             ? CastFromJS<int>(argv[1])
             : 3;
-        int const rc = whio_stream_gzip( src->handle(), dest->handle(), level );
+        int rc;
+        if( destS )
+        {
+            rc = whio_stream_gzip( src->handle(), destS->handle(), level );
+        }
+        else
+        {
+            assert( NULL != destD );
+            whio::OutStream dest( *destD, false );
+            assert( dest.handle() );
+            rc = whio_stream_gzip( src->handle(), dest.handle(), level );
+        }
         if( rc )
         {
             return Toss(StringBuffer()
                         << TypeName<ST>::Value
-                        << "::"<<fname<<"() gzip failed with rc "
-                        << rc << " ("<<whio_rc_string(rc)<<")");
+                        << "::"<<fname<<"(): whio_stream_gzip() failed with code "
+                        << rc << '.');
         }
         else return v8::Undefined();
     }
@@ -263,7 +279,13 @@ namespace io {
         char const * fname = "gunzipTo";
         if( argv.Length() < 1 )
         {
-            Toss(StringBuffer()<<fname<<"() requires one OutStream argument.");
+            invalid_arg:
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() signature: "
+                        << "("<<TypeName<whio::OutStream>::Value
+                        << "|"<<TypeName<whio::IODev>::Value
+                        << ")");
         }
         ST * src = CastFromJS<ST>(argv.This());
         if( ! src )
@@ -272,19 +294,77 @@ namespace io {
                         << TypeName<ST>::Value
                         << "::"<<fname<<"() could not find native 'this' pointer.");
         }
-        whio::OutStream * dest = CastFromJS<whio::OutStream>(argv[0]);
-        if( ! dest )
+        whio::OutStream * destS = CastFromJS<whio::OutStream>(argv[0]);
+        whio::IODev * destD = destS ? NULL : CastFromJS<whio::IODev>(argv[0]);
+        if( ! destS && !destD )
         {
-            return Toss(StringBuffer()
-                        << TypeName<ST>::Value
-                        << "::"<<fname<<"() requires one OutStream argument.");
+            goto invalid_arg;
         }
-        int const rc = whio_stream_gunzip( src->handle(), dest->handle() );
+        int rc;
+        if( destS )
+        {
+            rc = whio_stream_gunzip( src->handle(), destS->handle() );
+        }
+        else
+        {
+            assert( NULL != destD );
+            whio::OutStream dest( *destD, false );
+            assert( dest.handle() );
+            rc = whio_stream_gunzip( src->handle(), dest.handle() );
+        }
         if( rc )
         {
             return Toss(StringBuffer()
                         << TypeName<ST>::Value
-                        << "::"<<fname<<"() gzip failed with rc "
+                        << "::"<<fname<<"(): whio_stream_gunzip() failed with code "
+                        << rc << '.');
+        }
+        else return v8::Undefined();
+    }
+
+    v8::Handle<v8::Value> InStream_CopyTo( v8::Arguments const & argv )
+    {
+        typedef whio::InStream ST;
+        char const * fname = "copyTo";
+        if( argv.Length() != 1 )
+        {
+            invalid_arg:
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() signature: "
+                        << "("<<TypeName<whio::OutStream>::Value
+                        << "|"<<TypeName<whio::IODev>::Value
+                        << ")");
+        }
+        ST * src = CastFromJS<ST>(argv.This());
+        if( ! src )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"() could not find native 'this' pointer.");
+        }
+        whio::OutStream * destS = CastFromJS<whio::OutStream>(argv[0]);
+        whio::IODev * destD = destS ? NULL : CastFromJS<whio::IODev>(argv[0]);
+        if( ! destS && !destD )
+        {
+            goto invalid_arg;
+        }
+        int rc;
+        if( destS )
+        {
+            rc = whio_stream_copy( src->handle(), destS->handle() );
+        }
+        else
+        {
+            assert( NULL != destD );
+            whio::OutStream dest( *destD, false );
+            rc = whio_stream_copy( src->handle(), dest.handle() );
+        }
+        if( rc )
+        {
+            return Toss(StringBuffer()
+                        << TypeName<ST>::Value
+                        << "::"<<fname<<"(): whio_stream_copy() failed with rc "
                         << rc << " ("<<whio_rc_string(rc)<<")");
         }
         else return v8::Undefined();
@@ -434,6 +514,7 @@ namespace io {
         cc
             ("gzipTo", io::InStream_GZipTo )
             ("gunzipTo", io::InStream_GUnzipTo )
+            ("copyTo", io::InStream_CopyTo )
             ("read",
              CATCHER< InCaToInCa< io::read_impl<ST> > >::Call )
             ("toString",

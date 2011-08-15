@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Mon Aug 15 10:10:11 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 11:03:19 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8486,7 +8486,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Mon Aug 15 10:10:12 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8568,12 +8568,11 @@ int whio_stream_gzip( whio_stream * src, whio_stream * dest, int level )
                 if( have )
                 {
                     iosize = dest->api->write( dest, out, have );
-                    if( (iosize != have)
-                        || !dest->api->isgood(dest) )
+                    if( iosize != have )
                     {
                         WHIO_DEBUG("Write of %"WHIO_SIZE_T_PFMT" bytes failed "
                                    "- wrote only %"WHIO_SIZE_T_PFMT".\n",
-                                   have, iosize );
+                                   (whio_size_t)have, iosize );
                         (void)deflateEnd(&strm);
                         return Z_ERRNO;
                     }
@@ -8581,7 +8580,7 @@ int whio_stream_gzip( whio_stream * src, whio_stream * dest, int level )
             } while (strm.avail_out == 0);
             if( strm.avail_in != 0)
             {
-                WHIO_DEBUG("Not all input was consumed! %u byte(s) remain!",
+                WHIO_DEBUG("Not all input was consumed! %u byte(s) remain!\n",
                            (unsigned int) strm.avail_in );
                 (void)deflateEnd(&strm);
                 return Z_ERRNO;
@@ -15743,7 +15742,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Mon Aug 15 10:10:13 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
