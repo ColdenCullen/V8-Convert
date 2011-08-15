@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 11:03:22 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:05 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -190,10 +190,11 @@ namespace whio {
         return m_io->api->write(m_io,src,n);
     }
 
-    int OutStream::flush()
+    void OutStream::flush()
     {
         this->assertOpen();
-        return this->m_io->api->flush( this->m_io );
+        int const rc = this->m_io->api->flush( this->m_io );
+        if( rc ) throw RcException("OutStream::flush",rc);
     }
 
     IODev::IODev()
@@ -247,10 +248,11 @@ namespace whio {
             : this->m_io->api->iomode(this->m_io);
     }
 
-    int IODev::flush()
+    void IODev::flush()
     {
         this->assertOpen();
-        return this->m_io->api->flush( this->m_io );
+        int const rc = this->m_io->api->flush( this->m_io );
+        if( rc ) throw RcException("IODev::flush",rc);
     }
     
 
@@ -266,10 +268,11 @@ namespace whio {
         return m_io->api->write(m_io,src,n);
     }
 
-    int IODev::clearError()
+    void IODev::clearError()
     {
         this->assertOpen();
-        return this->m_io->api->clear_error(this->m_io);
+        int const rc = this->m_io->api->clear_error(this->m_io);
+        if( rc ) throw RcException("IODev::clearError",rc);
     }
 
     int IODev::error()
@@ -286,8 +289,14 @@ namespace whio {
     whio_size_t IODev::tell()
     {
         this->assertOpen();
-        return this->m_io->api->tell(this->m_io);
+        whio_size_t const rc = this->m_io->api->tell(this->m_io);
+        if( whio_rc.SizeTError == rc )
+        {
+            throw new Exception("seek() returned whio_rc.SizeTError.");
+        }
+        else return rc;
     }
+
     whio_size_t IODev::seek( whio_off_t off, int whence )
     {
         this->assertOpen();
@@ -299,10 +308,11 @@ namespace whio {
         else return rc;
     }
 
-    int IODev::truncate( whio_off_t sz )
+    void IODev::truncate( whio_off_t sz )
     {
         this->assertOpen();
-        return this->m_io->api->truncate(this->m_io, sz);
+        int const rc = this->m_io->api->truncate(this->m_io, sz);
+        if( rc ) throw RcException("IODev::truncate",rc);
     }
 
     whio_size_t IODev::size()
@@ -346,7 +356,6 @@ namespace whio {
         int const rc = whio_dev_ioctl( this->m_io,
                                        whio_dev_ioctl_BUFFER_size,
                                        &sz );
-        assert( 0 == rc );
         if( rc )
         {
             std::ostringstream os;
@@ -389,26 +398,22 @@ namespace whio {
         }
     }
 
-    int Subdevice::rebound( IODev & parent, whio_size_t lowerBound, whio_size_t upperBound )
+    void Subdevice::rebound( IODev & parent, whio_size_t lowerBound, whio_size_t upperBound )
     {
-        return whio_dev_subdev_rebound( parent.handle(), lowerBound, upperBound );
+        int const rc = whio_dev_subdev_rebound2( m_io, parent.handle(), lowerBound, upperBound );
+        if(rc)
+        {
+            throw RcException("Subdevice::rebound",rc,"whio_dev_subdev_rebound2() failed");
+        }
     }
 
-    int Subdevice::rebound( whio_size_t lowerBound, whio_size_t upperBound )
+    void Subdevice::rebound( whio_size_t lowerBound, whio_size_t upperBound )
     {
-        whio_dev * par = NULL;
-        int const rc = whio_dev_ioctl( m_io,
-                                       whio_dev_ioctl_SUBDEV_parent_dev,
-                                       &par );
-        if( rc )
+        int const rc = whio_dev_subdev_rebound( m_io, lowerBound, upperBound );
+        if(rc)
         {
-            std::ostringstream os;
-            os << "Internal error: we expect "
-               << "whio_dev_ioctl_SUBDEV_parent_dev to succeed here. "
-               << "Failed with code "<<rc << "( "<<whio_rc_string(rc)<<").)";
-            throw Exception(os.str());
+            throw RcException("Subdevice::rebound",rc,"whio_dev_subdev_rebound() failed");
         }
-        return whio_dev_subdev_rebound( par, lowerBound, upperBound );
     }
 
 
@@ -1109,6 +1114,10 @@ namespace whio {
         return this->m_fs.name( this->inodeId() );
     }
 
+    bool EPFS::PseudoFile::isInternal() const
+    {
+        return whio_epfs_inode_is_internal( this->inode() );
+    }
     
     whio_epfs_fsopt const * EPFS::defaultFsOpt()
     {
@@ -1357,7 +1366,7 @@ namespace whio {
         {
             assert( NULL == dev );
             std::ostringstream os;
-            os << "file=["<<name<<"], flags=["
+            os << "file=["<<name<<"], iomode=["
                << "0x" << std::hex<<mode<<"]";
             std::string const & str(os.str());
             throw RcException("whio_epfs_dev_open_by_name", rc , str.c_str());

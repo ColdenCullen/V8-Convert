@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 11:03:19 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:02 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -5829,6 +5829,12 @@ whio_dev * whio_dev_subdev_create( whio_dev * parent, whio_size_t lowerBound, wh
 int whio_dev_subdev_rebound( whio_dev * dev, whio_size_t lowerBound, whio_size_t upperBound );
 
 /**
+   Works like whio_dev_subdev_rebound(), but also reparents the subdevice (dev)
+   to the new parent object.
+*/
+int whio_dev_subdev_rebound2( whio_dev * dev, whio_dev * parent, whio_size_t lowerBound, whio_size_t upperBound );
+    
+/**
    Returns true if dev appears to be a subdevice (as opened by
    whio_dev_subdev_create()), else it returns false.
 */
@@ -6471,7 +6477,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:02 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12044,7 +12050,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:03 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12176,6 +12182,20 @@ for).
     Changing this number changes the EFS signature.
 */
 #define WHIO_EPFS_CONFIG_LABEL_LENGTH 64
+
+/**
+   WHIO_CONFIG_ENABLE_MMAP is HIGHLY EXPERIMENTAL! DO NOT USE!
+
+   In my basic tests mmap() is giving us no performance at all
+   and in fact costs us a small handful of seek()s. This depends
+   on the exact i/o patterns, though.
+
+   In read-only mode mmap() is not used because profiling showed
+   it to actually cost performance (apparenly due to duplicate
+   copying of data from storage to mmap, then to us).
+*/
+#define WHIO_CONFIG_ENABLE_MMAP 0
+#define WHIO_CONFIG_ENABLE_MMAP_ASYNC 0
 
 #ifdef __cplusplus
 extern "C" {
@@ -12692,8 +12712,7 @@ extern "C" {
     */
     enum whio_epfs_flags {
     /**
-       Not yet used. Flags the EFS as being under the influence of
-       mmap().
+       Flags the EFS as being under the influence of mmap().
      */
     WHIO_EPFS_FLAG_FS_IS_MMAPPED = 0x01,
 
@@ -12704,18 +12723,27 @@ extern "C" {
         owns its dev member. */
     WHIO_EPFS_FLAG_FS_OWNS_DEV = WHIO_EPFS_FLAG_IS_USED,
 
-    /**
-       Not yet used. May eventually be used on whio_epfs_handle
-       objects to signify that a given handle owns the "origin" inode
-       object. OTOH, any unlinked handle _is_ an origin handle.
-    */
-    WHIO_EPFS_FLAG_HANDLE_OWNS_INODE = WHIO_EPFS_FLAG_IS_USED,
-
-    /** Used by pfs objects. We can do away with this,
-        using the whio_iomodes enum instead.
+    /** Used by whio_epfs objects. We can do away with this, using the
+        whio_iomodes enum instead.
      */
     WHIO_EPFS_FLAG_RW = 0x04,
 
+    /**
+       An inode flag to mark "internal" inodes.
+
+       See whio_epfs_inode_set_internal() and
+       whio_epfs_inode_is_internal().
+    */
+    WHIO_EPFS_FLAG_INODE_IS_INTERNAL = WHIO_EPFS_FLAG_RW,
+
+    /**
+       A special-case marker to flag an inode as having been
+       allocated by a whio_epfs_namer object. It is up to the
+       namer implementations to set this in their format()
+       routine.
+    */
+    WHIO_EPFS_FLAG_INODE_IS_NAMER = 0x08,
+    
     /**
        Not yet used.
 
@@ -12748,8 +12776,18 @@ extern "C" {
        Convenience form of (WHIO_EPFS_FLAG_HAS_LOCKR |
        WHIO_EPFS_FLAG_HAS_LOCKW).
     */
-    WHIO_EPFS_FLAG_HAS_LOCK = WHIO_EPFS_FLAG_HAS_LOCKR | WHIO_EPFS_FLAG_HAS_LOCKW
+    WHIO_EPFS_FLAG_HAS_LOCK = WHIO_EPFS_FLAG_HAS_LOCKR | WHIO_EPFS_FLAG_HAS_LOCKW,
 
+    /**
+       whio_epfs_handle objects created with
+       whio_epfs_handle_alloc() get this flag
+       added to whio_epfs_handle::flags so that
+       whio_epfs_handle_free() knows whether or not
+       it should deallocate the handle.
+     */
+    WHIO_EPFS_HANDLE_ALLOC_STAMP = 0x80
+
+    
     };
 
 
@@ -15623,6 +15661,42 @@ extern "C" {
     */
     int whio_epfs_name_foreach( whio_epfs * fs, whio_epfs_namer_foreach_callback callback, void * callbackData );
 
+    /**
+       Returns true if ino is not NULL and has the "is internal"
+       flag set.
+    */
+    bool whio_epfs_inode_is_internal( whio_epfs_inode const * ino );
+
+    /**
+       Given a virtual position within block-chunked storage with
+       blocks of size blockSize, this function returns the number of
+       those blocks which are needed to hold a byte written at the
+       given virtual position. Thus it always returns a positive
+       number, even if pos is 0 (because writing to pos 0 would
+       require 1 block).
+
+       Results are undefined if blockSize is 0.
+
+       Constrast with whio_epfs_block_count_for_size().
+    */
+    whio_size_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
+                                               whio_size_t pos );
+    /**
+       Given a virtual size within block-chunked storage with
+       blocks of size blockSize, this function returns the number of
+       those blocks which are needed to hold an object with the
+       given size. Thus it returns 0 when sz is 0 (since we need
+       not blocks to hold 0 bytes).
+
+       Results are undefined if blockSize is 0.
+
+       Constrast with whio_epfs_block_count_for_pos().
+    */
+    whio_size_t whio_epfs_block_count_for_size( whio_size_t blockSize,
+                                                whio_size_t sz );
+
+    
+    
 #ifdef __cplusplus
         } /* extern "C" */
 #endif

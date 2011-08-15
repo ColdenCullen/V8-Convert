@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Mon Aug 15 11:03:19 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:02 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -7945,22 +7945,34 @@ whio_dev * whio_dev_subdev_create( whio_dev * parent, whio_size_t lowerBound, wh
     return dev;
 }
 
-int whio_dev_subdev_rebound( whio_dev * dev, whio_size_t lowerBound, whio_size_t upperBound )
+int whio_dev_subdev_rebound2( whio_dev * dev, whio_dev * parent, whio_size_t lowerBound, whio_size_t upperBound )
 {
-    if( !dev || (upperBound && (upperBound <= lowerBound)) ) return whio_rc.ArgError;
+    if( !dev || !parent || (upperBound && (upperBound <= lowerBound)) ) return whio_rc.ArgError;
     else if( ! whio_dev_isa_subdev(dev) ) return whio_rc.TypeError;
     else
     {
         whio_dev_subdev_meta * sub = (whio_dev_subdev_meta*)dev->impl.data;
-        if( ! sub || !sub->dev ) return whio_rc.InternalError;
+        if( ! sub ) return whio_rc.InternalError;
         else
         {
+            sub->dev = parent;
             sub->lower = sub->pos = lowerBound;
             sub->upper = upperBound;
             return whio_rc.OK;
         }
     }
 }
+
+int whio_dev_subdev_rebound( whio_dev * dev, whio_size_t lowerBound, whio_size_t upperBound )
+{
+    if( ! whio_dev_isa_subdev(dev) ) return whio_rc.TypeError;
+    else
+    {
+        whio_dev_subdev_meta * sub = (whio_dev_subdev_meta*)dev->impl.data;
+        return whio_dev_subdev_rebound2(dev, sub->dev, lowerBound, upperBound );
+    }
+}
+
 /* end file src/whio_dev_subdev.c */
 /* begin file src/whio_stream.c */
 #include <stdlib.h> /* free/malloc */
@@ -8486,7 +8498,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:02 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15742,7 +15754,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Mon Aug 15 11:03:20 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:03 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -16959,18 +16971,11 @@ extern "C" {
     int whio_epfs_mmap_disconnect( whio_epfs * fs );
 
     /**
-       Various internal flags.
+       Sets or unsets the "is internal" flag on the given inode.
+       Returns true if ino is not NULL.
     */
-    enum whio_epfs_internal_flags {
-    /**
-       whio_epfs_handle objects created with
-       whio_epfs_handle_alloc() get this flag
-       added to whio_epfs_handle::flags so that
-       whio_epfs_handle_free() knows whether or not
-       it should deallocate the handle.
-     */
-    WHIO_EPFS_HANDLE_ALLOC_STAMP = 0xe0
-    };
+    bool whio_epfs_inode_set_internal( whio_epfs_inode * ino, bool v );
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
@@ -17298,6 +17303,9 @@ int whio_epfs_block_wipe_data( whio_epfs * fs, whio_epfs_block * bl, whio_size_t
         const whio_size_t bs = fs->fsopt.blockSize;
         if( bl->nextBlock )
         {
+            /*
+              FIXME: iterate instead of recurse.
+            */
             whio_epfs_block nbl = whio_epfs_block_empty;
             rc = whio_epfs_block_read( fs, bl->nextBlock, &nbl );
             if( rc ) return rc;
@@ -17323,10 +17331,7 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
     if( ! whio_epfs_block_id_in_bounds( fs, bl ? bl->id : 0 ) ) return whio_rc.ArgError;
     else
     {
-        size_t fpos = 0;
-        const size_t bs = fs->fsopt.blockSize;
         int rc = 0;
-        if( (fpos + bs) < fpos /* overflow! */ ) return whio_rc.RangeError;
         if( deep && bl->nextBlock )
         {
             whio_epfs_block next = *bl;
@@ -17351,7 +17356,7 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
             const whio_epfs_id_t oid = bl->id;
             if( ! deep && bl->nextBlock )
             {
-                /*WHIO_DEBUG("Warning: we're cleaning up the metadata without cleaning up children! We're losing blocks!\n"); */
+                WHIO_DEBUG("Warning: we're cleaning up the metadata without cleaning up children! We're losing blocks!\n");
             }
             *bl = whio_epfs_block_empty;
             bl->id = oid;
@@ -17587,20 +17592,30 @@ int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_
     }
 }
 
+whio_size_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
+                                           whio_size_t pos )
+{
+    return 1 + (pos/blockSize); 
+}
+
+whio_size_t whio_epfs_block_count_for_size( whio_size_t blockSize,
+                                            whio_size_t sz )
+{
+    whio_size_t x;
+    return !sz
+        ? 0
+        : (x = (sz/blockSize),((blockSize % sz) ? (1+x) : x))
+        ;
+}
+
 int whio_epfs_block_for_pos( whio_epfs * fs,
                              whio_epfs_inode * ino,
                              whio_size_t pos,
                              whio_epfs_block * tgt, bool expand )
 {
-    whio_size_t bs;
+    whio_size_t const bs = fs->fsopt.blockSize;
     whio_size_t bc;
     whio_epfs_block_list * bli;
-    /**
-       TODO: consider refactoring to take a (whio_epfs_block ** tgt)
-       instead, and copying the pointer directly. That would be a
-       couple cycles faster and i can't think of a reason that it
-       would cause Grief.
-    */
     if( (ino->size <= pos) )
     {
         if( !expand )
@@ -17608,10 +17623,8 @@ int whio_epfs_block_for_pos( whio_epfs * fs,
             return whio_rc.RangeError;
         }
     }
+    bc = whio_epfs_block_count_for_pos(bs, pos);
     bli = &ino->blocks;
-    bs = fs->fsopt.blockSize;
-    bc = /* how many blocks will we need? */
-        1 + (pos/bs);
     if( fs->fsopt.maxBlocks && (bc>fs->fsopt.maxBlocks) )
     {
         return whio_rc.RangeError;
@@ -18211,6 +18224,23 @@ bool whio_epfs_inode_is_used( whio_epfs_inode const * ino )
 {
     return ino && (ino->flags & WHIO_EPFS_FLAG_IS_USED);
 }
+
+bool whio_epfs_inode_set_internal( whio_epfs_inode * ino, bool v )
+{
+    if( ! ino ) return false;
+    else
+    {
+        if( v ) ino->flags|=WHIO_EPFS_FLAG_INODE_IS_INTERNAL;
+        else ino->flags &= ~WHIO_EPFS_FLAG_INODE_IS_INTERNAL;
+        return true;
+    }
+}
+
+bool whio_epfs_inode_is_internal( whio_epfs_inode const * ino )
+{
+    return ino && (ino->flags & WHIO_EPFS_FLAG_INODE_IS_INTERNAL);
+}
+
 /** @internal
    Updates fs->hints.freeInodeList to remove ino.
 
@@ -19104,12 +19134,20 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
         { /* special (simpler) case for 0 byte truncate */
             if( m->ino->firstBlock ) 
             {
+#if 0
+                /*
+                  FIXME: use m->ino.blocks.list instead of
+                  reading the block.
+                 */
                 whio_epfs_block block = whio_epfs_block_empty;
                 int rc = whio_epfs_block_read( m->h->fs, m->ino->firstBlock, &block ); /* ensure we pick up whole block chain */
-                if( whio_rc.OK != rc )
+                if( 0 == rc )
                 {
                     rc = whio_epfs_block_wipe( m->h->fs, &block, true, true, true );
                 }
+#else
+                int rc = whio_epfs_block_wipe( m->h->fs, &m->ino->blocks.list[0], true, true, true );
+#endif
                 if( whio_rc.OK != rc ) return rc;
             }
             m->ino->blocks.count = 0;
@@ -19123,9 +19161,15 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
             /* Now hold on and enjoy the ride... */
             int rc = whio_rc.OK;
             /*const size_t oldSize = off>m->ino->size; */
+
             const short dir = (off < m->ino->size)
                 ? -1
-                : ((off>m->ino->size) ? 1 : 0);
+                : ((off>m->ino->size) ? 1 : 0)
+                /* "direction" of size change. (<0)=shrink,
+                   (>0)=grow, 0=same (can't happen here due to
+                   special-case handling above).
+                */
+                ;
             assert( (0 != off) && "This shouldn't be able to happen!" );
 
             /* Update inode metadata... */
@@ -19134,7 +19178,7 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
             rc = whio_epfs_inode_flush( m->h->fs, m->ino );
             if( whio_rc.OK != rc )
             {
-                WHIO_DEBUG("Flush failed for inode #%u. Error code=%d.\n",
+                WHIO_DEBUG("Flush failed for inode #%"WHIO_EPFS_ID_T_PFMT". Error code=%d.\n",
                            m->ino->id, rc );
                 return rc;
             }
@@ -19153,7 +19197,7 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                 }
                 if( dir < 0 )
                 { /* we shrunk */
-#if 1
+#if 0
                     /*
                       We'll be nice and zero the remaining bytes... We do this
                       partially for consistency with how blocks will get removed
@@ -20128,19 +20172,6 @@ const whio_epfs_setup_opt whio_epfs_setup_opt_empty = whio_epfs_setup_opt_empty_
 
 #define MARKER printf("MARKER: %s:%d:%s():\t",__FILE__,__LINE__,__func__); printf
 
-/**
-   WHIO_CONFIG_ENABLE_MMAP is HIGHLY EXPERIMENTAL! DO NOT USE!
-
-   In my basic tests mmap() is giving us no performance at all
-   and in fact costs us a small handful of seek()s. This depends
-   on the exact i/o patterns, though.
-
-   In read-only mode mmap() is not used because profiling showed
-   it to actually cost performance (apparenly due to duplicate
-   copying of data from storage to mmap, then to us).
-*/
-#define WHIO_CONFIG_ENABLE_MMAP 1
-#define WHIO_CONFIG_ENABLE_MMAP_ASYNC 0
 #if WHIO_CONFIG_ENABLE_MMAP
 #  include <sys/mman.h>
 #endif
@@ -22367,9 +22398,14 @@ static int whio_epfs_namer_ht_format( struct whio_epfs_namer * self, whio_epfs *
         if( rc ) return rc;
         else
         {
+            whio_epfs_inode * ino = whio_epfs_dev_inode(pdev);
             whio_ht_opt htOpt = whio_ht_opt_empty;
+            whio_epfs_id_t inodeId = ino ? ino->id : 0;
             whio_epfs_id_t const inodeCount = whio_epfs_options(fs)->inodeCount;
             htOpt.hashSize = ht_next_prime( inodeCount );
+            assert( NULL != ino );
+            whio_epfs_inode_set_internal( ino, true );
+            ino->flags |= WHIO_EPFS_FLAG_INODE_IS_NAMER;
             if( htOpt.hashSize < inodeCount )
             { /* someone created a huge EFS... */
                 htOpt.hashSize = inodeCount * 30+29;
@@ -22382,6 +22418,7 @@ static int whio_epfs_namer_ht_format( struct whio_epfs_namer * self, whio_epfs *
             if( rc )
             {
                 pdev->api->finalize(pdev);
+                whio_epfs_unlink( fs, inodeId );
                 return rc;
             }
             else

@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 11:03:22 CEST 2011. Do not edit! */
+/* auto-generated on Mon Aug 15 18:10:05 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -239,8 +239,10 @@ namespace whio {
 
         /**
            See whio_dev_api::flush().
+
+           Throws on error.
         */
-        int flush();
+        void flush();
 
         /**
            See whio_dev_api::read().
@@ -259,8 +261,11 @@ namespace whio {
 
         /**
            See whio_dev_api::clearError().
+
+           Throws on error, though that is arguable
+           for this case.
         */
-        int clearError();
+        void clearError();
 
         /**
            See whio_dev_api::eof().
@@ -269,23 +274,34 @@ namespace whio {
 
         /**
            See whio_dev_api::tell().
+
+           Throws if the underlying implementation
+           returns whio_rc.SizeTError.
         */
         whio_size_t tell();
 
         /**
            See whio_dev_api::seek().
+
+           Throws if the underlying implementation
+           returns whio_rc.SizeTError.
         */
         whio_size_t seek( whio_off_t off, int whence );
 
         /**
            See whio_dev_api::truncate().
+
+           Throws on error.
         */
-        int truncate( whio_off_t sz );
+        void truncate( whio_off_t sz );
 
         /**
            Returns the low-level whio_dev handle. Ownership is not
            transfered by this call and clients MUST NOT destroy the
            object or transfer ownership of it elsewhere.
+
+           Returns NULL if this object has already been closed or had
+           its handle taken away.
         */
         whio_dev * handle() { return m_io; }
 
@@ -299,6 +315,9 @@ namespace whio {
            caller. The effect on this object is as if close()
            had been called, except that the handle is not
            closed before returning to the caller.
+
+           Returns NULL if this object has already been closed or had
+           its handle taken away.
         */
         whio_dev * takeHandle();
 
@@ -396,8 +415,10 @@ namespace whio {
 
         /**
            See whio_stream_api::flush().
+
+           Throws on error.
         */
-        int flush();
+        void flush();
         /**
            See whio_stream_api::write().
         */
@@ -571,19 +592,21 @@ namespace whio {
         Subdevice( IODev & parent, whio_size_t lowerBound, whio_size_t upperBound );
 
         /**
-           See whio_dev_subdev_rebound().
+           Analog to whio_dev_subdev_rebound2(), this re-binds this
+           subdevice to the given parent object (which may differ from
+           its current parent).
+
+           Throws on error.
         */
-        int rebound( IODev & parent, whio_size_t lowerBound, whio_size_t upperBound );
+        void rebound( IODev & parent, whio_size_t lowerBound, whio_size_t upperBound );
 
         /**
-           Convenience overload which re-binds to the current
-           parent device.
+           Analog whio_dev_subdev_rebound(), this re-sets the bounds
+           of the subdevice.
 
-           On error: it throws if there is a serious internal
-           consistency/postcondition error, else it returns a non-0
-           whio_rc code.
+           Throws on error.
         */
-        int rebound( whio_size_t lowerBound, whio_size_t upperBound );
+        void rebound( whio_size_t lowerBound, whio_size_t upperBound );
     };
 
 
@@ -1507,9 +1530,8 @@ namespace whio {
             whio_epfs_inode const * inode() const;
 
             /**
-               Updates the modification time to the
-               given timestamp (GMT) or the curren time
-               if time==-1.
+               Updates the modification time to the given timestamp
+               (GMT) or the current time if time==-1.
              */
             void touch( uint32_t time = (uint32_t)-1 );
 
@@ -1535,6 +1557,12 @@ namespace whio {
                legal in EFS.
             */
             std::string name();
+
+            /**
+               Returns true if this inode is marked as "internal"
+               (e.g. potentially an inode allocated by a namer).
+            */
+            bool isInternal() const;
         };
 
         /**
