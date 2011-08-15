@@ -91,6 +91,7 @@ function testGZip()
 function testEPFS()
 {
     print("Testing EPFS...");
+    print( "Version info: "+JSON.stringify(whio.EPFS.versionInfo) );
     var fname = "my.epfs";
     var opt = {
         inodeCount:10,
@@ -106,6 +107,7 @@ function testEPFS()
     asserteq( fsOpt.maxBlocks, opt.maxBlocks );
     asserteq( fsOpt.blockSize, opt.blockSize );
     var label = "Test from JavaScript "+(new Date());
+    assert( fs.label.maxLength > 0, 'fs.label.maxLength == '+fs.label.maxLength );
     fs.label(label);
     fs.installNamer("ht");
     ++inodeCount /* namer uses 1 inode. */;

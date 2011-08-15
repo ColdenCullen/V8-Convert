@@ -187,7 +187,7 @@ namespace io {
             throw std::runtime_error(os.str());
         }
         whio_size_t n = CastFromJS<whio_size_t>(argv[0]);
-        if( ! n ) return v8::Integer::New(0);
+        if( ! n ) return v8::Null();
         typedef std::vector<unsigned char> VT;
         VT vec(n,'\0');
         whio_size_t rc;
@@ -200,7 +200,7 @@ namespace io {
               TODO: if errno indicates an interrupt, throw here.
             */
         }
-        if( ! rc ) return v8::Integer::New(0);
+        if( ! rc ) return v8::Null();
         vec.resize(rc);
         bool const binary = argv[1]->BooleanValue();
         if( binary )
@@ -660,6 +660,22 @@ namespace io {
         return CastToJS( rc );
     }
 
+    static v8::Handle<v8::Value> GetEpfsVersionInfo()
+    {
+        v8::Handle<v8::Object> rc( v8::Object::New() );
+        const uint16_t * mb = whio_epfs_magic_bytes;
+#define SET(K,I) rc->Set(v8::String::NewSymbol(K), CastToJS(mb[I]))
+        SET("year",0);
+        SET("month",1);
+        SET("day",2);
+        SET("sizeTBits",3);
+        SET("idTBits",4);
+        SET("maxLabelLength",5);
+        SET("sizeOfNamerLabel",6);
+#undef SET
+        return rc;
+    }
+    
     void ClassCreator_SetupBindings<whio::EPFS>::Initialize( v8::Handle<v8::Object> const & dest )
     {
         typedef whio::EPFS T;
@@ -671,7 +687,19 @@ namespace io {
             return;
         }
 
+
 #define CATCHER InCaCatcher_std
+        typedef CATCHER< ArityDispatchList< CVV8_TYPELIST((
+                      // label getter
+                      MethodTo<InCa, T, std::string (), &T::label>,
+                      // label setter
+                      MethodTo<InCa, T, void (char const *), &T::label>
+                      )) >
+            > LabelFunc;
+        v8::Handle<v8::Function> labelF( v8::FunctionTemplate::New(LabelFunc::Call)->GetFunction() );
+        labelF->Set( v8::String::NewSymbol("maxLength"),
+                     CastToJS<int>( whio_epfs_sizeof_label_payload ) );
+
         cc
             ("close", CC::DestroyObjectCallback )
             ("isRW",
@@ -688,14 +716,7 @@ namespace io {
              CATCHER< MethodTo<InCa, T, whio_epfs_id_t (char const *name), &T::inodeId> >::Call )
             ("installNamer",
              CATCHER< MethodTo<InCa, T, void (char const *name), &T::installNamer> >::Call )
-            ("label",
-             CATCHER< ArityDispatchList< CVV8_TYPELIST((
-                      // label getter
-                      MethodTo<InCa, T, std::string (), &T::label>,
-                      // label setter
-                      MethodTo<InCa, T, void (char const *), &T::label>
-                      )) >
-             >::Call)
+            ("label", labelF )
             ("name",
              CATCHER< ArityDispatchList<
              CVV8_TYPELIST((
@@ -721,6 +742,7 @@ namespace io {
             ;
 #undef CATCHER
         v8::Handle<v8::Function> ctor( cc.CtorFunction() );
+        ctor->Set( v8::String::NewSymbol("versionInfo"), GetEpfsVersionInfo() );
         ClassCreator<whio::EPFS::PseudoFile>::SetupBindings( ctor );
         cc.AddClassTo(TypeName<T>::Value, dest);
         return;
