@@ -8,9 +8,15 @@ function testIODev()
     assertThrows(function(){new whio.IODev(d,0);}, 'Invalid ctor args.');
 
     assert( /IODev/.test( d ), 'toString() appears to work.' );
-    var s = new whio.IODev(d,10,50);
+    var s = new whio.Subdevice(d,10,50);
     assert( s instanceof whio.IODev, 's is-a IODev.' );
+    assert( s instanceof whio.Subdevice, 's is-a Subdevice.' );
     assert( s.iomode(), 's.iomode() seems to work' );
+    asserteq( 'function', typeof s.rebound, 's.rebound is-a function.');
+
+    assertThrows( function(){s.rebound(1,"hi");},'Invalid arguments passed to rebound().');
+    s.rebound(1,5);
+    s.rebound(d,10,15);
     assert( s.close(), 's.close() seems to work' );
 
     assert( d.iomode(), 'd.iomode() seems to work' );
@@ -34,7 +40,7 @@ function testOutStream()
     ba.destroy();
 
     assert( d.iomode(), 'd.iomode() seems to work' );
-    assert( 0 == d.flush(), 'd.flush() seems to work' );
+    d.flush();
 
     assert( d.close(), 'd.close() seems to work' );
     assertThrows( function() {d.flush();},
@@ -69,8 +75,11 @@ function testInStream()
 function testGZip()
 {
     print("GZip tests...");
-    var buf = new whio.IODev(1024*4);
-    asserteq( 0, buf.size(), 'MemBuf initialize size problem has been solved.' )
+    var buf = new whio.MemoryIODev(1024*4);
+    assert( buf instanceof whio.MemoryIODev, 'buf is-a MemoryIODev' );
+    assert( buf instanceof whio.IODev, 'buf is-a IODev' );
+    asserteq( 0, buf.size(), 'MemBuf initialize size problem has been solved.' );
+    assert( buf.bufferSize() != 0, 'buf.bufferSize() == '+buf.bufferSize() );
     var src = new whio.InStream("/etc/hosts");
     src.gzipTo( buf );
     src.close();
@@ -145,6 +154,7 @@ function testEPFS()
         var ist = new whio.InStream(infile);
         var zf = fs.open(infile+".gz",whio.iomode.RWC|whio.iomode.TRUNCATE);
         assert( zf instanceof whio.IODev, 'zf is-a IODev' );
+        assert( zf instanceof whio.EPFS.PseudoFile, 'zf is-a PseudoFile' );
         ist.gzipTo(zf);
         print("Compressed "+infile+" to "+zf.size()+" bytes.");
         ist.close();

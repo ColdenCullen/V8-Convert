@@ -32,9 +32,9 @@ namespace cvv8 {
     //CVV8_TypeName_DECL((whio::FileOutStream));
 
     CVV8_TypeName_DECL((whio::IODev));
-    //CVV8_TypeName_DECL((whio::FileIODev));
-    //CVV8_TypeName_DECL((whio::MemoryIODev));
-    //CVV8_TypeName_DECL((whio::Subdevice));
+    CVV8_TypeName_DECL((whio::FileIODev));
+    CVV8_TypeName_DECL((whio::MemoryIODev));
+    CVV8_TypeName_DECL((whio::Subdevice));
     CVV8_TypeName_DECL((whio::EPFS::PseudoFile));
 
     CVV8_TypeName_DECL((whio::EPFS));
@@ -59,15 +59,16 @@ namespace cvv8 {
 
            (uint size [, float expansionFactor=some value >1.0])
         */
-        struct Ctor_IODev_Memory
+        struct Ctor_MemoryIODev
             : Argv_OrN< CVV8_TYPELIST((
                                        Argv_TypesMatch< CVV8_TYPELIST((whio_size_t,float)) >,
                                        Argv_TypesMatch< CVV8_TYPELIST((whio_size_t)) >
                                        )) >
         {
-            static whio::IODev * Call( v8::Arguments const & );
+            static whio::MemoryIODev * Call( v8::Arguments const & );
         };
 
+        
         /**
            whio::Subdevice constructor wrapper.
 
@@ -76,10 +77,10 @@ namespace cvv8 {
            (IODev parent, uint low, uint high)
 
         */
-        struct Ctor_IODev_Subdev
+        struct Ctor_Subdevice
             : Argv_TypesMatch< CVV8_TYPELIST((whio::IODev *,whio_size_t, whio_size_t)) >
         {
-            static whio::IODev * Call( v8::Arguments const & );
+            static whio::Subdevice * Call( v8::Arguments const & );
         };
 
         /**
@@ -95,14 +96,14 @@ namespace cvv8 {
            must be a mask of WHIO_MODE_xxx flags (available in JS via
            whio.iomode).
         */
-        struct Ctor_IODev_File
+        struct Ctor_FileIODev
             : Argv_OrN< CVV8_TYPELIST((
                                        Argv_TypesMatch< CVV8_TYPELIST((v8::String,v8::String/*mode string*/)) >,
                                        Argv_TypesMatch< CVV8_TYPELIST((v8::String,int32_t/*mode flags*/)) >,
                                        Argv_TypesMatch< CVV8_TYPELIST((v8::String,int32_t/*mode flags*/, uint16_t/*permissions*/)) >
                                        )) >
         {
-            static whio::IODev * Call( v8::Arguments const & );
+            static whio::FileIODev * Call( v8::Arguments const & );
         };
 
         /**
@@ -167,7 +168,7 @@ namespace cvv8 {
 
     template <>
     struct ClassCreator_InternalFields< whio::StreamBase >
-        : ClassCreator_InternalFields_Base< whio::IODev, 1, -1, 0 >
+        : ClassCreator_InternalFields_Base< whio::StreamBase, 1, -1, 0 >
     {};
 
     template <>
@@ -190,6 +191,22 @@ namespace cvv8 {
         : ClassCreator_InternalFields< whio::IODev >
     {};
 
+    template <>
+    struct ClassCreator_InternalFields< whio::MemoryIODev >
+        : ClassCreator_InternalFields< whio::IODev >
+    {};
+
+    template <>
+    struct ClassCreator_InternalFields< whio::Subdevice >
+        : ClassCreator_InternalFields< whio::IODev >
+    {};
+
+    template <>
+    struct ClassCreator_InternalFields< whio::FileIODev >
+        : ClassCreator_InternalFields< whio::IODev >
+    {};
+
+
 #if 0
     template <>
     struct ClassCreator_TypeID< whio::IODev >
@@ -210,9 +227,19 @@ namespace cvv8 {
         whio::IODev,
         PredicatedCtorDispatcher<
             Signature< whio::IODev *(
-                                     io::Ctor_IODev_Memory,
-                                     io::Ctor_IODev_Subdev,
-                                     io::Ctor_IODev_File
+#if 0
+           /* reminder: because these are typed as IODev, MemoryIODev
+               and Subdevice objects created via this ctor do not get
+               the additional type-specific members which get bound
+               via the "direct" MemoryIODev/Subdevice ctors. This is
+               a side-effect of the strong typing - we cannot hide the
+               MemoryIODev/Subdevice wrappers completely behind a
+               base-type constructor.
+            */
+                                     io::Ctor_MemoryIODev,
+                                     io::Ctor_Subdevice,
+#endif
+                                     io::Ctor_FileIODev
                                      )
                 >
             >
@@ -229,6 +256,50 @@ namespace cvv8 {
     {
         static void Initialize( v8::Handle<v8::Object> const & target );
     };
+
+    template <>
+    struct ClassCreator_Factory<whio::MemoryIODev>
+        : ClassCreator_Factory_Dispatcher<
+            whio::MemoryIODev,
+            PredicatedCtorDispatcher<
+                Signature< whio::MemoryIODev *(io::Ctor_MemoryIODev) >
+            >
+          >
+    {};
+
+    template <>
+    struct JSToNative<whio::MemoryIODev>
+        : JSToNative_ClassCreator<whio::MemoryIODev>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::MemoryIODev>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
+
+    template <>
+    struct ClassCreator_Factory<whio::Subdevice>
+        : ClassCreator_Factory_Dispatcher<
+            whio::Subdevice,
+            PredicatedCtorDispatcher<
+                Signature< whio::Subdevice *(io::Ctor_Subdevice) >
+            >
+          >
+    {};
+
+    template <>
+    struct JSToNative<whio::Subdevice>
+        : JSToNative_ClassCreator<whio::Subdevice>
+    {};
+
+    template <>
+    struct ClassCreator_SetupBindings<whio::Subdevice>
+    {
+        static void Initialize( v8::Handle<v8::Object> const & target );
+    };
+
 
     template <>
     struct ClassCreator_Factory<whio::StreamBase>

@@ -73,9 +73,9 @@ namespace cvv8 {
     //CVV8_TypeName_IMPL((whio::FileOutStream),"FileOutStream");
 
     CVV8_TypeName_IMPL((whio::IODev),"IODev");
-    //CVV8_TypeName_IMPL((whio::FileIODev),"FileIODev");
-    //CVV8_TypeName_IMPL((whio::MemoryIODev),"MemoryIODev");
-    //CVV8_TypeName_IMPL((whio::Subdevice),"Subdevice");
+    CVV8_TypeName_IMPL((whio::FileIODev),"FileIODev");
+    CVV8_TypeName_IMPL((whio::MemoryIODev),"MemoryIODev");
+    CVV8_TypeName_IMPL((whio::Subdevice),"Subdevice");
     CVV8_TypeName_IMPL((whio::EPFS::PseudoFile),"PseudoFile");
 
     CVV8_TypeName_IMPL((whio::EPFS),"EPFS");
@@ -394,17 +394,17 @@ namespace io {
         cc
             ("close", CCDev::DestroyObjectCallback )
             ("clearError",
-             CATCHER< MethodTo<InCa, IOD, int (), &IOD::clearError> >::Call )
+             CATCHER< MethodTo<InCa, IOD, void (), &IOD::clearError> >::Call )
             ("error",
              CATCHER< MethodTo<InCa, IOD, int (), &IOD::error> >::Call )
             ("eof",
              CATCHER< MethodTo<InCa, IOD, bool (), &IOD::eof> >::Call )
             ("flush",
-             CATCHER< MethodTo<InCa, IOD, int (), &IOD::flush> >::Call )
+             CATCHER< MethodTo<InCa, IOD, void (), &IOD::flush> >::Call )
             ("iomode",
              CATCHER< MethodTo<InCa, IOD, whio_iomode_mask (), &IOD::iomode> >::Call )
-            ("isClosed",
-             MethodTo<InCa, const IOD, bool (), &IOD::isClosed>::Call )
+            //("isClosed",
+            // MethodTo<InCa, const IOD, bool (), &IOD::isClosed>::Call )
             ("read",
              CATCHER< InCaToInCa< io::read_impl<IOD> > >::Call )
             ("size",
@@ -423,7 +423,7 @@ namespace io {
 #endif
              )
             ("truncate",
-             CATCHER< MethodTo<InCa, IOD, int (whio_off_t), &IOD::truncate> >::Call )
+             CATCHER< MethodTo<InCa, IOD, void (whio_off_t), &IOD::truncate> >::Call )
             ("write",
              CATCHER< InCaLikeFunction<whio_size_t, io::write_impl<IOD> > >::Call )
             ;
@@ -441,9 +441,61 @@ namespace io {
 
 #undef CATCHER
         cc.AddClassTo(TypeName<IOD>::Value, dest);
+        ClassCreator_SetupBindings<whio::MemoryIODev>::Initialize( dest );
+        ClassCreator_SetupBindings<whio::Subdevice>::Initialize( dest );
         return;
     }
 
+    void ClassCreator_SetupBindings<whio::MemoryIODev>::Initialize( v8::Handle<v8::Object> const & dest )
+    {
+        typedef whio::MemoryIODev IOD;
+        typedef ClassCreator<IOD> CC;
+        CC & cc(CC::Instance());
+        if( cc.IsSealed() )
+        {
+            cc.AddClassTo(TypeName<IOD>::Value, dest);
+            return;
+        }
+        cc.Inherit<whio::IODev>();
+        cc
+            ("bufferSize",
+             InCaCatcher_std< MethodTo<InCa, IOD, whio_size_t (), &IOD::bufferSize> >::Call )
+            ("toString",
+             io::toString_generic<IOD> )
+            ;
+        cc.AddClassTo(TypeName<IOD>::Value, dest);
+    }
+
+    void ClassCreator_SetupBindings<whio::Subdevice>::Initialize( v8::Handle<v8::Object> const & dest )
+    {
+        typedef whio::Subdevice IOD;
+        typedef ClassCreator<IOD> CC;
+        CC & cc(CC::Instance());
+        if( cc.IsSealed() )
+        {
+            cc.AddClassTo(TypeName<IOD>::Value, dest);
+            return;
+        }
+        cc.Inherit<whio::IODev>();
+
+        typedef PredicatedInCa< // rebound(uint,uint)
+            Argv_TypesMatch< CVV8_TYPELIST((whio_size_t,whio_size_t)) >,
+            MethodTo<InCa, IOD, void (whio_size_t,whio_size_t), &IOD::rebound>
+        > Rebound2;
+        typedef PredicatedInCa< // rebound(IODev,uint,uint)
+            Argv_TypesMatch< CVV8_TYPELIST((whio::IODev &, whio_size_t,whio_size_t)) >,
+            MethodTo<InCa, IOD, void (whio::IODev &, whio_size_t,whio_size_t), &IOD::rebound>
+        > Rebound3;
+        typedef PredicatedInCaDispatcher< CVV8_TYPELIST(( Rebound2, Rebound3 )) > Rebound;
+        cc
+            ("rebound",
+             InCaCatcher_std< Rebound >::Call )
+            ("toString",
+             io::toString_generic<IOD> )
+            ;
+        cc.AddClassTo(TypeName<IOD>::Value, dest);
+    }
+    
     void ClassCreator_SetupBindings<whio::StreamBase>::Initialize( v8::Handle<v8::Object> const & dest )
     {
         typedef whio::StreamBase ST;
@@ -462,8 +514,8 @@ namespace io {
              CATCHER< MethodTo<InCa, ST, bool (), &ST::isGood> >::Call )
             ("iomode",
              CATCHER< MethodTo<InCa, ST, whio_iomode_mask (), &ST::iomode> >::Call )
-            ("isClosed",
-             MethodTo<InCa, const ST, bool (), &ST::isClosed>::Call )
+            //("isClosed",
+            // MethodTo<InCa, const ST, bool (), &ST::isClosed>::Call )
             ("toString",
              io::toString_generic<ST>)
             ;
@@ -488,7 +540,7 @@ namespace io {
 #define CATCHER InCaCatcher_std
         cc
             ("flush",
-             CATCHER< MethodTo<InCa, ST, int (), &ST::flush> >::Call )
+             CATCHER< MethodTo<InCa, ST, void (), &ST::flush> >::Call )
             ("toString",
              io::toString_generic<ST>)
             ("write",
@@ -704,8 +756,8 @@ namespace io {
             ("close", CC::DestroyObjectCallback )
             ("isRW",
              CATCHER< MethodTo<InCa, const T, bool (), &T::isRW> >::Call )
-            ("isClosed",
-             MethodTo<InCa, const T, bool (), &T::isClosed>::Call )
+            //("isClosed",
+            // MethodTo<InCa, const T, bool (), &T::isClosed>::Call )
             ("foreachInode",
              InCaToInCa< EPFS_ForEachInode >::Call)
             ("fsOptions",
@@ -961,10 +1013,10 @@ namespace io {
     
     
 namespace io {
-    
-    whio::IODev * Ctor_IODev_Memory::Call( v8::Arguments const &argv )
+
+    whio::MemoryIODev * Ctor_MemoryIODev::Call( v8::Arguments const &argv )
     {
-        assert( Ctor_IODev_Memory()(argv) );
+        assert( Ctor_MemoryIODev()(argv) );
         uint32_t const sz = CastFromJS<uint32_t>(argv[0]);
         float const factor = (argv.Length()>1)
             ? CastFromJS<float>(argv[1])
@@ -972,9 +1024,9 @@ namespace io {
         return new whio::MemoryIODev( sz, factor );
     }
 
-    whio::IODev * Ctor_IODev_Subdev::Call( v8::Arguments const & argv )
+    whio::Subdevice * Ctor_Subdevice::Call( v8::Arguments const & argv )
     {
-        assert( Ctor_IODev_Subdev()(argv) );
+        assert( Ctor_Subdevice()(argv) );
         whio::IODev * parent = CastFromJS<whio::IODev*>(argv[0]);
         assert( (NULL != parent) && "Argument validation should have failed!" );
         whio_size_t const low = CastFromJS<whio_size_t>(argv[1]);
@@ -982,9 +1034,10 @@ namespace io {
         return new whio::Subdevice( *parent, low, high );
     }
 
-    whio::IODev * Ctor_IODev_File::Call( v8::Arguments const & argv )
+    
+    whio::FileIODev * Ctor_FileIODev::Call( v8::Arguments const & argv )
     {
-        assert( Ctor_IODev_File()(argv) );
+        assert( Ctor_FileIODev()(argv) );
         ArgCaster<char const *> ac;
         char const * fn = ac.ToNative(argv[0]);
         if( !fn || !*fn )
