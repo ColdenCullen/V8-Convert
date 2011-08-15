@@ -76,6 +76,7 @@ function testEPFS()
         maxBlocks:13
     };
     var fs = new whio.EPFS(fname,true,opt);
+    var inodeCount = 0 /* number of inodes this test code allocates. */;
     assert( fs instanceof whio.EPFS, 'fs is-a EPFS.' );
     assert( /EPFS/.test( fs ), 'toString() appears to work.' );
     var fsOpt = fs.fsOptions();
@@ -85,10 +86,13 @@ function testEPFS()
     var label = "Test from JavaScript "+(new Date());
     fs.label(label);
     fs.installNamer("ht");
+    ++inodeCount /* namer uses 1 inode. */;
     asserteq( fs.label(), label );
 
+    
     var inodeId = 3;
     var d = fs.open(inodeId, whio.iomode.RWC);
+    ++inodeCount;
     assert( d instanceof whio.EPFS.PseudoFile, 'd is-a whio.EPFS.PseudoFile' );
     assert( /PseudoFile/.test( d ), 'toString() appears to work.' );
 
@@ -127,12 +131,12 @@ function testEPFS()
     asserteq( hiMsg, gotMsg );
     d.close();
 
-    var inodeList = [];
-    fs.foreachInode( function(i,li) {
+    var gotInodeCount = 0;
+    fs.foreachInode( function(i) {
                          print(JSON.stringify(i));
-                         li.push( i.id );
-                     }, inodeList);
-    asserteq( 2, inodeList.length, 'Inode count matches expectations.' );
+                         ++gotInodeCount;
+                     });
+    asserteq( inodeCount, gotInodeCount, 'Inode count matches expectations.' );
     fs.close();
 }
 
