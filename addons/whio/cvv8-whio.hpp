@@ -1,7 +1,18 @@
 /**
-   INCOMPLETE! NOT YET EVEN CLOSE TO FINISHED!
+    v8 bindings for various i/o facilities provided by libwhio.
 
-   v8 bindings for various i/o facilities provided by libwhio.
+    Most of the whio C++ API is wrapped, but there are still a few
+    gaps to fill.
+
+    Notable TODOs:
+
+    - whio::HashTable (but we'll restrict it to String keys/values).
+
+    - A for-each-inode operation on whio::EPFS.
+
+    License: Public Domain
+
+    Author: Stephan Beal (http://wanderinghorse.net/home/stephan/)
 */
 #if !defined(CVV8_WHIO_HPP_INCLUDED)
 #define CVV8_WHIO_HPP_INCLUDED
@@ -12,9 +23,8 @@
 #include "cvv8/ClassCreator.hpp"
 namespace cvv8 {
 
-
     //CVV8_TypeName_DECL((whio::IOBase));
-   
+
     CVV8_TypeName_DECL((whio::StreamBase));
     CVV8_TypeName_DECL((whio::InStream));
     //CVV8_TypeName_DECL((whio::FileInStream));
@@ -36,17 +46,11 @@ namespace cvv8 {
     namespace io {
 
         /**
-           Sets up all of the various whio bindings in the dest
-           object. Throws a native exception for serious errors.
+           Adds an object named "whio" to dest and adds all of the
+           various whio bindings to the "whio" object. Throws a native
+           exception for serious errors.
         */
         void SetupBindings( v8::Handle<v8::Object> dest );
-
-        //! Internal.
-        template <typename T>
-        struct ClassCreator_InternalFields_whio
-            : ClassCreator_InternalFields_Base< T, 2, -1, 1 >
-        {
-        };
 
         /**
            whio::MemoryIODev constructor wrapper.
@@ -156,17 +160,35 @@ namespace cvv8 {
 
     } /* namespace io */
 
-#define WHIO_INTERNAL_FIELDS(T) template <> \
-    struct ClassCreator_InternalFields< T > \
-        : io::ClassCreator_InternalFields_whio< T > \
-    {}
-    WHIO_INTERNAL_FIELDS(whio::IODev);
-    WHIO_INTERNAL_FIELDS(whio::StreamBase);
-    WHIO_INTERNAL_FIELDS(whio::InStream);
-    WHIO_INTERNAL_FIELDS(whio::OutStream);
-    WHIO_INTERNAL_FIELDS(whio::EPFS);
+    template <>
+    struct ClassCreator_InternalFields< whio::IODev >
+        : ClassCreator_InternalFields_Base< whio::IODev, 2,-1,1 >
+    {};
 
-#undef WHIO_INTERNAL_FIELDS
+    template <>
+    struct ClassCreator_InternalFields< whio::StreamBase >
+        : ClassCreator_InternalFields_Base< whio::IODev, 1, -1, 0 >
+    {};
+
+    template <>
+    struct ClassCreator_InternalFields< whio::InStream >
+        : ClassCreator_InternalFields< whio::StreamBase >
+    {};
+
+    template <>
+    struct ClassCreator_InternalFields< whio::OutStream >
+        : ClassCreator_InternalFields< whio::StreamBase >
+    {};
+
+    template <>
+    struct ClassCreator_InternalFields< whio::EPFS >
+        : ClassCreator_InternalFields_Base< whio::EPFS >
+    {};
+
+    template <>
+    struct ClassCreator_InternalFields< whio::EPFS::PseudoFile >
+        : ClassCreator_InternalFields< whio::IODev >
+    {};
 
 #if 0
     template <>

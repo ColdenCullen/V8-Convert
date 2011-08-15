@@ -67,9 +67,9 @@ function testEPFS()
     print("Testing EPFS...");
     var fname = "my.epfs";
     var opt = {
-    inodeCount:10,
-    blockSize:1024 * 8,
-    maxBlocks:13
+        inodeCount:10,
+        blockSize:1024 * 8,
+        maxBlocks:13
     };
     var fs = new whio.EPFS(fname,true,opt);
     var fsOpt = fs.fsOptions();
@@ -91,7 +91,7 @@ function testEPFS()
     var gotMsg = d.read( msg.length, false );
     asserteq( gotMsg, msg );
     asserteq( inodeId, d.inodeId );
-    assertThrows(function(){d.inodeId=4;},'Cannot set inodeId.');
+    assertThrows(function(){d.inodeId=42;},'Cannot set inodeId.');
 
     msg = 0xcafe;
     d.clientFlags = msg;
@@ -120,7 +120,6 @@ function testEPFS()
 
     d.close();
     fs.close();
-    
 }
 
 try {

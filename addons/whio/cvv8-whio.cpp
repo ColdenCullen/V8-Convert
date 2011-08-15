@@ -241,8 +241,6 @@ namespace io {
              CATCHER< MethodTo<InCa, IOD, whio_iomode_mask (), &IOD::iomode> >::Call )
             ("isClosed",
              MethodTo<InCa, const IOD, bool (), &IOD::isClosed>::Call )
-            ("seek",
-             CATCHER< MethodTo<InCa, IOD, whio_size_t (whio_off_t,int), &IOD::seek> >::Call )
             ("size",
              CATCHER< MethodTo<InCa, IOD, whio_size_t (), &IOD::size> >::Call )
             ("tell",
@@ -254,7 +252,18 @@ namespace io {
             ("read",
              CATCHER< InCaToInCa< io::read_impl<IOD> > >::Call )
             ;
-            ;
+        v8::Handle<v8::Function> seek =
+            v8::FunctionTemplate::New(CATCHER<
+                                      MethodTo<InCa, IOD, whio_size_t (whio_off_t,int), &IOD::seek>
+                                      >::Call
+            )->GetFunction();
+#define SET(K) seek->Set(v8::String::NewSymbol(#K),v8::Integer::New(K))
+        SET(SEEK_SET);
+        SET(SEEK_CUR);
+        SET(SEEK_END);
+#undef SET
+        cc("seek",seek);
+
 #undef CATCHER
         cc.AddClassTo(TypeName<IOD>::Value, dest);
         return;
@@ -589,7 +598,7 @@ namespace io {
         p->touch( tv );
     }
 
-    void PseudoFile_touch( v8::Arguments const & argv )
+    uint32_t PseudoFile_touch( v8::Arguments const & argv )
     {
         typedef whio::EPFS::PseudoFile T;
         uint32_t tv = (uint32_t)-1;
@@ -616,6 +625,7 @@ namespace io {
             }
         }
         p->touch( tv );
+        return p->mtime();
     }
     
     void ClassCreator_SetupBindings<whio::EPFS::PseudoFile>::Initialize( v8::Handle<v8::Object> const & dest )
@@ -632,7 +642,7 @@ namespace io {
 #define CATCHER InCaCatcher_std
         cc
             ("touch",
-             InCaLikeFunction< void, PseudoFile_touch >::Call)
+             InCaLikeFunction< uint32_t, PseudoFile_touch >::Call)
             ;
 #undef CATCHER
         AccessorAdder acc( cc.Prototype() );
@@ -691,7 +701,7 @@ namespace io {
             throw new std::runtime_error("Filename ctor argument may not be empty.");
         }
         else if( 2 == argv.Length() )
-        {// (String name, int mode)
+        {// (String name, int|String mode)
             v8::Handle<v8::Value> const & a1( argv[1] );
             if( ValIs<v8::String>()( a1 ) )
             {
