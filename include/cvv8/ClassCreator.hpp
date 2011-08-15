@@ -931,13 +931,13 @@ namespace cvv8 {
         template <typename ValueT>
         inline ClassCreator & Set( char const * name, ValueT val )
         {
-            this->protoTmpl->Set(v8::String::New(name), CastToJS(val));
+            this->protoTmpl->Set(v8::String::NewSymbol(name), CastToJS(val));
             return *this;
         }
         //! Not quite sure why i need this overload, but i do.
         inline ClassCreator & Set( char const * name, v8::InvocationCallback val )
         {
-            this->protoTmpl->Set(v8::String::New(name), CastToJS(val));
+            this->protoTmpl->Set(v8::String::NewSymbol(name), CastToJS(val));
             return *this;
         }
         /**
@@ -963,7 +963,7 @@ namespace cvv8 {
         */
         inline void AddClassTo( char const * thisClassName, v8::Handle<v8::Object> const & dest )
         {
-            dest->Set(v8::String::New(thisClassName),
+            dest->Set(v8::String::NewSymbol(thisClassName),
                       this->CtorFunction());
         }
 
