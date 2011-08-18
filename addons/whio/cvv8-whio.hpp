@@ -6,9 +6,10 @@
 
     Notable TODOs:
 
-    - whio::HashTable (but we'll restrict it to String keys/values).
-
-    - A for-each-inode operation on whio::EPFS.
+    - whio::HashTable. We'll probably have to restrict it to String
+    keys/values, or create separate classes depending on the key type
+    (e.g. IntegerHashTable, StringHashTable) due to the C-level's void
+    pointers.
 
     License: Public Domain
 

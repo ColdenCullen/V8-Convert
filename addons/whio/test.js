@@ -13,8 +13,8 @@ function testIODev()
     assert( s instanceof whio.Subdevice, 's is-a Subdevice.' );
     assert( s.iomode(), 's.iomode() seems to work' );
     asserteq( 'function', typeof s.rebound, 's.rebound is-a function.');
+    assertThrows( function(){d.rebound(1,"hi");},'Invalid arguments passed to rebound().');
 
-    assertThrows( function(){s.rebound(1,"hi");},'Invalid arguments passed to rebound().');
     s.rebound(1,5);
     s.rebound(d,10,15);
     assert( s.close(), 's.close() seems to work' );
@@ -46,6 +46,20 @@ function testOutStream()
     assertThrows( function() {d.flush();},
                   'Use after close() throws.');
 
+}
+
+function testMemoryDev() {
+    var bSize = 1024*4;
+    var d = new whio.MemoryIODev(bSize);
+    asserteq( 0, d.size(), 'Initial size is 0.' );
+    assert( d.bufferSize() >= bSize, 'Buffer size is as expected.' );
+    assertThrows( function(){d.seek(1,7);},"seek()'s binding does very strict type/range checking.");
+    assertThrows( function(){d.seek("1",whio.SEEK_SET);},"seek()'s binding does very strict type/range checking.");
+    assert( 'number' === typeof whio.SEEK_SET, 'whio.SEEK_SET is-a number.');
+    //s.seek(0,whio.SEEK_SET);
+    asserteq( 1, d.seek(1,whio.SEEK_SET), "seek() works when we use whio.SEEK_XXX.");
+    assert( d.close(), 'close() reports success.' );
+    assertThrows( function(){d.write("a");}, 'Native "this" was both destroyed AND disconnected.');
 }
 
 function testInStream()
@@ -188,7 +202,7 @@ function testEPFS()
 
 function testByteArrayDev()
 {
-    print("ByteArrayIODev tests...");
+    print("EXPERIMENTAL ByteArrayIODev tests...");
     var ba = new whio.ByteArray( 2000 );
     var d = new whio.ByteArrayIODev(ba,true);
     assert( whio.iomode.WRITE & d.iomode(), 'Opened in read/write mode.' );
@@ -210,9 +224,13 @@ try {
     testInStream();
     testGZip();
     testEPFS();
+    testMemoryDev();
     testByteArrayDev();
     print("If you got this far then it seems to work.");
 }
 catch(e) {
     print("EXCEPTION: "+e);
+    for( var k in e ) {
+        print(k+'='+e[k]);
+    }
 }

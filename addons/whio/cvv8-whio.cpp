@@ -222,6 +222,10 @@ namespace io {
         }
     }
 
+    /**
+       FIXME: we can consolidate InStream_GZipTo/GUnzipTo/CopyTo into a single
+       template, i think.
+    */
     v8::Handle<v8::Value> InStream_GZipTo( v8::Arguments const & argv )
     {
         typedef whio::InStream ST;
@@ -412,6 +416,34 @@ namespace io {
     const void * ClassCreator_TypeID<whio::StreamBase>::Value = TypeName<whio::StreamBase>::Value;
 #endif
 
+    /**
+       An arguments predicate which returns true if the argument at
+       index I is one of the values SEEK_SET, SEEK_CUR, SEEK_END.
+    */
+    template <int I>
+    struct ArgAt_IsWhence : ArgumentsPredicate
+    {
+        inline bool operator()( v8::Arguments const & args ) const
+        {
+            if( args.Length() <= I ) return false;
+            
+            else
+            {
+                v8::Handle<v8::Value> const & v(args[I]);
+                if( ! ValIs<int32_t>()(v) ) return false;
+                else switch( v->Int32Value() )
+                {
+                  case SEEK_SET:
+                  case SEEK_CUR:
+                  case SEEK_END:
+                      return true;
+                  default:
+                      return false;
+                }
+            }
+        }
+    };
+    
     void ClassCreator_SetupBindings<whio::IODev>::Initialize( v8::Handle<v8::Object> const & dest )
     {
         typedef whio::IODev IOD;
@@ -462,13 +494,31 @@ namespace io {
             ;
         v8::Handle<v8::Function> seek =
             v8::FunctionTemplate::New(CATCHER<
-                                      MethodTo<InCa, IOD, whio_size_t (whio_off_t,int), &IOD::seek>
-                                      >::Call
+               /*
+                 Reminder to reader: this overly-complex seek()
+                 binding is for argument-validation proof-of-concept
+                 purposes, not because seek() needs to be overloaded
+                 this way. We could just as easily bind directly to
+                 seek() and the bound class would throw if JS code
+                 passes in an invalid value. The pre-checking done
+                 here is basically a demonstration of how we can
+                 perform near-arbitrary type/range checking as a
+                 precondition to calling a particular binding.
+               */
+               PredicatedInCaDispatcher< CVV8_TYPELIST((
+                    PredicatedInCa< 
+                    //Argv_AndN< CVV8_TYPELIST(( Argv_Length<2>, ArgAt_IsA<0,whio_off_t>, ArgAt_IsWhence<1> )) >,
+                    // Equivalent:
+                    Argv_And< Argv_Length<2>, Argv_And< ArgAt_IsA<0,whio_off_t>, ArgAt_IsWhence<1> > >,
+                    MethodTo<InCa, IOD, whio_size_t (whio_off_t,int), &IOD::seek>
+                    >
+               )) >
+            >::Call
             )->GetFunction();
-#define SET(K) seek->Set(v8::String::NewSymbol(#K),v8::Integer::New(K))
-        SET(SEEK_SET);
-        SET(SEEK_CUR);
-        SET(SEEK_END);
+#define SET(K) seek->Set(v8::String::NewSymbol(#K),v8::Integer::New(SEEK_##K))
+        SET(SET);
+        SET(CUR);
+        SET(END);
 #undef SET
         cc("seek",seek);
 
