@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 20:42:29 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1550,7 +1550,8 @@ namespace whio {
             uint32_t clientFlags() const;
 
             /** Sets the inode's name. Fails if it is opened
-                read-only.
+                read-only or if hasNamer() is false.
+ 
             */
             void name( char const * name );
             /**
@@ -1752,15 +1753,17 @@ namespace whio {
         void name( whio_epfs_id_t inodeID, char const * name );
 
         /**
-           Fetches the name of the given inode.
-           See whio_epfs_name_get() for details
-           and error conditions.
+           Fetches the name of the given inode.  See
+           whio_epfs_name_get() for details and error conditions.
 
-           Throws on error. An empty name is not
-           technically illegal since naming inodes
-           optional.
+           Throws on error. An empty name is not technically illegal
+           since naming inodes optional.
 
            Note that this will always throw if !hasNamer().
+
+           If an EFS-side string is larger than some hard internal
+           limit (currently 2k) then this function will fail, possibly
+           catastrophically. FIXME: 
         */
         std::string name( whio_epfs_id_t inodeID );
 

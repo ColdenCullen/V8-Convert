@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 20:42:29 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -292,7 +292,7 @@ namespace whio {
         whio_size_t const rc = this->m_io->api->tell(this->m_io);
         if( whio_rc.SizeTError == rc )
         {
-            throw new Exception("seek() returned whio_rc.SizeTError.");
+            throw Exception("tell() returned whio_rc.SizeTError.");
         }
         else return rc;
     }
@@ -303,7 +303,7 @@ namespace whio {
         whio_size_t const rc = this->m_io->api->seek(this->m_io, off, whence);
         if( whio_rc.SizeTError == rc )
         {
-            throw new Exception("seek() returned whio_rc.SizeTError.");
+            throw Exception("seek() returned whio_rc.SizeTError.");
         }
         else return rc;
     }
@@ -1445,7 +1445,13 @@ namespace whio {
             os << "inodeID="<<inodeID;
             throw RcException("whio_epfs_name_get", rc, os.str() );
         }
-        assert( nlen < NameBufSize );
+        else if( nlen >= NameBufSize )
+        {
+            assert( 0 && "whio_epfs_name_get() SHOULD have failed but did not." );
+            throw std::range_error("Buffer overflow, possible stack corruption, due to extremely "
+                                   "long name in EFS. "
+                                   "whio_epfs_name_get() SHOULD have failed but did not.");
+        }
         return std::string(buf, nlen);
     }
 

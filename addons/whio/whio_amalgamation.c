@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Mon Aug 15 20:42:26 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:28 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8498,7 +8498,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Mon Aug 15 20:42:27 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:31 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15754,7 +15754,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Mon Aug 15 20:42:27 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:33 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -19350,7 +19350,7 @@ whio_epfs_id_t whio_epfs_dev_inode_id( whio_dev const * dev )
 
 whio_size_t whio_epfs_dev_size( whio_dev const * dev )
 {
-    WHIO_EPFS_CDECL(0);
+    WHIO_EPFS_CDECL(whio_rc.SizeTError);
     return m->ino->size;
 }
     

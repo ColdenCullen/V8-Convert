@@ -1,4 +1,4 @@
-/* auto-generated on Mon Aug 15 20:42:26 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:28 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -4252,12 +4252,14 @@ int whio_dev_ioctl( whio_dev * dev, int operation, ... );
 
    It first tries the whio_dev_ioctl_GENERAL_size ioctl. If that works
    then its value is returned. As a fallback, this routine seeks to
-   end position of the device and measures the distance. It then
-   re-positions the cursor to its pre-call position.
+   end position of the device (seek() returns the position (=the
+   size)). It then re-positions the cursor to its pre-call position.
+   If one of the seek()s fails then whio_rc.SizeTError is returned.
 
-   As a general rule, whio_dev implementations shipped with this
-   library which can support an optimized (non-seeking) method for
-   getting their size support the whio_dev_ioctl_GENERAL_size ioctl.
+   As a general rule, concrete whio_dev implementations shipped with
+   this library which _can_ internally support an optimized
+   (non-seeking) method for getting their size _do_ support the
+   whio_dev_ioctl_GENERAL_size ioctl.
 */
 whio_size_t whio_dev_size( whio_dev * dev );
 
@@ -4389,6 +4391,10 @@ whio_dev_ioctl_mask_GENERAL = 0x010000,
 
    The third argument to whio_dev::ioctl() MUST be a pointer
    to a whio_size_t, to which the size is written.
+
+   Implementations which support this ioctl but enounter an error
+   should return a non-0 return code OTHER than
+   whio_rc.UnsupportedError.
 */
 whio_dev_ioctl_GENERAL_size = whio_dev_ioctl_mask_GENERAL | 0x01,
 
@@ -6477,7 +6483,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Mon Aug 15 20:42:27 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:30 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12050,7 +12056,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Mon Aug 15 20:42:27 CEST 2011. Do not edit! */
+/* auto-generated on Thu Aug 18 18:53:33 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12733,6 +12739,10 @@ extern "C" {
 
        See whio_epfs_inode_set_internal() and
        whio_epfs_inode_is_internal().
+
+       TODO: reconsider this. It was only added for
+       namer inodes but those have the INODE_IS_NAMER
+       flag.
     */
     WHIO_EPFS_FLAG_INODE_IS_INTERNAL = WHIO_EPFS_FLAG_RW,
 
@@ -12784,6 +12794,10 @@ extern "C" {
        added to whio_epfs_handle::flags so that
        whio_epfs_handle_free() knows whether or not
        it should deallocate the handle.
+
+       TODO: get rid of this. Handles are _only_ allocated
+       dynamically, so this stack-allocation hack is not needed and i
+       think i'll need space for 1 more flag.
      */
     WHIO_EPFS_HANDLE_ALLOC_STAMP = 0x80
 
@@ -13908,6 +13922,9 @@ extern "C" {
                a slight performance optimization so that we can abort
                certain read-the-next-inode loops earlier than we
                normally would.
+
+               TODO: get rid of this. freeInodeList makes this
+               obsolete. Removing it changes the file format, though.
              */
             whio_epfs_id_t maxEverUsedInode;
             /**
@@ -13930,14 +13947,20 @@ extern "C" {
              */
             whio_epfs_id_t blockCount;
 
-            /** Block counterpart of maxEverUsedInode. */
+            /**
+               Block counterpart of maxEverUsedInode.
+
+               TODO: i think we can get rid of this. freeBlockList
+               made this obsolete. Removing it changes
+               the file format, though.
+            */
             whio_epfs_id_t maxEverUsedBlock;
 
             /**
                An internal stamp with which we mark all
                dynamically-allocated whio_epfs objects. Not
                persistent. This is used so that some of the API
-               (e.g. whio_epfs_free()) can work consistently on both
+               (e.g. whio_epfs_close()) can work consistently on both
                stack- and heap-allocated whio_epfs objects.
             */
             void const * allocStamp;
@@ -14274,8 +14297,8 @@ extern "C" {
        The previous contents, if any, will be destroyed.
 
        None of the arguments may be null, but *fs may be null. If *fs
-       is null, a new whio_epfs is allocated and (on success) assigned
-       to *fs, else fs is assumed to point to a clean,
+       is NULL, a new whio_epfs is allocated and (on success) assigned
+       to *fs, else *fs is assumed to point to a clean,
        client-allocated whio_epfs object.
 
        How sopt is interpreted, and possibly changed, is described in
@@ -14288,7 +14311,7 @@ extern "C" {
        then whio_rc.RangeError may be returned.
 
        On success, whio_rc.OK is returned and fs points to a populated
-       whio_epfs object. If the user passed fs as a pointer to null, he
+       whio_epfs object. If the user passed fs as a pointer to NULL, he
        must eventually free the returned object using
        whio_epfs_finalize(). If he passed in his own object then it
        must be cleaned up as appropriate (whio_epfs_finalize() for
@@ -14306,10 +14329,11 @@ extern "C" {
        // Open/mkfs-specific options, including the storage device:
        whio_epfs_setup_opt so = whio_epfs_setup_opt_empty;
        so.storage.dev = whio_dev_for_filename("my.epfs","w+");
+       assert( NULL != so.storage.dev );
        so.storage.takeDevOnSuccess = true;
 
        // Create the fs:
-       whio_epfs * fs = NULL;
+       whio_epfs * fs = NULL; // DO NOT(!!!) use an uninitialized pointer!!!
        rc = whio_epfs_mkfs( &fs, &so, &fo );
        if( rc ) { //error
            // We need to clean up the storage device:
@@ -14460,7 +14484,7 @@ extern "C" {
        }
        opt.storage.takeDevOnSuccess = true;
        opt.storage.enableLocking = true;
-       whio_epfs * fs = NULL;
+       whio_epfs * fs = NULL; // NEVER(!!!) use an uninitialize pointer!
        int rc = whio_epfs_openfs( &fs, &opt );
        if( rc ) { // error: we must clean up opt.storage.dev: ...
            opt.storage.dev->finalize(opt.storage.dev);
@@ -14491,6 +14515,9 @@ extern "C" {
        opt.memory.fallbackOnOOM = true;
        // ^^ true = fall back to std allocators if we run out of memory
        @endcode
+
+       PS: DO NOT use the memory pool. It's known to cause memory
+       corruption in some test code.
     */
     int whio_epfs_openfs( whio_epfs ** fs, whio_epfs_setup_opt * opt );
 
@@ -14679,8 +14706,8 @@ extern "C" {
 
     /** @deprecated Made obsolete via evolution.
 
-    A type for collecting certain metrics from a whio_epfs memory
-       pool. It is mainly intended for debuggering.
+        A type for collecting certain metrics from a whio_epfs memory
+        pool. It is mainly intended for debuggering.
     */
     struct whio_epfs_mempool_stats_t
     {
@@ -14880,8 +14907,14 @@ extern "C" {
        WHIO_MODE_FLAG_CREATE).
 
        On error, non-0 is returned and dev is _probably_ not
-       modified. It may be modified if, e.g., truncation fails
-       (in which case the state of the device's data is undefined).
+       modified. It may be modified if, e.g., truncation fails (in
+       which case the state of the device's data is undefined).  If
+       the user passes in a dev pointer to NULL then it will always be
+       NULL on error (and the internally-allocated object is of course
+       freed up). If the user passes in his own custom-allocated dev
+       pointer than that device is close()d on error and the caller
+       must deallocate it in a manner appropriate to its allocation
+       method.
 
        More notes on truncation failure: if this function allocated
        *dev and truncation fails then the device is deallocated and
@@ -14910,7 +14943,7 @@ extern "C" {
        Example:
 
        @code
-       whio_dev * d = NULL
+       whio_dev * d = NULL; // NEVER(!!!) use an uninitialized pointer!
        int rc = whio_epfs_dev_open( myfs, &d, 0, WHIO_MODE_RWC );
        if( rc ) { ... error ... }
        else {
@@ -14958,11 +14991,7 @@ extern "C" {
        - Calling whio_dev_ioctl(dev,...) with a second argument of
        whio_epfs_ioctl_HANDLE_PTR and a third argument of type
        (whio_epfs_HANDLE**) will set the 3rd argument to the pointer
-       to the handle associated with the device. NOTE that
-       handle->inode might not be the real inode entry used by the
-       handle (this happens when a handle is opened multiple times),
-       and thus the whio_epfs_dev_inode() should be used to fetch the
-       inode, if needed, instead of using handle->inode directly.
+       to the handle associated with the device.
 
        - Calling whio_dev_ioctl(dev,...) with a second argument of
        whio_dev_ioctl_GENERAL_size requires a 3rd (whio_size_t*)
@@ -15057,8 +15086,23 @@ extern "C" {
     whio_epfs_id_t whio_epfs_dev_inode_id( whio_dev const * d );
 
     /**
-       If dev was initialized via whio_epfs_dev_open() then its current
-       (unflushed) size is returned, else 0 is returned.
+       If dev was initialized via whio_epfs_dev_open() then its
+       current (unflushed) size is returned, else whio_rc.SizeTError
+       is returned.
+
+       As of 20110730, whio_dev_size() tries to determine the size via
+       ioctl before falling back to seek()ing, so this function is now
+       equivalent to whio_dev_size(), but is still a tick faster
+       because it avoids one levels function-call indirection.
+
+       This function is basically equivalent to:
+
+       @code
+       whio_size_t sz = 0;
+       whio_dev_ioctl( dev, whio_dev_ioctl_GENERAL_size, &sz );
+       @endcode
+
+       except for the different error-reporting mechanism.
     */
     whio_size_t whio_epfs_dev_size( whio_dev const * dev );
     
@@ -15079,8 +15123,11 @@ extern "C" {
        Returns non-NULL on success. Error conditions include:
 
        - !dev (whio_rc.ArgError).
+
        - dev is not-a EPFS inode i/o device (whio_rc.ArgError).
-       - dev is read-only (whio_rc.AccessError). Use whio_epfs_dev_inode_c() to fetch a read-only inode.
+
+       - dev is read-only (whio_rc.AccessError). Use
+       whio_epfs_dev_inode_c() to fetch a read-only inode.
 
        This routine is equivalent to the whio_epfs_ioctl_INODE_PTR
        ioctl, but is a bit faster.
@@ -15103,7 +15150,7 @@ extern "C" {
        to the current system time if (time==-1).
 
        The given time, if not -1, is assumed to be GMT time. (Why? Because
-       it can't seem to get the local-to-GMT conversion working properly,
+       i can't seem to get the local-to-GMT conversion working properly,
        or at lest not without indirectly malloc()ing for each timestamp
        update.)
 
@@ -15149,9 +15196,13 @@ extern "C" {
        inodes. They are stored in the EFS container along with the
        other inode metadata.
 
-       ACHTUNG: this function does not flush the device, and any
+       ACHTUNG #1: this function does not flush the device, and any
        changes to the flags will not be written to storage until dev
        is flushed (remember that closing it flushes it).
+
+       ACHTUNG #2: the mtime of the inode is not modified by this
+       function. Whether or not it should be is a philosophical
+       question.
        
        On success 0 is returned. Error conditions include:
 
@@ -15195,8 +15246,9 @@ extern "C" {
        - inodeID is out of bounds (whio_rc.RangeError).
 
        - inodeID is not currently used (whio_rc.RangeError). It is
-       arguable, however, as to whether this should qualify as
-       an error condition or be silently ignored.
+       arguable, however, as to whether this should qualify as an
+       error condition or be silently ignored. whio_rc.RangeError is
+       ambiguous for this case.
        
        - fs is opened read-only (whio_rc.AccessError).
        
@@ -15221,11 +15273,14 @@ extern "C" {
        to unlink by name. This can only work if fs has a namer
        installed.
 
-       Returns 0 on success (found an unlinked), non-zero on error.
+       Returns 0 on success (found and unlinked), non-zero on error.
        There are any number of underlying error cases, including (but
        not limited to) whio_rc.NotFoundError to whio_rc.AllocError to
        whio_rc.IOError. (An allocation error can _potentially_ occur
        within the underlying namer instance.)
+
+       See whio_epfs_unlink() for more information, in particular about
+       error conditions.
     */
     int whio_epfs_unlink_by_name( whio_epfs * fs,
                                   whio_epfs_namer_const_string name,
@@ -15268,7 +15323,7 @@ extern "C" {
        and going until one before the end position. (That is,
        begin/end measures an exclusive range in the form
        [begin,end)). For each entry forEach(fs,entry,forEachData) may
-       or may not be called, depending on the where parameter
+       or may not be called, depending on the 'where' parameter
        (described below). If forEach() returns any value other than 0
        then looping stops and that return code is returned.
 
