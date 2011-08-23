@@ -180,24 +180,26 @@ function testEPFS()
     assert( fs.close(), 'EPFS.close() appears to work.' );
     d = fs = null;
     
-    fs = new whio.EPFS(fname,false);
-    assert( fs instanceof whio.EPFS, 'is-a EPFS' );
+    if(1) { // re-open and read back some stuff...
+	fs = new whio.EPFS(fname,false);
+	assert( fs instanceof whio.EPFS, 'is-a EPFS' );
 
-    d = fs.open( pname, whio.iomode.READ );
-    assert( d instanceof whio.EPFS.PseudoFile, 'is-a PseudoFile' );
-    assert( d instanceof whio.IODev, 'is-a IODev' );
-    gotMsg = d.read( hiMsg.length, false );
-    asserteq( hiMsg, gotMsg );
-    assert( d.size() >= gotMsg.length, 'd.size() appears to work.' );
-    d.close();
+	d = fs.open( pname, whio.iomode.READ );
+	assert( d instanceof whio.EPFS.PseudoFile, 'is-a PseudoFile' );
+	assert( d instanceof whio.IODev, 'is-a IODev' );
+	gotMsg = d.read( hiMsg.length, false );
+	asserteq( hiMsg, gotMsg );
+	assert( d.size() >= gotMsg.length, 'd.size() appears to work.' );
+	d.close();
 
-    var gotInodeCount = 0;
-    fs.foreachInode( function(i) {
-                         print(JSON.stringify(i));
-                         ++gotInodeCount;
-                     });
-    asserteq( inodeCount, gotInodeCount, 'Inode count matches expectations.' );
-    fs.close();
+	var gotInodeCount = 0;
+	fs.foreachInode( function(i) {
+            print(JSON.stringify(i));
+            ++gotInodeCount;
+        });
+	asserteq( inodeCount, gotInodeCount, 'Inode count matches expectations.' );
+	fs.close();
+    }
 }
 
 function testByteArrayDev()

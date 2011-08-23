@@ -1,4 +1,4 @@
-/* auto-generated on Thu Aug 18 18:53:28 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 15:39:34 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -172,7 +172,7 @@ char * whprintf_str( char const * fmt, ... );
 #endif /* WANDERINGHORSE_NET_WHPRINTF_H_INCLUDED */
 /* end file include/wh/whprintf.h */
 /* begin file include/wh/whalloc_amalgamation.h */
-/* auto-generated on Sun Aug 14 17:35:54 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 09:55:32 CEST 2011. Do not edit! */
 #define WHALLOC_AMALGAMATION_BUILD 1
 #if ! defined __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS 1
@@ -356,7 +356,6 @@ extern "C" {
 #   define WHALLOC_MASK 0xffffffff
 #   define WHALLOC_SIZE_T_PFMT PRIu32
 #elif 64 == WHALLOC_BITNESS
-    //#   error "UNTESTED CODE!"
     typedef uint64_t WHALLOC_API(size_t);
 #   define WHALLOC_MASK ((WHALLOC_API(size_t))0xffffffffffffffff)
 #   define WHALLOC_SIZE_T_PFMT PRIu64
@@ -630,7 +629,7 @@ extern "C" {
            implemented, since free() can be implemented in terms of
            realloc().
         */
-        void (*free)(void *);
+        void (*free)();
     };
     /** Convenience typedef. */
     typedef struct WHALLOC_API(fallback) WHALLOC_API(fallback);
@@ -1753,10 +1752,9 @@ extern "C" {
 #elif 32 == WHALLOC_BITNESS
 #  define WHALLOC_ALIGN_MAX 4
 #elif 64 == WHALLOC_BITNESS
-    //#  error "UNTESTED CODE!"
 #  define WHALLOC_ALIGN_MAX 8
 #else
-#  error "WHALLOC_BITNESS must be one of (8,16,32)!"
+#  error "WHALLOC_BITNESS must be one of (8,16,32,64)!"
 #endif
 
 #endif /*WHALLOC_USE_ALIGN*/
@@ -1802,13 +1800,6 @@ extern "C" {
    to record record locking information, where we have to create
    and destroy arbitrary numbers of them.)
 
-   - A side-effect of the internal list reorganization (to help
-   guaranty good performance for allocation) is that allocations made
-   one after another are, in many cases, likely to live in different
-   areas of memory (in different allocator-internal pages), and thus
-   have poor locality of reference. If guaranteed good locality of
-   reference is critical for your application then this code is not
-   for you.
 */
 
 #ifdef __cplusplus
@@ -2382,80 +2373,6 @@ WHALLOC_API(book) * WHALLOC_API(book_open2)( uint16_t n, uint16_t chunkSize,
    memory!
 */
 void * WHALLOC_API(book_open_alloc_reuse)( void * m, unsigned int n, void * allocState );
-
-
-/**
-   Similar to WHALLOC_API(book_open)(), but this function uses src as
-   its allocator for de/re/allocating both the new book object and all
-   page allocations the book makes.
-
-   On success the caller owns the returned object and must eventually
-   free it using WHALLOC_API(book_close)().
-
-   The src object must outlive the returned object, or results are
-   undefined.
-
-   On error, NULL is returned.
-
-   Mutex notes:
-
-   The client may legally set the mutex member of the returned object
-   to their own mutex if they do so before concurrent access to the
-   returned book becomes possible. If the mutex is also used by the bt
-   object then the mutex MUST be recursion-capable.  If the shared
-   mutex is not capable of recursive locks then adding new pages to
-   the book may cause a deadlock (or a deadlock avoidance in the guise
-   of an out-of-memory error). A deadlock avoidance error is particularly
-   messy in deallocation, and can lead to a leak.
-
-   An optimization tip/hack for clients:
-
-   If src is to be used soley by the returned object, instead of being
-   shared for other purposes, it can be tweaked for optimal memory
-   sizing by setting it up to have the same memory block size as the
-   _allocated_ size of a WHALLOC_API(page) object (which depends on
-   their length and chunk size). This setup ensures as little waste as
-   possible in the memory pool (due to slack space) and better
-   performance because we are guaranteed that the underlying
-   de/allocation routines do not have to span blocks (which changes
-   them from O(1) to O(N*M), where N=blocks needed for the
-   de/allocation and M is a function of how fragmented the memory pool
-   is).
-   
-   @code
-   enum { objsPerPage = 10,
-          objSize = sizeof(MyType),
-          pageSize = WHALLOC_API_PAGE_CALC_SIZE( objsPerPage, objSize ),
-          PoolSize = pageSize * 5//=number of pages in pool
-   };
-   unsigned char mem[PoolSize];
-   WHALLOC_API(bt) bt = WHALLOC_API(bt_empty);
-   int rc = WHALLOC_API(bt_init)( &bt, mem, PoolSize, pageSize );
-   if( rc ) { ... error ... }
-   WHALLOC_API(book) * b =
-       WHALLOC_API(book_from_bt)( &bt, objsPerPage, objSize );
-   @endcode
-
-   HOWEVER: while this provides an optimal block size for the pages,
-   the book is also allocated from such a block. Thus sizing this way
-   causes the memory pool block used by the book itself to be way too
-   large (a book object much smaller than a page, strangely
-   enough). So some pool memory is wasted (in the form of slack space)
-   there.
-   
-   In that configuration, the pager will fail with out-of-memory
-   if the pool fills up and the book needs more memory. We can add
-   a "fallback plan" which uses the standard realloc(3) for all
-   de/re/allocation by adding the following line right after
-   WHALLOC_API(bt_init)():
-
-   @code
-   bt.base.fallback = whalloc_fallback_stdalloc;
-   @endcode
-*/
-WHALLOC_API(book) * WHALLOC_API(book_from_bt)( struct WHALLOC_API(bt) * src,
-                                               uint16_t pageLength,
-                                               uint16_t chunkSize );
 
     
 /**
@@ -6483,7 +6400,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Thu Aug 18 18:53:30 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 15:39:37 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12056,7 +11973,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Thu Aug 18 18:53:33 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 15:39:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12133,8 +12050,9 @@ entries of sizeof(whio_epfs_block) each.
 
     Experimental.
 
-    This will go away once the way the free-lists are reworked.
-    
+    This will probably go away. i am not sure if it might be needed
+    for some future changes.
+
     If WHIO_EPFS_CONFIG_AUTO_FLUSH_HINTS is a true value
     then certain inode and block operations which update
     internal FS hints will try to write such changes to
@@ -12157,10 +12075,10 @@ Caveats:
 actually be used.
 
 - Locking may or may not be implemented for any given back-end storage
-device.
+device. Only file-based storage supports these operations at all (if
+they're compile-time configured for it).
 */
-
-#define WHIO_EPFS_CONFIG_ENABLE_STORAGE_LOCKING (WHIO_CONFIG_USE_FCNTL ? 1 : 0)
+#define WHIO_EPFS_CONFIG_ENABLE_STORAGE_LOCKING ((WHIO_CONFIG_USE_FCNTL) ? 1 : 0)
 
 /** @def WHIO_EPFS_ID_T_BITS
 
@@ -12172,11 +12090,15 @@ Changing this value makes this copy of whio_epfs incompatible
 with copies using a different value.
 
 In general, an EFS may not have more than 2^WHIO_EPFS_ID_T_BITS
-inodes or blocks.
+inodes or blocks. The "real" limit is probably a few ticks
+lower than that.
 
-A value of 16 is a good compromise, allowing an EFS to contain 64k
-blocks and inodes (which is far larger than its envisioned usages call
-for).
+A value of 16 is a good compromise, allowing an EFS to contain up to
+64k blocks and/or inodes (which is far larger than its envisioned
+usages call for) while shaving a few bytes of memory compared to
+32-bit IDs.
+
+Changing this number changes the EFS signature.
 */
 #define WHIO_EPFS_ID_T_BITS 16
 
@@ -12239,15 +12161,7 @@ extern "C" {
         whose size is WHIO_EPFS_ID_T_BITS/8 bytes.
     */
 #if WHIO_EPFS_ID_T_BITS == 8
-    /*
-      For very, very limited filesystems. There's lots of room for
-      overflows here!  Completely untested!
-    */
-#  define WHIO_EPFS_ID_T_PFMT PRIu8
-#  define WHIO_EPFS_ID_T_PFMTX PRIx8
-#  define WHIO_EPFS_ID_T_SFMT SCNu8
-#  define WHIO_EPFS_ID_T_SFMTX SCNx8
-    typedef uint8_t whio_epfs_id_t;
+#  error "whio_epfs cannot work in 8-bit mode."
 #elif WHIO_EPFS_ID_T_BITS == 16
     /* the most realistic value, IMO. */
 #  define WHIO_EPFS_ID_T_PFMT PRIu16
@@ -12268,7 +12182,7 @@ extern "C" {
 #  define WHIO_EPFS_ID_T_SFMTX SCNx64
     typedef uint64_t whio_epfs_id_t;
 #else
-#  error "WHIO_EPFS_ID_T_BITS must be one of: 8, 16, 32, 64"
+#  error "WHIO_EPFS_ID_T_BITS must be one of: 16, 32, 64"
 #endif
 
 #if WHIO_EPFS_ID_T_BITS > WHIO_SIZE_T_BITS

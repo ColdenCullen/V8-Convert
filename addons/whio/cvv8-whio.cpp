@@ -863,6 +863,12 @@ namespace io {
             // MethodTo<InCa, const T, bool (), &T::isClosed>::Call )
             ("foreachInode",
              InCaToInCa< EPFS_ForEachInode >::Call)
+	  /* potential fixme: set fsOptions as an Object (not
+	     Function) right after construction. We don't want
+	     MethodTo<Getter> here because of the computational cost
+	     of the conversion (which i like to stress to the client
+	     by making him use a function.
+	  */
             ("fsOptions",
              MethodTo<InCa, const T, whio_epfs_fsopt const * (), &T::fsopt >::Call )
             ("hasNamer",

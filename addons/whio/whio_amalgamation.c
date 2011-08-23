@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Thu Aug 18 18:53:28 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 15:39:35 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1414,7 +1414,7 @@ char * whprintf_str( char const * fmt, ... )
 }
 /* end file src/whprintf.c */
 /* begin file src/whalloc_amalgamation.c */
-/* auto-generated on Sun Aug 14 17:35:54 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 09:55:32 CEST 2011. Do not edit! */
 /* begin file whalloc.c */
 #if !defined(__STDC_FORMAT_MACROS)
 #  define __STDC_FORMAT_MACROS 1 /* for PRIxNN specifiers*/
@@ -1460,9 +1460,9 @@ const WHALLOC_API(rc_t) WHALLOC_API(rc) =
     (WHALLOC_API(size_t))-1/*HashCodeError*/
     };
 
-typedef char my_static_assert[
-                              sizeof(uintptr_t) == sizeof(void*) ? 1 : -1
-                              ];
+typedef char static_assert[
+                           sizeof(uintptr_t) == sizeof(void*) ? 1 : -1
+                           ];
 
 const WHALLOC_API(mutex) WHALLOC_API(mutex_empty) = whalloc_mutex_empty_m;
 const WHALLOC_API(mutex) WHALLOC_API(mutex_trace) = whalloc_mutex_trace_m;
@@ -1537,7 +1537,11 @@ WHALLOC_API(size_t) whalloc_allocator_base_hash_offset( WHALLOC_API(allocator_ba
 #if 1
     return ( off >= self->usize )
         ? WHALLOC_API(rc).HashCodeError
-        : ((off/self->blockSize)&self->hashMask)
+        : (
+           (WHALLOC_API(size_t))((off/self->blockSize)
+                                 &self->hashMask)
+           )
+        
         ;
 #else
     return ((off)/self->blockSize) & self->hashMask;
@@ -1623,13 +1627,13 @@ const WHALLOC_API(bt) WHALLOC_API(bt_empty) = whalloc_bt_empty_m;
 #define BITMAP_BYTEOF(ARRAY,BIT) ((self->bits.ARRAY)[ BIT / 8 ])
 #define BITMAP_IS_USED(BIT) BYTES_GET(self->bits.usage,(BIT))
 #define BITMAP_SET_USAGE(BIT,VAL) ((VAL)?BYTES_SET(self->bits.usage,BIT):BYTES_UNSET(self->bits.usage,BIT))
-#define BITMAP_USE(BIT) BITMAP_SET_USAGE(BIT,1)
-#define BITMAP_UNUSE(BIT) BITMAP_SET_USAGE(BIT,0)
+#define BITMAP_USE(BIT) (void)BITMAP_SET_USAGE(BIT,1)
+#define BITMAP_UNUSE(BIT) (void)BITMAP_SET_USAGE(BIT,0)
 
 #define BITMAP_IS_LINKED(BIT) BYTES_GET(self->bits.links,(BIT))
 #define BITMAP_SET_LINK(BIT,VAL) ((VAL)?BYTES_SET(self->bits.links,BIT):BYTES_UNSET(self->bits.links,BIT))
-#define BITMAP_LINK(BIT) BITMAP_SET_LINK(BIT,1)
-#define BITMAP_UNLINK(BIT) BITMAP_SET_LINK(BIT,0)
+#define BITMAP_LINK(BIT) (void)BITMAP_SET_LINK(BIT,1)
+#define BITMAP_UNLINK(BIT) (void)BITMAP_SET_LINK(BIT,0)
 
 /**
    Clears the internal bits table. Returns 0 on success.
@@ -2301,7 +2305,7 @@ void *  WHALLOC_API(bt_realloc)( WHALLOC_API(bt) * const self, void * m, WHALLOC
         UNLOCK;
         return mem;
     } while(0);
-    if( ! re ) re = (unsigned char *)WHALLOC_API(bt_alloc_impl)( self, size, 0 );
+    if( ! re ) re = WHALLOC_API(bt_alloc_impl)( self, size, 0 );
     if( re && (mem != re) )
     {
         /*WHALLOC_API(size_t) end;*/
@@ -2398,13 +2402,13 @@ int WHALLOC_API(bt_drain)( WHALLOC_API(bt) * const self )
 
 int WHALLOC_API(bt_dump_debug)( WHALLOC_API(bt) const * const self, FILE * out )
 {
-    WHALLOC_API(size_t) at;
-    WHALLOC_API(size_t) pos;
-    WHALLOC_API(size_t) count;
+    WHALLOC_API(size_t) at = 0;
+    WHALLOC_API(size_t) pos = 0;
+    WHALLOC_API(size_t) count = 0;
     char isL;
     char isU;
     WHALLOC_API(size_t) inNode;
-    int rc;
+    int rc = 0;
     if( ! self ) return WHALLOC_API(rc).ArgError;
     LOCK_OR(WHALLOC_API(rc).LockingError);
 #define NUM "%"WHALLOC_SIZE_T_PFMT
@@ -2589,7 +2593,6 @@ const WHALLOC_API(ht) WHALLOC_API(ht_empty) = whalloc_ht_empty_m;
 #   define WHALLOC_LENGTH_BITS 31
 #   define WHALLOC_FLAG_MASK (0x01 << WHALLOC_LENGTH_BITS)
 #elif 64 == WHALLOC_BITNESS
-//#   error "UNTESTED CODE!"
 #   define WHALLOC_LENGTH_BITS 48
 #   define WHALLOC_FLAG_MASK (((uint64_t)0x01) << WHALLOC_LENGTH_BITS)
 #else
@@ -2749,7 +2752,6 @@ int WHALLOC_API(ht_init)( WHALLOC_API(ht) * const self,
             maxItems = (size / (blockSize+2))+2;
         }
 #else
-//#  error "Unhandled WHALLOC_BITNESS value!"
         if( (4 == blockSize) )
         {
             maxItems = (WHALLOC_API(size_t))((size_t)size/8)+2;
@@ -3255,9 +3257,9 @@ enum WHALLOC_PAGER_FLAGS
  Evaluates to 1 (if VAL) or 0. */
 #define CHUNK_SET_USAGE(P,BIT,VAL) ((VAL)?BYTES_SET((P)->flags,BIT):BYTES_UNSET((P)->flags,BIT))
 /* Sets the given chunk-as-used BIT in page P. Evaluates to 1.*/
-#define CHUNK_USE(P,BIT) CHUNK_SET_USAGE(P,BIT,1)
+#define CHUNK_USE(P,BIT) (void)CHUNK_SET_USAGE(P,BIT,1)
 /* Clears the given chunk-is-used BIT in page P. Evaluates to 0.*/
-#define CHUNK_UNUSE(P,BIT) CHUNK_SET_USAGE(P,BIT,0)
+#define CHUNK_UNUSE(P,BIT) (void)CHUNK_SET_USAGE(P,BIT,0)
 
 
 const WHALLOC_API(page) WHALLOC_API(page_empty) = {
@@ -3784,7 +3786,7 @@ void * WHALLOC_API(book_alloc)( WHALLOC_API(book) * b )
         }
         if( !rc )
         { /* (most likely) all pages were full */
-            p = WHALLOC_API(book_add_page)( b );
+            p = WHALLOC_API(book_add_page_impl)( b, 0 );
             if( ! p )
             { /* OOM. */
                 LOGBOOK(b,("Page allocation failed!\n"));
@@ -3977,25 +3979,6 @@ int WHALLOC_API(book_erase)( WHALLOC_API(book) * b, char alsoDeallocPages )
         BOOK_UNLOCK(b,1);
         return 0;
     }
-}
-
-
-WHALLOC_API(book) * WHALLOC_API(book_from_bt)( WHALLOC_API(bt) * src,
-                                               uint16_t pageLength,
-                                               uint16_t chunkSize )
-{
-
-    WHALLOC_API(book) * b = NULL;
-    WHALLOC_API(allocator) A = WHALLOC_API(allocator_empty);
-    if( ! src || ! pageLength || ! chunkSize ) return 0;
-    WHALLOC_API(bt_allocator)( src, &A );
-    b = WHALLOC_API(book_open2)( pageLength, chunkSize,
-                                 &A, &A );
-    if( b && src->base.mutex.lock)
-    {
-        b->mutex = src->base.mutex;
-    }
-    return b;
 }
 
 
@@ -8498,7 +8481,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Thu Aug 18 18:53:31 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 15:39:37 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15754,7 +15737,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Thu Aug 18 18:53:33 CEST 2011. Do not edit! */
+/* auto-generated on Tue Aug 23 15:39:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -16984,11 +16967,7 @@ extern "C" {
 /* end file pfs/whio_epfs_internal.h */
 /* begin file pfs/whio_epfs_block.c */
 /************************************************************************
-FAR FROM COMPLETE.
-
-This is a work-in-progress, porting over parts of the whefs API into
-the whio API...
-
+The 
 Author: Stephan Beal (http://wanderinghorse.net/home/stephan/)
 
 License: Public Domain
@@ -17128,35 +17107,32 @@ int whio_epfs_block_set_used( whio_epfs * fs, whio_epfs_block * bl, bool u )
     if( ! bl ) return whio_rc.ArgError;
     else
     {
-        if(u)
-        {
-            if( !(bl->flags & WHIO_EPFS_FLAG_IS_USED) )
+        bool const isUsed = bl->flags & WHIO_EPFS_FLAG_IS_USED;
+        if(u && !isUsed )
+        { /* mark unused flag as used. */
+            bl->flags |= WHIO_EPFS_FLAG_IS_USED;
+            if( fs->hints.freeBlockList == bl->id )
             {
-                bl->flags |= WHIO_EPFS_FLAG_IS_USED;
-                if( fs->hints.freeBlockList == bl->id )
-                {
-                    fs->hints.freeBlockList = bl->nextFree;
-                    bl->nextFree = 0;
-                }
+                fs->hints.freeBlockList = bl->nextFree;
+                bl->nextFree = 0;
             }
         }
-        else
-        {
-            if( bl->flags & WHIO_EPFS_FLAG_IS_USED )
+        else if( !u && isUsed )
+        { /* marking used block as unused. */
+            whio_epfs_id_t const id = bl->id;
+            if( bl->nextBlock )
             {
-                whio_epfs_id_t id = bl->id;
-                if( bl->nextBlock )
-                {
-                    WHIO_DEBUG("WARNING: un-using block %"WHIO_EPFS_ID_T_PFMT
-                               " while it still links to %"WHIO_EPFS_ID_T_PFMT"!\n",
-                               id, bl->nextBlock);
-                }
-                *bl = whio_epfs_block_empty;
-                bl->id = id;
-                bl->nextFree = fs->hints.freeBlockList;
-                fs->hints.freeBlockList = bl->id;
+                WHIO_DEBUG("WARNING: un-using block %"WHIO_EPFS_ID_T_PFMT
+                           " while it still links to %"WHIO_EPFS_ID_T_PFMT"!\n",
+                           id, bl->nextBlock);
+                assert( 0 && "Un-using block would cause it to orphan its neighbor." );
             }
+            *bl = whio_epfs_block_empty;
+            bl->id = id;
+            bl->nextFree = fs->hints.freeBlockList;
+            fs->hints.freeBlockList = bl->id;
         }
+        /* else it's a no-op. */
         return whio_rc.OK;
     }
 }
@@ -17172,6 +17148,7 @@ whio_size_t whio_epfs_block_encode( whio_epfs_block const * bl, unsigned char * 
     dest += whio_encode_uint8( dest, bl->flags );
     return whio_epfs_sizeof_blockMeta;
 }
+
 int whio_epfs_block_decode( whio_epfs_block * bl, unsigned char const * src )
 {
     unsigned char const * at = src;
@@ -17324,9 +17301,9 @@ int whio_epfs_block_wipe_data( whio_epfs * fs, whio_epfs_block * bl, whio_size_t
 }
 
 int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
-		      bool wipeData,
-		      bool wipeMeta,
-		      bool deep )
+                          bool wipeData,
+                          bool wipeMeta,
+                          bool deep )
 {
     if( ! whio_epfs_block_id_in_bounds( fs, bl ? bl->id : 0 ) ) return whio_rc.ArgError;
     else
@@ -17341,12 +17318,15 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
             {
                 if( whio_rc.OK != (rc = whio_epfs_block_read_next( fs, &xb, &next )) )
                 {
+                    /* reminder to self: we have no recovery strategy here. */
                     return rc;
                 }
                 xb = next;
                 next.nextBlock = 0; /* avoid that the next call recurses deeply while still honoring 'deep'. */
                 if( whio_rc.OK != (rc = whio_epfs_block_wipe( fs, &next, wipeData, wipeMeta, deep )) )
                 {
+                    /* reminder to self: we have no recovery strategy here. bl->nextBlock
+                       is now necessarily 0 but not flushed. */
                     return rc;
                 }
             }
@@ -17357,6 +17337,7 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
             if( ! deep && bl->nextBlock )
             {
                 WHIO_DEBUG("Warning: we're cleaning up the metadata without cleaning up children! We're losing blocks!\n");
+                assert( 0 && "Would orphan storage blocks." );
             }
             *bl = whio_epfs_block_empty;
             bl->id = oid;
@@ -18890,7 +18871,8 @@ static whio_size_t whio_epfs_inode_iodev_read_impl( whio_dev * dev,
             whio_size_t sz;
             if(0)
             {
-                WHIO_DEBUG("inode #%"WHIO_EPFS_ID_T_PFMT" will be using block #%"WHIO_EPFS_ID_T_PFMT" for a read at pos %"WHIO_SIZE_T_PFMT"\n",
+                WHIO_DEBUG("inode #%"WHIO_EPFS_ID_T_PFMT" will be using block "
+                           "#%"WHIO_EPFS_ID_T_PFMT" for a read at pos %"WHIO_SIZE_T_PFMT"\n",
                            m->ino->id, block.id, m->h->cursor );
             }
             if( m->h->cursor >= m->ino->size ) return 0;
@@ -18901,6 +18883,13 @@ static whio_size_t whio_epfs_inode_iodev_read_impl( whio_dev * dev,
             if( (rdlen + m->h->cursor) >= m->ino->size )
             {
                 rdlen = m->ino->size - m->h->cursor;
+            }
+            if( (rdlen + m->h->cursor) < m->h->cursor )
+            { /* we risk numeric overflow. */
+                WHIO_DEBUG("Numeric overflow would occur via read "
+                           "(pos=%"WHIO_SIZE_T_PFMT" + readLength=%"WHIO_SIZE_T_PFMT") "
+                           "= overflow\n", m->h->cursor, rdlen );
+                return 0;
             }
             /*WHIO_DEBUG("rdpos=%u left=%u bdpos=%u rdlen=%u\n", rdpos, left, bdpos, rdlen ); */
             sz = whio_epfs_readat( m->h->fs, bdpos + rdpos, dest, rdlen );
@@ -18915,7 +18904,8 @@ static whio_size_t whio_epfs_inode_iodev_read_impl( whio_dev * dev,
                 else
                 {
                     WHIO_DEBUG("Numeric overflow in read! (pos=%"WHIO_SIZE_T_PFMT" + readLength=%"WHIO_SIZE_T_PFMT") = overflow\n", m->h->cursor, sz );
-                    return 0;
+                    assert( 0 && "Numeric overflow." );
+                    return sz;
                 }
                 /*whefs_block_flush( m->h->fs, &block ); */
                 if(0)
@@ -18928,18 +18918,11 @@ static whio_size_t whio_epfs_inode_iodev_read_impl( whio_dev * dev,
                                bdpos, rdpos, m->h->cursor, m->ino->size );
                 }
                 if( sz < rdlen )
-                { /* short write! */
+                { /* short read! */
                     return sz;
                 }
-                else if( rdlen < n )
-                { /* Wrap to next block and continue... */
-                    *keepGoing = true;
-                    return sz;
-                }
-                else
-                { /* got the exact right amount */
-                    return sz;
-                }
+                if( rdlen < n ) *keepGoing = true /* Wrap to next block and continue... */;
+                return sz;
             }
         }
     }
@@ -18993,9 +18976,12 @@ static whio_size_t whio_epfs_inode_iodev_write_impl( whio_dev * dev,
         const whio_size_t left = m->bs - wpos;
         const whio_size_t bdpos = whio_epfs_block_data_pos( m->h->fs, block.id );
         const whio_size_t wlen = ( n > left ) ? left : n;
-        whio_size_t sz = whio_epfs_writeat( m->h->fs, bdpos+wpos, src, wlen );
+        whio_size_t const sz = whio_epfs_writeat( m->h->fs, bdpos+wpos, src, wlen );
         /*WHIO_DEBUG("wpos=%u left=%u bdpos=%u wlen=%u\n\n", wpos, left, bdpos, wlen ); */
-        if( wlen != sz ) return sz;
+        if( wlen != sz )
+        {
+            return sz;
+        }
         else
         {
             whio_size_t szCheck = m->h->cursor + sz;
@@ -19017,19 +19003,8 @@ static whio_size_t whio_epfs_inode_iodev_write_impl( whio_dev * dev,
                              m->ino->id, block.id,
                              bdpos, wpos, m->h->cursor, m->ino->size );
 #endif
-            if( sz < wlen )
-            { /* short write! */
-                return sz;
-            }
-            else if( wlen < n )
-            { /* Wrap to next block and continue... */
-                *keepGoing = true;
-                return sz;
-            }
-            else
-            {
-                return sz;
-            }
+            if( wlen < n ) *keepGoing = true;
+            return sz;
         }
     }
 }
@@ -22098,7 +22073,15 @@ static void whio_epfs_namer_array_free( whio_epfs_namer * self )
 
 int whio_epfs_namer_array_register()
 {
-    return whio_epfs_namer_reg_add( &ArrayNamerReg );
+    static const whio_epfs_namer_reg ArrayNamerReg2 = {
+    &whio_epfs_namer_api_array,
+    whio_epfs_namer_array_alloc,
+    whio_epfs_namer_array_free,
+    {'a','r','r','a','y',0},
+    };
+    int rc = whio_epfs_namer_reg_add( &ArrayNamerReg );
+    if( 0 == rc ) rc = whio_epfs_namer_reg_add( &ArrayNamerReg2 );
+    return rc;
 }
 /* end file pfs/whio_epfs_namer_array.c */
 /* begin file pfs/whio_epfs_namer_ht.c */
