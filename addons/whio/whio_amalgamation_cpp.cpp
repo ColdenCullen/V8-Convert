@@ -1,4 +1,4 @@
-/* auto-generated on Fri Aug 26 19:10:42 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:42 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1126,7 +1126,7 @@ namespace whio {
         {
             o.maxBlocks = 0;
             o.blockSize = 1024 * 16;
-            o.inodeCount = 512;
+            o.inodeCount = 128;
         }
         return &o;
     }

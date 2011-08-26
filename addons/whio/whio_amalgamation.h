@@ -1,4 +1,4 @@
-/* auto-generated on Fri Aug 26 19:10:39 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6408,7 +6408,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12020,7 +12020,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12161,14 +12161,22 @@ Changing this number changes the EFS signature.
 /**
    WHIO_CONFIG_ENABLE_MMAP is HIGHLY EXPERIMENTAL! DO NOT USE!
 
-   In my basic tests mmap() is giving us no performance at all,
-   and in fact costs us a small handful of seek()s, _unless_ we enable
-   async mode. When async mmap mode is enabled, it's _much_ faster
-   (about 2.5x in my over-simplified tests).
+   In my basic tests mmap() is giving us no performance at all, and in
+   fact costs us a small handful of seek()s, _unless_ we enable async
+   mode. When async mmap mode is enabled, it's _much_ faster (about
+   2.5x in my over-simplified tests) IF the whio_epfs internals do
+   "extra" (superflous) flushing of the storage.  If the internals do
+   not do "extraneous" flushes then memmap provides unerwhelmingly
+   little benefit (_roughly_ up to 50% in my simple tests). Possibly
+   not enough to be worth the extra code.
 
    In read-only mode mmap() is not used because profiling showed
    it to actually cost performance (apparenly due to duplicate
    copying of data from storage to mmap, then to us).
+
+   This support requires an unduly large amount of code to coddle
+   mmap() (largely because the size of the EFS can change), and is
+   subject to removal at some point.
 */
 #define WHIO_CONFIG_ENABLE_MMAP 0
 #define WHIO_CONFIG_ENABLE_MMAP_ASYNC 0
@@ -12209,7 +12217,15 @@ extern "C" {
         whose size is WHIO_EPFS_ID_T_BITS/8 bytes.
     */
 #if WHIO_EPFS_ID_T_BITS == 8
-#  error "whio_epfs cannot work in 8-bit mode."
+    /*
+      For very, very limited filesystems. There's lots of room for
+      overflows here!  Completely untested!
+    */
+#  define WHIO_EPFS_ID_T_PFMT PRIu8
+#  define WHIO_EPFS_ID_T_PFMTX PRIx8
+#  define WHIO_EPFS_ID_T_SFMT SCNu8 /*C89 does not have %hh*/
+#  define WHIO_EPFS_ID_T_SFMTX SCNx8
+    typedef uint8_t whio_epfs_id_t;
 #elif WHIO_EPFS_ID_T_BITS == 16
     /* the most realistic value, IMO. */
 #  define WHIO_EPFS_ID_T_PFMT PRIu16
@@ -15712,8 +15728,8 @@ extern "C" {
 
        Constrast with whio_epfs_block_count_for_pos().
     */
-    whio_size_t whio_epfs_block_count_for_size( whio_size_t blockSize,
-                                                whio_size_t sz );
+    whio_epfs_id_t whio_epfs_block_count_for_size( whio_size_t blockSize,
+                                                   whio_size_t sz );
 
     
     

@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Fri Aug 26 19:10:39 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8485,7 +8485,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15764,7 +15764,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 20:59:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -17628,16 +17628,16 @@ int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_
 whio_size_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
                                            whio_size_t pos )
 {
-    return 1 + (pos/blockSize); 
+    return 1 + (pos/blockSize);
 }
 
-whio_size_t whio_epfs_block_count_for_size( whio_size_t blockSize,
-                                            whio_size_t sz )
+whio_epfs_id_t whio_epfs_block_count_for_size( whio_size_t blockSize,
+                                               whio_size_t sz )
 {
-    whio_size_t x;
+    whio_epfs_id_t x;
     return !sz
         ? 0
-        : (x = (sz/blockSize),((blockSize % sz) ? (1+x) : x))
+        : (x = (sz/blockSize),((!x || (sz % blockSize)) ? (1+x) : x))
         ;
 }
 
@@ -17689,13 +17689,12 @@ int whio_epfs_block_for_pos( whio_epfs * fs,
                 {
                     return whio_rc.AccessError;
                 }
+                rc = whio_epfs_block_list_reserve( fs, bli, bc );
+                if( rc ) return rc;
                 i = bli->count;
                 blP = &bl;
                 for( ; i < bc; ++i )
                 {
-                    /* FIXME: reserve enough space in bli before this loop,
-                       to avoid potentially more mallocs.
-                    */
                     rc = whio_epfs_block_next_free( fs, &bl, true );
                     if( ! rc ) rc = whio_epfs_block_list_append( fs, bli, &bl );
                     if( !rc && !ino->firstBlock )
@@ -19143,9 +19142,13 @@ static int whio_epfs_inode_iodev_flush( whio_dev * dev )
     if( !(WHIO_MODE_WRITE & m->h->iomode) ) return whio_rc.AccessError;
     /* FIXME: only flush if the inode has changed since last time.
        To know that we need to store yet another copy of it and
-       update that copy in write(). */
+       update that copy in write().
+
+       We need the following info for purposes of "has it changed?":
+       mtime, size, firstBlock
+    */
     whio_epfs_inode_flush( m->h->fs, m->ino );
-    /*whio_epfs_flush( m->h->fs ); HOLY COW! Having this here cuts performance a lot! */
+    /*whio_epfs_flush( m->h->fs ); HOLY COW! Having this here cuts performance A LOT! */
     return 0;
 }
 
@@ -19172,10 +19175,10 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                 int rc = whio_epfs_block_read( m->h->fs, m->ino->firstBlock, &block ); /* ensure we pick up whole block chain */
                 if( 0 == rc )
                 {
-                    rc = whio_epfs_block_wipe( m->h->fs, &block, true, true, true );
+                    rc = whio_epfs_block_wipe( m->h->fs, &block, false, true, true );
                 }
 #else
-                int rc = whio_epfs_block_wipe( m->h->fs, &m->ino->blocks.list[0], true, true, true );
+                int rc = whio_epfs_block_wipe( m->h->fs, &m->ino->blocks.list[0], false, true, true );
 #endif
                 if( whio_rc.OK != rc ) return rc;
             }
@@ -19188,9 +19191,10 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
         else
         {
             /* Now hold on and enjoy the ride... */
+            const whio_size_t bs = m->h->fs->fsopt.blockSize;
+            whio_epfs_block bl = whio_epfs_block_empty;
+            whio_size_t const newBlockCount = whio_epfs_block_count_for_size(bs,off);
             int rc = whio_rc.OK;
-            /*const size_t oldSize = off>m->ino->size; */
-
             const short dir = (off < m->ino->size)
                 ? -1
                 : ((off>m->ino->size) ? 1 : 0)
@@ -19201,9 +19205,18 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                 ;
             assert( (0 != off) && "This shouldn't be able to happen!" );
 
-            /* Update inode metadata... */
             /*WHEFS_DBG("truncating from %u to %u bytes\n",m->ino->size, off); */
-            m->ino->size = off;
+            /* Update inode and block metadata info... */
+            rc = whio_epfs_block_for_pos( m->h->fs, m->ino, off, &bl, (dir>0) );
+            if( whio_rc.OK != rc )
+            {
+                WHIO_DEBUG("Could not get block for write position %"WHIO_SIZE_T_PFMT
+                           " of inode #%"WHIO_EPFS_ID_T_PFMT". Error code=%d.\n",
+                           off, m->ino->id, rc );
+                return rc;
+            }
+            m->ino->size = off /* maintenace reminder: do not change this until
+                                  after block-for-pos is called. */;
             rc = whio_epfs_inode_flush( m->h->fs, m->ino );
             if( whio_rc.OK != rc )
             {
@@ -19211,108 +19224,93 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                            m->ino->id, rc );
                 return rc;
             }
-            else
-            {
-                /* Update block info... */
-                whio_epfs_block bl = whio_epfs_block_empty;
-                rc = whio_epfs_block_for_pos( m->h->fs,
-                                              m->ino,
-                                              off, &bl, true );
-                if( whio_rc.OK != rc )
-                {
-                    WHIO_DEBUG("Could not get block for write position %"WHIO_SIZE_T_PFMT
-                               " of inode #%"WHIO_EPFS_ID_T_PFMT". Error code=%d.\n",
-                               off, m->ino->id, rc );
-                    return rc;
-                }
-                if( dir < 0 )
-                { /* we shrunk */
+            else if( dir < 0 )
+            { /* we shrunk */
 #if 0
-                    /*
-                      We'll be nice and zero the remaining bytes... We do this
-                      partially for consistency with how blocks will get removed
-                      (they get wiped as well).  Theoretically we don't need this
-                      because they get wiped when created and when unlinked, but a
-                      failed unlink could leave data lying around, so we clean it
-                      here. Maybe we should consider a 'dirty' flag for blocks,
-                      wiping only dirty blocks, but that could get messy (no pun
-                      intended).
-                    */
-                    const uint32_t bs = whio_epfs_options( m->h->fs )->blockSize;
-                    rc = whio_epfs_block_wipe_data( m->h->fs, &bl, ( off % bs ) );
-                    if( whio_rc.OK != rc ) return rc;
+                /*
+                  We'll be nice and zero the remaining bytes... We do this
+                  partially for consistency with how blocks will get removed
+                  (they get wiped as well).  Theoretically we don't need this
+                  because they get wiped when created and when unlinked, but a
+                  failed unlink could leave data lying around, so we clean it
+                  here. Maybe we should consider a 'dirty' flag for blocks,
+                  wiping only dirty blocks, but that could get messy (no pun
+                  intended).
+                */
+                rc = whio_epfs_block_wipe_data( m->h->fs, &bl, ( off % bs ) );
+                if( whio_rc.OK != rc ) return rc;
 #endif
-                    if( ! bl.nextBlock )
-                    { /* Lucky for us! No more work to do! */
-                        m->ino->blocks.count = 1;
-                        return whio_rc.OK;
-                    }
-                    else
-                    {
-                        whio_epfs_block * blP = &m->ino->blocks.list[0];
-                        whio_epfs_block * nblP = blP + 1;
-                        uint32_t x = 1;
-                        for( ; (x < m->ino->blocks.count)
-                                 && (nblP->id != bl.nextBlock)
-                                 ; ++nblP, ++x )
-                        {
-                            /* Skip to bl.nextBlock */
-                        }
-                        if( (x == m->ino->blocks.count) || (nblP->id != bl.nextBlock) )
-                        {
-                            WHIO_DEBUG("nblP->id=%"WHIO_EPFS_ID_T_PFMT
-                                       ", bl.next_block=%"WHIO_EPFS_ID_T_PFMT"\n",
-                                       nblP->id, bl.nextBlock );
-                            WHIO_DEBUG("Internal block cache for inode #%"WHIO_EPFS_ID_T_PFMT
-                                       " is not as "
-                                       "long as we expect it to be or it is missing entries!\n",
-                                       m->ino->id );
-                            assert( 0 && "Unexpected inode block cache length." );
-                            return whio_rc.InternalError;
-                        }
-                        blP = nblP - 1;
-                        m->ino->blocks.count = x;
-                        whio_epfs_block_wipe( m->h->fs, nblP, true, true, true );
-                        blP->nextBlock = 0;
-                        return whio_epfs_block_flush( m->h->fs, blP );
-                    }
-                }
-                else if( dir > 0 )
-                { /* we grew - fill the new bytes with zeroes */
-                    /*
-                      Actually... since we zero these when shrinking and during mkfs(),
-                      we probably don't need to do this.
-                    */
-                    enum { bufSize = 1024 * 4 };
-                    unsigned char buf[bufSize];
-                    const whio_size_t PosAbs = m->h->cursor;
-                    const whio_size_t orig = m->ino->size;
-                    const whio_size_t dest = off;
-                    whio_size_t wlen = dest - orig;
-                    whio_size_t iorc = 0;
-                    whio_size_t wsz = 0;
-                    memset( buf, 0, bufSize );
-                    dev->api->seek( dev, orig, SEEK_SET );
-                    do
-                    {
-                        wsz = (wlen < bufSize) ? wlen : bufSize;
-                        iorc = dev->api->write( dev, buf, wsz );
-                        wlen -= iorc;
-                    }
-                    while( iorc && (iorc == wsz) );
-                    iorc = dev->api->seek( dev, PosAbs, SEEK_SET );
-                    return (iorc == PosAbs)
-                        ? whio_rc.OK
-                        : whio_rc.IOError;
+                if( ! bl.nextBlock )
+                { /* Lucky for us! No more work to do! */
+                    assert( m->ino->blocks.count >= newBlockCount );
+                    m->ino->blocks.count = newBlockCount;
+                    return whio_rc.OK;
                 }
                 else
-                {
-                    /* cannot happen due to special-case handling of truncate(0), above. */
-                    assert( 0 && "This is impossible!" );
+                { /* chop off any unneeded blocks ... */
+                    whio_epfs_block * blP;
+                    whio_epfs_block * nblP;
+                    assert( newBlockCount >= 1 );
+                    blP = &m->ino->blocks.list[newBlockCount-1];
+                    assert( blP->id == bl.id );
+                    nblP = &m->ino->blocks.list[newBlockCount];
+                    if( (nblP->id != bl.nextBlock) )
+                    {
+                        WHIO_DEBUG("nblP->id=%"WHIO_EPFS_ID_T_PFMT
+                                   ", bl.next_block=%"WHIO_EPFS_ID_T_PFMT"\n",
+                                   nblP->id, bl.nextBlock );
+                        WHIO_DEBUG("Internal block cache for inode #%"WHIO_EPFS_ID_T_PFMT
+                                   " is not as "
+                                   "long as we expect it to be or it is missing entries!\n",
+                                   m->ino->id );
+                        assert( 0 && "Unexpected inode block cache length/make-up." );
+                        return whio_rc.InternalError;
+                    }
+                    blP = nblP - 1;
+                    m->ino->blocks.count = newBlockCount;
+                    assert( m->ino->blocks.count <= m->ino->blocks.alloced );
+                    blP->nextBlock = 0;
+                    /* FIXME? Wipe blP's data slack space? */
+                    /* FIXME: zero-out m->ino->blocks.list entries >= newBlockCount */
+                    rc = whio_epfs_block_wipe( m->h->fs, nblP, false/*data*/, true/*meta*/, true/*deep*/ );
+                    if(0 == rc) rc = whio_epfs_block_flush( m->h->fs, blP );
+                    return rc;
                 }
-                WHIO_DEBUG("You should never have gotten to this line!");
-                return whio_rc.InternalError;
             }
+            else if( dir > 0 )
+            { /* we grew - fill the new bytes with zeroes.
+                 
+              FIXME: use whio_epfs_block_wipe_data()
+              */
+                enum { bufSize = 1024 * 4 };
+                unsigned char buf[bufSize];
+                const whio_size_t PosAbs = m->h->cursor;
+                const whio_size_t orig = m->ino->size;
+                const whio_size_t dest = off;
+                whio_size_t wlen = dest - orig;
+                whio_size_t iorc = 0;
+                whio_size_t wsz = 0;
+                memset( buf, 0, bufSize );
+                dev->api->seek( dev, orig, SEEK_SET );
+                do
+                {
+                    wsz = (wlen < bufSize) ? wlen : bufSize;
+                    iorc = dev->api->write( dev, buf, wsz );
+                    wlen -= iorc;
+                }
+                while( iorc && (iorc == wsz) );
+                iorc = dev->api->seek( dev, PosAbs, SEEK_SET );
+                return (iorc == PosAbs)
+                    ? whio_rc.OK
+                    : whio_rc.IOError;
+            }
+            else
+            {
+                /* cannot happen due to special-case handling of truncate(0), above. */
+                assert( 0 && "This is impossible!" );
+            }
+            WHIO_DEBUG("You should never have gotten to this line!");
+            return whio_rc.InternalError;
         }
     }
 }
