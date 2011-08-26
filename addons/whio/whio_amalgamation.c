@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Tue Aug 23 15:39:35 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 19:10:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -7847,7 +7847,11 @@ static int whio_dev_subdev_ioctl( whio_dev * dev, int arg, va_list vargs )
 static bool whio_dev_subdev_close( whio_dev * dev )
 {
     WHIO_subdev_DECL(false);
+#if 0 /* flushing the parent here causes too many lifetime- and
+         mutex-related issues in practice.
+      */
     dev->api->flush(dev);
+#endif
     if( dev->client.dtor ) dev->client.dtor( dev->client.data );
     dev->client = whio_client_data_empty;
     *sub = whio_dev_subdev_meta_empty;
@@ -8481,7 +8485,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Tue Aug 23 15:39:37 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -9076,10 +9080,6 @@ int whio_decode_cstring( unsigned char const * src, char ** tgt, whio_size_t * l
     }
 }
 
-/**
-   tag byte for encoded whio_id_type objects.
-*/
-static const unsigned int whio_size_t_tag_char = 0x08 | 'p';
 whio_size_t whio_encode_size_t( unsigned char * dest, whio_size_t v )
 {
 #if WHIO_SIZE_T_BITS == 64
@@ -9095,6 +9095,7 @@ whio_size_t whio_encode_size_t( unsigned char * dest, whio_size_t v )
 #endif
 }
 
+
 int whio_decode_size_t( unsigned char const * src, whio_size_t * v )
 {
 #if WHIO_SIZE_T_BITS == 64
@@ -9107,6 +9108,32 @@ int whio_decode_size_t( unsigned char const * src, whio_size_t * v )
     return whio_decode_uint8( src, v );
 #else
 #error "whio_size_t is not a supported type!"
+#endif
+}
+
+whio_size_t whio_encode_off_t( unsigned char * dest, whio_off_t v )
+{
+#if (WHIO_SIZE_T_BITS == 64) || (WHIO_SIZE_T_BITS == 32)
+    return whio_encode_int64( dest, v );
+#elif WHIO_SIZE_T_BITS == 16
+    return whio_encode_int32( dest, v );
+#elif WHIO_SIZE_T_BITS == 8
+    return whio_encode_int16( dest, v );
+#else
+#error "whio_size_t size (WHIO_SIZE_T_BITS) is not supported!"
+#endif
+}
+
+int whio_decode_off_t( unsigned char const * src, whio_off_t * v )
+{
+#if (WHIO_SIZE_T_BITS == 64) || (WHIO_SIZE_T_BITS == 32)
+    return whio_decode_int64( src, v );
+#elif WHIO_SIZE_T_BITS == 16
+    return whio_decode_int32( src, v );
+#elif WHIO_SIZE_T_BITS == 8
+    return whio_decode_int16( src, v );
+#else
+#error "whio_off_t/WHIO_SIZE_T_BITS combination not supported!"
 #endif
 }
 
@@ -15737,7 +15764,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Tue Aug 23 15:39:39 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -17059,7 +17086,32 @@ int whio_epfs_block_list_append( whio_epfs * fs, whio_epfs_block_list * bli, whi
             ;
         if( bli->alloced <= bli->count )
         {
-            rc = whio_epfs_block_list_reserve( fs, bli, bli->count + allocIncrement );
+            const whio_epfs_id_t newCount = bli->count + allocIncrement;
+            if( newCount < bli->count )
+            { /* suspecting numeric overflow.
+
+              We can reproduce this with:
+
+              ~> whio-epfs-mkfs --force -i5 -c0 -b1024 my.epfs
+              ~> whio-epfs-cp my.epfs my.epfs
+
+               which will try to copy the EFS into itself, which is
+               doomed to failure. It will fail once the block count
+               allocation overflows the numeric bounds of
+               whio_epfs_id_t. If we do not catch that here, it leads
+               to undefined behaviour (it appeared to me in the form
+               of a segfault) when we append and end up with
+               (bli->count>bli->alloced).
+
+               WITH this check, this bit still fails but downstream
+               code can normally recover and the above use case fails
+               halfway gracefully (doesn't immediately corrupt
+               anything, just blows the EFS up to 63MB and a boatload
+               of unallocated blocks).
+              */
+                return whio_rc.RangeError;
+            }
+            rc = whio_epfs_block_list_reserve( fs, bli, newCount );
             if( whio_rc.OK != rc ) return rc;
         }
         bli->list[bli->count] = *bl;
@@ -18858,7 +18910,8 @@ static whio_size_t whio_epfs_inode_iodev_read_impl( whio_dev * dev,
                                       m->h->cursor, &block, false );
         if( whio_rc.OK != rc )
         {
-            WHIO_DEBUG("Error #%d getting block for m->h->cursor=%u. n=%"WHIO_SIZE_T_PFMT", bs=%"WHIO_SIZE_T_PFMT"\n",
+            WHIO_DEBUG("Error #%d getting block for m->h->cursor=%"WHIO_SIZE_T_PFMT
+                       ". n=%"WHIO_SIZE_T_PFMT", bs=%"WHIO_SIZE_T_PFMT"\n",
                        rc, m->h->cursor, n, m->h->fs->fsopt.blockSize );
             return 0;
         }
@@ -18967,7 +19020,8 @@ static whio_size_t whio_epfs_inode_iodev_write_impl( whio_dev * dev,
                                   m->h->cursor, &block, true );
     if( whio_rc.OK != rc )
     {
-        WHIO_DEBUG("Error #%d getting block for m->h->cursor==%u\n\n", rc, m->h->cursor );
+        WHIO_DEBUG("Error #%d getting block for m->h->cursor==%"WHIO_SIZE_T_PFMT
+                   "\n\n", rc, m->h->cursor );
         return 0;
     }
     else
@@ -19091,7 +19145,7 @@ static int whio_epfs_inode_iodev_flush( whio_dev * dev )
        To know that we need to store yet another copy of it and
        update that copy in write(). */
     whio_epfs_inode_flush( m->h->fs, m->ino );
-    whio_epfs_flush( m->h->fs );
+    /*whio_epfs_flush( m->h->fs ); HOLY COW! Having this here cuts performance a lot! */
     return 0;
 }
 
@@ -19166,7 +19220,8 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                                               off, &bl, true );
                 if( whio_rc.OK != rc )
                 {
-                    WHIO_DEBUG("Could not get block for write position %u of inode #%u. Error code=%d.\n",
+                    WHIO_DEBUG("Could not get block for write position %"WHIO_SIZE_T_PFMT
+                               " of inode #%"WHIO_EPFS_ID_T_PFMT". Error code=%d.\n",
                                off, m->ino->id, rc );
                     return rc;
                 }
@@ -19205,10 +19260,14 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                         }
                         if( (x == m->ino->blocks.count) || (nblP->id != bl.nextBlock) )
                         {
-                            WHIO_DEBUG("nblP->id=%u, bl.next_block=%u\n", nblP->id, bl.nextBlock );
-                            WHIO_DEBUG("Internal block cache for inode #%u is not as "
-                                       "long as we expect it to be or is missing entries!\n",
+                            WHIO_DEBUG("nblP->id=%"WHIO_EPFS_ID_T_PFMT
+                                       ", bl.next_block=%"WHIO_EPFS_ID_T_PFMT"\n",
+                                       nblP->id, bl.nextBlock );
+                            WHIO_DEBUG("Internal block cache for inode #%"WHIO_EPFS_ID_T_PFMT
+                                       " is not as "
+                                       "long as we expect it to be or it is missing entries!\n",
                                        m->ino->id );
+                            assert( 0 && "Unexpected inode block cache length." );
                             return whio_rc.InternalError;
                         }
                         blP = nblP - 1;

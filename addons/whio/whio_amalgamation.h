@@ -1,4 +1,4 @@
-/* auto-generated on Tue Aug 23 15:39:34 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 19:10:39 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -5599,13 +5599,13 @@ extern const whio_dev_api whio_dev_api_membuf;
    the value returned from tell() or seek() will be relative to the
    subdevice. FIXME: the SEEK_END behaviour is arguably broken in
    combination with unbounded subdevices (upperBound==0) which are
-   themselves not at the end of a device chain.  i.e. a subdevice
-   laying before another subdevice in the same parent will have wrong
-   results for SEEK_END. Then again, such a use case is fundamentally
-   broken if the user is expanding the first subdevice in the chain,
-   overflowing into another device. But we also potentially have a
-   problem here if the parent device itself is an unbounded subdevice.
-   Hmmm.
+   themselves not at the end of a device chain.  i.e. an unbounded
+   subdevice laying before another subdevice in the same parent will
+   arguably have "wrong" results for SEEK_END. Then again, such a use
+   case is fundamentally broken if the user is expanding the first
+   subdevice in the chain, overflowing into another device. But we
+   also potentially have a problem here if the parent device itself is
+   an unbounded subdevice.  Hmmm.
 
    - truncate() is very limited. If the given size is less than its
    upper bounds, or if its upper bounds are unlimited, then it returns
@@ -5617,6 +5617,14 @@ extern const whio_dev_api whio_dev_api_membuf;
    - Some calls (e.g. flush(), clear_error()) are simply passed on to
    the parent device. Though it is not philosophically/pedantically
    correct to do so in all cases.
+
+   - close() does not, contrary to normal conventions, flush() the
+   device because in practice this causes lifetime- and mutex-related
+   issues. Because all writes are proxied to a parent, and the parent
+   must outlive this device, it is assumed that flush()ing on the
+   parent will happen properly through its normal lifetime.  (Before
+   20110826 subdevices _did_ flush the parent but this was not
+   explicitly documented.)
 
    - iomode() returns the same as the parent device does.
 
@@ -6400,7 +6408,7 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Tue Aug 23 15:39:37 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6579,6 +6587,25 @@ whio_sizeof_encoded_size_t =
 #error "WHIO_SIZE_T_BITS is not a supported value. Try one of (8,16,32,64)!"
 #endif
 ,
+
+/**
+   The encoded size of a whio_off_t object. Its size depends
+   on the value of WHIO_SIZE_T_BITS.
+*/
+whio_sizeof_encoded_off_t =
+#if WHIO_SIZE_T_BITS == 64
+    whio_sizeof_encoded_uint64
+#elif WHIO_SIZE_T_BITS == 32
+    whio_sizeof_encoded_uint64
+#elif WHIO_SIZE_T_BITS == 16
+    whio_sizeof_encoded_uint32
+#elif WHIO_SIZE_T_BITS == 8
+    whio_sizeof_encoded_uint16
+#else
+#error "WHIO_SIZE_T_BITS is not a supported value. Try one of (8,16,32,64)!"
+#endif
+,
+
 /**
  */
 whio_sizeof_encode_pack_overhead = (1 + whio_sizeof_encoded_uint8)
@@ -6711,8 +6738,28 @@ whio_size_t whio_encode_size_t( unsigned char * dest, whio_size_t v );
 */
 int whio_decode_size_t( unsigned char const * src, whio_size_t * v );
 
+
+/**
+   Encodes v to dest. This is just a proxy for one of:
+   whio_encode_int16(), whio_encode_int32() or whio_encode_int64(),
+   depending on the value of WHIO_SIZE_T_BITS.
+
+   dest must be valid memory at least whio_sizeof_encoded_off_t bytes
+   long. Returns whio_sizeof_encoded_off_t on success.
+*/
+whio_size_t whio_encode_off_t( unsigned char * dest, whio_off_t v );
+
+/**
+   Decodes v from src. This is just a proxy for one of:
+   whio_decode_int16(), whio_decode_int32() or whio_decode_int64(),
+   depending on the value of WHIO_SIZE_T_BITS. Returns 0 on success.
+*/
+int whio_decode_off_t( unsigned char const * src, whio_off_t * v );
+
+    
 /**
    Encodes v to dev using whio_size_t_encode().
+   Returns whio_sizeof_encoded_size_t on success.
 */
 whio_size_t whio_dev_encode_size_t( whio_dev * dev, whio_size_t v );
 
@@ -11973,7 +12020,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Tue Aug 23 15:39:39 CEST 2011. Do not edit! */
+/* auto-generated on Fri Aug 26 19:10:40 CEST 2011. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12114,9 +12161,10 @@ Changing this number changes the EFS signature.
 /**
    WHIO_CONFIG_ENABLE_MMAP is HIGHLY EXPERIMENTAL! DO NOT USE!
 
-   In my basic tests mmap() is giving us no performance at all
-   and in fact costs us a small handful of seek()s. This depends
-   on the exact i/o patterns, though.
+   In my basic tests mmap() is giving us no performance at all,
+   and in fact costs us a small handful of seek()s, _unless_ we enable
+   async mode. When async mmap mode is enabled, it's _much_ faster
+   (about 2.5x in my over-simplified tests).
 
    In read-only mode mmap() is not used because profiling showed
    it to actually cost performance (apparenly due to duplicate
@@ -12185,6 +12233,9 @@ extern "C" {
 #  error "WHIO_EPFS_ID_T_BITS must be one of: 16, 32, 64"
 #endif
 
+#if WHIO_SIZE_T_BITS < 16
+#  error "whio_epfs cannot work with (WHIO_SIZE_T_BITS<16)"
+#endif
 #if WHIO_EPFS_ID_T_BITS > WHIO_SIZE_T_BITS
 #  error "WHIO_EPFS_ID_T_BITS must be <= WHIO_SIZE_T_BITS"
 #endif
