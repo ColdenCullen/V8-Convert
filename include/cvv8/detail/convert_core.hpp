@@ -942,7 +942,7 @@ namespace cvv8 {
         NULL instead of performing an illegal cast).
     */
     template <typename T,
-              void const * & TypeID,
+              char const * & TypeID,
               int InternalFieldCount = 2,
               int TypeIdFieldIndex = 0,
               int ObjectFieldIndex = 1,
@@ -989,7 +989,7 @@ namespace cvv8 {
                     tid = (obj->InternalFieldCount() != InternalFieldCount)
                         ? NULL
                         : obj->GetPointerFromInternalField( TypeIdFieldIndex );
-                    ext = (tid == TypeID)
+                    ext = (tid == (void*)TypeID)
                         ? obj->GetPointerFromInternalField( ObjectFieldIndex )
                         : NULL;
                     if( ! ext )

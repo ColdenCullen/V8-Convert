@@ -173,50 +173,6 @@ namespace cvv8 {
     {};
 
     /**
-        ClassCreator policy type which defines a "type ID" value
-        for a type wrapped using ClassCreator. This is used
-        together with JSToNative_ObjectWithInternalFieldsTypeSafe
-        (type THAT 10 times fast) to provide a lightweight
-        (but highly effective) type check when extracting
-        natives from v8 (as void pointers). The default
-        implementation is fine for all cases i can think of, but i can
-        concieve of one or two uses for specializations (e.g. storing the
-        JS-side name of the class as the type ID).
-        
-        The type id must be unique per type except that subtypes may
-        (depending on various other binding options) may need use the same
-        value as the parent type. If multiple types share the same type ID,
-        the type-safety check can be bypassed, _potentially_ leading to an
-        illegal static_cast() and subsequent mis-use of the pointer. i
-        stress the word "potentially" because to get that condition one
-        would have to (A) abuse the object via the C++ API (which doesn't
-        happen via the binding process, and you're probably also not going
-        to do it) or (B) write some script code to confuse two bound native
-        types about who is really who when a particular member is called.
-
-        In the case of subclassed bound types, the
-        ClassCreator_TypeID<SubClass> impl should subclass
-        ClassCreator_TypeID<ParentClass>. Whether or not this is _required_
-        for proper functionality depends at least in part on whether
-        (ClassCreator_InternalFields<ParentType>::TypeIDIndex>=0). If it is
-        negative, subclasses do not need to explicitly define this policy
-        because the type ID won't be used for purposes of validating a JS-held
-        pointer's native type.
-
-        TODO: see if we can consolidate this type with TypeName<>. The problem
-        at the moment is that JSToNative_ObjectWithInternalFieldsTypeSafe
-        takes a (void const * &) and TypeName::Value is a (char const *), which
-        won't convert to (void const *) in the context of template parameters.
-    */
-    template <typename T>
-    struct ClassCreator_TypeID
-    {
-        static const void * Value;
-    };
-    template <typename T>
-    const void * ClassCreator_TypeID<T>::Value = TypeName<T>::Value;
-
-    /**
        Convenience base type for ClassCreator_InternalFields
        implementations.
 
@@ -567,7 +523,7 @@ namespace cvv8 {
     private:
         typedef ClassCreator_InternalFields<T> InternalFields;
         typedef ClassCreator_WeakWrap<T> WeakWrap;
-        typedef ClassCreator_TypeID<T> TypeID;
+        typedef TypeName<T> TypeID;
         v8::Persistent<v8::FunctionTemplate> ctorTmpl;
         v8::Handle<v8::ObjectTemplate> protoTmpl;
         bool isSealed;
@@ -1089,7 +1045,7 @@ namespace cvv8 {
     struct JSToNative_ClassCreator :
         tmp::IfElse< TypeSafe,
             JSToNative_ObjectWithInternalFieldsTypeSafe<T,
-                                            ClassCreator_TypeID<T>::Value,
+                                            TypeName<T>::Value,
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::TypeIDIndex,
                                             ClassCreator_InternalFields<T>::NativeIndex,
