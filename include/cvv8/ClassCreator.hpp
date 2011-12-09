@@ -69,6 +69,9 @@
 #include "NativeToJSMap.hpp"
 namespace cvv8 {
 
+    template <typename T>
+    class ClassCreator;
+    
     /**
        Policy template used by ClassCreator<T> for
        instantiating T objects.
@@ -356,25 +359,7 @@ namespace cvv8 {
         {
             Func();
         }
-	};
-
-	/**
-	   TODO
-	*/
-	template <typename T>
-	struct ClassCreator_Bind
-	{
-        /**
-           TODO
-        */
-        static void AddClassTo( v8::Handle<v8::Object> const & target )
-		{
-			typedef ClassCreator<T> CC;
-			CC & cc( CC::Instance() );
-			assert( cc.IsSealed() );
-            cc.AddClassTo( TypeName<T>::Value, target );
-        }
-	};
+    };
 
     /**
        The ClassCreator policy class responsible for doing optional
@@ -481,6 +466,25 @@ namespace cvv8 {
     };
 
 
+    /**
+       TODO
+    */
+    template <typename T>
+    struct ClassCreator_Bind
+    {
+        /**
+           TODO
+        */
+        static void AddClassTo( v8::Handle<v8::Object> const & target )
+        {
+            typedef ClassCreator<T> CC;
+            CC & cc( CC::Instance() );
+            assert( cc.IsSealed() );
+            cc.AddClassTo( TypeName<T>::Value, target );
+        }
+    };
+
+    
 #if 0
     namespace Detail
     {
@@ -1200,7 +1204,7 @@ namespace cvv8 {
             return ext ? static_cast<ResultType>(ext) : NULL;
         }
     };
-
+    
 #if 0
     //! Experimental.
     template <typename ParentT, typename SubT >
@@ -1323,6 +1327,30 @@ namespace cvv8 {
         }
     };
 
+    template <typename T>
+    struct NativeToJSImpl_CopyCtor
+    {
+        v8::Handle<v8::Value> operator()( T const * n ) const
+        {
+            typedef NativeToJSMap<T> BM;
+            v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
+            if( rc.IsEmpty() )
+            {
+                v8::Handle<v8::Value> argv[1];
+                argv[0] = v8::External::New((void*)n);
+                v8::Persistent<v8::Object> instance = v8::Persistent<v8::Object>::New( ClassCreator<T>::Instance().NewInstance( 1, argv ) );
+                BM::Insert(instance, (T *)n);
+                return instance;
+            }
+            return rc;
+        }
+        v8::Handle<v8::Value> operator()( T const & n ) const
+        {
+            return this->operator()( &n );
+        }
+    };
+
+    
     /** @deprecated Use ClassCreator_Factory_Dispatcher instead (same interface).
     */
     template <typename T,typename CtorForwarderList>

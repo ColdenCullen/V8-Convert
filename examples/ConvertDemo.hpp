@@ -311,6 +311,7 @@ namespace cvv8 {
         static char const * Value;
     };
 #endif
+#if 0
     /**
         This is required by subclasses for certain constellations of internal
         fields/type-safety options. It is always optional for base classes,
@@ -320,6 +321,7 @@ namespace cvv8 {
     template <>
     struct ClassCreator_TypeID<BoundSubNative> : ClassCreator_TypeID<BoundNative>
     {};
+#endif
 
     /**
        Optional: customize internal field layout for the JS class.
