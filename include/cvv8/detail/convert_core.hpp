@@ -406,9 +406,9 @@ namespace cvv8 {
     template <>
     struct NativeToJS< ::v8::InvocationCallback >
     {
-        v8::Handle<v8::Value> operator()( ::v8::InvocationCallback const f ) const
+        v8::Handle<v8::Data> operator()( ::v8::InvocationCallback const f ) const
         {
-            return ::v8::FunctionTemplate::New(f)->GetFunction();
+            return ::v8::FunctionTemplate::New(f);//->GetFunction();
         }
     };
 
@@ -456,7 +456,7 @@ namespace cvv8 {
     /**
        Overload to avoid mis-selection of templates.
     */
-    static inline v8::Handle<v8::Value> CastToJS( v8::InvocationCallback v )
+    static inline v8::Handle<v8::Data> CastToJS( v8::InvocationCallback v )
     {
         typedef NativeToJS<v8::InvocationCallback> F;
         return F()( v );
