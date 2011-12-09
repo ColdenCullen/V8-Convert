@@ -344,7 +344,11 @@ static int v8_main(int argc, char const * const * argv)
     cv::Shell shell(NULL,argc,argv);
     //v8::Handle<v8::Object> global = shell.Global();
     shell.SetupDefaultBindings()
+#if 0
+        /* the v8 devs occassionally change IdleNotification's signature, which
+           breaks type-safe templates... */
         ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
+#endif
 #if TRY_FORK
         ("fork", ForkCallback::Call)
 #endif

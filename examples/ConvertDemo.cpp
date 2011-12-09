@@ -506,8 +506,13 @@ namespace cvv8 {
                    FunctionToInCa<ValueHandle (v8::Arguments const &), bogo_callback>::Call )
                   ("bogo2",
                    FunctionToInCa<int (v8::Arguments const &),bogo_callback2>::Call)
+#if 0
+        /* the v8 devs occassionally change IdleNotification's signature, which
+           breaks type-safe templates... */
                   ("runGC",
-                   FunctionToInCa<bool (),v8::V8::IdleNotification>::Call);
+                   FunctionToInCa<bool (),v8::V8::IdleNotification>::Call)
+#endif
+                ;
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
             typedef BN T;
