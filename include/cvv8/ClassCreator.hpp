@@ -104,7 +104,7 @@ namespace cvv8 {
            The default implementation simply return (new T).
         */
         static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
-        {
+		{
             return new T;
         }
 

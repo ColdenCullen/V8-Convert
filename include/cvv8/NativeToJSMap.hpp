@@ -140,13 +140,35 @@ namespace cvv8 {
                 typedef NativeToJSMap<T> BM;
                 v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
                 if( rc.IsEmpty() ) return v8::Null();
-                else return rc;
+                return rc;
             }
             v8::Handle<v8::Value> operator()( Type const & n ) const
             {
                 return this->operator()( &n );
             }
-        };
+		};
+
+		struct NativeToJSImpl_CopyCtor
+		{
+			v8::Handle<v8::Value> operator()( Type const * n ) const
+			{
+				typedef NativeToJSMap<T> BM;
+				v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
+				if( rc.IsEmpty() )
+				{
+					v8::Handle<v8::Value> argv[1];
+					argv[0] = v8::External::New((void*)n);
+					v8::Persistent<v8::Object> instance = v8::Persistent<v8::Object>::New( ClassCreator<T>::Instance().NewInstance( 1, argv ) );
+					BM::Insert(instance, (Type *)n);
+					return instance;
+				}
+				return rc;
+			}
+			v8::Handle<v8::Value> operator()( Type const & n ) const
+			{
+				return this->operator()( &n );
+			}
+		};
 
 #if 0
         //! Experimental

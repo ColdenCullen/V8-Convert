@@ -1987,6 +1987,36 @@ namespace cvv8 {
         }
     };
 
+	
+    template <typename T>
+    struct CtorCopyForwarder : Signature<T* (v8::Handle<v8::External>)>
+    {
+        typedef Signature<T* (v8::Handle<v8::External>)> STL;
+        //typedef typename tmp::AddPointer<typename STL::ReturnType>::Type ReturnType;
+        typedef typename STL::ReturnType ReturnType;
+        /**
+            If (argv.Length()>=Arity) or Arity is less than 0,
+            then the constructor is called with Arity arguments
+            (if it >=0) or with 1 v8::Arguments parameter (for Arity<0).
+            
+            Returns the result of (new Type(...)), transfering ownership
+            to the caller.
+            
+            May propagate native exceptions.
+        */
+        static ReturnType Call( v8::Arguments const & argv )
+        {
+            enum { Arity = sl::Arity< STL >::Value };
+			// TODO: Make this typesafe!
+			// If we receive an external object as only argument handle this as a 'copy' constructor (from c++ to js).
+			if (argv.Length() == 1 && argv[0]->IsExternal())
+			{
+				return static_cast<ReturnType>(v8::External::Unwrap(argv[0]));
+			}
+			return NULL;
+        }
+    };
+
 #if !defined(DOXYGEN)
     namespace Detail
     {
