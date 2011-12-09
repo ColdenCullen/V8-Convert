@@ -406,9 +406,9 @@ namespace cvv8 {
     template <>
     struct NativeToJS< ::v8::InvocationCallback >
     {
-        v8::Handle<v8::Data> operator()( ::v8::InvocationCallback const f ) const
+        v8::Handle<v8::Value> operator()( ::v8::InvocationCallback const f ) const
         {
-            return ::v8::FunctionTemplate::New(f);//->GetFunction();
+            return ::v8::FunctionTemplate::New(f)->GetFunction();
         }
     };
 
@@ -456,7 +456,7 @@ namespace cvv8 {
     /**
        Overload to avoid mis-selection of templates.
     */
-    static inline v8::Handle<v8::Data> CastToJS( v8::InvocationCallback v )
+    static inline v8::Handle<v8::Value> CastToJS( v8::InvocationCallback v )
     {
         typedef NativeToJS<v8::InvocationCallback> F;
         return F()( v );
@@ -942,7 +942,7 @@ namespace cvv8 {
         NULL instead of performing an illegal cast).
     */
     template <typename T,
-              char const * & TypeID,
+              void const * & TypeID,
               int InternalFieldCount = 2,
               int TypeIdFieldIndex = 0,
               int ObjectFieldIndex = 1,
@@ -989,7 +989,7 @@ namespace cvv8 {
                     tid = (obj->InternalFieldCount() != InternalFieldCount)
                         ? NULL
                         : obj->GetPointerFromInternalField( TypeIdFieldIndex );
-                    ext = (tid == (void*)TypeID)
+                    ext = (tid == TypeID)
                         ? obj->GetPointerFromInternalField( ObjectFieldIndex )
                         : NULL;
                     if( ! ext )
@@ -1984,36 +1984,6 @@ namespace cvv8 {
             enum { Arity = sl::Arity< STL >::Value };
             typedef Detail::CtorForwarderProxy<Sig> Proxy;
             return Proxy::Call( argv );
-        }
-    };
-
-	
-    template <typename T>
-    struct CtorCopyForwarder : Signature<T* (v8::Handle<v8::External>)>
-    {
-        typedef Signature<T* (v8::Handle<v8::External>)> STL;
-        //typedef typename tmp::AddPointer<typename STL::ReturnType>::Type ReturnType;
-        typedef typename STL::ReturnType ReturnType;
-        /**
-            If (argv.Length()>=Arity) or Arity is less than 0,
-            then the constructor is called with Arity arguments
-            (if it >=0) or with 1 v8::Arguments parameter (for Arity<0).
-            
-            Returns the result of (new Type(...)), transfering ownership
-            to the caller.
-            
-            May propagate native exceptions.
-        */
-        static ReturnType Call( v8::Arguments const & argv )
-        {
-            enum { Arity = sl::Arity< STL >::Value };
-			// TODO: Make this typesafe!
-			// If we receive an external object as only argument handle this as a 'copy' constructor (from c++ to js).
-			if (argv.Length() == 1 && argv[0]->IsExternal())
-			{
-				return static_cast<ReturnType>(v8::External::Unwrap(argv[0]));
-			}
-			return NULL;
         }
     };
 

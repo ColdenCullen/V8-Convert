@@ -346,9 +346,9 @@ public:
     allows us to invoke TypeName<T>::Value from here.
 */  
 template <typename T>
-v8::Handle<v8::Value> TossMissingThis(const char* file, unsigned int line)
+v8::Handle<v8::Value> TossMissingThis()
 {
-    return Toss(StringBuffer()<<"in " << file << "[" << line <<"]: CastFromJS<"
+    return Toss(StringBuffer()<<"CastFromJS<"
 #if 0
         <<TypeName<T>::Value
 #else
@@ -360,7 +360,7 @@ v8::Handle<v8::Value> TossMissingThis(const char* file, unsigned int line)
 #if !defined(DOXYGEN)
 namespace Detail {
 /** Temporary internal macro. Undef'd at the end of this file. */
-#define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ){ return TossMissingThis<T>(__FILE__, __LINE__); } \
+#define HANDLE_PROPAGATE_EXCEPTION catch( MissingThisException const & ){ return TossMissingThis<T>(); } \
             catch(...){ throw; } (void)0/* (void)0 is a hack to help emacs' indentation out!*/
 
     /**

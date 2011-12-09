@@ -69,9 +69,6 @@
 #include "NativeToJSMap.hpp"
 namespace cvv8 {
 
-    template <typename T>
-    class ClassCreator;
-    
     /**
        Policy template used by ClassCreator<T> for
        instantiating T objects.
@@ -107,7 +104,7 @@ namespace cvv8 {
            The default implementation simply return (new T).
         */
         static ReturnType Create( v8::Persistent<v8::Object> & jsSelf, v8::Arguments const & argv )
-		{
+        {
             return new T;
         }
 
@@ -160,15 +157,6 @@ namespace cvv8 {
     {};
 
     /**
-       A ClassCreator policy/option class responsible specifying whether
-       or not a ClassCreator-bound class creates it's own data object or
-	   expects it to be bound manually.
-    */
-    template <typename T>
-    struct ClassCreator_CreateData : Opt_Bool<true>
-    {};
-
-    /**
        ClassCreator policy which determines whether lookups for native
        types in JS objects should walk through the prototype
        chain. This can decrease the speed of JS-to-this operations and
@@ -183,6 +171,50 @@ namespace cvv8 {
     template <typename T>
     struct ClassCreator_SearchPrototypeForThis : Opt_Bool<true>
     {};
+
+    /**
+        ClassCreator policy type which defines a "type ID" value
+        for a type wrapped using ClassCreator. This is used
+        together with JSToNative_ObjectWithInternalFieldsTypeSafe
+        (type THAT 10 times fast) to provide a lightweight
+        (but highly effective) type check when extracting
+        natives from v8 (as void pointers). The default
+        implementation is fine for all cases i can think of, but i can
+        concieve of one or two uses for specializations (e.g. storing the
+        JS-side name of the class as the type ID).
+        
+        The type id must be unique per type except that subtypes may
+        (depending on various other binding options) may need use the same
+        value as the parent type. If multiple types share the same type ID,
+        the type-safety check can be bypassed, _potentially_ leading to an
+        illegal static_cast() and subsequent mis-use of the pointer. i
+        stress the word "potentially" because to get that condition one
+        would have to (A) abuse the object via the C++ API (which doesn't
+        happen via the binding process, and you're probably also not going
+        to do it) or (B) write some script code to confuse two bound native
+        types about who is really who when a particular member is called.
+
+        In the case of subclassed bound types, the
+        ClassCreator_TypeID<SubClass> impl should subclass
+        ClassCreator_TypeID<ParentClass>. Whether or not this is _required_
+        for proper functionality depends at least in part on whether
+        (ClassCreator_InternalFields<ParentType>::TypeIDIndex>=0). If it is
+        negative, subclasses do not need to explicitly define this policy
+        because the type ID won't be used for purposes of validating a JS-held
+        pointer's native type.
+
+        TODO: see if we can consolidate this type with TypeName<>. The problem
+        at the moment is that JSToNative_ObjectWithInternalFieldsTypeSafe
+        takes a (void const * &) and TypeName::Value is a (char const *), which
+        won't convert to (void const *) in the context of template parameters.
+    */
+    template <typename T>
+    struct ClassCreator_TypeID
+    {
+        static const void * Value;
+    };
+    template <typename T>
+    const void * ClassCreator_TypeID<T>::Value = TypeName<T>::Value;
 
     /**
        Convenience base type for ClassCreator_InternalFields
@@ -327,37 +359,41 @@ namespace cvv8 {
             typedef ClassCreator<T> CC;
             CC & cc( CC::Instance() );
             if( cc.IsSealed() ) {
+                cc.AddClassTo( "T", dest );
                 return;
             }
             
             // ... do your bindings here...
 
+            // As the final step:            
+            cc.AddClassTo( "T", dest );
+            return;
             @endcode
 
             If you do not actually want to add the class to the dest object,
             you should call Seal() instead of AddClassTo() (or pass a different
             destination object to AddClassTo().
         */
-        static void Initialize()
+        static void Initialize( v8::Handle<v8::Object> const & target )
         {
             throw std::runtime_error("ClassCreator_SetupBindings<T> MUST be specialized "
                                      "in order to be useful!");
         }
     };
-	
+
     /**
         A concrete ClassCreator_SetupBindings implementation which forwards
         the call to a user-defined function.
     */
-    template <typename T, void (*Func)() >
+    template <typename T, void (*Func)( v8::Handle<v8::Object> const &) >
     struct ClassCreator_SetupBindings_ClientFunc
     {
         /**
             Calls Func(target).
         */
-        static void Initialize()
+        static void Initialize( v8::Handle<v8::Object> const & target )
         {
-            Func();
+            Func(target);
         }
     };
 
@@ -466,25 +502,6 @@ namespace cvv8 {
     };
 
 
-    /**
-       TODO
-    */
-    template <typename T>
-    struct ClassCreator_Bind
-    {
-        /**
-           TODO
-        */
-        static void AddClassTo( v8::Handle<v8::Object> const & target )
-        {
-            typedef ClassCreator<T> CC;
-            CC & cc( CC::Instance() );
-            assert( cc.IsSealed() );
-            cc.AddClassTo( TypeName<T>::Value, target );
-        }
-    };
-
-    
 #if 0
     namespace Detail
     {
@@ -550,7 +567,7 @@ namespace cvv8 {
     private:
         typedef ClassCreator_InternalFields<T> InternalFields;
         typedef ClassCreator_WeakWrap<T> WeakWrap;
-        typedef TypeName<T> TypeID;
+        typedef ClassCreator_TypeID<T> TypeID;
         v8::Persistent<v8::FunctionTemplate> ctorTmpl;
         v8::Handle<v8::ObjectTemplate> protoTmpl;
         bool isSealed;
@@ -608,13 +625,7 @@ namespace cvv8 {
         
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
         {
-			using namespace v8;
-			// Don't destroy object if not created by self.
-			if (!ClassCreator_CreateData<T>::Value)
-			{
-				return;
-			}
-			
+            using namespace v8;
             //std::cerr << "Entering weak_dtor<>(native="<<(void const *)nobj<<")\n";
             Local<Object> jobj( Object::Cast(*pv) );
             typedef typename JSToNative<T>::ResultType NT;
@@ -757,49 +768,44 @@ namespace cvv8 {
                                         */);
             if( jobj.IsEmpty() ) return jobj /* assume exception*/;
             Persistent<Object> self( Persistent<Object>::New(jobj) );
-
-			// Should we create the object.
-			if (ClassCreator_CreateData<T>::Value)
-			{
-				T * nobj = NULL;
-				try
-				{
-					WeakWrap::PreWrap( self, argv  );
-					nobj = Factory::Create( self, argv );
-					if( ! nobj )
-					{
-						return CastToJS<std::exception>(std::runtime_error("Native constructor failed."));
-					}
-					WeakWrap::Wrap( self, nobj );
-					self.MakeWeak( nobj, weak_dtor );
-					if( 0 <= InternalFields::TypeIDIndex )
-					{
-						self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
-					}
-					self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
-						/* We do this after the call to Wrap() just in case the Wrap() impl
-						   accidentally writes to this field. In that case we end up
-						   losing the data they stored there. So this is just as evil as
-						   adding the internal field before Wrap(), but only when the
-						   client mis-uses the internal fields.
-						*/
-						;
-				}
-				catch(std::exception const &ex)
-				{
-					WeakWrap::Unwrap( self, nobj );
-					if( nobj ) Factory::Delete( nobj );
-					self.Clear();
-					return Toss(CastToJS(ex));
-				}
-				catch(...)
-				{
-					WeakWrap::Unwrap( self, nobj );
-					if( nobj ) Factory::Delete( nobj );
-					self.Clear();
-					return Toss("Native constructor threw an unknown exception!");
-				}
-			}
+            T * nobj = NULL;
+            try
+            {
+                WeakWrap::PreWrap( self, argv  );
+                nobj = Factory::Create( self, argv );
+                if( ! nobj )
+                {
+                    return CastToJS<std::exception>(std::runtime_error("Native constructor failed."));
+                }
+                WeakWrap::Wrap( self, nobj );
+                self.MakeWeak( nobj, weak_dtor );
+                if( 0 <= InternalFields::TypeIDIndex )
+                {
+                    self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
+                }
+                self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
+                    /* We do this after the call to Wrap() just in case the Wrap() impl
+                       accidentally writes to this field. In that case we end up
+                       losing the data they stored there. So this is just as evil as
+                       adding the internal field before Wrap(), but only when the
+                       client mis-uses the internal fields.
+                    */
+                    ;
+            }
+            catch(std::exception const &ex)
+            {
+                WeakWrap::Unwrap( self, nobj );
+                if( nobj ) Factory::Delete( nobj );
+                self.Clear();
+                return Toss(CastToJS(ex));
+            }
+            catch(...)
+            {
+                WeakWrap::Unwrap( self, nobj );
+                if( nobj ) Factory::Delete( nobj );
+                self.Clear();
+                return Toss("Native constructor threw an unknown exception!");
+            }
             return self;
         }
 
@@ -808,7 +814,7 @@ namespace cvv8 {
               protoTmpl(v8::Persistent<v8::ObjectTemplate>::New( ctorTmpl->PrototypeTemplate() )),
               isSealed(false)
         {
-			ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
+            ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
         }
     public:
         /**
@@ -831,14 +837,6 @@ namespace cvv8 {
         inline v8::Handle<v8::ObjectTemplate> Prototype()
         {
             return this->protoTmpl;
-        }
-
-        /**
-           Returns this class' constructor instance template object.
-        */
-        inline v8::Handle<v8::ObjectTemplate> CtorInstanceTemplate()
-        {
-            return this->ctorTmpl->InstanceTemplate();
         }
 
         /**
@@ -877,15 +875,6 @@ namespace cvv8 {
         }
 
         /**
-           Mark this class as sealed.
-        */
-        inline void Seal()
-        {
-            this->isSealed = true;
-        }
-
-
-		/**
            Creates a new instanced of the object via the JS API. It calls
            ClassCreator_Factory<T>::Create(), passing it argv, to
            instantiate the object. On success a JS handle to the object is
@@ -1057,61 +1046,18 @@ namespace cvv8 {
                    << "> has not been sealed yet!";
                 throw std::runtime_error(os.str());
             }
-			this->CtorTemplate()->Inherit( p.CtorTemplate() );
+            this->CtorTemplate()->Inherit( p.CtorTemplate() );
         }
-		
+
         /**
-            Simply runs ClassCreator_SetupBindings<T>::Initialize().
+            Simply runs ClassCreator_SetupBindings<T>::Initialize( target ).
             It is provided here to simplify the client-side interface.
         */
-        static void SetupBindings()
+        static void SetupBindings( v8::Handle<v8::Object> const & target )
         {
-            ClassCreator_SetupBindings<T>::Initialize();
+            ClassCreator_SetupBindings<T>::Initialize( target );
         }
         
-        /**
-            Simply runs ClassCreator_Bind<T>::AddClassTo( target ).
-            It is provided here to simplify the client-side interface.
-        */
-        static void AddClassTo( v8::Handle<v8::Object> const & target )
-        {
-            ClassCreator_Bind<T>::AddClassTo( target );
-        }
-        
-        /**
-            Attaches a C++ object instance to a JS object.
-			Can be used for attaching to objects created with ClassCreator_CreateData<T>::Value set to false.
-        */
-        void Attach( v8::Handle<v8::Value> const & h, T* const & data )
-		{
-			if( h.IsEmpty() || ! h->IsObject() ) return;
-
-			v8::Local<v8::Object> const & obj( v8::Object::Cast( *h )->FindInstanceInPrototypeChain(CtorTemplate()) );
-			if( obj.IsEmpty() )
-			{
-				std::ostringstream os;
-				os << "ClassCreator<"
-					<< TypeID::Value
-					<< "> can't attach to object not created by ClassCreator prototype!";
-				throw std::runtime_error(os.str());
-			}
-			// Throw an exception if the JS object was already bound.
-			if( obj->GetPointerFromInternalField( InternalFields::NativeIndex ) != NULL )
-			{
-				std::ostringstream os;
-				os << "ClassCreator<"
-					<< TypeID::Value
-					<< "> is already attached to a C++ object!";
-				throw std::runtime_error(os.str());
-			}
-
-			// Bind the C++ object to the JS object.
-			if( 0 <= InternalFields::TypeIDIndex )
-			{
-				obj->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
-			}
-			obj->SetPointerInInternalField( InternalFields::NativeIndex, data );
-        }
     };
 
     /**
@@ -1140,10 +1086,10 @@ namespace cvv8 {
         which means a slightly smaller runtime memory footprint.
     */
     template <typename T, bool TypeSafe = ClassCreator_InternalFields<T>::TypeIDIndex >= 0 >
-    struct JSToNative_ClassCreator/* :
+    struct JSToNative_ClassCreator :
         tmp::IfElse< TypeSafe,
             JSToNative_ObjectWithInternalFieldsTypeSafe<T,
-                                            TypeName<T>::Value,
+                                            ClassCreator_TypeID<T>::Value,
                                             ClassCreator_InternalFields<T>::Count,
                                             ClassCreator_InternalFields<T>::TypeIDIndex,
                                             ClassCreator_InternalFields<T>::NativeIndex,
@@ -1154,57 +1100,10 @@ namespace cvv8 {
                                             ClassCreator_InternalFields<T>::NativeIndex,
                                             ClassCreator_SearchPrototypeForThis<T>::Value
                                             >            
-        >::Type*/
+        >::Type
     {
-        typedef typename TypeInfo<T>::NativeHandle ResultType;
-        /**
-           If h is-a Object and it meets the requirements described
-           in this class' documentation, then this function returns
-           the result of static_cast<ResultType>(void*), using the (void*)
-           extracted from the Object. If the requirements are not met
-           then NULL is returned.
-           
-           See the class docs for more details on the requirements
-           of the passed-in handle.
-
-           If SearchPrototypeChain is true and the object does not 
-           contain a native then the prototype chain is searched 
-           recursively. This is generally only required when bound 
-           types are subclassed from JS code.           
-        */
-        ResultType operator()( v8::Handle<v8::Value> const & h ) const
-        {
-			typedef ClassCreator_InternalFields<T> InternalFields;
-			typedef TypeName<T> TypeID;
-
-			if( h.IsEmpty() || ! h->IsObject() ) return NULL;
-
-			v8::Local<v8::Object> const & obj( v8::Object::Cast( *h )->FindInstanceInPrototypeChain(ClassCreator<T>::Instance().CtorTemplate()) );
-			if( obj.IsEmpty() )
-			{
-				std::ostringstream os;
-				os << "ClassCreator<"
-					<< TypeID::Value
-					<< "> can't convert to object not created by a ClassCreator prototype!";
-				throw std::runtime_error(os.str());
-			}
-			
-			void * ext = obj->GetPointerFromInternalField( InternalFields::NativeIndex );
-
-			// Throw an exception if the JS object was already bound.
-			if( ext == NULL )
-			{
-				std::ostringstream os;
-				os << "ClassCreator<"
-					<< TypeID::Value
-					<< "> ClassCreator JS object has no bound C++ object!";
-				throw std::runtime_error(os.str());
-			}
-			
-            return ext ? static_cast<ResultType>(ext) : NULL;
-        }
     };
-    
+
 #if 0
     //! Experimental.
     template <typename ParentT, typename SubT >
@@ -1263,7 +1162,7 @@ namespace cvv8 {
 #endif // !DOXYGEN
 
     /**
-        Can be used as a concrete ClassCreator_Factory<T> 
+        Can be used as a concrete ClassCreator_Factor<T> 
         specialization to forward JS ctor calls directly to native 
         ctors.
     
@@ -1327,30 +1226,6 @@ namespace cvv8 {
         }
     };
 
-    template <typename T>
-    struct NativeToJSImpl_CopyCtor
-    {
-        v8::Handle<v8::Value> operator()( T const * n ) const
-        {
-            typedef NativeToJSMap<T> BM;
-            v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
-            if( rc.IsEmpty() )
-            {
-                v8::Handle<v8::Value> argv[1];
-                argv[0] = v8::External::New((void*)n);
-                v8::Persistent<v8::Object> instance = v8::Persistent<v8::Object>::New( ClassCreator<T>::Instance().NewInstance( 1, argv ) );
-                BM::Insert(instance, (T *)n);
-                return instance;
-            }
-            return rc;
-        }
-        v8::Handle<v8::Value> operator()( T const & n ) const
-        {
-            return this->operator()( &n );
-        }
-    };
-
-    
     /** @deprecated Use ClassCreator_Factory_Dispatcher instead (same interface).
     */
     template <typename T,typename CtorForwarderList>

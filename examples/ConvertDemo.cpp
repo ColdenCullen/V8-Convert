@@ -507,7 +507,7 @@ namespace cvv8 {
                   ("bogo2",
                    FunctionToInCa<int (v8::Arguments const &),bogo_callback2>::Call)
                   ("runGC",
-                   FunctionToInCa<bool (int),v8::V8::IdleNotification>::Call);
+                   FunctionToInCa<bool (),v8::V8::IdleNotification>::Call);
             ////////////////////////////////////////////////////////////////////////
             // Bind some JS properties to native properties:
             typedef BN T;
@@ -602,9 +602,7 @@ namespace cvv8 {
 
 void BoundNative::SetupBindings( v8::Handle<v8::Object> const & dest )
 {
-    typedef cv::ClassCreator<BoundNative> CC;
-    CC::Instance().SetupBindings();
-    CC::Instance().AddClassTo(dest);
+    cv::ClassCreator<BoundNative>::Instance().SetupBindings(dest);
 }
 
 v8::Handle<v8::Value> bind_BoundSubNative( v8::Handle<v8::Object> dest )

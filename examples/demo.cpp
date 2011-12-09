@@ -344,7 +344,7 @@ static int v8_main(int argc, char const * const * argv)
     cv::Shell shell(NULL,argc,argv);
     //v8::Handle<v8::Object> global = shell.Global();
     shell.SetupDefaultBindings()
-        ("gc", cv::FunctionToInCa<bool (int),v8::V8::IdleNotification>::Call )
+        ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
 #if TRY_FORK
         ("fork", ForkCallback::Call)
 #endif
