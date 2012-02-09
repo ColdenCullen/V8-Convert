@@ -64,7 +64,9 @@ static int v8_main(int argc, char const * const * argv)
     assert( argc >= 2 );
     cv::Shell shell(NULL, argc, argv);
     shell.SetupDefaultBindings()
+#if 0 /* the v8 team keeps changing the signature of IdleNotification() */
         ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
+#endif
     ;
     try
     {

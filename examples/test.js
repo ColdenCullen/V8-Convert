@@ -40,7 +40,7 @@ function test1()
     f.invoInt(1,2,3,4);
     f.doFooConst();
     f.nativeParam(f);
-    f.runGC();
+    if( f.runGC ) f.runGC();
     assertThrows( function() { f.throwStdString(); } );
     
 
@@ -145,6 +145,10 @@ function test3()
 
 function test4()
 {
+    if( ! BoundNative.prototype.runGC ) {
+        print("runGC() not defined - skipping test.");
+    }
+
     print("Creating several unreferenced objects and manually running GC...");
     var i =0;
     var max = 5;

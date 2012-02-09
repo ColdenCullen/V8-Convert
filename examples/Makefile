@@ -15,6 +15,9 @@ SHELL.OBJECTS := ConvertDemo.o
 SHELL_BINDINGS_HEADER := ConvertDemo.hpp
 SHELL_BINDINGS_FUNC := BoundNative::SetupBindings
 
+# gcc 4.6 got REAL pedantic and breaks lots of code...
+CPPFLAGS += -Wno-error=unused-but-set-variable
+
 ########################################################################
 # shell app...
 include ../addons/shell-common.make
