@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
+/* auto-generated on Thu Feb 16 20:37:09 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -791,7 +791,6 @@ long whprintfv(
   const et_info *infop = 0;      /* Pointer to the appropriate info structure */
   char buf[WHPRINTF_BUF_SIZE];       /* Conversion buffer */
   char prefix;               /* Prefix character.  "+" or "-" or " " or '\0'. */
-  etByte errorflag = 0;      /* True if an error is encountered */
   etByte xtype = 0;              /* Conversion paradigm */
   char * zExtra = 0;              /* Extra memory used for etTCLESCAPE conversions */
 #if ! WHPRINTF_OMIT_FLOATING_POINT
@@ -831,7 +830,6 @@ if(1){				       \
       if( c==0 ) break;
     }
     if( (c=(*++fmt))==0 ){
-      errorflag = 1;
       pfrc = pfAppend( pfAppendArg, "%", 1);
       WHPRINTF_CHECKERR(0);
       break;
@@ -1366,7 +1364,7 @@ static long whprintfv_appender_stringbuf( void * arg, char const * data, long n 
         size_t npos = sb->pos + n;
         if( npos >= sb->alloced )
         {
-            const size_t asz = (npos * 1.5) + 1;
+            const size_t asz = (3 * npos / 2) + 1;
             if( asz < npos ) return -1; /* overflow */
             else
             {
@@ -1414,7 +1412,7 @@ char * whprintf_str( char const * fmt, ... )
 }
 /* end file src/whprintf.c */
 /* begin file src/whalloc_amalgamation.c */
-/* auto-generated on Tue Aug 23 09:55:32 CEST 2011. Do not edit! */
+/* auto-generated on Tue Feb 14 23:25:42 CET 2012. Do not edit! */
 /* begin file whalloc.c */
 #if !defined(__STDC_FORMAT_MACROS)
 #  define __STDC_FORMAT_MACROS 1 /* for PRIxNN specifiers*/
@@ -1621,7 +1619,7 @@ const WHALLOC_API(bt) WHALLOC_API(bt_empty) = whalloc_bt_empty_m;
 #define BYTES_BYTEFOR(A,BIT) ((A)[ BIT / 8 ])
 #define BYTES_SET(A,BIT) ((BYTES_BYTEFOR(A,BIT) |= (0x01 << (BIT%8))),0x01)
 #define BYTES_UNSET(A,BIT) ((BYTES_BYTEFOR(A,BIT) &= ~(0x01 << (BIT%8))),0x00)
-#define BYTES_GET(A,BIT) ((BYTES_BYTEFOR(A,BIT) & (0x01 << (BIT%8))) ? 0x01 : 0x00)
+#define BYTES_GET(A,BIT) (BYTES_BYTEFOR(A,BIT) & (0x01 << (BIT%8)))
 #define BYTES_TOGGLE(A,BIT) (BYTES_GET(A,BIT) ? (BYTES_UNSET(A,BIT)) : (BYTES_SET(B,BIT)))
 
 #define BITMAP_BYTEOF(ARRAY,BIT) ((self->bits.ARRAY)[ BIT / 8 ])
@@ -1953,10 +1951,10 @@ WHALLOC_API(size_t) WHALLOC_API(bt_mark_range)( WHALLOC_API(bt) * const self,
         */
         check = endex-1;
         lastFree = check;
-        for( ; (check != startIndex)
-                 && !BITMAP_IS_USED(check);
+        for( ; (check != startIndex);
              --check, --lastFree )
         {
+            if( BITMAP_IS_USED(check) ) break;
         }
         if( check == startIndex ) break; /*  all blocks between (start,end) are free :-D */
         startIndex = lastFree+1;
@@ -2235,17 +2233,17 @@ void *  WHALLOC_API(bt_realloc)( WHALLOC_API(bt) * const self, void * m, WHALLOC
             mark = WHALLOC_API(bt_mark_range)( self, hash, size );
             assert( (mark == hash) && "WHALLOC_API(bt_realloc)() internal error: bt_mark_range() returned unexpected result!" );
             mem = WHALLOC_API(bt_mem_for_hash)( self, mark );
+            if( self->base.freeIndexHint >= hash)
+            {
+                self->base.freeIndexHint = hash+blocksNeeded;
+            }
         }
 #endif
-        if( self->base.freeIndexHint >= hash)
-        {
-            self->base.freeIndexHint = hash+blocksNeeded;
-        }
         UNLOCK;
         return mem;
     }
     re = 0;
-    if(1) do
+    if(0) do /* this code is broken, it seems, and i'm too tired to debugger it */
     {
         /**
            See if we can expand in the neighboring blocks
@@ -3365,6 +3363,7 @@ void WHALLOC_API(page_finalize)( WHALLOC_API(page) * p )
     {
         void * ignored;
         ignored = p->alloc.realloc( p, 0, p->alloc.state );
+        if(NULL == ignored){/*kludge for pedantic gcc*/}
     }
     return;
 }
@@ -3577,6 +3576,7 @@ int WHALLOC_API(page_move_left)( WHALLOC_API(page) * p )
         WHALLOC_API(page) * pr = p->prev;
         WHALLOC_API(page) * ignored;
         ignored = WHALLOC_API(page_snip)( p );
+        if(NULL == ignored){/*kludge for pedantic gcc*/}
         WHALLOC_API(page_insert_before)( p, pr );
         return 0;
     }
@@ -4631,7 +4631,6 @@ int whio_buffer_printf( whio_buffer * buf, char const * fmt, ... )
 
 #include <string.h> /* memset() */
 #include <stdlib.h> /* calloc() and friends */
-#include <inttypes.h> /* PRIuXX */
 
 const whio_dev whio_dev_empty = whio_dev_empty_m;
 const whio_lock_request whio_lock_request_empty = whio_lock_request_empty_m;
@@ -4898,7 +4897,6 @@ static long whio_dev_printf_appender( void * arg, char const * data, long n )
     size_t sz = (size_t)n;
     whio_dev * dev = NULL;
     if( ! arg || !data || (n<1) ) return -1;
-    if( n < sz ) return -1; /* negative n */
     dev = (whio_dev*)arg;
     sz = dev->api->write( dev, data, sz );
     return (sz == whio_rc.SizeTError) ? 0 : (long) sz; /* FIXME: check for overflow! */
@@ -5263,21 +5261,9 @@ along with the factory functions for creating the device objects.
 /*#  define _POSIX_C_SOURCE 199506L */
 #endif
 
-#include <unistd.h> /* ftruncate() */
 #include <stdlib.h> /* malloc()/free() */
 #include <string.h> /* memset() */
 /*#include <stdio.h> */
-#if defined(__GNUC__) || defined(__TINYC__)
-#if !defined(GCC_VERSION) || (GCC_VERSION < 40100)
-/* i don't actually know which versions need this, but 4.0.2 does. */
-    extern int ftruncate(int , off_t);
-    extern int fsync(int fd);
-/*#  warning "Kludging ftruncate() and fsync() declartions." */
-/*#else */
-/*#  warning "Hoping ftruncate() and fsync() are declared." */
-#endif
-#endif /* __GNUC__ */
-
 
 #if WHIO_CONFIG_USE_FCNTL
 #  include <fcntl.h>
@@ -5438,7 +5424,7 @@ static whio_size_t whio_dev_FILE_tell( whio_dev * dev )
 static whio_size_t whio_dev_FILE_seek( whio_dev * dev, whio_off_t pos, int whence )
 {
     WHIO_FILE_DECL(whio_rc.SizeTError);
-    if( 0 == fseeko( f->fp, pos, whence ) )
+    if( 0 == fseeko( f->fp, WHIO_OFF_TO_STD_OFF_T(pos), whence ) )
     {
 	off_t t = ftello( f->fp );
 	return (t >= 0) ? (whio_size_t)t : whio_rc.SizeTError;
@@ -5465,7 +5451,7 @@ static int whio_dev_FILE_trunc( whio_dev * dev, whio_off_t len )
     if( !(WHIO_MODE_WRITE & f->iomode) ) return whio_rc.AccessError;
     else
     {
-        return (0 == ftruncate( f->fileno, len ))
+        return (0 == ftruncate( f->fileno, WHIO_OFF_TO_STD_OFF_T(len) ))
             ? whio_rc.OK
             : whio_rc.IOError;
         /** ^^^ is there a way to truncate a FILE handle without using fileno()? */
@@ -5660,19 +5646,7 @@ to provide dramatic speed increases.
 #include <assert.h>
 #include <stdlib.h> /* malloc()/free() */
 #include <string.h> /* memset() */
-#include <unistd.h> /* ftruncate(), fdatasync() */
 #include <errno.h>
-
-#if defined(__GNUC__) || defined(__TINYC__)
-#if !defined(GCC_VERSION) || (GCC_VERSION < 40100)
-/* i don't actually know which versions need this, but 4.0.2 does. */
-    extern int ftruncate(int, off_t);
-    extern int fsync(int fd);
-/*#  warning "Kludging ftruncate() and fsync() declartions." */
-/*#else */
-/*#  warning "Hoping ftruncate() and fsync() are declared." */
-#endif
-#endif /* __GNUC__ */
 
 
 #if WHIO_CONFIG_USE_FCNTL
@@ -5826,7 +5800,7 @@ static whio_size_t whio_dev_fileno_seek( whio_dev * dev, whio_off_t pos, int whe
 {
     off_t rc;
     WHIO_fileno_DECL(whio_rc.SizeTError);
-    rc = lseek( f->fileno, pos, whence );
+    rc = lseek( f->fileno, WHIO_OFF_TO_STD_OFF_T(pos), whence );
     if( pos == rc )
     {
 	/**
@@ -5862,7 +5836,7 @@ static int whio_dev_fileno_trunc( whio_dev * dev, whio_off_t len )
     else
     {
         int rc = whio_rc.OK;
-        if( 0 == ftruncate( f->fileno, len ) )
+        if( 0 == ftruncate( f->fileno, WHIO_OFF_TO_STD_OFF_T(len) ) )
         {
             whio_dev_fileno_flush( dev );
         }
@@ -6094,7 +6068,9 @@ static int whio_dev_fileno_ioctl( whio_dev * dev, int arg, va_list vargs )
                   switch(errno)
                   {
                     case ENOTDIR:
+#if !defined(_MSC_VER)
                     case ELOOP:
+#endif
                     case ENOENT:
                     case ENAMETOOLONG: rc = whio_rc.RangeError;
                         break;
@@ -6366,17 +6342,25 @@ int whio_dev_posix_open2( whio_dev ** tgt, char const * fname,
           case EISDIR:
           case EPERM:
           case EROFS:
+#if !defined(_MSC_VER)
           case ETXTBSY:
+#endif
           case ENOTDIR:
               return whio_rc.AccessError;
+#if !defined(_MSC_VER)
           case EWOULDBLOCK:
               return whio_rc.LockingError; /* arguably AccessError */
+#endif
           case EINTR:
               return whio_rc.InterruptedError;
+#if !defined(_MSC_VER)
           case ELOOP:
+#endif
           case EMFILE:
           case ENFILE:
+#if !defined(_MSC_VER)
           case EOVERFLOW:
+#endif
           case EFBIG: /* linux pre-2.6.24 */
           case ENAMETOOLONG:
               return whio_rc.RangeError;
@@ -6672,12 +6656,12 @@ static whio_size_t whio_dev_membuf_seek( whio_dev * dev, whio_off_t pos, int whe
 	  too = (whio_size_t)pos;
 	  break;
       case SEEK_END:
-	  too = mb->vsize + pos;
+	  too = mb->vsize + WHIO_OFF_TO_SIZE_T(pos);
 	  if( (pos>0) && (too < mb->vsize) )  /* overflow! */ return whio_rc.SizeTError;
 	  else if( (pos<0) && (too > mb->vsize) )  /* underflow! */ return whio_rc.SizeTError;
 	  break;
       case SEEK_CUR:
-	  too += pos;
+	  too += WHIO_OFF_TO_SIZE_T(pos);
 	  if( (pos>0) && (too < mb->pos) )  /* overflow! */ return whio_rc.SizeTError;
 	  else if( (pos<0) && (too > mb->pos) )  /* underflow! */ return whio_rc.SizeTError;
 	  break;
@@ -7140,12 +7124,12 @@ static whio_size_t whio_dev_memmap_seek( whio_dev * dev, whio_off_t pos, int whe
 	  too = (whio_size_t)pos;
 	  break;
       case SEEK_END:
-	  too = mb->size + pos;
+	  too = mb->size + WHIO_OFF_TO_SIZE_T(pos);
 	  if( (pos>0) && (too < mb->size) )  /* overflow! */ return whio_rc.SizeTError;
 	  else if( (pos<0) && (too > mb->size) )  /* underflow! */ return whio_rc.SizeTError;
 	  break;
       case SEEK_CUR:
-	  too += pos;
+	  too += WHIO_OFF_TO_SIZE_T(pos);
 	  if( (pos>0) && (too < mb->pos) )  /* overflow! */ return whio_rc.SizeTError;
 	  else if( (pos<0) && (too > mb->pos) )  /* underflow! */ return whio_rc.SizeTError;
 	  break;
@@ -7637,12 +7621,12 @@ static whio_size_t whio_dev_subdev_seek( whio_dev * dev, whio_off_t pos, int whe
 	  {
 	      top = sub->upper;
 	  }
-	  too = top + pos;
+	  too = top + WHIO_OFF_TO_SIZE_T(pos);
 	  if( (pos < 0) && (too > sub->upper ) ) UNDERFLOW;
 	  else if( (pos>0) && (too < sub->upper) ) OVERFLOW;
 	  break;
       case SEEK_CUR:
-	  too += pos;
+	  too += WHIO_OFF_TO_SIZE_T(pos);
 	  if( (pos < 0) && (too > sub->pos ) ) UNDERFLOW;
 	  else if( (pos > 0) && (too < sub->pos) ) OVERFLOW;
 	  break;
@@ -8485,7 +8469,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
+/* auto-generated on Thu Feb 16 20:37:13 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -9544,7 +9528,11 @@ int whio_decode_pack_v( void const * src_, whio_size_t * itemCount, char const *
 /* begin file src/whio_udb.c */
 #include <assert.h>
 #include <string.h> /* memcmp() */
-#include <strings.h> /* strncasecmp() */
+#if 0
+#  ifndef _MSC_VER
+#    include <strings.h> /* strncasecmp(). POSIX.1-2001, 4.4BSD. */
+#  endif
+#endif
 #include <stdlib.h> /* malloc()/free() */
 #include <ctype.h> /* tolower() */
 
@@ -12398,7 +12386,7 @@ static int whio_udb_foreach_glob( whio_udb const * db, whio_udb_record const * r
 {
     whio_udb_foreach_glob_info * gi = (whio_udb_foreach_glob_info*) cbData;
     char const * p = NULL;
-    int i = 0;
+    unsigned int i = 0;
     int rc = 0;
     int check = 0;
     for( ; !rc && (i<gi->count); ++i )
@@ -15764,7 +15752,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Fri Aug 26 20:59:40 CEST 2011. Do not edit! */
+/* auto-generated on Thu Feb 16 20:37:16 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -16194,6 +16182,26 @@ extern "C" {
        The fs argument is required only so that we can use
        whio_epfs_malloc() and friends.
 
+       If (bl != &fs->cache.blockList) then the following special behaviours
+       apply:
+
+       - If (count==0) and (fs->cache.blockList.alloced < bl->alloced)
+       then fs->cache.blockList is cleaned up and bl's contents are
+       transfered to fs->cache.blockList.
+
+       - If (count==0) and (fs->cache.blockList.alloced >= bl->alloced)
+       then fs->cache.blockList is cleaned up and bl's contents are
+       transfered to fs->cache.blockList.
+
+       - When expanding (bl->alloced < count), if
+       (fs->cache.blockList.allocced>=count) then
+       bl->list[0..bl->count] are copied to fs->cache.blockList and
+       then fs->cache.blockList's list memory is transfered to bl.
+
+       In other words: this routine caches the largest of the previously
+       freed lists for later re-allocation. The cache only has space
+       for one entry. When growing a list, we try to use the cached copy,
+       if it's big enough.       
     */
     int whio_epfs_block_list_reserve( whio_epfs * fs, whio_epfs_block_list *bl, whio_epfs_id_t count );
 
@@ -17017,36 +17025,84 @@ const whio_epfs_block_list whio_epfs_block_list_empty = whio_epfs_block_list_emp
 int whio_epfs_block_list_reserve( whio_epfs * fs, whio_epfs_block_list *bl, whio_epfs_id_t n )
 {
     if( ! bl ) return whio_rc.ArgError;
-    else if( 0 == n )
+    if( 0 == n )
     {
-        /*MARKER(("Freeing block list of %"WHIO_EPFS_ID_T_PFMT" items @%p\n",n, (void const *)bl->list); */
-        /*free( bl->list ); */
-        whio_epfs_mfree( fs, bl->list );
-        /*void * x; x = realloc( bl->list, 0 ); */
-        *bl = whio_epfs_block_list_empty;
-        return whio_rc.OK;
-    }
-    else if( bl->alloced >= n ) return whio_rc.OK;
-    else
-    {
-        whio_epfs_block * li = (whio_epfs_block *)
-            /*realloc( bl->list, n * sizeof(whio_epfs_block) ); */
-            whio_epfs_mrealloc( fs,  bl->list, n * sizeof(whio_epfs_block) );
-        /*MARKER(("(Re)allocated block list of %"WHIO_EPFS_ID_T_PFMT" items @%p\n", n, (void const *)li)); */
-        if( ! li )
+        if( ! bl->alloced ) return 0;
+        else if( &fs->cache.blockList != bl )
         {
-            return whio_rc.AllocError;
+#if 1
+            if( ! fs->cache.blockList.alloced )
+            { /* recycle this for future use. */
+                bl->count = 0;
+                fs->cache.blockList = *bl;
+                *bl = whio_epfs_block_list_empty;
+                return 0;
+            }
+            else if( fs->cache.blockList.alloced < bl->alloced  )
+            { /* recycle this for future use. We will favour
+                 the longest-allocated list for purposes of
+                 caching.
+              */
+                whio_epfs_mfree( fs, fs->cache.blockList.list );
+                bl->count = 0;
+                fs->cache.blockList = *bl;
+                *bl = whio_epfs_block_list_empty;
+                return 0;
+            }
+#endif
+            /* else fall through */
+        }
+        assert( NULL != bl->list );
+        /*MARKER(("Freeing block list of %"WHIO_EPFS_ID_T_PFMT" items @%p\n",n, (void const *)bl->list); */
+        whio_epfs_mfree( fs, bl->list );
+        *bl = whio_epfs_block_list_empty;
+        return 0;
+    }
+    else if( bl->alloced >= n ) return 0;
+    else
+    { /* time to grow up ... */
+        assert( (bl != &fs->cache.blockList)
+                && "fs->cache.blockList must never be used directly, only has a holder." );
+        if( fs->cache.blockList.alloced >= n )
+        { /* steal the last-cached entry. */
+            whio_epfs_id_t const count = bl->count;
+            whio_epfs_id_t i = 0;
+            whio_epfs_block_list * cl = &fs->cache.blockList;
+            assert( cl->count >= count );
+            for( ; i < count; ++i )
+            {
+                cl->list[i] = bl->list[i];
+            }
+            if( bl->alloced )
+            {
+                whio_epfs_mfree( fs, bl->list );
+            }
+            *bl = *cl;
+            bl->count = count;
+            fs->cache.blockList = whio_epfs_block_list_empty;
+            return 0;
         }
         else
         {
-            whio_epfs_id_t i = bl->count;
-            bl->alloced = n;
-            bl->list = li;
-            for( ; i < n; ++i )
+            whio_epfs_block * li = (whio_epfs_block *)
+                /*realloc( bl->list, n * sizeof(whio_epfs_block) ); */
+                whio_epfs_mrealloc( fs,  bl->list, n * sizeof(whio_epfs_block) );
+            /*MARKER(("(Re)allocated block list of %"WHIO_EPFS_ID_T_PFMT" items @%p\n", n, (void const *)li)); */
+            if( ! li )
             {
-                li[i] = whio_epfs_block_empty;
+                return whio_rc.AllocError;
             }
-            return whio_rc.OK;
+            else
+            {
+                whio_epfs_id_t i = bl->count;
+                bl->alloced = n;
+                bl->list = li;
+                for( ; i < n; ++i )
+                {
+                    li[i] = whio_epfs_block_empty;
+                }
+                return whio_rc.OK;
+            }
         }
     }
 }
@@ -17625,7 +17681,7 @@ int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_
     }
 }
 
-whio_size_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
+whio_epfs_id_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
                                            whio_size_t pos )
 {
     return 1 + (pos/blockSize);
@@ -17779,11 +17835,6 @@ int whio_epfs_blocks_format( whio_epfs * fs, whio_epfs_id_t from, whio_epfs_id_t
 
 whio_epfs_handle * whio_epfs_handle_alloc(whio_epfs * fs)
 {
-    /**
-       TODO: once i've pulled in whalloc support, allocate
-
-       using that.
-    */
     whio_epfs_handle * x = (whio_epfs_handle*)whio_epfs_malloc(fs,sizeof(whio_epfs_handle));
     if(x)
     {
@@ -18052,8 +18103,13 @@ int whio_epfs_handle_open( whio_epfs * fs,
         h = 0;
         if( origin )
         {
-            if( (origin->inode->openCount+1) < origin->inode->openCount )
-            { /* overflow! */
+            if( (uint8_t)(origin->inode->openCount+1) < (uint8_t)origin->inode->openCount )
+            { /* overflow! Extra uint8_t casts are to avoid gcc error
+                 (in some versions) for the intentional overflow
+                 check:
+
+                 error: assuming signed overflow does not occur when assuming that (X + c) < X is always false
+              */
                 WHIO_DEBUG("WARNING: continuing would overflow whio_epfs_inode::openCount!\n");
                 return whio_rc.RangeError;
             }
@@ -18511,7 +18567,7 @@ int whio_epfs_inode_touch( int32_t diffFromGMT, whio_epfs_inode * ino, uint32_t 
         else
         {
             t = (uint32_t)time(NULL);
-            ino->mtime = (diffFromGMT>=t) ? 0 : (t - diffFromGMT);
+            ino->mtime = (diffFromGMT >= (signed)t) ? 0 : (t - diffFromGMT);
         }
 #endif        
         return 0;
@@ -18875,9 +18931,9 @@ NULL/*h*/,NULL/*ino*/,0/*bs*/,NULL/*memToFree*/
    A helper for the whio_epfs_inode_iodev API. Requires that the 'dev'
    parameter be-a whio_dev and that that device is-a whio_epfs_inode_iodev.
  */
-#define WHIO_EPFS_DECL(RV) whio_epfs_inode_iodev_meta * m = (dev ? (whio_epfs_inode_iodev_meta*)dev->impl.data : 0); \
+#define WHIO_EPFS_DEV_DECL(RV) whio_epfs_inode_iodev_meta * m = (dev ? (whio_epfs_inode_iodev_meta*)dev->impl.data : 0); \
     if( !m || !m->h || ((void const *)&whio_epfs_inode_iodev_meta_empty != dev->impl.typeID) ) return RV
-#define WHIO_EPFS_CDECL(RV) whio_epfs_inode_iodev_meta const * m = (dev ? (whio_epfs_inode_iodev_meta const*)dev->impl.data : 0); \
+#define WHIO_EPFS_DEV_CDECL(RV) whio_epfs_inode_iodev_meta const * m = (dev ? (whio_epfs_inode_iodev_meta const*)dev->impl.data : 0); \
     if( !m || !m->h || ((void const *)&whio_epfs_inode_iodev_meta_empty != dev->impl.typeID) ) return RV
 
 /**
@@ -18987,7 +19043,7 @@ static whio_size_t whio_epfs_inode_iodev_read( whio_dev * dev, void * dest, whio
     bool keepGoing = true;
     whio_size_t total = 0;
     whio_size_t sz;
-    WHIO_EPFS_DECL(0);
+    WHIO_EPFS_DEV_DECL(0);
     while( keepGoing )
     {
         sz = whio_epfs_inode_iodev_read_impl( dev, m, WHIO_VOID_PTR_ADD(dest,total), n - total, &keepGoing );
@@ -19066,7 +19122,7 @@ static whio_size_t whio_epfs_inode_iodev_write_impl( whio_dev * dev,
 */
 static whio_size_t whio_epfs_inode_iodev_write( whio_dev * dev, void const * src, whio_size_t n )
 {
-    WHIO_EPFS_DECL(0);
+    WHIO_EPFS_DEV_DECL(0);
     if( !src || !n || !(WHIO_MODE_WRITE & m->h->iomode) )
     {
         return 0;
@@ -19095,7 +19151,7 @@ static int whio_epfs_inode_iodev_clear_error( whio_dev * dev )
 
 static int whio_epfs_inode_iodev_eof( whio_dev * dev )
 {
-    WHIO_EPFS_DECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_DECL(whio_rc.ArgError);
     return (m->h->cursor < m->ino->size)
         ? 0
         : 1;
@@ -19103,14 +19159,14 @@ static int whio_epfs_inode_iodev_eof( whio_dev * dev )
 
 static whio_size_t whio_epfs_inode_iodev_tell( whio_dev * dev )
 {
-    WHIO_EPFS_DECL(whio_rc.SizeTError);
+    WHIO_EPFS_DEV_DECL(whio_rc.SizeTError);
     return m->h->cursor;
 }
 
 static whio_size_t whio_epfs_inode_iodev_seek( whio_dev * dev, whio_off_t pos, int whence )
 {
     whio_size_t too;
-    WHIO_EPFS_DECL(whio_rc.SizeTError);
+    WHIO_EPFS_DEV_DECL(whio_rc.SizeTError);
     too = m->h->cursor;
     switch( whence )
     {
@@ -19119,12 +19175,12 @@ static whio_size_t whio_epfs_inode_iodev_seek( whio_dev * dev, whio_off_t pos, i
           too = (whio_size_t)pos;
           break;
       case SEEK_END:
-          too = m->ino->size + pos;
+          too = m->ino->size + WHIO_OFF_TO_SIZE_T(pos);
           if( (pos>0) && (too < m->ino->size) )  /* overflow! */ return whio_rc.SizeTError;
           else if( (pos<0) && (too > m->ino->size) )  /* underflow! */ return whio_rc.SizeTError;
           break;
       case SEEK_CUR:
-          too += pos;
+          too += WHIO_OFF_TO_SIZE_T(pos);
           if( (pos>0) && (too < m->h->cursor) )  /* overflow! */ return whio_rc.SizeTError;
           else if( (pos<0) && (too > m->h->cursor) )  /* underflow! */ return whio_rc.SizeTError;
           break;
@@ -19138,7 +19194,7 @@ static whio_size_t whio_epfs_inode_iodev_seek( whio_dev * dev, whio_off_t pos, i
 
 static int whio_epfs_inode_iodev_flush( whio_dev * dev )
 {
-    WHIO_EPFS_DECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_DECL(whio_rc.ArgError);
     if( !(WHIO_MODE_WRITE & m->h->iomode) ) return whio_rc.AccessError;
     /* FIXME: only flush if the inode has changed since last time.
        To know that we need to store yet another copy of it and
@@ -19146,15 +19202,21 @@ static int whio_epfs_inode_iodev_flush( whio_dev * dev )
 
        We need the following info for purposes of "has it changed?":
        mtime, size, firstBlock
+
+       Or we simply set a dirty flag on any writes. Duh.
     */
     whio_epfs_inode_flush( m->h->fs, m->ino );
-    /*whio_epfs_flush( m->h->fs ); HOLY COW! Having this here cuts performance A LOT! */
+    if( m->h->fs->flags & WHIO_EPFS_FLAG_FS_EXTRA_SYNC )
+    {
+        /*HOLY COW! Having this here cuts performance A LOT! */
+        whio_epfs_flush( m->h->fs ); 
+    }
     return 0;
 }
 
 static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
 {
-    WHIO_EPFS_DECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_DECL(whio_rc.ArgError);
     if( len < 0 ) return whio_rc.ArgError;
     else if( !(WHIO_MODE_WRITE & m->h->iomode) ) return whio_rc.AccessError;
     else
@@ -19207,7 +19269,12 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
 
             /*WHEFS_DBG("truncating from %u to %u bytes\n",m->ino->size, off); */
             /* Update inode and block metadata info... */
-            rc = whio_epfs_block_for_pos( m->h->fs, m->ino, off, &bl, (dir>0) );
+            rc = whio_epfs_block_for_pos( m->h->fs, m->ino, off-1, &bl, (dir>0) )
+                /* reminder: we use (off-1) because the block-for-pos and block-for-size
+                   algos are different, and we really want block-for-size but don't
+                   have a function for that.
+                */
+                ;
             if( whio_rc.OK != rc )
             {
                 WHIO_DEBUG("Could not get block for write position %"WHIO_SIZE_T_PFMT
@@ -19336,7 +19403,7 @@ static int whio_epfs_inode_iodev_ioctl( whio_dev * dev, int arg, va_list vargs )
 
        Anyway... things to consider...
     */
-    WHIO_EPFS_DECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_DECL(whio_rc.ArgError);
     switch(arg)
     {
       case whio_epfs_ioctl_INODE_ID: {
@@ -19367,7 +19434,7 @@ static int whio_epfs_inode_iodev_ioctl( whio_dev * dev, int arg, va_list vargs )
 
 static whio_iomode_mask whio_epfs_inode_iodev_iomode( whio_dev * dev )
 {
-    WHIO_EPFS_DECL(WHIO_MODE_INVALID);
+    WHIO_EPFS_DEV_DECL(WHIO_MODE_INVALID);
     return m->h->iomode;
 }
 
@@ -19376,20 +19443,20 @@ whio_epfs_id_t whio_epfs_dev_inode_id( whio_dev const * dev )
     /** Reminder: we don't use whio_epfs_dev_inode_ioctl() here
         so that we can keep dev const.
     */
-    WHIO_EPFS_CDECL(0);
+    WHIO_EPFS_DEV_CDECL(0);
     return m->ino->id;
 }
 
 whio_size_t whio_epfs_dev_size( whio_dev const * dev )
 {
-    WHIO_EPFS_CDECL(whio_rc.SizeTError);
+    WHIO_EPFS_DEV_CDECL(whio_rc.SizeTError);
     return m->ino->size;
 }
     
 
 static bool whio_epfs_inode_iodev_close( whio_dev * dev )
 {
-    WHIO_EPFS_DECL(false);
+    WHIO_EPFS_DEV_DECL(false);
     if( WHIO_MODE_WRITE & m->h->iomode )
     {
         dev->api->flush( dev );
@@ -19445,13 +19512,13 @@ static void whio_epfs_inode_iodev_finalize( whio_dev * dev )
 
 int whio_epfs_dev_client_flags_get( whio_dev const * dev, uint32_t * flags )
 {
-    WHIO_EPFS_CDECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_CDECL(whio_rc.ArgError);
     return whio_epfs_inode_client_flags_get( m->ino, flags );
 }
 
 int whio_epfs_dev_client_flags_set( whio_dev * dev, uint32_t flags )
 {
-    WHIO_EPFS_DECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_DECL(whio_rc.ArgError);
     return (WHIO_MODE_WRITE & m->h->iomode)
         ? whio_epfs_inode_client_flags_set( m->ino, flags )
         : whio_rc.AccessError
@@ -19460,32 +19527,32 @@ int whio_epfs_dev_client_flags_set( whio_dev * dev, uint32_t flags )
 
 whio_epfs_inode * whio_epfs_dev_inode( whio_dev * dev )
 {
-    WHIO_EPFS_DECL(NULL);
+    WHIO_EPFS_DEV_DECL(NULL);
     return (WHIO_MODE_WRITE & m->h->iomode)
         ? m->ino
         : NULL;
 }
 whio_epfs_inode const * whio_epfs_dev_inode_c( whio_dev const * dev )
 {
-    WHIO_EPFS_CDECL(NULL);
+    WHIO_EPFS_DEV_CDECL(NULL);
     return m->ino;
 }
 int whio_epfs_dev_touch( whio_dev * dev, uint32_t t )
 {
-    WHIO_EPFS_DECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_DECL(whio_rc.ArgError);
     return (WHIO_MODE_WRITE & m->h->iomode)
         ? whio_epfs_inode_touch( m->h->fs->hints.gmtOffset, m->ino, t )
         : whio_rc.AccessError;
 }
 int whio_epfs_dev_mtime( whio_dev const * dev, uint32_t * time )
 {
-    WHIO_EPFS_CDECL(whio_rc.ArgError);
+    WHIO_EPFS_DEV_CDECL(whio_rc.ArgError);
     if( time ) *time = m->ino->mtime;
     return whio_rc.OK;
 }
 
-#undef WHIO_EPFS_DECL
-#undef WHIO_EPFS_CDECL
+#undef WHIO_EPFS_DEV_DECL
+#undef WHIO_EPFS_DEV_CDECL
 
 /**
    The whio_dev_api implementation for pfs.
@@ -20027,23 +20094,24 @@ int whio_epfs_mempool_setup( whio_epfs * fs, void * mem, whio_size_t size, bool 
         else
         {
             int rc;
+            unsigned char * cmem = (unsigned char *)mem;
             WHALLOC_API(bt) * p;
             const whalloc_size_t minBlockSize = 24;
             const whalloc_size_t blockSize =
                 (WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE < minBlockSize)
                 ? minBlockSize
                 : WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE;
-            fs->pool.mem = (unsigned char *)mem;
-            fs->pool.size = size;
-            p = (WHALLOC_API(bt)*)fs->pool.mem;
+            p = (WHALLOC_API(bt)*)cmem;
             *p = WHALLOC_API(bt_empty);
-            rc = WHALLOC_API(bt_init)(p, fs->pool.mem + btSz, size - btSz, blockSize);
+            p->base.log = alloc_logger; /* avoid "static function never used" warning */
+            p->base.log = 0; /* but we don't want to log by default */
+            rc = WHALLOC_API(bt_init)(p, cmem + btSz, size - btSz, blockSize);
             if( rc )
             {
                 return whio_rc.AllocError;
             }
-            p->base.log = alloc_logger; /* avoid "static function never used" warning */
-            p->base.log = 0; /* but we don't want to log by default */
+            fs->pool.mem = cmem;
+            fs->pool.size = size;
             if( fallback )
             {
                 p->base.fallback = whalloc_fallback_stdalloc;
@@ -20665,6 +20733,7 @@ int whio_epfs_close( whio_epfs *fs )
         }
         whio_epfs_handle_list_reserve( fs, &fs->handles, 0 );
     }
+    whio_epfs_block_list_reserve( fs, &fs->cache.blockList, 0 );
     if( fs->dev )
     {
         whio_epfs_mmap_disconnect(fs);
@@ -21109,7 +21178,7 @@ static int whio_epfs_apply_sopt( whio_epfs * fs, whio_epfs_setup_opt * sopt )
         fs->flags |= WHIO_EPFS_FLAG_FS_OWNS_DEV;
         sopt->storage.dev = NULL;
     }
-    else if( sopt->memory.mem )
+    if( sopt->memory.mem )
     {
         rc = whio_epfs_mempool_setup( fs, sopt->memory.mem,
                                           sopt->memory.size,
@@ -21196,6 +21265,10 @@ int whio_epfs_mkfs( whio_epfs ** fs_, whio_epfs_setup_opt * sopt, whio_epfs_fsop
         whio_epfs_init_offsz(fs);
         fs->dev = sopt->storage.dev;
         fs->flags |= WHIO_EPFS_FLAG_RW;
+        if( sopt->enableExtraFlushing )
+        {
+            fs->flags |= WHIO_EPFS_FLAG_FS_EXTRA_SYNC;
+        }
         whio_epfs_check_fileno( fs );
         if( sopt->storage.enableLocking )
         {
@@ -21340,9 +21413,8 @@ int whio_epfs_mkfs_file( whio_epfs ** fs_,
             device (on file re-use), but that hoses the device before
             we get a chance to check the locking.
             
-            We cannot truncate() the device to clean it up because
-            subdevices don't yet support truncation and i plan on using
-            a subdevice in conjunction with whefs.
+            We arguablly cannot truncate() the device to clean it up
+            because subdevices don't support truncation.
             */
             if( ! dev )
             {
@@ -21486,6 +21558,10 @@ int whio_epfs_openfs( whio_epfs ** fs_, whio_epfs_setup_opt * sopt )
             }
             fs = 0;        
             return rc;
+        }
+        if( sopt->enableExtraFlushing )
+        {
+            fs->flags |= WHIO_EPFS_FLAG_FS_EXTRA_SYNC;
         }
         fs->hints.gmtOffset = whio_epfs_calc_gmt_diff();
         if( ownsFS ) *fs_ = fs;
@@ -22330,6 +22406,7 @@ static const ht_namer_impl ht_namer_impl_empty = ht_namer_impl_empty_m;
             : 0;                                     \
     if( ! impl ) return RV;                          \
     ht = &impl->ht;                                  \
+    if(NULL==ht){/*workaround for pedantic gcc*/}    \
     assert( self == &impl->namer )
 
 /**
@@ -22880,13 +22957,11 @@ static int whio_epfs_namer_ht_alloc( whio_epfs_namer ** self )
 static void whio_epfs_namer_ht_free( whio_epfs_namer * self )
 {
     void * obj;
-    whio_ht * ht;
     ht_namer_impl * impl =
         (self && (self->impl.typeID == &HtNamerAPI))
         ? ((ht_namer_impl*)self->impl.data)
         : 0;
     if( ! impl ) return;
-    ht = &impl->ht;
     assert( self == &impl->namer );
     obj = self->impl.data;
     self->api->cleanup( self );

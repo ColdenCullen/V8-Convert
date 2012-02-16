@@ -1,4 +1,4 @@
-/* auto-generated on Fri Aug 26 20:59:42 CEST 2011. Do not edit! */
+/* auto-generated on Thu Feb 16 20:37:24 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -595,7 +595,8 @@ namespace whio {
 
 
     StdOStream::StdOStream( whio_stream * proxy, bool ownsWh, uint32_t bufferSize )
-	: m_buf( *this, proxy, ownsWh, bufferSize )
+	: std::ostream(NULL),
+          m_buf( *this, proxy, ownsWh, bufferSize )
     {
     }
     StdOStream::~StdOStream()
@@ -603,13 +604,15 @@ namespace whio {
     }
 
     StdOStream::StdOStream( OutStream & d, bool takeOwnership, uint32_t bufferSize )
-        : m_buf( *this, d.handle(), takeOwnership, bufferSize )
+        : std::ostream(NULL),
+          m_buf( *this, d.handle(), takeOwnership, bufferSize )
     {
         if( takeOwnership ) d.takeHandle();
     }
 
     StdOStream::StdOStream( IODev & d, bool takeOwnership, uint32_t bufferSize )
-        : m_buf( *this,
+        : std::ostream(NULL),
+          m_buf( *this,
                  whio_stream_for_dev( d.handle(), takeOwnership),
                  true, bufferSize)
     {
@@ -617,18 +620,21 @@ namespace whio {
     }
 
     StdIStream::StdIStream( whio_stream * proxy, bool ownsWh, uint32_t bufferSize )
-	: m_buf( *this, proxy, ownsWh, bufferSize )
+	: std::istream(NULL),
+          m_buf( *this, proxy, ownsWh, bufferSize )
     {
     }
 
     StdIStream::StdIStream( InStream & d, bool takeOwnership, uint32_t bufferSize )
-        : m_buf( *this, d.handle(), takeOwnership, bufferSize )
+        : std::istream(NULL),
+          m_buf( *this, d.handle(), takeOwnership, bufferSize )
     {
         if( takeOwnership ) d.takeHandle();
     }
 
     StdIStream::StdIStream( IODev & d, bool takeOwnership, uint32_t bufferSize )
-        : m_buf( *this,
+        : std::istream(NULL),
+          m_buf( *this,
                  whio_stream_for_dev( d.handle(), takeOwnership),
                  true, bufferSize)
     {

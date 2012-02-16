@@ -1,10 +1,13 @@
-/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
+/* auto-generated on Thu Feb 16 20:37:09 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
 /* begin file include/wh/whprintf.h */
 #ifndef WANDERINGHORSE_NET_WHPRINTF_H_INCLUDED
 #define WANDERINGHORSE_NET_WHPRINTF_H_INCLUDED 1
+#ifdef _MSC_VER
+    #define _CRT_NONSTDC_NO_DEPRECATE
+#endif
 #include <stdarg.h>
 #include <stdio.h> /* FILE handle */
 #ifdef __cplusplus
@@ -40,7 +43,7 @@ extern "C" {
    The policies which implementations need to follow are:
 
    - arg is an implementation-specific pointer (may be 0) which is
-   passed to whprintf(). whprintfv() doesn't know what this argument is
+   passed to vappendf. whprintfv() doesn't know what this argument is
    but passes it to its whprintf_appender. Typically it will be an
    object or resource handle to which string data is pushed or output.
 
@@ -101,7 +104,7 @@ typedef long (*whprintf_appender)( void * arg,
 
  CURRENT (documented) PRINTF EXTENSIONS:
 
- %%z works like %%s, but takes a non-const (char *) and whprintf()
+ %%z works like %%s, but takes a non-const (char *) and vappendf
  deletes the string (using free()) after appending it to the output.
 
  %%h (HTML) works like %s but converts certain characters (like '<' and '&' to
@@ -126,7 +129,7 @@ typedef long (*whprintf_appender)( void * arg,
  implementation's sqlite3 genes.)
 
  These extensions may be disabled by setting certain macros when
- compiling whprintf.c (see that file for details).
+ compiling vappendf.c (see that file for details).
 */
 long whprintfv(
   whprintf_appender pfAppend,          /* Accumulate results here */
@@ -172,7 +175,7 @@ char * whprintf_str( char const * fmt, ... );
 #endif /* WANDERINGHORSE_NET_WHPRINTF_H_INCLUDED */
 /* end file include/wh/whprintf.h */
 /* begin file include/wh/whalloc_amalgamation.h */
-/* auto-generated on Tue Aug 23 09:55:32 CEST 2011. Do not edit! */
+/* auto-generated on Tue Feb 14 23:25:42 CET 2012. Do not edit! */
 #define WHALLOC_AMALGAMATION_BUILD 1
 #if ! defined __STDC_FORMAT_MACROS
 #define __STDC_FORMAT_MACROS 1
@@ -1444,6 +1447,10 @@ extern "C" {
        if( ! re ) { ... error ... }
        else { myMemory = re; }
        @endcode
+
+       FIXME: the expand-in-place code is broken (and disabled) because it
+       can overwrite adjacent blocks. Thus we always do a "real" re-allocation
+       for growing reallocs.
     */
     void *  WHALLOC_API(bt_realloc)( WHALLOC_API(bt) * const self, void * m, WHALLOC_API(size_t) n );
 
@@ -2660,8 +2667,12 @@ extern "C" {
 
 #ifndef __cplusplus
 /* Try to find a usable bool, or make one up ... */
-#  ifndef WHIO_HAVE_STDBOOL
-#    define WHIO_HAVE_STDBOOL 1
+#  ifdef _MSC_VER
+#    define WHIO_HAVE_STDBOOL 0
+#  else
+#    ifndef WHIO_HAVE_STDBOOL
+#      define WHIO_HAVE_STDBOOL 1
+#    endif
 #  endif
 #  if defined(WHIO_HAVE_STDBOOL) && !(WHIO_HAVE_STDBOOL)
 #    if !defined(bool)
@@ -2920,6 +2931,17 @@ still the case).
 #else
 #  error "WHIO_SIZE_T_BITS must be one of: 8, 16, 32, 64"
 #endif
+
+/** @def WHIO_OFF_TO_STD_OFF_T()
+
+    Converts whio_off_t OFF to off_t.
+*/
+#define WHIO_OFF_TO_STD_OFF_T(OFF)     ((off_t)(OFF))
+/** @def WHIO_OFF_TO_SIZE_T()
+
+    Converts whio_off_t OFF to whio_size_t.
+*/
+#define WHIO_OFF_TO_SIZE_T(OFF)         ((whio_size_t)(OFF))
 
 /** @def WHIO_VOID_PTR_ADD()
    WHIO_VOID_PTR_ADD() is a workaround for gcc's -pedantic mode
@@ -6408,7 +6430,79 @@ whio_stream * whio_stream_for_fileno( int fileno, bool writeMode );
 
 #endif /* WANDERINGHORSE_NET_WHIO_STREAMS_H_INCLUDED */
 /* end file include/wh/whio/whio_streams.h */
-/* auto-generated on Fri Aug 26 20:59:39 CEST 2011. Do not edit! */
+/* begin file include/wh/whio/whio_unistd.h */
+#ifndef WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED
+#define WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED
+
+#ifdef _MSC_VER
+#  define WHIO_UNISTD_MSVC
+#endif
+
+#ifdef WHIO_UNISTD_MSVC
+/* This file intended to serve as a drop-in replacement for 
+ *  unistd.h on Windows
+ *  Please add functionality as neeeded 
+ */
+
+
+#include <stdlib.h>
+#include <io.h>
+#if 0
+#  include <getopt.h> /* getopt from: http://www.pwilson.net/sample.html. */
+#endif
+#include <process.h> /* for getpid() and the exec..() family */
+
+#define srandom srand
+#define random rand
+
+#define access      _access
+#define ftruncate   _chsize
+
+#define ftello      ftell
+#define fseeko      fseek
+#define fsync(x)    _commit(x)
+
+
+#define ssize_t int
+
+#define STDIN_FILENO 0
+#define STDOUT_FILENO 1
+#define STDERR_FILENO 2
+
+#if 0
+/* should be in some equivalent to <sys/types.h> */
+typedef __int8            int8_t;
+typedef __int16           int16_t; 
+typedef __int32           int32_t;
+typedef __int64           int64_t;
+typedef unsigned __int8   uint8_t;
+typedef unsigned __int16  uint16_t;
+typedef unsigned __int32  uint32_t;
+typedef unsigned __int64  uint64_t;
+#endif
+
+#undef WHIO_UNISTD_MSVC
+#else /* Not windows, assume *nix-like/POSIX  */
+#include <unistd.h>
+
+#if !defined(__cplusplus)
+#if defined(__GNUC__) || defined(__TINYC__)
+#if !defined(GCC_VERSION) || (GCC_VERSION < 40100)
+/* i don't actually know which versions need this, but 4.0.2 does. */
+    extern int ftruncate(int, off_t);
+    extern int fsync(int fd);
+/*#  warning "Kludging ftruncate() and fsync() declartions." */
+/*#else */
+/*#  warning "Hoping ftruncate() and fsync() are declared." */
+#endif
+#endif /* __GNUC__ */
+#endif /* !__cplusplus */
+
+#endif /* !WHIO_UNISTD_MSVC  */
+
+#endif /* WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED */
+/* end file include/wh/whio/whio_unistd.h */
+/* auto-generated on Thu Feb 16 20:37:13 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12020,7 +12114,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Fri Aug 26 20:59:40 CEST 2011. Do not edit! */
+/* auto-generated on Thu Feb 16 20:37:16 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12146,6 +12240,17 @@ usages call for) while shaving a few bytes of memory compared to
 32-bit IDs.
 
 Changing this number changes the EFS signature.
+
+Trivia...
+
+Due to struct padding, sizeof(whio_epfs_inode) is the same for both 8
+and 16-bit builds, but it is larger in
+32-bit. sizeof(whio_epfs_block)==4 in 8-bit mode and doubles for each
+bitness increment. In fact, the main reasons 16 bits is the default is
+because blocks are arguably the most significant O(N) memory cost
+factor in the library, and we don't need more than 16 bits unless we
+ever approach the 64k block count barrier (which lies well beyond the
+envisioned usages of this code!).
 */
 #define WHIO_EPFS_ID_T_BITS 16
 
@@ -12158,21 +12263,73 @@ Changing this number changes the EFS signature.
 */
 #define WHIO_EPFS_CONFIG_LABEL_LENGTH 64
 
+/** @def WHIO_EPFS_CONFIG_EXTRA_SYNC
+
+    If WHIO_EPFS_CONFIG_EXTRA_SYNC is true then write-mode performance
+    for EPFS p-files is reduced dramatically, but _theoretically_ the
+    room for corruption of on-disk is lower because this code tells
+    the OS to flush its buffers to storage (but we cannot rule out
+    that the OS lies to us or that the data is transfered to
+    hardware-level buffers). If "extra synching" is disabled then
+    write-mode performance is increated dramatically for p-files.
+
+    With this turned off, speed of write-intensive operations, e.g.:
+
+    @code
+    ~> whio-epfs-cp my.epfs *.*
+    @endcode
+
+    are much faster (anywhere from 3 to 10 times in my simple tests).
+
+    An example:
+
+    @code
+# With WHIO_EPFS_CONFIG_EXTRA_SYNC=0:
+
+~> whio-epfs-mkfs --force -i100 -b$((1024*32)) -c0 my.epfs --namer=ht
+whio-epfs-mkfs [my.epfs]: EFS container created (36024 bytes).
+~> time whio-epfs-cp my.epfs *.[ch]
+
+real	0m0.144s
+user	0m0.000s
+sys	0m0.010s
+
+# With WHIO_EPFS_CONFIG_EXTRA_SYNC=1:
+
+~> whio-epfs-mkfs --force -i100 -b$((1024*32)) -c0 my.epfs --namer=ht
+whio-epfs-mkfs [my.epfs]: EFS container created (36024 bytes).
+~> time whio-epfs-cp my.epfs *.[ch]
+
+real	0m1.429s
+user	0m0.000s
+sys	0m0.020s
+    @endcode
+
+    It might be interesting to know that enabling this adds exactly
+    1 line of code.
+*/
+#define WHIO_EPFS_CONFIG_EXTRA_SYNC 0
+
 /**
    WHIO_CONFIG_ENABLE_MMAP is HIGHLY EXPERIMENTAL! DO NOT USE!
 
-   In my basic tests mmap() is giving us no performance at all, and in
-   fact costs us a small handful of seek()s, _unless_ we enable async
-   mode. When async mmap mode is enabled, it's _much_ faster (about
-   2.5x in my over-simplified tests) IF the whio_epfs internals do
-   "extra" (superflous) flushing of the storage.  If the internals do
-   not do "extraneous" flushes then memmap provides unerwhelmingly
-   little benefit (_roughly_ up to 50% in my simple tests). Possibly
-   not enough to be worth the extra code.
+   In my basic tests, for read-intensive/only modes mmap() is giving
+   us no performance benefit, and in fact seems to cost us a small
+   handful of seek()s. Thus for read-only modes, EPFS instances do not
+   enable mmap().
 
-   In read-only mode mmap() is not used because profiling showed
-   it to actually cost performance (apparenly due to duplicate
-   copying of data from storage to mmap, then to us).
+   In write-intensive modes i'm not seeing a significant
+   speed-up unless async mode is enabled (see
+   WHIO_CONFIG_ENABLE_MMAP_ASYNC).
+
+
+   When async mmap mode is enabled, it's _much_ faster (about 2.5x in
+   my over-simplified tests) than without it IF the whio_epfs
+   internals do "extra" (superflous) flushing of the storage
+   (WHIO_EPFS_CONFIG_EXTRA_SYNC!=0). If WHIO_EPFS_CONFIG_EXTRA_SYNC is
+   0 then async memmap provides a much smaller benefit (_roughly_ up
+   to 35% in my simple tests). Possibly not enough to be worth the
+   extra code.
 
    This support requires an unduly large amount of code to coddle
    mmap() (largely because the size of the EFS can change), and is
@@ -12325,9 +12482,9 @@ bogus memory access.
 
 <b>Primary Misfeatures:</b>
 
-- Currently no support for flock()-style locking (that is on the TODO
-list). The main problem here is that we are sitting a couple levels of
-abstraction above the FILE (if any) the EFS lives in.
+- Currently only minimal support for flock()-style locking. If locking
+is enabled, an EFS container file is locked for as long as it is
+opened, and multiple writers are not allowed (will block).
 
 - No multi-threading support (and it may never come). It is not legal
 to use an EFS from more than one thread at a time. Accessing one EFS
@@ -12336,13 +12493,14 @@ lead to corruption as one thread moves the device cursor and another
 one then mis-writes to that location.
 
 - C signals (or propagated C++ exceptions via callbacks, or similar)
-during write operations can potentially corrupt the contents of an
-EFS.
+during while the EFS is manipulating metadata can potentially corrupt
+the contents of the EFS, making it unusable.
 
-- It does not map names to pseudofiles - only ID
-numbers. Name-to-inode mapping requires lots of decisions and
-trade-offs for memory vs. performance. Such features can be added
-on top of it via another layer or two of indirection.
+- It does not map names to pseudofiles - only ID numbers.
+Name-to-inode mapping requires lots of decisions and trade-offs for
+memory vs. performance. Such features can be added on top of it via
+another layer or two of indirection, e.g. the whio_epfs_namer
+interface.
 
 - It does not support the notion of directories/subdirectories.  Such
 features can theoretically be added on top of it, however.
@@ -12734,9 +12892,13 @@ extern "C" {
        routine.
     */
     WHIO_EPFS_FLAG_INODE_IS_NAMER = 0x08,
+    /**
+       The runtime variant of WHIO_EPFS_CONFIG_EXTRA_SYNC.
+    */
+    WHIO_EPFS_FLAG_FS_EXTRA_SYNC = 0x08,
     
     /**
-       Not yet used.
+       Reserved, not yet used.
 
        Signifies that the flagged object has changed state and needs
        to be flushed.
@@ -12798,7 +12960,13 @@ extern "C" {
         whio_epfs_id_t id;
         /** ID of next block in this chain, or 0 for no block. */
         whio_epfs_id_t nextBlock;
-        /** Used only by free blocks. Points to the next free block. */
+        /** Used only by free blocks. Points to the next free block.
+
+            Potential TODO: re-use the nextBlock flag in the free list.
+            There's no reason to keep it separate unless we want to move
+            whole runs of blocks to the free list at once by freeing only
+            the head block.
+        */
         whio_epfs_id_t nextFree;
         /** Internal flags. */
         uint8_t flags;
@@ -12860,9 +13028,6 @@ extern "C" {
         /**
            The timestamp of the last modification on the
            inode, in Unix Epoch format.
-
-           The time zone is currently undefined (assume local), but
-           consideration is being given to standardizing on gmtime.
 
            i could justify increasing this to uint64_t if i'd remove
            the cflags member.
@@ -12996,7 +13161,7 @@ extern "C" {
             Current pseudofile position cursor, equivalent to a file
             position cursor.
 
-            Each handle has its own cursor.
+            Each handle to a given inode has its own cursor.
         */
         whio_size_t cursor;
 
@@ -14014,6 +14179,16 @@ extern "C" {
             */
             whio_epfs_namer_reg reg;
         } namer;
+        /**
+           Internal caches and whatnot.
+        */
+        struct whio_epfs_fs_cache
+        {
+            /**
+               
+            */
+            whio_epfs_block_list blockList;
+        } cache;
     };
     /** Convenience typedef. */
     typedef struct whio_epfs whio_epfs;
@@ -14049,6 +14224,9 @@ extern "C" {
             {/*namer*/\
                 NULL/*n*/, \
                 whio_epfs_namer_reg_empty_m/*reg*/ \
+            },           \
+            {/*cache*/ \
+                whio_epfs_block_list_empty_m /*blockList*/ \
             } \
          }
 
@@ -14150,9 +14328,18 @@ extern "C" {
        whio_epfs initialization back to the caller. Certain members
        may be changed by the various initialization routines to notify
        interested callers of certain details.
+
+
+       To populate new instances of this object, always use either
+       whio_epfs_setup_opt_empty_m or whio_epfs_setup_opt_empty,
+       depending on the context.
     */
     struct whio_epfs_setup_opt
     {
+        /**
+           Runtime version of WHIO_EPFS_CONFIG_EXTRA_SYNC.
+        */
+        bool enableExtraFlushing;
         /**
            Storage-related options.
         */
@@ -14247,6 +14434,7 @@ extern "C" {
        initializing whio_epfs_setup_opt objects.
     */
 #define whio_epfs_setup_opt_empty_m {\
+        WHIO_EPFS_CONFIG_EXTRA_SYNC/*enableExtraFlushing*/,     \
         {/*storage*/ \
             NULL/*dev*/,                    \
                 false/*takeDevOnSuccess*/,       \
@@ -15715,8 +15903,8 @@ extern "C" {
 
        Constrast with whio_epfs_block_count_for_size().
     */
-    whio_size_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
-                                               whio_size_t pos );
+    whio_epfs_id_t whio_epfs_block_count_for_pos( whio_size_t blockSize,
+                                                  whio_size_t pos );
     /**
        Given a virtual size within block-chunked storage with
        blocks of size blockSize, this function returns the number of

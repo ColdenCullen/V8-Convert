@@ -1128,8 +1128,8 @@ namespace io {
         assert( Ctor_MemoryIODev()(argv) );
         uint32_t const sz = CastFromJS<uint32_t>(argv[0]);
         float const factor = (argv.Length()>1)
-            ? CastFromJS<float>(argv[1])
-            : 1.5;
+            ? static_cast<float>(CastFromJS<double>(argv[1]))
+            : static_cast<float>(1.5);
         return new whio::MemoryIODev( sz, factor );
     }
 
