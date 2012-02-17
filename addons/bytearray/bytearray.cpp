@@ -480,6 +480,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
                                                              NULL/*JSByteArray::indexedPropertyEnumerator*/
                                                             );
     v8::Handle<v8::Function> ctor = cw.CtorFunction();
+    ctor->Set(JSTR("zlibEnabled"), v8::Boolean::New(ByteArray_CONFIG_ENABLE_ZLIB ? 1 : 0));
 
     ctor->Set(JSTR("enableDestructorDebug"), cv::CastToJS(cv::FunctionToInCa< void (bool), setEnableDestructorDebug>::Call) );
     cw.AddClassTo( TypeName<JSByteArray>::Value, dest );
