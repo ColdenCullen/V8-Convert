@@ -1,8 +1,59 @@
 load('../test-common.js');
 
+// If a platform variable is not set, the script will use arguments[0] if
+// present, or default to "unix".
+//
+// Possible string values:  
+//  windows 
+//  unix        (default)
+//
+// Example:
+// var platform = "windows";
+
+var platform; // Declared, otherwise it'll throw a variable is undefined
+
+var undefined;
+
+var DEV; // Platform specific device files
+var ETC; // Platform specific files
+
+if (platform == undefined)
+{
+    if((arguments !== undefined) && (arguments.length >= 1))
+    {
+        platform = arguments[0];
+    } else {
+        platform = "unix";
+    }
+}
+
+switch (platform)
+{
+case "windows":
+    DEV = 
+    {   null:   "NUL"
+    ,   stdout: "CON"
+    };
+    ETC = 
+    {   hosts:  "c:\\windows\\System32\\drivers\\etc\\hosts"
+    }
+    break;        
+default:
+    DEV = 
+    {   null:   "/dev/null"
+    ,   stdout: "/dev/stdout"
+    };
+    ETC = 
+    {   hosts: "/etc/hosts"
+    }
+    break;
+}
+
+
+
 function testIODev()
 {
-    var d = new whio.IODev("/dev/null","r");
+    var d = new whio.IODev(DEV.null,"r");
 
     assert( d instanceof whio.IODev, 'd is-a IODev' );
     assertThrows(function(){new whio.IODev(d,0);}, 'Invalid ctor args.');
@@ -28,7 +79,7 @@ function testIODev()
 function testOutStream()
 {
     assertThrows(function(){new whio.OutStream(true);}, 'Invalid ctor args.');
-    var d = new whio.OutStream("/dev/stdout",false);
+    var d = new whio.OutStream(DEV.stdout,false);
     assert( d instanceof whio.OutStream, 'd is-a OutStream' );
     assert( d instanceof whio.StreamBase, 'd is-a StreamBase' );
     assert( /OutStream/.test( d ), 'toString() appears to work.' );
@@ -64,7 +115,7 @@ function testMemoryDev() {
 
 function testInStream()
 {
-    var d = new whio.InStream("/etc/hosts");
+    var d = new whio.InStream(ETC.hosts);
 
     assert( d instanceof whio.InStream, 'd is-a InStream' );
     assert( d instanceof whio.StreamBase, 'd is-a StreamBase' );
@@ -89,12 +140,16 @@ function testInStream()
 function testGZip()
 {
     print("GZip tests...");
+    if(! whio.zlibEnabled ){
+        print("zlib support not enabled. Skipping tests.");
+        return;
+    }
     var buf = new whio.MemoryIODev(1024*4);
     assert( buf instanceof whio.MemoryIODev, 'buf is-a MemoryIODev' );
     assert( buf instanceof whio.IODev, 'buf is-a IODev' );
     asserteq( 0, buf.size(), 'MemBuf initialize size problem has been solved.' );
     assert( buf.bufferSize() != 0, 'buf.bufferSize() == '+buf.bufferSize() );
-    var src = new whio.InStream("/etc/hosts");
+    var src = new whio.InStream(ETC.hosts);
     src.gzipTo( buf );
     src.close();
     buf.seek(0,whio.SEEK_SET);
@@ -102,7 +157,7 @@ function testGZip()
     print("Compressed size = "+buf.size());
 
     src = new whio.InStream(buf,true);
-    var dest = new whio.OutStream("/dev/stdout",false);
+    var dest = new whio.OutStream(DEV.stdout,false);
     var banner = '****************************************';
     print("DECOMPRESSED: "+banner);
     src.gunzipTo(dest);
@@ -163,7 +218,10 @@ function testEPFS()
     d.name = pname;
     asserteq( d.name, pname );
 
-    if(1) {
+    if(!whio.ByteArray.zlibEnabled) {
+        print("ByteArray class was built without zlib support. Skipping compression stuff.");
+    }
+    else{
         var infile = "test.js";
         var ist = new whio.InStream(infile);
         var zf = fs.open(infile+".gz",whio.iomode.RWC|whio.iomode.TRUNCATE);
@@ -210,7 +268,7 @@ function testByteArrayDev()
     assert( whio.iomode.WRITE & d.iomode(), 'Opened in read/write mode.' );
     asserteq( ba.length, d.size(), 'ByteArray and dev are same size.' );
     asserteq( 3, d.write("hi!"), 'write() reported success.' );
-    asserteq( ba[2], "!".charCodeAt(0), "write()n date landed in the ByteArray.");
+    asserteq( ba[2], "!".charCodeAt(0), "write()n data landed in the ByteArray.");
 
     /** no workie: ByteArrayIODev::assertOpen() is never being called :(
         ba.length = 0;

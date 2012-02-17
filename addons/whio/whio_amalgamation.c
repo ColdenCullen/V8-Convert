@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Thu Feb 16 20:37:09 CET 2012. Do not edit! */
+/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -4488,6 +4488,11 @@ void whio_free( void * m )
     if(NULL != m) whio_realloc( m, 0 );
     return;
 }
+
+char whio_zlib_enabled()
+{
+    return WHIO_CONFIG_ENABLE_ZLIB ? 1 : 0;
+}
 /* end file src/whio.c */
 /* begin file src/whio_common.c */
 #include <string.h> /* strchr() */
@@ -8469,7 +8474,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Thu Feb 16 20:37:13 CET 2012. Do not edit! */
+/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15752,7 +15757,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Thu Feb 16 20:37:16 CET 2012. Do not edit! */
+/* auto-generated on Fri Feb 17 15:14:45 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -18103,13 +18108,8 @@ int whio_epfs_handle_open( whio_epfs * fs,
         h = 0;
         if( origin )
         {
-            if( (uint8_t)(origin->inode->openCount+1) < (uint8_t)origin->inode->openCount )
-            { /* overflow! Extra uint8_t casts are to avoid gcc error
-                 (in some versions) for the intentional overflow
-                 check:
-
-                 error: assuming signed overflow does not occur when assuming that (X + c) < X is always false
-              */
+            if( origin->inode->openCount == (uint8_t)-1 )
+            {
                 WHIO_DEBUG("WARNING: continuing would overflow whio_epfs_inode::openCount!\n");
                 return whio_rc.RangeError;
             }

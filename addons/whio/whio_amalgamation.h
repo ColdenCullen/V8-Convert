@@ -1,4 +1,4 @@
-/* auto-generated on Thu Feb 16 20:37:09 CET 2012. Do not edit! */
+/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -3740,6 +3740,11 @@ int whio_buffer_vprintf( whio_buffer * buf, char const * fmt, va_list vargs );
 */
 int whio_buffer_printf( whio_buffer * buf, char const * fmt, ... );
 
+/**
+   Returns a true (non-0) value if the library was compiled with zlib
+   support (via enabling the WHIO_CONFIG_ENABLE_ZLIB macro).
+*/
+char whio_zlib_enabled();
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -6502,7 +6507,7 @@ typedef unsigned __int64  uint64_t;
 
 #endif /* WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED */
 /* end file include/wh/whio/whio_unistd.h */
-/* auto-generated on Thu Feb 16 20:37:13 CET 2012. Do not edit! */
+/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12114,7 +12119,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Thu Feb 16 20:37:16 CET 2012. Do not edit! */
+/* auto-generated on Fri Feb 17 15:14:45 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif

@@ -17,13 +17,15 @@ bytearray.o socket.o: bytearray.cpp
 
 ENABLE_ZLIB ?= 1
 whio_amalgamation.o: CFLAGS+=-std=c89
-whio_amalgamation.o: CPPFLAGS+=-DWHIO_CONFIG_ENABLE_ZLIB=$(ENABLE_ZLIB)
+#whio_amalgamation.o:
+CPPFLAGS+=-DWHIO_CONFIG_ENABLE_ZLIB=$(ENABLE_ZLIB)
 #whio_amalgamation.o: CPPFLAGS+=-DWHIO_CONFIG_ENABLE_DEBUG=1
 #whio_amalgamation.o: CPPFLAGS+=-DWHIO_CONFIG_USE_FCNTL=1
 libwhio_v8.LIB.OBJECTS := whio_amalgamation.o whio_amalgamation_cpp.o cvv8-whio.o bytearray.o
 ifeq (1,$(ENABLE_ZLIB))
   libwhio_v8.DLL.LDFLAGS += -lz
 endif
+bytearray.o: CPPFLAGS+=-DByteArray_CONFIG_ENABLE_ZLIB=$(ENABLE_ZLIB)
 libwhio_v8.DLL.OBJECTS := $(libwhio_v8.LIB.OBJECTS)
 libwhio_v8.DLL: $(libwhio_v8.LIB.OBJECTS)
 $(eval $(call ShakeNMake.CALL.RULES.LIBS,libwhio_v8))

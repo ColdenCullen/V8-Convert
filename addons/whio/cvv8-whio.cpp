@@ -273,7 +273,8 @@ namespace io {
             return Toss(StringBuffer()
                         << TypeName<ST>::Value
                         << "::"<<fname<<"(): whio_stream_gzip() failed with code "
-                        << rc << '.');
+                        << rc
+                        << " ("<<whio_rc_string(rc)<<").");
         }
         else return v8::Undefined();
     }
@@ -1286,7 +1287,8 @@ namespace io {
         SET(ioObj,"SEEK_SET",JINT(SEEK_SET));
         SET(ioObj,"SEEK_CUR",JINT(SEEK_CUR));
         SET(ioObj,"SEEK_END",JINT(SEEK_END));
-
+        SET(ioObj,"zlibEnabled", v8::Boolean::New(::whio_zlib_enabled()));
+        
         // WHIO_MODE_xxx flags...
         v8::Handle<v8::Object> ioModes( v8::Object::New() );
         ioObj->Set(JSTR("iomode"),ioModes);
