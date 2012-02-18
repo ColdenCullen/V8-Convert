@@ -1154,6 +1154,23 @@ int cpdo_version_number()
     return CPDO_VERSION_NUMBER;
 }
 
+char * cpdo_qualify_identifier( cpdo_driver * drv, char const * iden )
+{
+    if(!drv || !iden || !*iden) return NULL;
+    else
+    {
+        char * rc = NULL;
+        drv->api->qualify(drv, iden, NULL, &rc);
+        return rc;
+    }
+}
+
+int cpdo_free_string( cpdo_driver * drv, char * str )
+{
+    if(!drv || !str) return cpdo_rc.ArgError;
+    else return drv->api->free_string(drv, str);
+}
+
 #undef MARKER
 #if defined(__cplusplus)
 } /*extern "C"*/
@@ -1217,6 +1234,7 @@ extern "C" {
 ************************************************************************/
 int cpdo_skel_connect( cpdo_driver * self, cpdo_connect_opt const * opt );
 static int cpdo_skel_sql_quote( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
+static int cpdo_skel_sql_qualify( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
 static int cpdo_skel_free_string( cpdo_driver * self, char * str);
 static int cpdo_skel_prepare( cpdo_driver * self, cpdo_stmt ** tgt, const char * sql, uint32_t len );
 static int cpdo_skel_error_info( cpdo_driver * self, char const ** dest, uint32_t * len, int * errorCode );
@@ -1236,6 +1254,7 @@ const cpdo_driver_api cpdo_skel_driver_api =
     cpdo_skel_driver_details,
     cpdo_skel_connect,
     cpdo_skel_sql_quote,
+    cpdo_skel_sql_qualify,
     cpdo_skel_free_string,
     cpdo_skel_prepare,
     cpdo_skel_error_info,
@@ -1254,8 +1273,7 @@ const cpdo_driver_api cpdo_skel_driver_api =
         cpdo_skel_driver_opt_get_string_quote_char
     },
     {/*constants*/
-    CPDO_DRIVER_NAME /*driver_name*/,
-    '`' /*table_quote*/
+        CPDO_DRIVER_NAME /*driver_name*/
     }
 };
 
@@ -1566,6 +1584,22 @@ static int cpdo_skel_sql_quote( cpdo_driver * self, char const * str, uint32_t *
     }
 }
 
+static int cpdo_skel_sql_qualify( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
+{
+    if(!str || !dest || !*str) return cpdo_rc.ArgError;
+    else
+    {
+        char * rc = cpdo_mprintf("%s", str);
+        if(!rc) return cpdo_rc.AllocError;
+        else
+        {
+            *dest = rc;
+            if(len) *len = strlen(rc);
+            return 0;
+        }
+    }
+}
+    
 static int cpdo_skel_free_string( cpdo_driver * self, char * str)
 {
     return str ? (free(str),0) : cpdo_rc.ArgError;
@@ -3369,6 +3403,7 @@ extern "C" {
 #define CPDO_DRIVER_NAME "sqlite3"
 int cpdo_sq3_connect( cpdo_driver * self, cpdo_connect_opt const * opt );
 static int cpdo_sq3_sql_quote( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
+static int cpdo_sq3_sql_qualify( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
 static int cpdo_sq3_free_string( cpdo_driver * self, char * str);
 static int cpdo_sq3_prepare( cpdo_driver * self, cpdo_stmt ** tgt, char const * sql, uint32_t len );
 static int cpdo_sq3_error_info( cpdo_driver * self, char const ** dest, uint32_t * len, int * errorCode );
@@ -3391,6 +3426,7 @@ const cpdo_driver_api cpdo_sq3_driver_api =
     cpdo_sq3_driver_details,
     cpdo_sq3_connect,
     cpdo_sq3_sql_quote,
+    cpdo_sq3_sql_qualify,
     cpdo_sq3_free_string,
     cpdo_sq3_prepare,
     cpdo_sq3_error_info,
@@ -3409,8 +3445,7 @@ const cpdo_driver_api cpdo_sq3_driver_api =
         cpdo_sq3_driver_opt_get_string_quote_char
     },
     {/*constants*/
-    CPDO_DRIVER_NAME /*driver_name*/,
-    '"' /*table_quote*/
+        CPDO_DRIVER_NAME /*driver_name*/
     }
 };
 
@@ -3688,6 +3723,22 @@ static int cpdo_sq3_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
     }
 }
 
+static int cpdo_sq3_sql_qualify( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
+{
+    if(!str || !dest || !*str) return cpdo_rc.ArgError;
+    else
+    {
+        char * rc = cpdo_mprintf("[%s]", str);
+        if(!rc) return cpdo_rc.AllocError;
+        else
+        {
+            *dest = rc;
+            if(len) *len = strlen(rc);
+            return 0;
+        }
+    }
+}
+    
 static int cpdo_sq3_free_string( cpdo_driver * self, char * str)
 {
     return str ? (free(str),0) : cpdo_rc.ArgError;
@@ -4288,6 +4339,7 @@ extern "C" {
 #define CPDO_DRIVER_NAME "mysql5"
 int cpdo_my5_connect( cpdo_driver * self, cpdo_connect_opt const * opt );
 static int cpdo_my5_sql_quote( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
+static int cpdo_my5_sql_qualify( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
 static int cpdo_my5_free_string( cpdo_driver * self, char * str);
 static int cpdo_my5_prepare( cpdo_driver * self, cpdo_stmt ** tgt, const char * sql, uint32_t len );
 static int cpdo_my5_error_info( cpdo_driver * self, char const ** dest, uint32_t * len, int * errorCode );
@@ -4310,6 +4362,7 @@ const cpdo_driver_api cpdo_my5_driver_api =
     cpdo_my5_driver_details,
     cpdo_my5_connect,
     cpdo_my5_sql_quote,
+    cpdo_my5_sql_qualify,
     cpdo_my5_free_string,
     cpdo_my5_prepare,
     cpdo_my5_error_info,
@@ -4328,8 +4381,7 @@ const cpdo_driver_api cpdo_my5_driver_api =
         cpdo_my5_driver_opt_get_string_quote_char
     },
     {/*constants*/
-    CPDO_DRIVER_NAME /*driver_name*/,
-    '`' /*table_quote*/
+        CPDO_DRIVER_NAME /*driver_name*/
     }
 };
 
@@ -4829,6 +4881,21 @@ static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
         *len = mysql_real_escape_string( drv->conn, to, str, *len );
         *dest = to;
         return 0;
+    }
+}
+static int cpdo_my5_sql_qualify( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
+{
+    if(!str || !dest || !*str) return cpdo_rc.ArgError;
+    else
+    {
+        char * rc = cpdo_mprintf("`%s`", str);
+        if(!rc) return cpdo_rc.AllocError;
+        else
+        {
+            *dest = rc;
+            if(len) *len = strlen(rc);
+            return 0;
+        }
     }
 }
 
@@ -6511,6 +6578,19 @@ namespace cpdo {
         this->drv->api->free_string(this->drv, dest);
         return rs;
     }
+
+    std::string driver::qualify( std::string const & part )
+    {
+        this->assert_connected();
+        char * dest = NULL;
+        uint32_t slen = static_cast<uint32_t>(part.size());
+        this->check_code( this->drv->api->qualify( this->drv,
+                            part.c_str(), &slen, &dest) );
+        std::string const & rs( dest ? dest : "" );
+        this->drv->api->free_string(this->drv, dest);
+        return rs;
+    }
+
     int driver::error_code()
     {
         this->assert_connected();
@@ -6561,21 +6641,6 @@ namespace cpdo {
     {
         this->assert_connected();
         return this->drv->api->constants.driver_name;
-    }
-
-    char driver::table_quote_char() const
-    {
-        this->assert_connected();
-        return this->drv->api->constants.table_quote;
-    }
-
-    char driver::string_quote_char()
-    {
-        this->assert_connected();
-        char ch = 0;
-        int const rc = this->drv->api->opt.get_string_quote_char(this->drv, &ch);
-        this->check_code( rc );
-        return ch;
     }
 
     cpdo_driver * driver::handle()

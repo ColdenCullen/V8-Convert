@@ -1211,17 +1211,19 @@ namespace cvv8 {
             ////////////////////////////////////////////////////////////////////////
             // cpdo::driver bindings...
             Handle<ObjectTemplate> const & dProto( wdrv.Prototype() );
-            wdrv("close", WDRV::DestroyObjectCallback )
+            wdrv
                 ("begin", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::begin> >::Call )
+                ("close", WDRV::DestroyObjectCallback )
                 ("commit", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::commit> >::Call )
-                ("rollback", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::rollback> >::Call)
-                ("exec", CATCHER< cv::MethodToInCa<DRV,void (std::string const &),&DRV::exec> >::Call)
-                ("prepare", CATCHER< cv::InCaToInCa<JSPDO_prepare> >::Call )
                 ("exec", CATCHER< cv::InCaToInCa<JSPDO_exec> >::Call )
                 ("lastInsertId",
                  CATCHER< cv::InCaToInCa<JSPDO_lastInsertId> >::Call
                  //LastInsId::Call
                  )
+                ("prepare", CATCHER< cv::InCaToInCa<JSPDO_prepare> >::Call )
+                ("qualify", CATCHER< cv::MethodToInCa<DRV,std::string (std::string const &),&DRV::qualify> >::Call)
+                ("quote", CATCHER< cv::MethodToInCa<DRV,std::string (std::string const &),&DRV::quote> >::Call)
+                ("rollback", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::rollback> >::Call)
                 ("toString", CATCHER< cv::InCaToInCa<JSPDO_toString> >::Call)
                 ;
 #undef CATCHER

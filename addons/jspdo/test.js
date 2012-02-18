@@ -38,6 +38,8 @@ else { // MySQL...
 function testConnect() {
     var drv = App.drv = new JSPDO(App.dsn,App.user,App.password);
     print("Driver: "+JSON.stringify(drv,0,4));
+    print("Qualified idenifiers look like: "+drv.qualify("foo"));
+    print("Quoted string values look like: "+drv.quote("f'o'o"));
     print('JSPDO.columnTypes: '+JSON.stringify(JSPDO.columnTypes,0,4));
     print("Available db drivers: "+JSON.stringify(JSPDO.driverList));
     assertThrows(function() { drv.driverName = "should throw"; });
