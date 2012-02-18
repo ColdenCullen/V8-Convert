@@ -54,7 +54,11 @@ endif
 # Normalize the options to 1/0 values...
 ifneq (1,$(CPDO_ENABLE_SQLITE3))
   CPDO_ENABLE_SQLITE3 := 0
+else
+  # gcc: work around a portability bug in sqlite3:
+  cpdo_amalgamation.o: CPPFLAGS+=-Wno-error=long-long
 endif
+
 ifneq (1,$(CPDO_ENABLE_MYSQL5))
   CPDO_ENABLE_MYSQL5 := 0
 endif
@@ -148,9 +152,10 @@ SHELL.NAME := jspdo
 include ../shell-common.make
 
 .PHONY: amal-cpp
-amal-cpp: cpdo_amalgamation.o
+amal-cpp:
 	gcc -c -Iinclude cpdo_amalgamation.cpp \
 		-Wall -Werror -pedantic -ansi \
+		-Wno-error=long-long \
 		-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3) \
 		-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5) \
 		$(CFLAGS_MYSQL5)

@@ -1164,6 +1164,7 @@ namespace cvv8 {
                 typedef cv::InCaCatcher_std< RECatch > BaseCatch;
                 v8::InvocationCallback cb;
                 cb = BaseCatch::Call;
+                if(NULL == cb) {/*kludge for gcc 4.6!*/}
             }
 
             ////////////////////////////////////////////////////////////////////////

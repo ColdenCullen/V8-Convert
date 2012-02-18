@@ -2700,7 +2700,6 @@ long cpdo_printfv(
   const et_info *infop = 0;      /* Pointer to the appropriate info structure */
   char buf[CPDO_PRINTF_BUF_SIZE];       /* Conversion buffer */
   char prefix;               /* Prefix character.  "+" or "-" or " " or '\0'. */
-  etByte errorflag = 0;      /* True if an error is encountered */
   etByte xtype = 0;              /* Conversion paradigm */
   char * zExtra = 0;              /* Extra memory used for etTCLESCAPE conversions */
 #if ! CPDO_PRINTF_OMIT_FLOATING_POINT
@@ -2741,7 +2740,6 @@ if(1){				       \
       if( c==0 ) break;
     }
     if( (c=(*++fmt))==0 ){
-      errorflag = 1;
       pfrc = pfAppend( pfAppendArg, "%", 1);
       CPDO_PRINTF_CHECKERR(0);
       break;
@@ -5886,7 +5884,7 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
               specified in C89.
               */
                 {
-                    enum { I64BufLen = 40 };
+                    enum { I64BufLen = 80 };
                     char buf[I64BufLen];
                     My5StringAppender myStr;
                     myStr.str = buf;
