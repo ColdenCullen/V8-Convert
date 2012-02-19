@@ -134,9 +134,11 @@ jspdo.o: $(EXT.CPP)
 js2c: js2c.c Makefile
 # adding $(MAKEFILE_LIST) as a dep causes a circular dep on .make.c_deps and js2c???
 	$(CC) -o $@ js2c.c
-CLEAN_FILES += js2c
-$(EXT.CPP): js2c $(EXT.JS) $(ALL_MAKEFILES)
-	./js2c jspdoInitCode < $(EXT.JS) > $@
+jsmin: jsmin.c Makefile
+	$(CC) -o $@ jsmin.c
+CLEAN_FILES += js2c jsmin
+$(EXT.CPP): js2c jsmin $(EXT.JS) $(ALL_MAKEFILES)
+	./js2c jspdoInitCode < $(EXT.JS) | ./jsmin > $@
 
 ########################################################################
 # Binaries...
