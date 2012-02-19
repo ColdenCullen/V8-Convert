@@ -74,7 +74,7 @@ function test1(){
         url: 'http://fossil.wanderinghorse.net/repos/whio/index.cgi/json',
         envelope: {
             "command": "wiki/list",
-            "requestId": "yoohoo"/*these break the length counting: Äöüß*/
+            "requestId": "yoohooÄöüß"
         }
     };
     Curl.fossilJson(opt);
