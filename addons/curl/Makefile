@@ -23,7 +23,17 @@ include ../../config.make # see that file for certain configuration options.
 # If needed, append the CPPFLAGS to point to where <v8/convert/*.hpp> can
 # be found.
 
-THE_OBJS := CurlJS.o
+BA.DIR := ../bytearray
+$(BA.DIR)/bytearray.hpp $(BA.DIR)/bytearray.cpp:
+bytearray.hpp: $(BA.DIR)/bytearray.hpp 
+	cp $(BA.DIR)/$@ .
+bytearray.cpp: $(BA.DIR)/bytearray.cpp bytearray.hpp
+	cp $(BA.DIR)/$@ .
+bytearray.o: bytearray.cpp
+CLEAN_FILES += bytearray.cpp bytearray.hpp
+
+
+THE_OBJS := CurlJS.o bytearray.o
 libv8curl.LIB.OBJECTS := $(THE_OBJS)
 libv8curl.DLL.OBJECTS := $(libv8curl.LIB.OBJECTS)
 libv8curl.DLL: $(libv8curl.LIB.OBJECTS)

@@ -8,121 +8,49 @@ function testOne()
     print(banner.start);
     print( arguments.callee.name+"()" );
     var c = new Curl();
+    var inBody = new Curl.ByteArray();
+    var inHead = new Curl.ByteArray();
     c.setOpt({
         url:'http://code.google.com/p/v8-juice/wiki/PluginCurl',
         userAgent:"Google Chrome, kind of.",
         //verbose:true,
         //noBody:true,
-        writeFunction:function writeFunction(data,len,ud)
+        writeFunction:function writeFunction(data,ud)
         {
-            print(arguments.callee.name+"()",data.length,"of",len,"bytes");
+            var len = data.length;
+            print(arguments.callee.name+"() "+len+" bytes: ["+data+"]");
             ++ud.count;
-            return data.length;
+            inBody.append(data);
+            data.destroy();
+            return len;
         },
         writeData:{count:0},
         //header:true,
-        headerFunction:function headerFunction(data,len,ud)
+        headerFunction:function headerFunction(data,ud)
         {
-            print(arguments.callee.name+"()",data.length,"of",len,
-                  "bytes:","["+data.substring(0,data.length-2)+"]");
+            var len = data.length;
+            print(arguments.callee.name+"() "+len+
+                  " bytes: ["+data+"]");
             ++ud.count;
-            return data.length;
+            inHead.append(data);
+            data.destroy();
+            return len;
         },
         headerData:{count:0}
     });
     var rc = c.easyPerform();
     print( "c.easyPerform() rc =",rc);
     print(c,'=',JSON.stringify(c,undefined,2));
+    if(!rc){
+        print("Fetched headers: "+inHead);
+        print("Fetched body: "+inBody);
+    }
+    if(inHead) inHead.destroy();
+    if(inBody) inBody.destroy();
     c.destroy();
     print(banner.end);
 };
-function testTwo()
-{
-    print(banner.start);
-    print( arguments.callee.name+"()" );
-    var c = new Curl();
-    print( "Curl obj =",JSON.stringify( c, undefined, 2 ) );
-    c.setOpt({
-        //verbose:true,
-        port:80,
-        url:"http://s11n",
-        writeFunction:function writeFunction(data,len,ud)
-        {
-            print(arguments.callee.name+"()",data.length,"of",len,"bytes");
-            ++ud.count;
-            return data.length;
-        },
-        writeData:{count:0},
-        headerFunction:function headerFunction(data,len,ud)
-        {
-            print(arguments.callee.name+"()",data.length,"of",len,"bytes:","["+data.substring(0,data.length-2)+"]");
-            return data.length;
-        },
-        headerData:{count:0},
-        userAgent:"cvv8-curl"
-    });
-    print( "port =",c.opt.port);
-    print( "timeout =",c.opt.timeout);
-    var rc = c.easyPerform();
-    print("perform rc =",rc);
-    print("Curl obj =",JSON.stringify(c,undefined,2));
-    //print("Curl.opt obj =",JSON.stringify(c.opt,undefined,2));
-    c.destroy();
-    print(banner.end);
-}
-function testThree()
-{
-    print(banner.start);
-    print( arguments.callee.name+"()" );
-    var c = new Curl();
-    var o = {
-        url:'http://localhost',
-        //verbose:true,
-        port:80,
-        timeout:11,
-        connectionTimeout:17,
-        headerFunction:function headerFunction(data,len,ud)
-        {
-            print(arguments.callee.name+"()",data.length,"of",len,"bytes:","["+data.substring(0,data.length-2)+"]");
-            return data.length;
-        },
-        headerData:{count:0},
-        httpHeader:["Host: s11n","Accept-Encoding: gzip","Accept: text/html"],
-        http200Aliases:['wh','s11n']
-    };
-    rc = c.setOpt(o);
-    print( "setOpt RC =",rc);
-    rc = c.setOpt( Curl.OPT_HTTPHEADER,
-                   ["Host: wh","Accept-Encoding: gzip","Accept: text/html"]
-                   );
-    print( "setOpt RC =",rc);
-    var rc = c.setOpt( Curl.OPT_CRLF, 0 )
-    print( "setOpt RC =",rc);
-    rc = c.setOpt( 'userAgent', "v8-juice" );
-    print( "setOpt RC =",rc);
-    var rc = c.setOpt( Curl.OPT_URL, 'http://wh' )
-    print( "setOpt RC =",rc);
-    print('c.opt.url ==',c.opt.url);
-    c.setOpt( Curl.OPT_WRITEFUNCTION, function writeFunction(data,len,ud)
-    {
-        print(arguments.callee.name+"()",data.length,"of",len,"bytes");
-        ++ud.count;
-        return data.length;
-    } );
-    c.setOpt( Curl.OPT_WRITEDATA, {count:0} );
 
-    print( "c =",JSON.stringify(c,undefined,2));
-    c.easyPerform();
-    if(1)
-    {
-        var ar = c.getInfo( Curl.INFO_HTTPAUTH_AVAIL );
-        print('CURLINFO_HTTPAUTH_AVAIL =\n\t',(ar ? ar.join('\n\t') : null));
-        ar = c.getInfo( Curl.INFO_SSL_ENGINES );
-        print('CURLINFO_SSL_ENGINES =\n\t',(ar ? ar.join('\n\t') : null));
-    }
-    c.destroy();
-    print(banner.end);
-}
 
 function testFour()
 {
@@ -186,45 +114,59 @@ function listProperties()
 
 function testReader()
 {
+    Curl.ByteArray.enableDestructorDebug(true);
     print(banner.start);
     print( arguments.callee.name+"()" );
+    var envelope = {
+        "command": "wiki/list"
+    };
+    var postData = new Curl.ByteArray(JSON.stringify(envelope));
+    var contentLength = postData.length;
+    var baResponse;
     var c = new Curl();
-    var content = "";
-    for( var i = 0; i < 20000; ++i )
-    {
-        content += '*';
-    }
     c.setOpt({
-            url:'http://localhost',
-            port:8080,
+            url:'http://fossil.wanderinghorse.net/repos/cpdo/index.cgi/json',
             verbose:true,
             post:true,
-            httpHeader:['Content-Length: '+content.length],
+            httpHeader:['Content-Length: '+contentLength,
+                        'Content-Type: application/json'],
+            writeFunction:function(data,ud){
+                if(!baResponse) baResponse = new Curl.ByteArray();
+                baResponse.append(data);
+                var len = data.length;
+                data.destroy();
+                return len;
+            },
             readFunction:function(len,ud)
             {
-                if( ud.pos >= ud.content.length ) return "";
-                var clen = ud.content.length - ud.pos;
+                print("readFunction("+len+") pos="+ud.pos);
+                if( ud.pos >= contentLength ) return null;
+                var clen = contentLength - ud.pos;
                 var xlen = (len > clen) ? clen : len;
-                var s = ud.content.substr( ud.pos, xlen );
-                print("readFunction(",len,") sending",s.length,'bytes.');
+                var s = postData.slice( ud.pos, xlen );
+                print("readFunction(",len,") sending",s.length,'bytes');
                 ud.pos += xlen;
                 return s;
             },
             readData:{
-                pos:0,
-                content:content
+                pos:0
             }
         });
     var rc = c.easyPerform();
+    postData.destroy();
     c.destroy();
+    print("Response: "+baResponse);
+    if(baResponse) {
+        print(baResponse.stringValue());
+        baResponse.destroy();
+    }
     print(banner.end);
 
 }
 
 //listProperties();
 testOne();
-//testTwo();
-//testThree();
-//testFour();
-//testCurlInfo();
-//testReader();
+testFour();
+testCurlInfo();
+testReader();
+

@@ -4,6 +4,8 @@
 #include <cvv8/ClassCreator.hpp>
 #include <map>
 #include <iostream>
+#include "bytearray.hpp"
+
 #ifndef CERR
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << " : "
 #endif
@@ -873,30 +875,99 @@ namespace cvv8 { namespace curl {
         im = reinterpret_cast<CurlJS::Impl *>( data );
         FuncHnd fh = im->getOptFunc( OptKey );
         if( fh.IsEmpty() ) return (size*nmemb);
-        enum { argc = 3 };
         size_t len = size * nmemb;
-        char const * cp = (len) ? reinterpret_cast<char const *>( ptr ) : 0;
+        //char const * cp = (len) ? reinterpret_cast<char const *>( ptr ) : 0;
+        typedef ClassCreator<JSByteArray> BAC;
+        v8::Handle<v8::Object> baObj( BAC::Instance().NewInstance( 0, NULL ) );
+        if( baObj.IsEmpty() ) return 0 /* assume exception is propagating. */;
+        JSByteArray * ba = CastFromJS<JSByteArray>(baObj);
+        if( ! ba ) {
+            Toss("Allocation of ByteArray failed.");
+            return 0;
+        }
+        ba->append( ptr, len );
+
+        enum { argc = 2 };
         ValHnd argv[argc] = {
-            v8::String::New( cp ? cp : "", cp ? static_cast<int>( len ) : 0 ),
-            v8::Integer::NewFromUnsigned( len ),
+            baObj,
+            //v8::Integer::NewFromUnsigned( len ),
             im->opt( DataKey )
         };
         v8::Local<v8::Value> rv = fh->Call( im->jself, argc, argv );
+        //BAC::Instance().DestroyObject(baObj);
         return rv.IsEmpty() ? 0 : CastFromJS<size_t>( rv );
     }
-    
+
+    /**
+       This callback is triggered when Curl wants to read data from
+       the client and send it to the server.
+
+       It can be used to accummulate the results of incoming data,
+       e.g. by append()ing the first ByteArray argument to an app-side
+       ByteArray which is buffering the whole response.
+
+       The callback must return the number of bytes it processed,
+       ideally the ByteArray's length. Returning a different value
+       will halt inbound data processing.
+
+       JS-side usage:
+
+       @code
+       var rawResponse;
+       var curlOpt = {
+         writeFunction:function( aByteArray, writeData ){
+           if(!rawResponse) rawResponse = new Curl.ByteArray();
+           rawResponse.append(aByteArray);
+           var len = aByteArray.length;
+           aByteArray.destroy();
+           return len; // number of bytes processed.
+         }
+       };
+       // After easyPerform(), rawResponse would contain the fetched
+       // response data.
+       @endcode
+    */
     static size_t WriteCallback(char *ptr, size_t size, size_t nmemb, void *data)
     {
         return WriterCallback<Strings::optWriteFunc,Strings::optWriteData>( ptr, size, nmemb, data );
     }
+
+    /**
+       Used just like WriteCallback(), but applies to the
+       headerFunction and headerData curl properties.
+    */
     static size_t HeaderCallback(char *ptr, size_t size, size_t nmemb, void *data)
     {
         return WriterCallback<Strings::optHeaderFunc,Strings::optHeaderData>( ptr, size, nmemb, data );
     }
 
+    /**
+       This callback is triggered when Curl wants to read data from
+       the client and send it to the server.
+    
+       JS side usage:
+
+       @code
+       var curlOpt = {
+         httpHeader: ['Content-Length: '+lengthOfEntireContentInBytes],
+         readFunction: function(length, readData){
+           // return length bytes of data as a ByteArray. Any other
+           // result signifies an error.
+         },
+         readData: ...optional 2nd param for readFunction()...
+       };
+       @endcode
+
+       The catch is: because it can be called incrementally, client
+       code has to keep track of a range of bytes and feed them out
+       piecemeal. Because this could cause UTF text data to be split
+       on non-character boundaries, this type requires a ByteArray to
+       be returned to hold the data, since a ByteArray can legally
+       hold arbitrary bytes (whereas a v8::String has undefined
+       results if we give it malformed UTF).
+     */
     static size_t ReadCallback( char *ptr, size_t size, size_t nmemb, void *data)
     {
-        //CERR << "WriterCallback<"<<OptKey<<", "<<DataKey<<">() "<<(size*nmemb)<<" bytes.\n";
         CurlJS::Impl * im;
         im = reinterpret_cast<CurlJS::Impl *>( data );
         FuncHnd fh = im->getOptFunc( Strings::optReadFunc );
@@ -913,11 +984,14 @@ namespace cvv8 { namespace curl {
         {
             return CURL_READFUNC_ABORT;
         }
-        v8::Local<v8::String> sv( rv->ToString() );
-        v8::String::AsciiValue const asc( sv );
-        size_t rc = static_cast<size_t>( asc.length() );
-        if( rc < len ) len = rc;
-        memcpy( ptr, *asc, len );
+        JSByteArray const * ba = CastFromJS<JSByteArray>(rv);
+        if(!ba){
+            return 0;
+        }
+        size_t const baLen = ba->length();
+        if( baLen < len ) len = baLen;
+        memcpy( ptr, ba->rawBuffer(), len );
+        //ClassCreator<JSByteArray>::Instance().DestroyObject(rv);
         return len;
     }
 
@@ -1082,7 +1156,6 @@ namespace cvv8 { namespace curl {
         //v8::HandleScope hsc;
         v8::Local<v8::Object> src( v8::Object::Cast(*value) );
         v8::Handle<v8::Object> pobj( v8::Object::New() );
-        CERR << "SetOpts(Object)\n";
         this->impl->opt( pobj );
         v8::Local<v8::Array> ar = src->GetPropertyNames();
         const int arlen = CastFromJS<int>( ar->Get(JSTR("length")) );
@@ -1247,16 +1320,6 @@ namespace cvv8 { namespace curl {
             clean up! We WILL cause grief here if the main application is also using
             the curl API.
         */
-#if 0
-                typedef tmp::TypeList<
-            convert::InvocableMemFunc1<N,ValHnd,ValHnd const &,&N::SetOpts>,
-            convert::InvocableMemFunc2<N,ValHnd,ValHnd const &,ValHnd const &,&N::SetOpt>
-            > SetOptList;
-        typedef tmp::TypeList<
-            convert::InvocableMemFunc0<N,int,&N::Pause>,
-            convert::InvocableMemFunc1<N,int,int,&N::Pause>
-            > PauseList;
-#endif
 
         // Overloadload setOpt():
         typedef ArityDispatchList< CVV8_TYPELIST((
@@ -1282,7 +1345,7 @@ namespace cvv8 { namespace curl {
         cc.AddClassTo(TypeName<N>::Value, target);
 
         v8::Handle<v8::Function> const & ctor( cc.CtorFunction() );
-
+        JSByteArray::SetupBindings( ctor );
         ctor->Set( JSTR("strlenBytes"),
                    v8::FunctionTemplate::New(FunctionTo<InCa, unsigned int (ValHnd const &), strlenBytes >::Call)->GetFunction()
                    );
