@@ -53,30 +53,6 @@ namespace {
     }
 }
 namespace cv = cvv8;
-namespace jspdo {
-
-#if 0
-    /**
-        Not yet used, but something to consider so that we can finalize any
-        statements left open when the db closes. Adding this requires some other
-        refactoring.
-    */
-    class JSPDO : public cpdo::driver {
-        public:
-            typedef std::map< void const *, v8::Handle<v8::Object> > StmtMap;
-            StmtMap stmts;
-            //cpdo::driver * drv;
-            JSPDO( char const * dsn, char const * user, char const * pw )
-                : cpdo::driver(dsn,user,pw),
-                  stmts()
-            {}
-            //~ JSPDO() : stmts()//,drv(NULL)
-            //~ {
-            //~ }
-            virtual ~JSPDO()/*defined out-of-line for templating reasons!*/;
-    };
-#endif
-}
 
 namespace cvv8 {
     CVV8_TypeName_DECL((cpdo::driver));
@@ -773,9 +749,9 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
     try
     {
         ASSERT_STMT_DECL(info.This());
-        v8::Handle<v8::Object> self( info.This() );
+        v8::Handle<v8::Object> const & self( info.This() );
         char const * prop = "columnNames";
-        v8::Handle<v8::String> jProp(JSTR(prop));
+        v8::Handle<v8::String> const & jProp(JSTR(prop));
         v8::Handle<v8::Value> val( self->GetHiddenValue(jProp) );
         if( val.IsEmpty() )
         {
@@ -786,7 +762,7 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
             }
             else
             {
-                v8::Handle<v8::Array> ar( v8::Array::New(colCount) );
+                v8::Handle<v8::Array> const & ar( v8::Array::New(colCount) );
                 for( uint16_t i = 0; i < colCount; ++i )
                 {
                     char const * n = st->col_name(i);
@@ -815,8 +791,10 @@ static v8::Handle<v8::Value> Statement_getColumnNames( v8::Local< v8::String > p
    Statement.columnTypes accessor which caches the column types in
    an internal JS array.
    
-   This has unfortunate semantic differences from columnType(), so
-   it has been disabled.
+   This has unfortunate semantic differences from columnType(), so it
+   has been disabled. The main problem is that a given column can have
+   different types in any given row (at least in sqlite3), so caching
+   the column types is not all that useful.
 */
 static v8::Handle<v8::Value> Statement_getColumnTypes( v8::Local< v8::String > property,
                                                        const v8::AccessorInfo & info )
@@ -872,9 +850,9 @@ static v8::Handle<v8::Value> Statement_getParamNames( v8::Local< v8::String > pr
     try
     {
         ASSERT_STMT_DECL(info.This());
-        v8::Handle<v8::Object> self( info.This() );
+        v8::Handle<v8::Object> const & self( info.This() );
         char const * prop = "columnNames";
-        v8::Handle<v8::String> jProp(JSTR(prop));
+        v8::Handle<v8::String> const & jProp(JSTR(prop));
         v8::Handle<v8::Value> val( self->GetHiddenValue(jProp) );
         if( val.IsEmpty() )
         {
@@ -885,7 +863,7 @@ static v8::Handle<v8::Value> Statement_getParamNames( v8::Local< v8::String > pr
             }
             else
             {
-                v8::Handle<v8::Array> ar( v8::Array::New(colCount) );
+                v8::Handle<v8::Array> const & ar( v8::Array::New(colCount) );
                 for( uint16_t i = 1/*bind ndx starts at 1*/; i <= colCount; ++i )
                 {
                     char const * n = st->param_name(i);
