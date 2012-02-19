@@ -34,7 +34,21 @@ function test1()
     ba = new ByteArray(str);
     asserteq( 9, ba.length );
     asserteq( str, ba.stringValue() );
+    
+    function badSlice(pos, len){
+        return function(){
+            var b = ba.slice(pos,len);
+            print('slice='+b);
+        }
+    }
+    assertThrows( badSlice(1,9), 'Bad slice.');
+    assertThrows( badSlice(10,1), 'Bad slice.');
+    assertThrows( badSlice(9,1), 'Bad slice.');
+    var sl = ba.slice(2,4);
     ba.destroy();
+    print('slice='+sl);
+    asserteq( 'aöo', sl.stringValue() );
+    sl.destroy();
 }
 
 function testGZip()

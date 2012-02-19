@@ -149,6 +149,21 @@ namespace cvv8 {
         int gunzipTo( JSByteArray & dest ) const;
 
         /**
+           Creates a new JS-side byte array object using data from this object,
+           starting at the given pos and running the given length.
+
+           On error a JS exception is triggered and an empty handle is
+           returned.
+           
+           It is an error if pos/len are out of range for this
+           object.
+
+           The returned object is owned by v8.
+        */
+        v8::Handle<v8::Object> slice( uint32_t pos, uint32_t len ) const;
+            
+        
+        /**
            Creates a new JSByteArray and calls gzipTo(*this,
            thatObject).  Throws if there is a binding-level error,
            returns v8::Null() if gzipping fails, or a handle to a new

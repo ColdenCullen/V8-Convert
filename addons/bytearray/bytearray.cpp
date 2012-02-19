@@ -450,6 +450,7 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
         ( "append", cv::MethodTo<InCa, N, void (v8::Handle<v8::Value> const &), &N::append>::Call )
         ( "stringValue", cv::MethodTo<InCa, const N, std::string (),&N::stringValue>::Call )
         ( "toString", cv::MethodTo<InCa, const N, std::string (),&N::toString>::Call )
+        ( "slice", cv::MethodTo<InCa, const N, v8::Handle<v8::Object> (uint32_t, uint32_t),&N::slice>::Call )
         // i don't like these next two...
         //( "gzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gzipTo>::Call )
         //( "gunzipTo", cv::ConstMethodToInCa<N, int (N &), &N::gunzipTo>::Call )
@@ -490,6 +491,24 @@ void JSByteArray::SetupBindings( v8::Handle<v8::Object> dest )
 
 namespace cvv8 {
 
+    v8::Handle<v8::Object> JSByteArray::slice( uint32_t pos, uint32_t len ) const
+    {
+        typedef ClassCreator<JSByteArray> CC;
+        v8::Handle<v8::Object> rc;
+        uint32_t srcLen = this->length();
+        if( (pos>=srcLen) || ((pos + len) > srcLen) ) {
+            Toss(StringBuffer()<< " pos/length out of range.");
+            return rc;
+        }
+
+        JSByteArray * ba = NULL;
+        rc = CC::Instance().NewInstance( 0, NULL, ba );
+        if(!ba) return rc /* assume exception is propagating */;
+        unsigned char const * src = (unsigned char const*)this->rawBuffer();
+        ba->append( src + pos, len );
+        return rc;
+    }
+    
     int GZipJSByteArray( JSByteArray const & src, JSByteArray & dest, int level )
     {
 #if ! ByteArray_CONFIG_ENABLE_ZLIB
