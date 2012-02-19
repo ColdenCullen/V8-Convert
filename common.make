@@ -131,7 +131,7 @@ $$($(1).DLL): $$($(1).DLL.SOURCES) $$($(1).DLL.OBJECTS)
 	echo "$(1).DLL.OBJECTS and/or $(1).DLL.SOURCES are/is undefined!"; exit 1; }; \
 	$(call ShakeNMake.CALL.SETX,"LD [$$@] ..."); \
 	 $$(CXX) -o $$@ -shared -rdynamic $$(LDFLAGS) \
-		$$($(1).DLL.LDFLAGS) $$($(1).DLL.OBJECTS) \
+		$$($(1).DLL.OBJECTS) $$($(1).DLL.LDFLAGS) \
 		$$($(1).DLL.CXXFLAGS)
 endef
 ########################################################################
