@@ -369,10 +369,6 @@ namespace cvv8 {
             cc.AddClassTo( "T", dest );
             return;
             @endcode
-
-            If you do not actually want to add the class to the dest object,
-            you should call Seal() instead of AddClassTo() (or pass a different
-            destination object to AddClassTo().
         */
         static void Initialize( v8::Handle<v8::Object> const & target )
         {
