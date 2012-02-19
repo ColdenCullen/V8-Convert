@@ -800,7 +800,6 @@ v8::Handle< v8::Value > sprintf( int argc, v8::Handle<v8::Value> argv[] )
   const et_info *infop = 0;      /* Pointer to the appropriate info structure */
   char buf[WHPRINTF_BUF_SIZE];       /* Conversion buffer */
   char prefix;               /* Prefix character.  "+" or "-" or " " or '\0'. */
-  etByte errorflag = 0;      /* True if an error is encountered */
   etByte xtype;              /* Conversion paradigm */
   char * zExtra = 0;              /* Extra memory used for etTCLESCAPE conversions */
 #if ! WHPRINTF_OMIT_FLOATING_POINT
@@ -842,7 +841,6 @@ do{				       \
       if( c==0 ) break;
     }
     if( (c=(*++fmt))==0 ){
-      errorflag = 1;
       pfrc = pfAppend( pfAppendArg, "%", 1);
       WHPRINTF_CHECKERR(0);
       break;
