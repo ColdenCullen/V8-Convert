@@ -81,7 +81,7 @@ static int v8_main(int argc, char const * const * argv)
         }
 #endif
         char const * fname = argv[1];
-        v8::Handle<v8::Value> rc = shell.ExecuteFile( fname );
+        /*v8::Handle<v8::Value> rc = */shell.ExecuteFile( fname );
     }
     catch(std::exception const & ex)
     {
