@@ -114,7 +114,7 @@ function listProperties()
 
 function testReader()
 {
-    Curl.ByteArray.enableDestructorDebug(true);
+    //Curl.ByteArray.enableDestructorDebug(true);
     print(banner.start);
     print( arguments.callee.name+"()" );
     var envelope = {
