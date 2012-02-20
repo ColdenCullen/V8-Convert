@@ -138,7 +138,7 @@ jsmin: jsmin.c Makefile
 	$(CC) -o $@ jsmin.c
 CLEAN_FILES += js2c jsmin
 $(EXT.CPP): js2c jsmin $(EXT.JS) $(ALL_MAKEFILES)
-	./js2c jspdoInitCode < $(EXT.JS) | ./jsmin > $@
+	./jsmin < $(EXT.JS) | ./js2c jspdoInitCode > $@
 
 ########################################################################
 # Binaries...
