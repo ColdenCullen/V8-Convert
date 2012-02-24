@@ -1126,7 +1126,7 @@ namespace io {
 
     whio::MemoryIODev * Ctor_MemoryIODev::Call( v8::Arguments const &argv )
     {
-        assert( Ctor_MemoryIODev()(argv) );
+        assert( Ctor_MemoryIODev()(argv) /*assert that arg dispatching worked properly*/);
         uint32_t const sz = CastFromJS<uint32_t>(argv[0]);
         float const factor = (argv.Length()>1)
             ? static_cast<float>(CastFromJS<double>(argv[1]))
@@ -1136,7 +1136,7 @@ namespace io {
 
     whio::Subdevice * Ctor_Subdevice::Call( v8::Arguments const & argv )
     {
-        assert( Ctor_Subdevice()(argv) );
+        assert( Ctor_Subdevice()(argv) /*assert that arg dispatching worked properly*/);
         whio::IODev * parent = CastFromJS<whio::IODev*>(argv[0]);
         assert( (NULL != parent) && "Argument validation should have failed!" );
         whio_size_t const low = CastFromJS<whio_size_t>(argv[1]);
@@ -1147,7 +1147,7 @@ namespace io {
     
     whio::FileIODev * Ctor_FileIODev::Call( v8::Arguments const & argv )
     {
-        assert( Ctor_FileIODev()(argv) );
+        assert( Ctor_FileIODev()(argv) /*assert that arg dispatching worked properly*/ );
         ArgCaster<char const *> ac;
         char const * fn = ac.ToNative(argv[0]);
         if( !fn || !*fn )
@@ -1182,7 +1182,7 @@ namespace io {
 
     whio::OutStream * Ctor_OutStream::Call( v8::Arguments const &argv )
     {
-        assert( Ctor_OutStream()(argv) );
+        assert( Ctor_OutStream()(argv) /*assert that arg dispatching worked properly*/);
         v8::Handle<v8::Value> arg( argv[0] );
         if( ValIs<v8::String>()(arg) )
         { /* (String name, bool truncate) */
@@ -1215,7 +1215,7 @@ namespace io {
 
     whio::InStream * Ctor_InStream::Call( v8::Arguments const &argv )
     {
-        assert( Ctor_InStream()(argv) );
+        assert( Ctor_InStream()(argv) /*assert that arg dispatching worked properly*/);
         v8::Handle<v8::Value> arg( argv[0] );
         if( ValIs<v8::String>()(arg) )
         { /* (String name) */
