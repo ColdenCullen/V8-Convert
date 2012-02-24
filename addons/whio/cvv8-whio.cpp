@@ -1152,7 +1152,7 @@ namespace io {
         char const * fn = ac.ToNative(argv[0]);
         if( !fn || !*fn )
         {
-            throw new std::runtime_error("Filename ctor argument may not be empty.");
+            throw std::runtime_error("Filename ctor argument may not be empty.");
         }
         else if( 2 == argv.Length() )
         {// (String name, int|String mode)
