@@ -64,7 +64,7 @@ function testIODev()
     assert( s instanceof whio.Subdevice, 's is-a Subdevice.' );
     assert( s.iomode(), 's.iomode() seems to work' );
     asserteq( 'function', typeof s.rebound, 's.rebound is-a function.');
-    assertThrows( function(){d.rebound(1,"hi");},'Invalid arguments passed to rebound().');
+    assertThrows( function(){s.rebound(1,"hi");},'Invalid arguments passed to rebound().');
 
     s.rebound(1,5);
     s.rebound(d,10,15);
@@ -235,7 +235,9 @@ function testEPFS()
     }
     
     assert( d.close(), 'PseudoFile.close() appears to work.' );
+    assert( !d.close(), 'Second call to close() fails.');
     assert( fs.close(), 'EPFS.close() appears to work.' );
+    assert( !fs.close(), 'Second call to close() fails.');
     d = fs = null;
     
     if(1) { // re-open and read back some stuff...
