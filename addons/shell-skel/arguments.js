@@ -1,8 +1,7 @@
 
 arguments.parseArgs = function() {
     var i, m, l;
-    var rxNonFlag = /^[^-][^=]+?$/; /* -arg */
-
+    var rxNonFlag = /^[^-]/; /* arg */
     var rx0a = /^--?([^=]+)$/; /* -[-]arg */
     var rx1a = /^--?([^=]+)=(.*)$/; /* -[-]arg=val */
     var rc = {
@@ -35,7 +34,7 @@ if( 0 === arguments.length ) {
     print("\tshell script.js -- -a=1 --b=2 --c");
 }
 print('arguments ='+JSON.stringify(arguments));
-print('arguments.parseArgs ='+JSON.stringify(arguments.parseArgs()));
+print('arguments.parseArgs ='+JSON.stringify(arguments.parseArgs(),0,2));
 
 function testV8ShellStuff()
 {
