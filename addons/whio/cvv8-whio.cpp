@@ -1036,6 +1036,7 @@ namespace io {
                  <<"Could not find native "
                  << TypeName<T>::Value
                  << " 'this' pointer.");
+            return;
         }
         if( time->IsDate() )
         {
@@ -1062,6 +1063,7 @@ namespace io {
                  <<"Could not find native "
                  << TypeName<T>::Value
                  << " 'this' pointer.");
+            return 0;
         }
         if( ! time.IsEmpty() )
         {

@@ -1,4 +1,4 @@
-/* auto-generated on Fri Feb 17 15:14:46 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:16 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1426,6 +1426,83 @@ namespace whio {
             return k;
         }
     };
+
+
+    /**
+       Do not use - not yet complete.
+    */
+    class Vlbm
+    {
+    private:
+        whio_vlbm bm;
+        IODev * dev;
+        bool ownsDevice;
+    private:
+        Vlbm();
+        template <typename Func>
+        static Vlbm * create( char const * funcName,
+                              Func factory,
+                              IODev * parent,
+                              bool takeDevice);
+    public:
+        ~Vlbm();
+        /**
+           Analog to whio_vlbm_format(). If takeDevice is true
+           then this object takes over ownership of parent on success.
+           On error an exception is thrown.
+        */
+        static Vlbm * format( IODev * parent, bool takeDevice );
+        /**
+           Analog to whio_vlbm_open(). If takeDevice is true
+           then this object takes over ownership of parent on success.
+           On error an exception is thrown.
+        */
+        static Vlbm * open( IODev * parent, bool takeDevice );
+        bool isRw() const;
+        whio_size_t storageSize() const;
+        
+        class Block
+        {
+        private:
+            Vlbm * bm;
+            whio_vlbm_block bl;
+            explicit Block(Vlbm *bm);
+            friend class Vlbm;
+
+        public:
+            ~Block();
+            bool isValid() const { return bl.id && bm; }
+            whio_size_t id() const { return bl.id; };
+            whio_size_t capacity() const { return bl.capacity; }
+            uint32_t clientFlags() const { return bl.clientFlags; }
+            void clientFlags(uint32_t v);
+            whio_size_t usedByteCount() const { return bl.usedByteCount; }
+            void usedByteCount(whio_size_t n);
+            whio_size_t prevBlockId() const { return bl.prevBlock; }
+            whio_size_t nextBlockId() const { return bl.nextBlock; }
+            void flush();
+            void free();
+            void wipeData();
+            Block readLeftBlock();
+            Block readRightBlock();
+            void unlink();
+            void read( void * dest, whio_size_t n, whio_size_t offset );
+            void write( void const * src, whio_size_t n/*TODO: whio_size_t offset*/ );
+        };
+
+        Block allocBlock( whio_size_t blockSize, whio_vlbm_list toList = WHIO_VLBM_LIST_USED );
+        Block addNewBlock( whio_size_t blockSize, whio_vlbm_list toList = WHIO_VLBM_LIST_USED );
+        Block blockById(whio_size_t id);
+
+        Block freeListHead();
+        Block usedListHead();
+
+        Block clientBlock();
+        void clientBlock( Block const & bl );
+
+
+    };
+
 }
 
 #endif /* include guard */

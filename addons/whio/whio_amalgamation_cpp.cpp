@@ -1,4 +1,4 @@
-/* auto-generated on Fri Feb 17 15:14:46 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:16 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1041,7 +1041,184 @@ namespace whio {
               never is).*/
             ;
     }
+
+    Vlbm::Vlbm()
+        : bm(whio_vlbm_empty),
+          dev(NULL),
+          ownsDevice(false)
+    {
+    }
+
+    Vlbm::~Vlbm()
+    {
+        if( bm.dev ){
+            whio_vlbm_close(&bm);
+        }
+        if(ownsDevice && dev){
+            delete dev;
+        }
+        dev = NULL;
+    }
+
+    template <typename Func>
+    Vlbm * Vlbm::create( char const * funcName,
+                         Func factory,
+                         IODev * parent, bool takeDevice)
+    {
+        Vlbm * v = new Vlbm;
+        whio_vlbm * tgt = &v->bm;
+        int rc = factory(&tgt, parent->handle(), false);
+        if(rc){
+            delete v;
+            throw RcException("Vlbm::format", rc);
+        }
+        v->ownsDevice = takeDevice;
+        v->dev = parent;
+        return v;
+    }
     
+    Vlbm * Vlbm::format( IODev * parent, bool takeDevice )
+    {
+        return create("whio_vlbm_format", whio_vlbm_format, parent, takeDevice );
+    }
+
+    Vlbm * Vlbm::open( IODev * parent, bool takeDevice )
+    {
+        return create("whio_vlbm_open", whio_vlbm_open, parent, takeDevice );
+    }
+
+    bool Vlbm::isRw() const
+    {
+        return whio_vlbm_is_rw(&bm);
+    }
+
+    whio_size_t Vlbm::storageSize() const
+    {
+        return whio_vlbm_storage_size(&bm);
+    }
+
+#define RC_WRAPPER(FUNC,PARAMS)                       \
+    rc = FUNC PARAMS;                                 \
+    if(rc) throw RcException(#FUNC, rc)
+    
+    Vlbm::Block Vlbm::allocBlock( whio_size_t blockSize, whio_vlbm_list toList )
+    {
+        Block bl(this);
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_alloc_to,(&bm, blockSize, &bl.bl, toList));
+        else return bl;
+    }
+
+    Vlbm::Block Vlbm::addNewBlock( whio_size_t blockSize, whio_vlbm_list toList )
+    {
+        Block bl(this);
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_add_new_to,( &bm, blockSize,
+                                                &bl.bl, toList ));
+        else return bl;
+    }
+
+
+    Vlbm::Block Vlbm::blockById(whio_size_t id)
+    {
+        Vlbm::Block bl(this);
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_read,(&bm, id, &bl.bl));
+        return bl;
+    }
+
+    void Vlbm::clientBlock( Vlbm::Block const & bl )
+    {
+        assert( bl.bm == this );
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_client_set,(&bm, &bl.bl));
+    }
+
+    Vlbm::Block Vlbm::clientBlock()
+    {
+        return bm.table.clientBlock
+            ? blockById( bm.table.clientBlock )
+            : Block(NULL);
+    }
+
+    Vlbm::Block Vlbm::freeListHead()
+    {
+        return bm.table.freeList
+            ? blockById( bm.table.freeList )
+            : Block(NULL);
+    }
+    
+    Vlbm::Block Vlbm::usedListHead()
+    {
+        return bm.table.usedList
+            ? blockById( bm.table.usedList )
+            : Block(NULL);
+    }
+    
+
+    Vlbm::Block::Block(Vlbm *parent)
+        : bm(parent),
+          bl(whio_vlbm_block_empty)
+    {}
+    Vlbm::Block::~Block()
+    {
+        bm = NULL;
+        bl = whio_vlbm_block_empty;
+    }
+
+    void Vlbm::Block::flush()
+    {
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_write,( &bm->bm, &bl ));
+    }
+
+    void Vlbm::Block::usedByteCount(whio_size_t n)
+    {
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_length_set,(&bl, n));
+    }
+
+    void Vlbm::Block::clientFlags(uint32_t n)
+    {
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_flags_set,(&bl, n));
+    }
+
+    Vlbm::Block Vlbm::Block::readLeftBlock()
+    {
+        return bl.prevBlock
+            ? bm->blockById(bl.prevBlock)
+            : Vlbm::Block(NULL);
+    }
+
+    Vlbm::Block Vlbm::Block::readRightBlock()
+    {
+        return bl.nextBlock
+            ? bm->blockById(bl.nextBlock)
+            : Vlbm::Block(NULL);
+    }
+
+    void Vlbm::Block::wipeData()
+    {
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_wipe,(&bm->bm, &bl));
+    }
+    
+    void Vlbm::Block::free()
+    {
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_free,(&bm->bm, &bl));
+    }
+
+    void Vlbm::Block::unlink()
+    {
+        int rc;
+        RC_WRAPPER(whio_vlbm_block_unlink,(&bm->bm, &bl));
+    }
+
+
+    
+#undef RC_WRAPPER
 }
 
 #endif

@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:13 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8474,7 +8474,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12968,7 +12968,7 @@ static int whio_ht_record_read( whio_ht * ht, whio_size_t blockID, whio_ht_recor
     else
     {
         unsigned char buf[Len];
-        rc = whio_vlbm_data_read_n_at( &ht->vlbm, &rec->block, buf, Len, 0 );
+        rc = whio_vlbm_data_read_at( &ht->vlbm, &rec->block, buf, Len, 0 );
         if( rc ) return rc;
         return whio_ht_record_decode( buf, rec );
     }
@@ -13652,7 +13652,7 @@ static bool whio_ht_keycmp( whio_ht * ht, void const * key,
                 buf = sbuf;
             }
             /*memset( buf, 0, keyLen );*/
-            rc = whio_vlbm_data_read_n_at( &ht->vlbm, &rec->block, buf, keyLen, kpos );
+            rc = whio_vlbm_data_read_at( &ht->vlbm, &rec->block, buf, keyLen, kpos );
             if( rc ) return rc;
             else return 0 == ht->funcs.keycmp( key, buf, keyLen );
         }
@@ -13961,7 +13961,7 @@ int whio_ht_value_set( whio_ht * ht,
         if( rec->valueLen != valueLen )
         {
             rec->valueLen = valueLen;
-            rc = whio_vlbm_block_length_set( &ht->vlbm, &rec->block,
+            rc = whio_vlbm_block_length_set( &rec->block,
                                              whio_ht_record_dpos(rec) + rec->valueLen );
             if( 0 == rc )
             {
@@ -14072,7 +14072,7 @@ static int whio_ht_insert_impl( whio_ht * ht,
             rc = whio_ht_hashent_write( ht, hashndx, rec.block.id );
             if( rc ) return rc;
         }
-        rc = whio_vlbm_block_length_set( &ht->vlbm, &rec.block, blsz );
+        rc = whio_vlbm_block_length_set( &rec.block, blsz );
         if( rc ) return rc;
         rc = whio_ht_record_write( ht, &rec, true );
         if( rc ) return rc;
@@ -14317,8 +14317,8 @@ static int whio_ht_kv_get_n( whio_ht * ht, whio_ht_record const * rec,
                ? kvLen
                : *n)
             ;
-        int const rc = whio_vlbm_data_read_n_at( &ht->vlbm, &rec->block,
-                                                 dest, sz, pos );
+        int const rc = whio_vlbm_data_read_at( &ht->vlbm, &rec->block,
+                                               dest, sz, pos );
         if( n && (0 == rc) )
         {
             *n = sz;
@@ -15097,6 +15097,12 @@ static whio_size_t whio_vlbm_block_list_id( whio_vlbm * bm,
     }
 }
 
+/**
+   Reads the head block of the list identified by whichList.  If the
+   list is empty or whichList is not a known list ID then *dest is
+   populated with an empty state and 0 is returned.  Returns non-0 on
+   error. On success dest is modified to contain the block's state.
+*/
 static int whio_vlbm_block_read_list( whio_vlbm * bm,
                                       whio_vlbm_list whichList,
                                       whio_vlbm_block * dest )
@@ -15341,9 +15347,9 @@ whio_size_t whio_vlbm_block_length(whio_vlbm_block const * bl)
     return bl ? bl->usedByteCount : 0;
 }
 
-int whio_vlbm_block_length_set(whio_vlbm * bm, whio_vlbm_block * bl, whio_size_t newLen)
+int whio_vlbm_block_length_set(whio_vlbm_block * bl, whio_size_t newLen)
 {
-    if( ! bm || !bl ) return whio_rc.ArgError;
+    if( !bl ) return whio_rc.ArgError;
     else if( !bl->id || (newLen > bl->capacity)) return whio_rc.RangeError;
     else
     {
@@ -15399,6 +15405,7 @@ static whio_size_t whio_vlbm_block_dpos( whio_vlbm_block const * bl )
         + whio_vlbm_sizeof_encoded_block /* metadata header */;
 }
 
+#if 0
 int whio_vlbm_data_write( whio_vlbm * bm, whio_vlbm_block * bl, void const * src, whio_size_t n )
 {
     if( ! bm || !bl || !bl->id || !src )
@@ -15429,7 +15436,8 @@ int whio_vlbm_data_write( whio_vlbm * bm, whio_vlbm_block * bl, void const * src
         }
     }
 }
-int whio_vlbm_data_read_n_at( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest,
+#endif
+int whio_vlbm_data_read_at( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest,
                               whio_size_t n, whio_size_t pos )
 {
     if( ! bm || !bl || !bl->id || !dest )
@@ -15446,16 +15454,48 @@ int whio_vlbm_data_read_n_at( whio_vlbm * bm, whio_vlbm_block const * bl, void *
         : whio_rc.IOError;
 }
 
-int whio_vlbm_data_read_n( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest,
+int whio_vlbm_data_read( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest,
                            whio_size_t n )
 {
-    return whio_vlbm_data_read_n_at( bm, bl, dest, n, 0 );
+    return whio_vlbm_data_read_at( bm, bl, dest, n, 0 );
 }
 
-int whio_vlbm_data_read( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest )
+int whio_vlbm_data_write_at( whio_vlbm * bm, whio_vlbm_block * bl,
+                             void const * src,
+                             whio_size_t n, whio_size_t pos )
 {
-    return bl
-        ? whio_vlbm_data_read_n_at( bm, bl, dest, bl->usedByteCount, 0 )
+    if( ! bm || !bl || !bl->id || !src )
+    {
+        return whio_rc.ArgError;
+    }
+    if( (pos >= bl->capacity) || ((pos + n) > bl->capacity) )
+    {
+        return whio_rc.RangeError;
+    }
+    if(n != whio_dev_writeat(bm->dev, pos + whio_vlbm_block_dpos(bl), src, n)){
+        return whio_rc.IOError;
+    }
+#if 0
+    else return 0;
+#else
+    else {
+        if( (pos+n) > bl->usedByteCount )
+        {
+            bl->usedByteCount = pos+n;
+            return whio_vlbm_block_write( bm, bl );
+        }
+        else
+        {
+            return 0;
+        }
+    }
+#endif
+}
+
+int whio_vlbm_data_write( whio_vlbm * bm, whio_vlbm_block * bl, void const * src, whio_size_t n )
+{
+    return (bm && bl && src)
+        ? whio_vlbm_data_write_at( bm, bl, src, n, 0 )
         : whio_rc.ArgError;
 }
 
@@ -15511,7 +15551,7 @@ int whio_vlbm_data_write_callback( whio_vlbm * bm, whio_vlbm_block * bl,
                   FIXME: consider not ignoring this return code.
                 */
                 ;
-            if( !rc && (bl->usedByteCount != total) )
+            if( !rc && (bl->usedByteCount < total) )
             {
                 bl->usedByteCount = total;
                 rc = whio_vlbm_block_write( bm, bl );
@@ -15757,7 +15797,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Fri Feb 17 15:14:45 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -20034,166 +20074,7 @@ License: Public Domain
 
 #include <assert.h>
 
-#if WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-#endif
-
 #define MARKER printf("MARKER: %s:%d:%s():\t",__FILE__,__LINE__,__func__); printf
-
-#if WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-#define PFS_POOL(FS) ((WHALLOC_API(bt)*)(FS)->pool.mem)
-static int alloc_loggerv( char const * fmt, va_list varg )
-{
-    return vfprintf( stderr, fmt, varg );
-}
-static int alloc_logger( char const * fmt, ... )
-{
-    int rc;
-    va_list varg;
-    va_start(varg,fmt);
-    rc = alloc_loggerv( fmt, varg );
-    va_end(varg);
-    return rc;
-}
-#endif
-
-int whio_epfs_mempool_drain( whio_epfs * fs )
-{
-#if ! WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-    return whio_rc.UnsupportedError;
-#else
-    if( fs && fs->pool.mem )
-    {
-        WHALLOC_API(bt_drain)( (WHALLOC_API(bt)*)fs->pool.mem );
-        return 0;
-    }
-    else return whio_rc.ArgError;
-#endif
-}
-
-#if WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-/** Implements the whio_allocator interface and treats state as a
-    (WHALLOC_API(bt)*) object.
-*/
-static void * whio_epfs_allocator_bt( void * m, unsigned int sz, void * state )
-{
-    return WHALLOC_API(bt_realloc)( (WHALLOC_API(bt) *)state, m, sz );
-}
-#endif
-
-int whio_epfs_mempool_setup( whio_epfs * fs, void * mem, whio_size_t size, bool fallback )
-{
-#if ! WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-    return whio_rc.UnsupportedError;
-#else
-    if( ! fs ) return whio_rc.ArgError;
-    else if( fs->pool.mem ) return whio_rc.AccessError;
-    else
-    {
-        size_t const btSz = sizeof(WHALLOC_API(bt));
-        if( size < (btSz*2) ) return whio_rc.RangeError;
-        else
-        {
-            int rc;
-            unsigned char * cmem = (unsigned char *)mem;
-            WHALLOC_API(bt) * p;
-            const whalloc_size_t minBlockSize = 24;
-            const whalloc_size_t blockSize =
-                (WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE < minBlockSize)
-                ? minBlockSize
-                : WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE;
-            p = (WHALLOC_API(bt)*)cmem;
-            *p = WHALLOC_API(bt_empty);
-            p->base.log = alloc_logger; /* avoid "static function never used" warning */
-            p->base.log = 0; /* but we don't want to log by default */
-            rc = WHALLOC_API(bt_init)(p, cmem + btSz, size - btSz, blockSize);
-            if( rc )
-            {
-                return whio_rc.AllocError;
-            }
-            fs->pool.mem = cmem;
-            fs->pool.size = size;
-            if( fallback )
-            {
-                p->base.fallback = whalloc_fallback_stdalloc;
-            }
-            fs->alloc.realloc = whio_epfs_allocator_bt;
-            fs->alloc.state = p;
-            return 0;
-        }
-    }
-#endif
-}
-
-int whio_epfs_mempool_stats( whio_epfs const * fs, whio_epfs_mempool_stats_t * dest )
-{
-#if !WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-    return whio_rc.UnsupportedError;
-#else
-    if( ! fs || ! dest ) return whio_rc.ArgError;
-    else if( ! fs->pool.mem ) return whio_rc.UnsupportedError;
-    else
-    {
-        WHALLOC_API(bt) * p = PFS_POOL(fs);
-        memset( dest, 0, sizeof(whio_epfs_mempool_stats_t) );
-        dest->allocedObjects = p->base.allocCount;
-        dest->allocedBlocks = p->base.allocBlockCount;
-        dest->blockCount = p->base.blockCount;
-        dest->blockSize = p->base.blockSize;
-        dest->memorySize = p->base.usize;
-        return whio_rc.OK;
-    }
-#endif
-}
-
-int whio_epfs_mempool_dump( whio_epfs * fs, FILE * dest, char const * prefix, bool full )
-{
-#if ! WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-    return whio_rc.UnsupportedError;
-#else
-    if( ! fs || ! dest ) return whio_rc.ArgError;
-    else
-    {
-        WHALLOC_API(bt) * p = PFS_POOL(fs);
-        fprintf(dest, "%s: whefs_fs@%p:\n",(prefix? prefix:__func__),(void const *)fs);
-        if( ! p )
-        {
-            fputs("Memory pool is not installed. Use whio_epfs_mempool_setup() to install it (and RTFM first!).\n",dest);
-            return 0;
-        }
-        else
-        {
-            int rc;
-            whio_epfs_mempool_stats_t st;
-            if( full )
-            {
-                WHALLOC_API(bt_dump_debug)( p, dest );
-            }
-            else
-            {
-                fprintf(dest, "Memory pool contains %"WHALLOC_SIZE_T_PFMT
-                        " item(s) in %"WHALLOC_SIZE_T_PFMT" block(s) taking up %"WHALLOC_SIZE_T_PFMT
-                        " byte(s).\n",
-                        p->base.allocCount, p->base.allocBlockCount, (p->base.allocBlockCount * p->base.blockSize) );
-            }
-            rc = whio_epfs_mempool_stats( fs, &st );
-            if( rc ) return rc;
-            fprintf( dest, "Overall status:\n");
-#define X(KEY) fprintf( dest,"\t%s = %"WHIO_SIZE_T_PFMT"\n", #KEY, st.KEY)
-            X(memorySize);
-            X(allocedObjects);
-            X(allocedBlocks);
-            X(blockCount);
-            X(blockSize);
-#undef X
-            fprintf( dest, "Current usage: %3.2f%%\n",
-                     (1.0*st.allocedBlocks) / st.blockCount * 100
-                     );
-            return 0;
-        }
-    }
-#endif
-}
-
 
 
 void * whio_epfs_mrealloc( whio_epfs * fs, void * mem, whio_size_t n )
@@ -20205,7 +20086,7 @@ void * whio_epfs_mrealloc( whio_epfs * fs, void * mem, whio_size_t n )
     }
     else
     {
-        return realloc( mem, n );
+        return whio_realloc( mem, n );
     }
 }
 
@@ -20751,7 +20632,6 @@ int whio_epfs_close( whio_epfs *fs )
         }
         fs->dev = 0;
     }
-    whio_epfs_mempool_drain( fs )/*ignoring error code*/; /* this needs to go away, in favour of the newer allocation abstraction. */
     return whio_rc.OK;
 }
 
@@ -21178,20 +21058,6 @@ static int whio_epfs_apply_sopt( whio_epfs * fs, whio_epfs_setup_opt * sopt )
         fs->flags |= WHIO_EPFS_FLAG_FS_OWNS_DEV;
         sopt->storage.dev = NULL;
     }
-    if( sopt->memory.mem )
-    {
-        rc = whio_epfs_mempool_setup( fs, sopt->memory.mem,
-                                          sopt->memory.size,
-                                          sopt->memory.fallbackOnOOM );
-        if( 0 == rc )
-        {
-            sopt->memory.mem = NULL;
-        }
-        else
-        {
-            /* ^^^^ ignoring error case - not critical. */
-        }
-    }
     return rc;
 }
 
@@ -21262,6 +21128,7 @@ int whio_epfs_mkfs( whio_epfs ** fs_, whio_epfs_setup_opt * sopt, whio_epfs_fsop
 #define RERR(RC) fs->err = RC; if(ownsFS){whio_epfs_finalize(fs);} else {whio_epfs_close(fs);} return RC
 #define CHECKRC if(rc) { RERR(rc); }
         fs->fsopt = *fsopt;
+        fs->alloc = sopt->allocator;
         whio_epfs_init_offsz(fs);
         fs->dev = sopt->storage.dev;
         fs->flags |= WHIO_EPFS_FLAG_RW;
@@ -21520,6 +21387,7 @@ int whio_epfs_openfs( whio_epfs ** fs_, whio_epfs_setup_opt * sopt )
 #define RERR(RC) fs->err = RC; if(ownsFS){whio_epfs_finalize(fs);} else {whio_epfs_close(fs);} return RC
 #define CHECKRC if(rc) { RERR(rc); }
         fs->dev = sopt->storage.dev;
+        fs->alloc = sopt->allocator;
         if( WHIO_MODE_WRITE & fs->dev->api->iomode( fs->dev ) )
         {
             fs->flags |= WHIO_EPFS_FLAG_RW;

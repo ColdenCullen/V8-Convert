@@ -1,4 +1,4 @@
-/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:13 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6507,7 +6507,7 @@ typedef unsigned __int64  uint64_t;
 
 #endif /* WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED */
 /* end file include/wh/whio/whio_unistd.h */
-/* auto-generated on Fri Feb 17 15:14:44 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -9592,6 +9592,7 @@ The data blocks are in the form:
 [prevBlockID]
 [capacityInBytes]
 [usedByteCount]
+[...data bytes...]
 
 A VLBM manages blocks in two "chains" (doubly-linked lists), the
 used-blocks and free-blocks lists. It stores only the IDs of one item
@@ -9648,7 +9649,7 @@ struct whio_vlbm_block
 
     /**
        The number of bytes currently used by client-provided data.
-     */
+    */
     whio_size_t usedByteCount;
 };
 
@@ -9681,11 +9682,11 @@ enum whio_vlbm_list {
 /**
    The free-block list.
 */
-WHIO_VLBM_LIST_FREE = 0,
+WHIO_VLBM_LIST_FREE = 1,
 /**
    The used-block list.
 */
-WHIO_VLBM_LIST_USED = 1,
+WHIO_VLBM_LIST_USED = 2,
 /**
    A "non-list" list. These blocks are not linked to
    directly by a VLBM, and it is up to the client
@@ -10128,7 +10129,7 @@ whio_size_t whio_vlbm_block_length(whio_vlbm_block const * bl);
   clients using the whio_vlbm_block_dev_open() API can re-set the
   "used length" if they need to.
 */
-int whio_vlbm_block_length_set(whio_vlbm * bm, whio_vlbm_block * bl, whio_size_t newLen);
+int whio_vlbm_block_length_set(whio_vlbm_block * bl, whio_size_t newLen);
 
 /**
    Reads the given block ID from storage and populates dest with its
@@ -10238,23 +10239,21 @@ uint32_t whio_vlbm_block_flags(whio_vlbm_block const * bl );
    non-zero is returned and dest might be partially populated - its
    contents are undefined.
 */
-int whio_vlbm_data_read_n_at( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest,
+int whio_vlbm_data_read_at( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest,
                               whio_size_t n, whio_size_t pos );
 /**
-   Equivalent to whio_vlbm_data_read_n_at( bm, bl, dest, n, 0 ).
- */
-int whio_vlbm_data_read_n( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest, whio_size_t n );
+   Equivalent to whio_vlbm_data_read_at( bm, bl, dest, n, 0 ).
+*/
+int whio_vlbm_data_read( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest, whio_size_t n );
 
 /**
-   Equivalent to whio_vlbm_data_read_n_at( bm, bl, dest, whio_vlbm_block_length(bl), 0 ),
- */
-int whio_vlbm_data_read( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest );
+   Writes n bytes from src to position pos of the given block. bl must be
+   a fully populated, valid block. If (pos+n) would exceed the bounds of bl
+   then whio_rc.RangeError is returned and no write is performed.
 
-/**
-   Writes n bytes from src to bl's storage.
+   src must be at least n bytes of valid memory and (pos+n) must be less
+   than whio_vlbm_block_capacity(bl).
 
-   src must be at least n bytes of valid memory and n must be less
-   than or equal to whio_vlbm_block_capacity(bl).
 
    Returns 0 on success, non-zero on error. A whio_rc.RangeError
    indicates that n is too large. whio_rc.ArgError indicates that one
@@ -10262,12 +10261,20 @@ int whio_vlbm_data_read( whio_vlbm * bm, whio_vlbm_block const * bl, void * dest
    is read-only. whio_rc.IOError indicates a more serious problem,
    after which the contents of the db are not guaranteed to be
    consistent.
+   
+   If writing extends past bl's current "used size" then its virtual
+   size is updated to the new virtual size.
+*/
+int whio_vlbm_data_write_at( whio_vlbm * bm, whio_vlbm_block * bl,
+                             void const * src,
+                             whio_size_t n, whio_size_t pos );
 
-   If whio_vlbm_block_length(bl) is not n then bl will be updated
-   with the new length and flushed to storage.
+
+/**
+   Convenience form of whio_vlbm_data_write_n_at(bm, bl, src, n, 0).
 */
 int whio_vlbm_data_write( whio_vlbm * bm, whio_vlbm_block * bl, void const * src, whio_size_t n );
-
+    
 /**
    A callback function type used with
    whio_vlbm_data_write_callback(). This function is called to collect
@@ -12119,7 +12126,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Fri Feb 17 15:14:45 CET 2012. Do not edit! */
+/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12130,68 +12137,6 @@ whio_vlbm_block_empty_m/*block*/, \
 
 This file contains the compile-time-configurable parts of whio_epfs.
 */
-/** @def WHIO_EPFS_CONFIG_ENABLE_MEMPOOL
-
-EXPERIMENTAL!
-
-If WHIO_EPFS_CONFIG_ENABLE_MEMPOOL is a true value then the whio_epfs
-class will be capable of installing an internal memory allocator.
-
-The mempool support is not yet considered "trusted", as in
-"stable". It has been seen to cause memory corruption in at
-least one test.
-
-Reminder to self: with 32-bit WHIO_SIZE_T on a 64-bit platform,
-i'm seeing some buggy deallocation in whio_epfs_close(), which
-causes an endless loop.
-*/
-#define WHIO_EPFS_CONFIG_ENABLE_MEMPOOL 0
-
-/** @def WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE
-@internal
-
-WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE only applies if
-WHIO_EPFS_CONFIG_ENABLE_MEMPOOL is set to true. It defines the memory
-block size used by the allocator.
-
-Some numbers to keep in mind:
-
-- Internally, EPFS typically allocates far more whio_epfs_block
-objects than all other allocations combined. They're very small (6
-bytes on my setup), and they're (re)allocated in arrays, so we can
-pack several of them into a mid-sized memory block (about 24-48
-bytes). A block chain (allocated as an array, realloced as needed)
-will always have at least as many blocks as is necessary to hold its
-inode's data. In the general case, smaller EFS block size == more
-whio_epfs_blocks needed in memory at one time.
-
-- We allocate only 1 whio_epfs_inode for any given opened inode ID. If
-a given ID is opened multiple times, we still only allocate one inode
-(and its associated block chain is only loaded once). However...
-
-- We allocate 1 whio_epfs_handle every time any inode ID is opened (contrast
-with inode allocations).
-
-- A larger memory block size inherently means fewer entries can be
-allocated, so a relatively large size (48+ bytes) is not recommended.
-
-- For growing block chains via re-allocation, the allocator may
-temporarily need two copies (if it cannot expand the memory in-place). Thus
-the pool always needs some slack space.
-
-Tips for testing OOM conditions:
-
-- First, to use OOM-capable code you must disable the failoverOnOOM
-option in the EPFS memory pool. (If using the standard allocators, it is
-very, very unlikely that you'll ever seen OOM error.)
-
-- Use a small (e.g. 1200-byte) memory pool on an EFS with 256-byte
-blocks, open an inode device and truncate() it to, e.g. 1MB. That will
-end up trying to load a block chain of at least (1MB/256B=4000)
-entries of sizeof(whio_epfs_block) each.
-*/
-#define WHIO_EPFS_CONFIG_MEMPOOL_BLOCKSIZE (sizeof(whio_epfs_inode))
-
 /** @def WHIO_EPFS_CONFIG_AUTO_FLUSH_HINTS
 
     Experimental.
@@ -12464,8 +12409,7 @@ in another EFS.
 
 - Optimized for low memory usage: normal use cases need to allocate
 less than 1k of dynamic memory at runtime. Clients may provide it with
-their own memory buffer, from which it will "allocate" any memory it
-needs. (See whio_epfs_mempool_setup().)
+their own allocator, which it will use for memory management.
 
 - As of 20100310, the last of the most performance-significant
 algorithms (finding the next free block and inode) are O(1), plus a
@@ -12683,9 +12627,7 @@ to work out regarding where to store such an inode table.
 
 /** @page page_whio_epfs_memcosts whio_epfs memory costs
 
-     Here are some notes about the memory costs of whio_epfs, mainly
-     for use in finding good values for use with
-     whio_epfs_mempool_setup()...
+     Here are some notes about the memory costs of whio_epfs...
 
      For typical use, where only a couple handles are opened at once
      and data block chains for the opened handles do not grow really
@@ -14160,16 +14102,6 @@ extern "C" {
         } hints;
 
         /**
-           Details for the optional internal memory allocator.
-        */
-        struct whio_epfs_mempool
-        {
-            /** Memory reserved for use as an allocation source. */
-            unsigned char * mem;
-            /** Length of mem, in bytes. */
-            whio_size_t size;
-        } pool;
-        /**
            Allocator used for de/re/allocating EFS-internal
            memory.
         */
@@ -14221,10 +14153,6 @@ extern "C" {
                     -1/*storageLockingMode*/,\
                     0/*gmtOffset*/ \
             },                 \
-            {/*pool*/ \
-                NULL/*mem*/,\
-                0U/*size*/\
-            },                                         \
             whio_allocator_empty_m, \
             {/*namer*/\
                 NULL/*n*/, \
@@ -14391,45 +14319,12 @@ extern "C" {
             */
             /*bool failIfNoInitialLock; */
         } storage;
+
         /**
-           HIGHLY EXPERIMENTAL! Do not yet use in client code!
-
-           Options related to the fs memory allocator.
+           Optional memory allocator to be used by
+           the EPFS instance.
         */
-        struct whio_epfs_setup_opt_memory
-        {
-            /**
-               Start of the memory to be used as an allocation pool.
-               The setup routines will set this to NULL if the
-               associated fs is able to use it as a memory
-               pool. Ownership of the memory is not changed, however.
-
-               If a client _requires_ that memory pool support be
-               enabled: he must first set it up via this object, and
-               after opening the fs he should check if the mem member
-               has been set to NULL. If it is NULL, memory pool
-               initialization worked, else the pool was not set up and
-               the library will automatically fall back to
-               malloc()/free() (regardless of the value of
-               fallbackOnOOM).
-            */
-            void * mem;
-            /**
-               Length of mem, in bytes.
-            */
-            whio_size_t size;
-            /**
-               If true, the fs should fall back to the standard
-               de/re/allocators if the internal memory pool fills up,
-               otherwise it should fail allocations with an
-               out-of-memory error when the pool fills up.
-
-               If pool initialization fails, the library will
-               automatically fall back to malloc()/free() regardless
-               of the value of fallbackOnOOM.
-            */
-            bool fallbackOnOOM;
-        } memory;
+        whio_allocator allocator;
     };
     /** Convenience typedef. */
     typedef struct whio_epfs_setup_opt whio_epfs_setup_opt;
@@ -14444,12 +14339,8 @@ extern "C" {
             NULL/*dev*/,                    \
                 false/*takeDevOnSuccess*/,       \
                 (WHIO_EPFS_CONFIG_ENABLE_STORAGE_LOCKING ? true : false)/*enableLocking*/, \
-        },                              \
-        {/*memory*/ \
-            NULL/*mem*/,\
-            0/*size*/,\
-            false/*fallbackOnOOM*/\
-         }\
+        },                                                      \
+        {/*allocator*/NULL,NULL}                         \
     }
     /**
        Empty-initializated whio_epfs_setup_opt object. This object
@@ -14602,22 +14493,6 @@ extern "C" {
        (or will try to).
 
        
-       opt->memory (optional):
-
-       If the of opt->memory.mem is non-null then
-       whio_epfs_mempool_setup() is called, using the parameters set
-       in opt->memory. If memory pool initialization succeeds then
-       opt->memory.mem will be set to NULL to signify that fs has
-       taken over write-ownership of the memory. Actual ownership of
-       the memory is as defined for whio_epfs_mempool_setup().  It is
-       not considered an error for memory pool setup to fail. In that
-       case, this routine may succeed but will not set opt->memory.mem
-       to NULL (to signify that it didn't take over logical ownership
-       of the memory). Note that even if the memory pool is set up, fs
-       itself will never be allocated within that pool (it's a
-       chicken/egg scenario).
-
-
        Lifetime of the opt object:
 
        After this function returns, fs does not directly point to any
@@ -14676,22 +14551,6 @@ extern "C" {
        fs, and ownership of fs is passed to the caller, who must
        eventually use whio_epfs_finalize() to destroy it.
 
-       To add an internal memory pool to the above fs object, we could
-       do:
-
-       @code
-       // In a scope which will out-live the EPFS object, e.g. global:
-       unsigned char mempool[4000];
-       ...
-       // Then modify the opt object like so _before_ calling openfs2():
-       opt.memory.mem = mempool;
-       opt.memory.size = sizeof(mempool);
-       opt.memory.fallbackOnOOM = true;
-       // ^^ true = fall back to std allocators if we run out of memory
-       @endcode
-
-       PS: DO NOT use the memory pool. It's known to cause memory
-       corruption in some test code.
     */
     int whio_epfs_openfs( whio_epfs ** fs, whio_epfs_setup_opt * opt );
 
@@ -14772,155 +14631,6 @@ extern "C" {
                              bool allowOverwrite,
                              whio_epfs_fsopt const * fsopt );
 
-    
-    /**
-       Please read all of these docs before using this function...
-
-       First: HIGHLY EXPERIMENTAL! It normally seems to work, but once
-       in a while i'm getting memory corruption in objects allocated
-       through the custom allocator, seemingly via the block array
-       reallocations (which hints at a bug in the realloc impl).
-
-       Until the above warning is gone, please do not use this
-       function or the related functionality built on top of it
-       (e.g. whio_epfs_setup_opt::memory).
-
-       This function tries to set up a memory pool for fs' own use, so
-       that fs does not have to use malloc()/realloc() as much. This
-       reduces calls into the OS and helps provide good locality of
-       reference for various fs-internal objects (which tend to
-       reference one-another).
-
-       This functionality might or might not be compiled in. If it is
-       not, this function will return whio_rc.UnsupportedError. In
-       that case, fs will fall back to using the C-standard allocation
-       routines.
-
-       If used at all, this function must be called _immediately_ after
-       initialization of fs (via whio_epfs_mkfs2(), whio_epfs_openfs2(),
-       or similar). If it is called after fs allocates any resources
-       for its own use then results are undefined.
-       
-       mem must be a pointer to @a size bytes of memory. The memory
-       must outlive fs and must not be modified during fs' lifetime by
-       any means other than fs' internal API. size must be larger than
-       some vague compile-time constant (tip: try values larger than
-       300) or this function will fail with error code
-       whio_rc.RangeError.
-
-       A portion of mem (about 120-200 bytes, depending on various
-       compile-time options) will be reserved for the memory
-       management data. Another (1-1.5% of size) may (depending on the
-       size of mem) be reserved if the allocator needs more space for
-       its management data. The rest can be used for allocating the
-       various bits fs may need during its lifetime. See \ref
-       page_whio_epfs_memcosts for more information about the memory
-       costs.
-
-       Because fs-associated client data is destructed early in the
-       fs-closing process, while some internals are still live, it is
-       not legal for @a mem to be used as "client data" via
-       whio_epfs_client_data_set() if a destructor is set for that
-       data (if there is no destructor then mem may be the client data
-       object).
-
-       If the internal pool runs out of memory, its behaviour depends
-       on the fallback argument. If fallback is false then allocation
-       will fail (returning NULL) for over-allocation.  If fallback is
-       true, the API will fall back to using
-       malloc()/realloc()/free().
-
-       For many use cases, mem can be a stack-allocated buffer
-       (e.g. allocated globally or in main()), as long as it outlives
-       fs. It is also legal for mem to come from malloc(), but in that
-       case the caller must be sure to free it after fs is
-       closed. Closing fs will disassociate mem from fs, and it will
-       need to be set up again if you want to re-use fs and the memory
-       pool.
-
-       Returns 0 on success. Error case return codes:
-
-       - whio_rc.ArgError means mem or fs are null.
-
-       - whio_rc.RangeError = size is too small to be useful.
-
-       - whio_rc.AccessError = fs' memory pool was already set up.
-
-       In theory (and if i've done my part right), setting up a pool
-       large enough (1-2kb should do, 5kb would be a lot) can keep the
-       whio_epfs API from ever having to dynamically allocate memory
-       in the context of fs. At least for the average use case, where
-       only a few handles are opened at a time, and block chains do
-       not get extraordinarily long. The one malloc() call we normally
-       cannot escape from is when using file-based storage, since
-       calling fopen() allocates a FILE handle.
-       
-       ACHTUNG, ACHTUNG, ACHTUNG:
-       
-       The following list contains the ONLY functions which may
-       legally be called _before_ whio_epfs_mempool_setup(). All
-       others may indirectly induce undefined behaviour if
-       whio_epfs_mempool_setup() is called after they are called:
-
-       - whio_epfs_mkfs() (not whio_epfs_mkfs2())
-       - whio_epfs_openfs() (not whio_epfs_openfs2())
-
-       To set up a memory pool at the time the fs is initialized, as
-       opposed to afterwards, use whio_epfs_mkfs() or
-       whio_epfs_openfs(). Doing so removes any concerns about legal
-       call ordering.
-       
-       If you actually read this far, you have my blessing to use this
-       function. If you skipped to the end, please go back and read
-       these docs before using it. And then if you see weird behaviour
-       please try not using this, to be sure that the allocator is not
-       the problem.
-    */
-    int whio_epfs_mempool_setup( whio_epfs * fs, void * mem, whio_size_t size, bool fallback );
-
-    /** @deprecated Made obsolete via evolution.
-
-        A type for collecting certain metrics from a whio_epfs memory
-        pool. It is mainly intended for debuggering.
-    */
-    struct whio_epfs_mempool_stats_t
-    {
-        /** Number of allocated objects in the pool. */
-        whio_size_t allocedObjects;
-        /** Number of allocated blocks in the pool. */
-        whio_size_t allocedBlocks;
-        /** Total number of memory blocks in the pool. */
-        whio_size_t blockCount;
-        /** Size of each memory block in the pool. */
-        whio_size_t blockSize;
-        /**
-           The total number of bytes in the underlying pool which are
-           reserved for allocation purposes. This number will be
-           smaller than the value passed to whio_epfs_mempool_setup(),
-           since the allocator's innards are stored directly in the
-           client-supplied buffer.
-        */
-        whio_size_t memorySize;
-    };
-    /** Convenience typedef. */
-    typedef struct whio_epfs_mempool_stats_t whio_epfs_mempool_stats_t;
-
-    /** @deprecated
-
-       This function will go away once the allocator abstraction
-       layer is consistently used internally.
-       
-       Populates dest, which may not be null, with some current
-       metrics from fs' memory pool.
-
-       On success 0 is returned and dest is modified. On error non-0
-       is returned and dest is not modified.
-
-       If the memory pool is not active or the feature is not compiled
-       in then whio_rc.UnsupportedError is returned. If either fs or
-       dest are null then whio_rc.ArgError is returned.
-    */
-    int whio_epfs_mempool_stats( whio_epfs const * fs, whio_epfs_mempool_stats_t * dest );
     
     /**
        Closes fs, making it available for re-use with whio_epfs_mkfs2()
