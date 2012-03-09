@@ -542,13 +542,12 @@ static long spech_urlencode( whprintf_appender pf,
     long ret = 0;
     char ch = 0;
     char const * hex = "0123456789ABCDEF";
-#define xbufsz 10
+    enum { xbufsz = 10 };
     char xbuf[xbufsz];
     int slen = 0;
     if( ! str ) return 0;
     memset( xbuf, 0, xbufsz );
     ch = *str;
-#define xbufsz 10
     slen = 0;
     for( ; ch; ch = *(++str) )
     {
@@ -564,7 +563,6 @@ static long spech_urlencode( whprintf_appender pf,
             ret += pf( pfArg, xbuf, slen );
         }
     }
-#undef xbufsz
     return ret;
 }
 
