@@ -203,7 +203,7 @@ v8::Handle<v8::Value> JSByteArray::indexedPropertySetter(uint32_t index, v8::Loc
         msg << "Index "<<index<<" is out of bounds for "
             <<TypeName<JSByteArray>::Value
             << " of length "<<ar->length()<<'!';
-        return v8::ThrowException(msg);
+        return cv::Toss(msg);
 #else
         return rv;
 #endif
@@ -218,7 +218,7 @@ v8::Handle<v8::Value> JSByteArray::indexedPropertySetter(uint32_t index, v8::Loc
         {
             cv::StringBuffer msg;
             msg << "Byte value "<<ival<<" is out of range. It must be between 0 and 255, inclusive.";
-            return v8::ThrowException(msg.toError());
+            return cv::Toss(msg);
         }
         return cv::CastToJS<uint16_t>( ar->vec[index] = (unsigned char)(ival & 0xff) );
     }
