@@ -52,9 +52,36 @@
         debug("Closing JSPDO handle "+this);
         origImpls.close.apply(this,[]);
     };
-    
+
+    /**
+        Expands the native prepare() method to take any of these forms:
+
+        (string sql)
+
+        (string sql, arrayOrObject bindData)
+
+        ( {sql: string, bind: arrayOrObj} )
+
+        On error it propagates an exception.
+    */
     jp.prepare = function() {
-        var st = origImpls.prepare.apply(this,argvToArray(arguments));
+        var opt, st, av = argvToArray(arguments);
+        if(!av[0]){
+            throw new Error("prepare() requires a string or Object as its first value.");
+        }
+        if(1===av.length){
+           if('string'===typeof av[0]) {
+               opt = { sql: av[0] };
+           }
+           else opt = av[0];
+        }
+        else if(2===av.length){
+            opt = { sql:av[0], bind:av[1] };
+        }
+        else throw new Error("Invalid arguments passed to prepare()");
+        st = origImpls.prepare.call(this, opt.sql);
+        if( opt.bind ) try{ st.bind( opt.bind ); }
+        catch(e){ st.finalize(); throw e; }
         debug("Created JSPDO.Statement "+st);
         return st;        
     };
