@@ -1,4 +1,4 @@
-/* auto-generated on Sat Mar  3 14:45:16 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:29 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1675,6 +1675,12 @@ namespace whio {
            whio_epfs_namer_add() for more details.
         */
         void installNamer( char const * impl = "ht" );
+
+        /**
+            If this object has a namer then this function removes it,
+            otherwise it throws. Throws on error.
+        */
+        void removeNamer();
 
         /**
            Equivalent to whio_epfs_openfs2(). Returns the new instance

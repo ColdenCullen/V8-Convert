@@ -1,4 +1,4 @@
-/* auto-generated on Sat Mar  3 14:45:16 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:29 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -1462,6 +1462,14 @@ namespace whio {
         rc = whio_epfs_namer_format( &m_fs, &reg );
         if( rc ) throw RcException("whio_epfs_namer_format",rc);
     }
+
+    void EPFS::removeNamer()
+    {
+        this->assertOpen();
+        if(!this->hasNamer()) throw RcException("whio_epfs_has_namer", whio_rc.UnsupportedError);
+        int rc = whio_epfs_namer_unformat( &this->m_fs );
+        if( rc ) throw RcException("whio_epfs_namer_unformat",rc);
+    }
     
     void EPFS::openfs( EPFS & fs, whio_dev * dev, bool takeStore )
     {
@@ -1549,7 +1557,7 @@ namespace whio {
         {
             assert( NULL == dev );
             std::ostringstream os;
-            os << "file=["<<name<<"], iomode=["
+            os << "name=["<<name<<"], iomode=["
                << "0x" << std::hex<<mode<<"]";
             std::string const & str(os.str());
             throw RcException("whio_epfs_dev_open_by_name", rc , str.c_str());

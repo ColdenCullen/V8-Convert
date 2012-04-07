@@ -766,6 +766,7 @@ namespace io {
 
     static int ForeachInode_callback( whio_epfs * fs, whio_epfs_inode const * ent, void * clientData )
     {
+        v8::Locker sentry;
         ForeachInode * fi = (ForeachInode *)clientData;
         v8::Handle<v8::Object> idata = InodeToObject(ent);
         if( whio_epfs_has_namer(fs) )
@@ -811,8 +812,12 @@ namespace io {
         fi.fs = fs;
         fi.self = argv.This();
         if( argv.Length() > 1 ) fi.data = argv[1];
-        int const rc = whio_epfs_foreach_inode( fs->handle(), NULL, NULL,
-                                                ForeachInode_callback, &fi );
+        int rc;
+        {
+            v8::Unlocker unl;
+            rc = whio_epfs_foreach_inode( fs->handle(), NULL, NULL,
+                                            ForeachInode_callback, &fi );
+        }
         return CastToJS( rc );
     }
 
@@ -878,6 +883,8 @@ namespace io {
              CATCHER< MethodTo<InCa, T, whio_epfs_id_t (char const *name), &T::inodeId> >::Call )
             ("installNamer",
              CATCHER< MethodTo<InCa, T, void (char const *name), &T::installNamer> >::Call )
+            ("removeNamer",
+             CATCHER< MethodTo<InCa, T, void (), &T::removeNamer> >::Call )
             ("label", labelF )
             ("name",
              CATCHER< ArityDispatchList<
@@ -903,6 +910,14 @@ namespace io {
              CATCHER< InCaToInCa<EPFS_OpenPseudoFile> >::Call)
             ;
 #undef CATCHER
+#if 0 // because of label.maxLabelLength, we can't use label as a non-function property like this:
+        AccessorAdder acc( cc.Prototype() );
+        acc("label",
+            GetterCatcher_std< MethodTo<Getter, T, std::string (), &T::label> >::Get,
+            SetterCatcher_std< MethodTo<Setter, T, void (char const *), &T::label> >::Set
+            )
+            ;
+#endif
         v8::Handle<v8::Function> ctor( cc.CtorFunction() );
         ctor->Set( v8::String::NewSymbol("versionInfo"), GetEpfsVersionInfo() );
         ClassCreator<whio::EPFS::PseudoFile>::SetupBindings( ctor );

@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Sat Mar  3 14:45:13 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:25 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -8474,7 +8474,7 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:26 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15797,7 +15797,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:27 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -16398,18 +16398,33 @@ extern "C" {
 
     /** @internal
 
-        Loads the current block chain for h. If h is linked to another
-        handle, the operation is performed on that handle instead.
+        Loads the current block chain for ino.
 
         This should be called ONE time to load the list of blocks for
-        h.  Aftert that, use the whio_epfs_block_list_append() to add
-        blocks, and be sure to flush each _new_ block using
-        whio_epfs_block_flush(). Use whio_dev::truncate() (via
-        whio_epfs_dev_open()) to remove blocks.
+        h.  Aftert that, use the whio_epfs_block_list_append() to
+        add blocks, and be sure to flush each _new_ block using
+        whio_epfs_block_flush(). Use whio_dev::truncate() (via ino's
+        device handle) to remove blocks.
 
         Returns 0 on success.
     */
-    int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_block_list * bl );
+    int whio_epfs_inode_block_list_load( whio_epfs * fs, whio_epfs_inode * ino );
+
+    /**
+        @internal
+
+        Given a non-0 block ID, this function loads the chain of
+        blocks starting at that block. bli must be an
+        empty-initialized list, to which the block chain entries are
+        appended.
+
+        headBlock must refer to the head block of a given chain or
+        results are semantically undefined (and may lead to later
+        corruption in the form of mis-linked blocks).
+
+        Returns 0 on success.
+    */
+    int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_id_t headBlock, whio_epfs_block_list * bli );
 
     /** @internal
 
@@ -16490,7 +16505,7 @@ extern "C" {
 
        This does not change the block metadata, only the client data
        area. If startPos is not 0 then the wiping starts at the given
-       offset relative to the bl. Right-handle wiped blocks will be
+       offset relative to the bl. Right-side wiped blocks will be
        wiped in their entirety.
     */
     int whio_epfs_block_wipe_data( whio_epfs * fs, whio_epfs_block * bl, whio_size_t startPos );
@@ -17128,9 +17143,8 @@ int whio_epfs_block_list_reserve( whio_epfs * fs, whio_epfs_block_list *bl, whio
             return 0;
         }
         else
-        {
+        { /* (re)alloc list... */
             whio_epfs_block * li = (whio_epfs_block *)
-                /*realloc( bl->list, n * sizeof(whio_epfs_block) ); */
                 whio_epfs_mrealloc( fs,  bl->list, n * sizeof(whio_epfs_block) );
             /*MARKER(("(Re)allocated block list of %"WHIO_EPFS_ID_T_PFMT" items @%p\n", n, (void const *)li)); */
             if( ! li )
@@ -17158,35 +17172,17 @@ int whio_epfs_block_list_append( whio_epfs * fs, whio_epfs_block_list * bli, whi
     else
     {
         int rc = 0;
-        /**
-           allocIncrement is the number of objects to allocate at a
-           time. Its value is _almost_ arbitrarily chosen. It _should_,
-           for efficiency, be evently dividable into the memory pool block
-           size (if using a pool), but i don't want the pool abstraction
-           to leak into here.
-
-           i chose not to use a multiplier (typical for expanding allocators)
-           because it can end up wasting a lot of memory in our memory
-           pool for EFSs with very small block sizes. Instead we suffer a few
-           more re-allocations for those cases.
-
-           BUG on 64-bit: if this number is "too low" (e.g. 6) i'm getting
-           (at cleanup time) an assertion in whalloc_bt_free() at some
-           point because of an invalid address passed into the allocator
-           (and i have no idea where it's coming from - everything else
-           seems to work). However, if i increase allocIncrement to 10,
-           this problem goes away. This needs more testing when i have
-           access to a 64-bit machine with a graphical debugger. This
-           problem appears to only happen on 64-bit platforms when
-           (WHIO_SIZE_T_BITS<64).
-        */
-        const whio_epfs_id_t allocIncrement =
-            /*6 */
-            /*20 */
-            ((bli->count>6) ? (bli->count/3) : 6)
-            ;
         if( bli->alloced <= bli->count )
-        {
+        { /* reserve more space... */
+            /**
+               allocIncrement is the number of objects to allocate at a
+               time. Its value is basically arbitrarily chosen.
+            */
+            const whio_epfs_id_t allocIncrement =
+                /*6 */
+                /*20 */
+                ((bli->count>=10) ? (bli->count/2) : 8)
+                ;
             const whio_epfs_id_t newCount = bli->count + allocIncrement;
             if( newCount < bli->count )
             { /* suspecting numeric overflow.
@@ -17217,7 +17213,7 @@ int whio_epfs_block_list_append( whio_epfs * fs, whio_epfs_block_list * bli, whi
         }
         bli->list[bli->count] = *bl;
         if( 0 < bli->count )
-        { /* append block to the list */
+        { /* append block to the on-storage list */
             whio_epfs_block * prev = &bli->list[bli->count-1];
             if( ! prev->nextBlock )
             {
@@ -17239,12 +17235,7 @@ int whio_epfs_block_list_append( whio_epfs * fs, whio_epfs_block_list * bli, whi
                 return whio_rc.InternalError;
             }
         }
-        else
-        { /* set bl as the first block... */
-            /*WHIO_DEBUG("inode attached to bli needs to be updated now!\n"); */
-        }
         ++bli->count;
-        /*WHEFS_DBG("Appended block #%"WHIO_EPFS_ID_T_PFMT" to chain (of %"WHIO_EPFS_ID_T_PFMT" item(s)) for inode #%"WHIO_EPFS_ID_T_PFMT"[%s].", bl->id, ino->blocks.count, ino->id, ino->name ); */
         return whio_rc.OK;
     }
 }
@@ -17431,26 +17422,102 @@ int whio_epfs_block_wipe_data( whio_epfs * fs, whio_epfs_block * bl, whio_size_t
     {
         whio_size_t fpos = 0;
         const whio_size_t bs = fs->fsopt.blockSize;
-        if( bl->nextBlock )
+        if(bl->nextBlock)
         {
-            /*
-              FIXME: iterate instead of recurse.
-            */
-            whio_epfs_block nbl = whio_epfs_block_empty;
-            rc = whio_epfs_block_read( fs, bl->nextBlock, &nbl );
-            if( rc ) return rc;
-            rc = whio_epfs_block_wipe_data( fs, &nbl, 0 );
-            if( rc ) return rc;
+            whio_epfs_block xbl = *bl;
+            while( xbl.nextBlock )
+            {
+                whio_epfs_block nbl = whio_epfs_block_empty;
+                assert(0 && "Is this code used?");
+                rc = whio_epfs_block_read( fs, xbl.nextBlock, &nbl );
+                if( rc ) return rc;
+                xbl = nbl;
+                nbl.nextBlock = 0;
+                rc = whio_epfs_block_wipe_data( fs, &nbl, 0 );
+                if( rc ) return rc;
+            }
         }
         /*rc = whio_epfs_block_flush( fs, bl ); */
         /*if( rc ) return rc; */
         if( startPos >= bs ) return whio_rc.RangeError;
-        rc = whio_epfs_block_data_seek( fs, bl->id, &fpos );
-        if( rc ) return rc;
+        fpos = whio_epfs_block_data_pos(fs, bl->id);
+        if( !fpos ) return whio_rc.InternalError;
         if( (fpos + bs) < fpos /* overflow! */ ) return whio_rc.RangeError;
-        fs->dev->api->seek( fs->dev, startPos, SEEK_CUR );
+        fpos += startPos;
+        if(fpos != whio_epfs_seek(fs, fpos))
+        {
+            return whio_rc.IOError;
+        }
         return whio_dev_fill( fs->dev, 0, bs - startPos );
     }
+}
+
+/**
+    Wipes the right-side neighbors of the given block. The
+    wipeData/wipeMeta parameters are as as documented for
+    whio_epfs_block_wipe(), and this function iso only intended
+    for use by that function.
+
+    bl->nextBlock is set to 0 regardless of success of failure (because
+    we have to recovery strategy here).
+
+    Returns 0 on success.
+*/
+static int whio_epfs_block_wipe_chain( whio_epfs * fs, whio_epfs_block * bl, char wipeData, char wipeMeta )
+{
+    int rc = 0;
+    whio_epfs_block next = whio_epfs_block_empty;
+    whio_epfs_block xb = *bl;
+    bl->nextBlock = 0
+        /* because we have on error recovery strategy, we have no
+        "correct" place to set nextBlock=0. So we'll just always set
+        it to 0 regardless of success or failure. The calling code
+        won't flush the block on error, so setting this for both
+        cases "shouldn't" make a difference as long as the client
+        heeds the error codes and doesn't continue using the EFS. */;
+#define WORK_AROUND_REVERSE_FREE_ORDER 1
+    /**
+        If WORK_AROUND_REVERSE_FREE_ORDER is a true value then this code
+        wipes blocks in the chain in reverse order to avoid an
+        "unfortunate" ordering in the free-block chain which causes
+        them to be re-allocated in reverse order. It costs us an
+        allocation of the block chain but helps avoid a blatant
+        data block fragmentation case.
+    */
+    if(WORK_AROUND_REVERSE_FREE_ORDER && xb.nextBlock){
+        whio_epfs_id_t i;
+        whio_epfs_block * n = NULL;
+        whio_epfs_block_list bli = whio_epfs_block_list_empty;
+        rc = whio_epfs_block_list_load( fs, xb.nextBlock, &bli );
+        if(rc) return rc;
+        assert( bli.count > 0 );
+        for( i = bli.count-1; i != (whio_epfs_id_t)-1; --i ){
+            n = &bli.list[i];
+            assert(n && n->id);
+            n->nextBlock = 0;
+            rc = whio_epfs_block_wipe( fs, n, wipeData, wipeMeta, 0 );
+            if(rc) break;
+        }
+        whio_epfs_block_list_reserve( fs, &bli, 0 );
+    }
+    else while( xb.nextBlock )
+    {
+        if( 0 != (rc = whio_epfs_block_read_next( fs, &xb, &next )) )
+        {
+            /* reminder to self: we have no recovery strategy here. */
+            break;
+        }
+        xb = next;
+        next.nextBlock = 0 /* avoid that the next call recurses. */;
+        if( 0 != (rc = whio_epfs_block_wipe( fs, &next, wipeData, wipeMeta, 1 )) )
+        {
+            /* reminder to self: we have no recovery strategy here. bl->nextBlock
+               is now necessarily 0 but not flushed. */
+            break;
+        }
+    }
+#undef WORK_AROUND_REVERSE_FREE_ORDER
+    return rc;
 }
 
 int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
@@ -17462,27 +17529,11 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
     else
     {
         int rc = 0;
+        assert((wipeData || wipeMeta) && "Invalid at least one of wipeData/wipeMeta must be true.");
         if( deep && bl->nextBlock )
         {
-            whio_epfs_block next = *bl;
-            whio_epfs_block xb = *bl;
-            bl->nextBlock = 0;
-            while( xb.nextBlock )
-            {
-                if( whio_rc.OK != (rc = whio_epfs_block_read_next( fs, &xb, &next )) )
-                {
-                    /* reminder to self: we have no recovery strategy here. */
-                    return rc;
-                }
-                xb = next;
-                next.nextBlock = 0; /* avoid that the next call recurses deeply while still honoring 'deep'. */
-                if( whio_rc.OK != (rc = whio_epfs_block_wipe( fs, &next, wipeData, wipeMeta, deep )) )
-                {
-                    /* reminder to self: we have no recovery strategy here. bl->nextBlock
-                       is now necessarily 0 but not flushed. */
-                    return rc;
-                }
-            }
+            rc = whio_epfs_block_wipe_chain(fs, bl,  wipeData, wipeMeta);
+            if(rc) return rc;
         }
         if( wipeMeta )
         {
@@ -17496,7 +17547,7 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
             bl->id = oid;
             bl->nextFree = fs->hints.freeBlockList;
             fs->hints.freeBlockList = bl->id;
-            if(1)
+            if(0)
             {
                 WHIO_DEBUG("Wiping block #%"WHIO_EPFS_ID_T_PFMT
                            ". freeBlockList=#%"WHIO_EPFS_ID_T_PFMT
@@ -17516,6 +17567,11 @@ int whio_epfs_block_wipe( whio_epfs * fs, whio_epfs_block * bl,
         }
         if( wipeData )
         {
+            /*
+                Reminder to self: block-wipe-data is always applied to all blocks in the
+                chain, but at this point bl.nextBlock has almost certainly been set to 0,
+                so neighboring blocks won't be handled here.
+            */
             rc = whio_epfs_block_wipe_data( fs, bl, 0 );
             if( whio_rc.OK != rc )
             {
@@ -17615,11 +17671,6 @@ int whio_epfs_block_next_free( whio_epfs * fs, whio_epfs_block * dest, bool mark
                     whio_epfs_mmap_disconnect( fs );
                     bl = whio_epfs_block_empty;
                     bl.id = id;
-#if 0
-                    /* this is unnecessary - we do it below. */
-                    rc = whio_epfs_block_flush( fs, &bl );
-                    if( rc ) return rc;
-#endif
                     rc = whio_epfs_block_wipe_data( fs, &bl, 0 );
                     whio_epfs_mmap_connect( fs );
                     if( rc ) return rc;
@@ -17672,25 +17723,26 @@ int whio_epfs_block_read_next( whio_epfs * fs,
     }
 }
 
-int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_block_list * bli )
+int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_id_t headBlock, whio_epfs_block_list * bli )
 {
-    if( ! fs || ! ino || !bli ) return whio_rc.ArgError;
+    if( ! fs || !bli ) return whio_rc.ArgError;
     else
     {
-        if( ! ino->firstBlock )
+        if( ! headBlock )
         {
             return whio_rc.OK;
         }
         if( bli->count )
         {
-            MARKER(("WARNING: this function shouldn't be called when handle->blocks.count is !0. inode=#%"WHIO_EPFS_ID_T_PFMT".",
-                    ino->id));
+            MARKER(("WARNING: this function shouldn't be called when blocks->count is !0. block=#%"WHIO_EPFS_ID_T_PFMT".",
+                    headBlock));
+            assert(0 && "internal error");
             return whio_rc.OK;
         }
         else
         {
             whio_epfs_block bl = whio_epfs_block_empty;
-            int rc = whio_epfs_block_read( fs, ino->firstBlock, &bl );
+            int rc = whio_epfs_block_read( fs, headBlock, &bl );
             if( whio_rc.OK != rc ) return rc;
 
 #if 0
@@ -17703,13 +17755,6 @@ int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_
     
             rc = whio_epfs_block_list_append( fs, bli, &bl );
             if( whio_rc.OK != rc ) return rc;
-            if( ! ino->firstBlock )
-            {
-                ino->firstBlock = bl.id;
-                whio_epfs_inode_touch( fs->hints.gmtOffset, ino, -1 );
-                rc = whio_epfs_inode_flush( fs, ino );
-                if( whio_rc.OK != rc ) return rc;
-            }
             while( bl.nextBlock )
             {
                 rc = whio_epfs_block_read_next( fs, &bl, &bl );
@@ -17718,11 +17763,21 @@ int whio_epfs_block_list_load( whio_epfs * fs, whio_epfs_inode * ino, whio_epfs_
                 if( whio_rc.OK != rc ) return rc;
             }
 #if 0
-            WHIO_DEBUG("Loaded block chain of %"WHIO_EPFS_ID_T_PFMT" block(s) for inode #%"WHIO_EPFS_ID_T_PFMT".\n",
-                       bli->count, ino->id );
+            WHIO_DEBUG("Loaded block chain of %"WHIO_EPFS_ID_T_PFMT" block(s) starting with block #%"WHIO_EPFS_ID_T_PFMT".\n",
+                       bli->count, headBlock );
 #endif
             return whio_rc.OK;
         }
+    }
+}
+
+int whio_epfs_inode_block_list_load( whio_epfs * fs, whio_epfs_inode * ino )
+{
+    if( ! fs || !ino ) return whio_rc.ArgError;
+    else if(!ino->firstBlock) return 0;
+    else
+    {
+        return whio_epfs_block_list_load( fs, ino->firstBlock, &ino->blocks );
     }
 }
 
@@ -17768,7 +17823,7 @@ int whio_epfs_block_for_pos( whio_epfs * fs,
         int rc = whio_rc.OK;
         if( ! bli->list )
         {
-            rc = whio_epfs_block_list_load( fs, ino, bli );
+            rc = whio_epfs_inode_block_list_load( fs, ino );
             if( rc ) return rc;
         }
         if( !expand && (bli->count < bc) )
@@ -19355,8 +19410,11 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                 }
                 else
                 { /* chop off any unneeded blocks ... */
-                    whio_epfs_block * blP;
-                    whio_epfs_block * nblP;
+                    /* FIXME: deallocate the list from the end first,
+                        to avoid a reverse-order re-allocated later on.
+                    */
+                    whio_epfs_block * blP /* current block */;
+                    whio_epfs_block * nblP /* start of lop-off point */;
                     assert( newBlockCount >= 1 );
                     blP = &m->ino->blocks.list[newBlockCount-1];
                     assert( blP->id == bl.id );
@@ -19403,6 +19461,7 @@ static int whio_epfs_inode_iodev_trunc( whio_dev * dev, whio_off_t len )
                 {
                     wsz = (wlen < bufSize) ? wlen : bufSize;
                     iorc = dev->api->write( dev, buf, wsz );
+                    if(iorc!=wsz) return whio_rc.IOError;
                     wlen -= iorc;
                 }
                 while( iorc && (iorc == wsz) );
@@ -19877,6 +19936,13 @@ int whio_epfs_storage_lock_all( whio_epfs * fs, bool wait )
     else
     {
         whio_lock_request wli = whio_lock_request_empty;
+        /* reminder: fs->offsets has not yet been populated, so we
+        cannot lock, e.g., up until the inode table, because that
+        calculation has not happened yet.
+        */
+        wli.start = 0;
+        wli.length = (whio_off_t)whio_epfs_sizeof_magic;
+        assert( wli.start < wli.length );
         wli.type = whio_epfs_is_rw(fs)
             ? whio_lock_TYPE_WRITE
             : whio_lock_TYPE_READ;
@@ -19892,7 +19958,9 @@ int whio_epfs_storage_unlock_all( whio_epfs * fs )
 #if ! WHIO_EPFS_CONFIG_ENABLE_STORAGE_LOCKING
     return whio_rc.UnsupportedError;
 #else
-    whio_lock_request wli = whio_lock_request_set_u;
+    whio_lock_request wli = whio_lock_request_setw_u;
+    wli.start = 0;
+    wli.length = (whio_off_t)whio_epfs_sizeof_magic;
     return whio_epfs_storage_lock( fs, &wli );
 #endif
 }
@@ -21503,7 +21571,7 @@ int whio_epfs_unlink( whio_epfs * fs, whio_epfs_id_t inodeID )
         }
         rc = whio_epfs_inode_read( fs, inodeID, &ino );
         if( rc ) return rc;
-        else if( ! whio_epfs_inode_is_used(&ino) ) return whio_rc.RangeError;
+        else if( ! whio_epfs_inode_is_used(&ino) ) return whio_rc.NotFoundError;
         else
         {
             whio_epfs_id_t firstBlock = ino.firstBlock;
@@ -21714,7 +21782,8 @@ int whio_epfs_name_set( whio_epfs * fs, whio_epfs_id_t inodeID, whio_epfs_namer_
 
 int whio_epfs_name_get( whio_epfs * fs, whio_epfs_id_t inodeID, whio_epfs_namer_string n, whio_size_t * len )
 {
-    if( !fs || !fs->namer.n || !n || !len || !fs->namer.n->api) return whio_rc.ArgError;
+    if( !fs || !n || !len) return whio_rc.ArgError;
+    else if( !fs->namer.n ) return whio_rc.UnsupportedError;
     else if( !whio_epfs_inode_id_in_bounds( fs, inodeID ) ) return whio_rc.RangeError;
     else return fs->namer.n->api->get( fs->namer.n, inodeID, n, len);
 }
@@ -21722,18 +21791,38 @@ int whio_epfs_name_get( whio_epfs * fs, whio_epfs_id_t inodeID, whio_epfs_namer_
 int whio_epfs_name_search( whio_epfs * fs, whio_epfs_id_t * inodeID,
                            whio_epfs_namer_const_string n, whio_size_t len )
 {
-    if( !fs || !fs->namer.n || !n || !len || !inodeID || !fs->namer.n->api) return whio_rc.ArgError;
-    else if( !fs->namer.n->api->search ) return whio_rc.UnsupportedError;
+    if( !fs || !n || !len || !inodeID) return whio_rc.ArgError;
+    else if( !fs->namer.n || !fs->namer.n->api->search ) return whio_rc.UnsupportedError;
     else return fs->namer.n->api->search( fs->namer.n, inodeID, n, len );
 }
 
 int whio_epfs_name_foreach( whio_epfs * fs, whio_epfs_namer_foreach_callback callback, void * callbackData )
 {
     if( !fs || !fs->namer.n || !fs->namer.n->api) return whio_rc.ArgError;
-    else if( !fs->namer.n->api->search ) return whio_rc.UnsupportedError;
+    else if( !fs->namer.n || !fs->namer.n->api->search ) return whio_rc.UnsupportedError;
     else return fs->namer.n->api->foreach( fs->namer.n, callback, callbackData );
 }
 
+int whio_epfs_namer_unformat( whio_epfs * fs )
+{
+    
+    if( !fs ) return whio_rc.ArgError;
+    else if(!fs->namer.n || !fs->namer.n->api->unformat ) return whio_rc.UnsupportedError;
+    else {
+        int rc = fs->namer.n->api->unformat( fs->namer.n );
+        if(rc) return rc;
+        fs->namer.reg.free( fs->namer.n );
+        fs->namer.n = NULL;
+        fs->namer.reg = whio_epfs_namer_reg_empty;
+        {
+            enum { BufLen = whio_epfs_sizeof_namer_label_payload };
+            unsigned char buf[BufLen];
+            memset(buf, 0, BufLen);
+            rc = whio_epfs_namer_metadata_write( fs, buf, BufLen );
+        }
+        return rc;
+    }    
+}
 
 static whio_epfs_namer_reg whio_epfs_namer_list[] = {
 /*
@@ -21875,6 +21964,7 @@ int whio_epfs_namer_metadata_write( whio_epfs * fs, unsigned char const * metada
 static unsigned char EndOfListSentry[1] = {0};
 
 static int whio_epfs_namer_array_format( struct whio_epfs_namer * self, whio_epfs * fs, void * metadata, whio_size_t metalen );
+static int whio_epfs_namer_array_unformat( struct whio_epfs_namer * self );
 static int whio_epfs_namer_array_open( whio_epfs_namer * self, whio_epfs * fs, void const * metadata, whio_size_t metalen );
 static int whio_epfs_namer_array_set( whio_epfs_namer * self, whio_epfs_id_t i, whio_epfs_namer_const_string name, whio_size_t len );
 static int whio_epfs_namer_array_get( whio_epfs_namer * self, whio_epfs_id_t i, whio_epfs_namer_string name, whio_size_t * len );
@@ -21891,6 +21981,7 @@ static void whio_epfs_namer_array_free( whio_epfs_namer * self );
 
 static const whio_epfs_namer_api whio_epfs_namer_api_array = {
 whio_epfs_namer_array_format,
+whio_epfs_namer_array_unformat,
 whio_epfs_namer_array_open,
 whio_epfs_namer_array_set,
 whio_epfs_namer_array_get,
@@ -21932,6 +22023,12 @@ static int whio_epfs_namer_array_setup( whio_epfs * fs, whio_epfs_namer * self )
 static int whio_epfs_namer_array_format( struct whio_epfs_namer * self, whio_epfs * fs, void * metadata, whio_size_t metalen )
 {
     return whio_epfs_namer_array_setup( fs, self );
+}
+
+static int whio_epfs_namer_array_unformat( struct whio_epfs_namer * self )
+{
+    /* nothing to do! */
+    return 0;
 }
 
 static int whio_epfs_namer_array_open( whio_epfs_namer * self, whio_epfs * fs, void const * metadata, whio_size_t metalen )
@@ -22120,6 +22217,7 @@ static void noop_printf(char const * fmt, ...) {}
 static void whio_epfs_namer_ht_free( whio_epfs_namer * self );
 static int whio_epfs_namer_ht_alloc( whio_epfs_namer ** self );
 static int whio_epfs_namer_ht_format( whio_epfs_namer * self, whio_epfs * fs, void * metadata, whio_size_t metalen );
+static int whio_epfs_namer_ht_unformat( struct whio_epfs_namer * self );
 static int whio_epfs_namer_ht_open( whio_epfs_namer * self, whio_epfs * fs, void const * metadata, whio_size_t metalen );
 static int whio_epfs_namer_ht_set( whio_epfs_namer * self, whio_epfs_id_t i, whio_epfs_namer_const_string name, whio_size_t len );
 static int whio_epfs_namer_ht_get( whio_epfs_namer * self, whio_epfs_id_t i, whio_epfs_namer_string name, whio_size_t * len );
@@ -22182,6 +22280,7 @@ static int whio_epfs_namer_ht_cleanup( whio_epfs_namer * self );
 */
 static const whio_epfs_namer_api HtNamerAPI = {
 whio_epfs_namer_ht_format,
+whio_epfs_namer_ht_unformat,
 whio_epfs_namer_ht_open,
 whio_epfs_namer_ht_set,
 whio_epfs_namer_ht_get,
@@ -22247,6 +22346,7 @@ struct ht_namer_impl
        The underlying fs.
     */
     whio_epfs * fs;
+    whio_epfs_id_t inodeId;
 };
 typedef struct ht_namer_impl ht_namer_impl;
 /**
@@ -22256,7 +22356,8 @@ typedef struct ht_namer_impl ht_namer_impl;
         whio_ht_empty_m,        \
         whio_epfs_namer_ht_empty_m,         \
         whio_buffer_empty_m, \
-        NULL/*fs*/ \
+        NULL/*fs*/, \
+        0/*inodeId*/ \
     }
 /**
    Empty-initialized ht_namer_impl object.
@@ -22340,8 +22441,8 @@ static bool ht_dec_size_t( char const * src, whio_size_t * dest )
 static whio_size_t ht_next_prime( whio_epfs_id_t n )
 {
     /**
-       This list was or less arbitrarily chosen by starting at some
-       relatively small prime and roughly doubling it for each
+       This list was more or less arbitrarily chosen by starting at
+       some relatively small prime and roughly doubling it for each
        increment.
      */
 #define N(P) if(n < P) return P
@@ -22423,6 +22524,7 @@ static int whio_epfs_namer_ht_format( struct whio_epfs_namer * self, whio_epfs *
                 memcpy( metadata, buf, space );
                 if(0) whio_ht_opt_set_wipe_on_remove( ht, true );
                 impl->fs = fs;
+                impl->inodeId = inodeId;
 #if HT_NAME_MY_INODE
                 return self->api->set( self, inodeID,
                                        (whio_epfs_namer_const_string) HtNamerInodeName,
@@ -22433,6 +22535,30 @@ static int whio_epfs_namer_ht_format( struct whio_epfs_namer * self, whio_epfs *
             }
         }
     }
+}
+
+static int whio_epfs_namer_ht_unformat( struct whio_epfs_namer * self )
+{
+    int rc = 0;
+    whio_epfs_id_t inodeId;
+    HT_DECL(whio_rc.ArgError);
+    inodeId = impl->inodeId;
+    /*
+        We cannot use self->api->cleanup(self) here because that removes
+        the state which the unlink() call will need. We cannot call
+        unlink() before closing impl->ht because the API won't let us
+        unlink() an opened inode (impl->ht's storage).
+    */
+    if(whio_ht_is_open(&impl->ht)){
+        whio_ht_close(&impl->ht);
+    }
+    if( inodeId ){
+        impl->fs->namer.n = NULL /* KLUDGE to allow unlink() to work */;
+        rc = whio_epfs_unlink( impl->fs, inodeId );
+        impl->fs->namer.n = self;
+        impl->inodeId = 0;
+    }    
+    return rc;
 }
 
 static int whio_epfs_namer_ht_open( whio_epfs_namer * self, whio_epfs * fs, void const * metadata, whio_size_t metalen )
@@ -22462,6 +22588,7 @@ static int whio_epfs_namer_ht_open( whio_epfs_namer * self, whio_epfs * fs, void
             else
             {
                 impl->fs = fs;
+                impl->inodeId = inodeID;
             }
             return 0;
         }
@@ -22792,9 +22919,12 @@ static int whio_epfs_namer_ht_cleanup( whio_epfs_namer * self )
     int rc;
     HT_DECL(whio_rc.ArgError);
     whio_buffer_reserve( &impl->buffer, 0 );
-    rc = whio_ht_close( &impl->ht );
-    assert( 0 == rc );
-    impl->ht = whio_ht_empty;
+    if( whio_ht_is_open( &impl->ht ) ){
+        rc = whio_ht_close( &impl->ht );
+        assert( 0 == rc );
+        impl->ht = whio_ht_empty;
+    }
+    impl->inodeId = 0;
     assert( self->impl.data == impl );
     /*
       impl and self will be freed by whio_epfs_namer_ht_free(),

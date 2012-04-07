@@ -1,4 +1,4 @@
-/* auto-generated on Sat Mar  3 14:45:13 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:25 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -6507,7 +6507,7 @@ typedef unsigned __int64  uint64_t;
 
 #endif /* WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED */
 /* end file include/wh/whio/whio_unistd.h */
-/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:26 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12126,7 +12126,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Sat Mar  3 14:45:14 CET 2012. Do not edit! */
+/* auto-generated on Sat Apr  7 19:56:27 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -13579,6 +13579,16 @@ extern "C" {
            fs, since any writing on such an object will fail.
         */
         int (*format)( struct whio_epfs_namer * self, struct whio_epfs * fs, void * metadata, whio_size_t metalen );
+        /**
+            Is called by whio_epfs_namer_remove() just before it
+            removes the namer instance. This function must clean up
+            any resources the namer stores in the EFS. It may
+            duplicate the behaviour of cleanup() only if calling
+            cleanup() after calling this is safe. This function must
+            leave self in such a state that
+            self->api->format(self,...) "could" work.
+        */
+        int (*unformat)( struct whio_epfs_namer * self );
 
         /**
            Called by the EFS core when an EFS is opened. This function
@@ -13615,7 +13625,7 @@ extern "C" {
 
            Note that the interface allows clients to use binary names,
            which means that the given name need not be
-           null-terminated. If the parameter is a string, the len
+           nul-terminated. If the parameter is a string, the len
            parameter should be its conventional strlen() (without
            counting the trailing NUL).
 
@@ -13962,7 +13972,7 @@ extern "C" {
            File descriptor, used only for mmap() purposes (which is
            still experimental).  If dev does not report its file
            descriptor we assume mmap() is not possible and disable
-           it. mmap() support is a built-time option and it is not
+           it. mmap() support is a build-time option and it is not
            known to be 100% reliable.
          */
         int fileno;
@@ -13998,7 +14008,7 @@ extern "C" {
            (if client.dtor is not null) when the EFS is closed.  It is
            legal for client.data to be NULL and client.dtor to be
            non-NULL. In that case, client.dtor(NULL) will be called
-           when the EPFS is closed, which the client can used to
+           when the EPFS is closed, which the client can use to
            trigger something other than a cleanup operation.
         */
         whio_client_data client;
@@ -14037,15 +14047,14 @@ extern "C" {
 
             /**
                The highest block ID which has been added to the EFS.
-             */
+            */
             whio_epfs_id_t blockCount;
 
             /**
                Block counterpart of maxEverUsedInode.
 
-               TODO: i think we can get rid of this. freeBlockList
-               made this obsolete. Removing it changes
-               the file format, though.
+               This value is mainly important when adding blocks
+               dynamically to an EFS.
             */
             whio_epfs_id_t maxEverUsedBlock;
 
@@ -14110,9 +14119,9 @@ extern "C" {
         struct whio_epfs_namer_
         {
             whio_epfs_namer * n;
-            /** The underlying namer registration object. This API
-                calls n->api->cleanup(n) before calling this
-                reg->free(n).
+            /** The underlying namer registration object. The EFS
+                cleanup process calls n->api->cleanup(n) before
+                calling this reg->free(n).
             */
             whio_epfs_namer_reg reg;
         } namer;
@@ -15129,10 +15138,9 @@ extern "C" {
 
        - inodeID is out of bounds (whio_rc.RangeError).
 
-       - inodeID is not currently used (whio_rc.RangeError). It is
+       - inodeID is not currently used (whio_rc.NotFoundError). It is
        arguable, however, as to whether this should qualify as an
-       error condition or be silently ignored. whio_rc.RangeError is
-       ambiguous for this case.
+       error condition or be silently ignored.
        
        - fs is opened read-only (whio_rc.AccessError).
        
@@ -15500,6 +15508,8 @@ extern "C" {
        @endcode
     */
     int whio_epfs_namer_format( whio_epfs * fs, whio_epfs_namer_reg const * reg );
+
+    int whio_epfs_namer_unformat( whio_epfs * fs );
     
     /**
        Returns true if fs is non-NULL and has a whio_epfs_namer
@@ -15569,6 +15579,9 @@ extern "C" {
        Note that searching by name is an optional feature of the namer
        API. If the namer does not support it, whio_rc.UnsupportedError
        is returned.
+
+       If no namer is installed in fs, whio_rc.UnsupportedError is
+       returned.
     */
     int whio_epfs_name_search( whio_epfs * fs, whio_epfs_id_t * inodeID, whio_epfs_namer_const_string name, whio_size_t nameLength );
 
