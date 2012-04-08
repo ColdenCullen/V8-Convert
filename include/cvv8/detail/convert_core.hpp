@@ -1924,15 +1924,15 @@ namespace cvv8 {
         */
         ResultType ToNative( v8::Handle<v8::Value> const & v )
         {
-            typedef JSToNative<std::string> C;
             if( v.IsEmpty() || v->IsNull() || v->IsUndefined() )
             {
                 return 0;
             }
-            std::string const & conv( C()( v ) );
-            char const * begin = conv.c_str();
-            Buffer b( begin, begin + conv.size() +1 /*include the NUL byte*/ );
-            std::swap( this->val, b );
+            v8::String::Utf8Value const val(v);
+            char const * begin = *val;
+            if(!begin) return NULL;
+            char const * end = begin + strlen(begin);
+            this->val.assign( begin, end +1 /*include the NUL byte*/ );
             return &this->val[0];
         }
         /**
