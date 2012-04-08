@@ -17,6 +17,29 @@
         return this;
     };
 
+
+    var cache = {};
+    function dsnCache(db){
+        var dsn = db.dsn;
+        var ca = cache[dsn];
+        if( !ca ){
+            ca = cache[dsn] = {};
+        }
+        return ca;
+    };
+
+    $.Table.setFactory = function (db, name, fac){
+        var ca = dsnCache(db);;
+        if(!ca.factories) ca.factories = {};
+        if(fac) ca.factories[name] = fac;
+        else delete ca.factories[name];
+    };
+
+    $.Table.getFactory = function(db,name){
+        var ca = dsnCache(db);
+        return ca.factories ? ca.factories[name] : undefined;
+    };
+
     $.Table.prototype = {
         getRowPrototype: function(){
             return new $.Row(this);
@@ -57,9 +80,10 @@
         createNewRow: function(){
             var d = this.getRowCreateInfo();
             var s = this.db.prepare( d );
-            var r = new $.Row(this, d.f);
+            var r;
             try {
                 s.step();
+                r =  new $.Row(this, d.f);
             }
             finally {
                 s.finalize();
@@ -75,9 +99,9 @@
                 defaults:this.defaults
             };
         },
-        loadById: function(id){
+        getRowById: function(id){
             var r = new $.Row(this);
-            return r.populateFromId(id) ? r : null;
+            return r.populateFromId(id);
         },
         qualifiedColumnNames: function(addAs){
             var i, l;
@@ -87,11 +111,36 @@
                             (addAs ? (' AS '+this.columns[i]) : ''));
             }
             return names;
+        },
+        fetchRows:function(prep){
+            var rc = [];
+            if(!prep) prep = {};
+            var self = this;
+            this.db.exec({
+                sql: prep.sql || ("SELECT * FROM "+self.db.qualify(self.name)),
+                bind: prep.bind,
+                mode: 'object',
+                each:function(row){
+                    rc.push( new $.Row(self,row) );
+                }
+            });
+            return rc.length ? rc : null;
         }
     }/*Table.prototype*/;
 
+
     $.getTableDef = function(db,name){
-        var t = new $.Table(db,name);
+        var ce = arguments.callee;
+        if(!ce.cache){
+            ce.cache = {};
+        }
+        var ca = ce.cache[db.dsn];
+        if(!ca) {
+            ca = ce.cache[db.dsn] = {};
+        }
+        var t = ca[name];
+        if(t) return t;
+        t = new $.Table(db,name);
         var s;
         try {
             s = db.prepare("SELECT * FROM "+db.qualify(name));
@@ -105,6 +154,7 @@
         finally{
             if(s) s.finalize();
         }
+        ca[name] = t;
         return t;
     };
 
@@ -160,22 +210,30 @@
                 ' WHERE '+db.qualify(this.table.idField)+'=?';
             return o;
         },
+        val: function(){
+            if(1==arguments.length){
+                return this.f[arguments[0]];
+            }
+            else if(2==arguments.length){
+                var v = arguments[1];
+                if(undefined===v) delete this.f[arguments[0]];
+                else this.f[arguments[0]] = v;
+                return this;
+            }
+        },
         save: function(){
             var d = this.getUpdateInfo();
-            var s = this.table.db.prepare(d.sql);
+            var s = this.table.db.prepare(d);
             try {
-                s.bind(d.bind);
                 s.step();
             }
             finally {
                 s.finalize();
             }
+            return this;
         },
         toJSON:function(){
-            return {
-                //idField:this.table.idField,
-                f:this.f
-            };
+            return this.f;
         },
         id:function(){
             if(0==arguments.length){
@@ -197,10 +255,10 @@
         },
         populateFromId:function(id){
             var s = this.table.db.prepare(this.getPopulateByIdInfo(id));
-            this.f = {};
             var r;
             try{
                 s.bind(1,id);
+                this.f = {};
                 if((r = s.stepObject())) {
                     this.f = r;
                 }
@@ -208,10 +266,207 @@
             finally {
                 s.finalize();
             }
-            return !!r;
+            return r ? this : undefined;
         }
     }/*Row.prototype*/;
 
+    $.Expr = function(){
+        this.$parts = [];
+        this.$state = {
+            paramCount: 0
+        };
+    };
+    
+    function exFwd(key){
+        return function(ex){
+            this.$parts.push(key);
+            if(arguments.length) this.$parts.push(ex);
+            return this;
+        }
+    }
+    
+    function aliasedFwd(n,a){
+        if(n instanceof Array){
+            var i = 0, l = n.length, v;
+            for( ; i < l; ++i ){
+                v = n[i];
+                if(i>0) this.$push(',');
+                if( v instanceof Array ){
+                    aliasedFwd.apply(this,[ v[0],v[1] ]);
+                }else{
+                    aliasedFwd.apply(this, [v]);
+                }
+            }
+            return this;
+        }
+        this.$push(this.qualify(n));
+        if(a){
+            this.$push('AS').$push(a);
+        }
+        return this;
+    }
+    function flatten(dest,ar){
+        var v, i = 0, l = ar.length;
+        for( ; i < l; ++i ){
+            v = ar[i];
+            if( v instanceof Array ) {
+                arguments.callee.apply(this,[dest,v]);
+                continue;
+            }
+            else if(null ===v){
+                v = 'NULL';
+            }
+            dest.push(v);
+        }
+    }
+    $.Expr.prototype = {
+        $push:function(v){
+            this.$parts.push(v);
+            return this;
+        },
+        qualify:function(n){
+            if( this.db && this.db.qualify ) {
+                return this.db.qualify(n);
+            }
+            else {
+                return ('string'===typeof n) ? '`'+n+'`' : ''+n;
+            }
+        },
+        escape:function(s){
+            if(null===s) return 'NULL';
+            else if('number' === typeof s) return s;
+            else return (''+s).replace(/'/g, "''");
+        },
+        quote:function(s){
+            s = this.escape(s);
+            return ('string'===typeof s) ? "'"+s+"'" : s;
+        },
+        
+        and:exFwd('AND'),
+        asc:function(){
+            return this.$push('ASC');
+        },
+        between:function(l,r){
+            return this.$push(['BETWEEN',l,'AND',r]);
+        },
+        boundParam:function(name){
+            this.$parts.push(name || '?');
+            ++this.$state.paramCount;
+            return this;
+        },
+        comma:function(){
+            return this.$push(',');
+        },
+        clear:function(){
+            this.$parts = [];
+            this.$state = {
+                paramCount: 0
+            };
+            return this;
+        },
+        clone:function(){
+            var ctor = this.constructor;
+            var e = new ctor;
+            e.db = this.db;
+            e.$parts = JSON.parse(JSON.stringify(this.$parts));
+            e.$state = JSON.parse(JSON.stringify(this.$state));
+            return e;
+        },
+        desc:function(){
+            return this.$push('DESC');
+        },
+        eq:exFwd('='),
+        gt:exFwd('>'),
+        field:aliasedFwd,
+        from:exFwd('FROM'),
+        IN:function(list){
+            var i = 0, v, l = list.length;
+            this.$push('IN').$push('(');
+            for( ; i < l; ++i ){
+                v = this.quote(list[i]);
+                if(i>0) this.$push(',');
+                this.$push(v);
+            }
+            return this.$push(')');
+        },
+        is:exFwd('IS'),
+        isNot:exFwd('IS NOT'),
+        isNull:exFwd('IS NULL'),
+        isNotNull:exFwd('IS NOT NULL'),
+        like:exFwd('LIKE'),
+        limit:function(n,m){
+            if(1==arguments.length) {
+                m = n;
+                n = 0;
+            }
+            return this.$push(['LIMIT',n,',',m]);
+        },
+        lt:exFwd('<'),
+        neq:exFwd('<>'),
+        not:exFwd('NOT'),
+        NULL:function(){
+            return this.$push('NULL');
+        },
+        or:exFwd('OR'),
+        order:exFwd('ORDER BY'),
+        raw:function(){
+            var av = Array.prototype.slice.apply(arguments,[0]);
+            return this.$push(av);
+        },
+        select:exFwd('SELECT'),
+        set:function(obj){
+            this.$push('SET');
+            var ce = arguments.callee;
+            if(!ce.rxParam){
+                ce.rxParam = /^((:\w+)|\?)$/;
+            }
+            var k, v, i = 0;
+            for( k in obj) {
+                v = obj[k];
+                if(1 < ++i){
+                    this.$push(',');
+                }
+                this.$push(k).$push('=');
+                if( ce.rxParam.test(v) ) this.boundParam(v);
+                else this.value(v);
+            }
+            return this;
+        },
+        sub:function(ex){
+            var e = ex || new Expr();
+            this.$push(['(',e,')']);
+            return ex ? this: e;
+        },
+        table:aliasedFwd,
+        update:function(tbl){
+            this.$push('UPDATE');
+            if(arguments.length){
+                this.$push(this.qualify(arguments[0]));
+            }
+            return this;
+        },
+        value:function(v){
+            v = v ? this.escape(v) : v;
+            if(null === v) v = 'NULL';
+            else if('string'===typeof v){
+                v = "'"+v+"'";
+            }
+            return this.$push( v );
+        },
+        where:exFwd('WHERE'),
+
+        toJSON:function(){
+            return {
+                paramCount:this.$state.paramCount,
+                parts:this.$parts
+            };
+        },
+        toString:function(){
+            var x = [];
+            flatten.apply(this, [x, this.$parts]);
+            return x.join(' ');
+        }
+    };
 })(JSPDO);
 
 if(1) (function (){
@@ -269,11 +524,11 @@ if(1) (function (){
             objout('fetchAll:',res);
             objout('getPopulateByIdInfo(7)',r.getPopulateByIdInfo(7));
             r.populateFromId(1);
-            objout('loadById 1:',r);
-            r = t.loadById(2);
-            objout('t.loadById 2:',r);
-            r = t.loadById(3);
-            objout('t.loadById 3:',r);
+            objout('getRowById 1:',r);
+            r = t.getRowById(2);
+            objout('t.getRowById 2:',r);
+            r = t.getRowById(3);
+            objout('t.getRowById 3:',r);
         })();
 
         (function test2(){
@@ -288,156 +543,7 @@ if(1) (function (){
         })();
 
         (function test3(){
-            function Expr(){
-                this.$parts = [];
-                this.$state = {
-                    paramCount: 0
-                };
-            }
-            function exFwd(key){
-                return function(ex){
-                    this.$parts.push(key);
-                    if(ex) this.$parts.push(ex);
-                    return this;
-                }
-            }
-            function aliasedFwd(n,a){
-                if(n instanceof Array){
-                    var i = 0, l = n.length, v;
-                    for( ; i < l; ++i ){
-                        v = n[i];
-                        if(i>0) this.$push(',');
-                        if( v instanceof Array ){
-                            aliasedFwd.apply(this,[ v[0],v[1] ]);
-                        }else{
-                            aliasedFwd.apply(this, [v]);
-                        }
-                    }
-                    return this;
-                }
-                this.$push(this.qualify(n));
-                if(a){
-                    this.$push('AS').$push(a);
-                }
-                return this;
-            }
-            function flatten(dest,ar){
-                var v, i = 0, l = ar.length;
-                for( ; i < l; ++i ){
-                    v = ar[i];
-                    if( v instanceof Array ) {
-                        flatten(dest,v);
-                    }
-                    else {
-                        dest.push(''+v);
-                    }
-                }
-            }
-            Expr.prototype = {
-                $push:function(v){
-                    this.$parts.push(v);
-                    return this;
-                },
-                qualify:function(n){
-                    return ('string'===typeof n) ? '`'+n+'`' : ''+n;
-                },
-                escape:function(s){
-                    if(null===s) return 'NULL';
-                    else if('number' === typeof s) return s;
-                    else return (''+s).replace(/'/g, "''");
-                },
-                
-                and:exFwd('AND'),
-                asc:function(){
-                    return this.$push('ASC');
-                },
-                between:function(l,r){
-                    return this.$push(['BETWEEN',l,'AND',r]);
-                },
-                boundParam:function(name){
-                    this.$parts.push(name || '?');
-                    ++this.$state.paramCount;
-                    return this;
-                },
-                comma:function(){
-                    return this.$push(',');
-                },
-                clear:function(){
-                    this.$parts = [];
-                    this.$state = {
-                        paramCount: 0
-                    };
-                    return this;
-                },
-                clone:function(){
-                    var x = JSON.parse(JSON.stringify(this));
-                    var e = new Expr();
-                    e.$parts = x.$parts;
-                    e.$state = x.$state;
-                    return e;
-                },
-                desc:function(){
-                    return this.$push('DESC');
-                },
-                eq:exFwd('='),
-                gt:exFwd('>'),
-                field:aliasedFwd,
-                from:exFwd('FROM'),
-                IN:function(list){
-                    this.$push('IN').$push('(');
-                    this.$push(list.join(', '));
-                    return this.$push(')');
-                },
-                is:exFwd('IS'),
-                isNot:exFwd('IS NOT'),
-                isNull:exFwd('IS NULL'),
-                isNotNull:exFwd('IS NOT NULL'),
-                like:exFwd('LIKE'),
-                limit:function(n,m){
-                    if(1==arguments.length) {
-                        m = n;
-                        n = 0;
-                    }
-                    return this.$push(['LIMIT',n,',',m]);
-                },
-                lt:exFwd('<'),
-                neq:exFwd('<>'),
-                not:exFwd('NOT'),
-                NULL:function(){
-                    return this.$push('NULL');
-                },
-                or:exFwd('OR'),
-                order:exFwd('ORDER BY'),
-                raw:function(){
-                    var av = Array.prototype.slice.apply(arguments,[0]);
-                    return this.$push(av.join(' '));
-                },
-                select:exFwd('SELECT'),
-                sub:function(ex){
-                    var e = ex || new Expr();
-                    this.$push(['(',e,')']);
-                    return ex ? this: e;
-                },
-                table:aliasedFwd,
-                update:exFwd('UPDATE'),
-                value:function(v){
-                    v = this.escape(v);
-                    if('string'===typeof v){
-                        v = "'"+v+"'";
-                    }
-                    return this.$push( v );
-                },
-                where:exFwd('WHERE'),
-
-                toJSON:function(){
-                    return this.$parts;
-                },
-                toString:function(){
-                    var x = [];
-                    flatten(x, this.$parts);
-                    return x.join(' ');
-                }
-            };
+            var Expr = JSPDO.Lol.Expr;
 
             var e = new Expr();
             objout('expr:',e);
@@ -466,7 +572,7 @@ if(1) (function (){
                 table('x','y').
                 where(e).
                     and().sub(sub).
-                    and( new Expr().raw('AA').not().IN([1,3,5]) ).
+                    and( new Expr().raw('AA').not().IN([1,3,'x15']) ).
                 order('z').
                 limit(3);
             objout('expr:',sel);
@@ -474,7 +580,21 @@ if(1) (function (){
             e = new Expr().field('a').like( new Expr().field('b') );
             objout('another expr:',e);
             print(e);
-            
+
+            e = new Expr().update('x')/*.table('x')*/.set({
+                a:3, z:"hi'ya", y:null, d:'?', e:':hi'
+            }).where(0).neq(1);
+            objout('UPDATE expr:',e);
+            print(e);
+            e = e.clone();
+            objout('CLONEd expr:',e);
+
+        })();
+
+        (function test4(){
+            var t = tables.t;
+            var rc = t.fetchRows();
+            objout("fetchRows():",rc);
         })();
     }
     finally{ db.close(); }
