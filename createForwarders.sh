@@ -138,12 +138,10 @@ struct MethodSignature< T const, RV (T::*)(${aTParam}) > :
     MethodSignature< T const, RV (${aTParam}) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV, ${aTDecl} >
 struct MethodSignature< T const, RV (T::*)(${aTParam}) const > :
     MethodSignature< T const, RV (${aTParam}) >
 {};
-#endif
 
 
 EOF
@@ -175,8 +173,9 @@ function makeFunctionForwarder()
 
 mycat <<EOF
 namespace Detail {
-    template <typename Sig, bool UnlockV8>
-    struct FunctionForwarder<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+
+    template <typename Sig, bool UnlockV8 >
+    struct FunctionForwarderBase<${count},Sig,UnlockV8> : FunctionSignature<Sig>
     {
         typedef FunctionSignature<Sig> SignatureType;
         typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
@@ -190,6 +189,13 @@ namespace Detail {
             ${unlocker}
             return (ReturnType)(*func)( ${castCalls} );
         }
+    };
+
+    template <typename Sig, bool UnlockV8>
+    struct FunctionForwarder<${count},Sig,UnlockV8> : FunctionForwarderBase<${count},Sig,UnlockV8>
+    {
+        typedef FunctionSignature<Sig> SignatureType;
+        typedef typename SignatureType::FunctionType FunctionType;
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
             return CastToJS( CallNative( func, argv ) );
@@ -197,20 +203,10 @@ namespace Detail {
     };
 
     template <typename Sig, bool UnlockV8>
-    struct FunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionSignature<Sig>
+    struct FunctionForwarderVoid<${count},Sig,UnlockV8> : FunctionForwarderBase<${count},Sig,UnlockV8>
     {
         typedef FunctionSignature<Sig> SignatureType;
-        typedef char AssertArity[ (${count} == sl::Arity<SignatureType>::Value) ? 1 : -1];
         typedef typename SignatureType::FunctionType FunctionType;
-        typedef typename SignatureType::ReturnType ReturnType;
-        static ReturnType CallNative( FunctionType func, v8::Arguments const & argv )
-        {
-            ${sigTypeDecls}
-            ${castTypedefs}
-            ${castInits}
-            ${unlocker}
-            return (ReturnType)(*func)( ${castCalls} );
-        }
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
             CallNative( func, argv );

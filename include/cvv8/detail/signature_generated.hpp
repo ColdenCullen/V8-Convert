@@ -532,12 +532,10 @@ struct MethodSignature< T const, RV (T::*)( A0) > :
     MethodSignature< T const, RV ( A0) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0 >
 struct MethodSignature< T const, RV (T::*)( A0) const > :
     MethodSignature< T const, RV ( A0) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0 >
@@ -572,12 +570,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1) > :
     MethodSignature< T const, RV ( A0, A1) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1 >
 struct MethodSignature< T const, RV (T::*)( A0, A1) const > :
     MethodSignature< T const, RV ( A0, A1) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1 >
@@ -612,12 +608,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2) > :
     MethodSignature< T const, RV ( A0, A1, A2) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2) const > :
     MethodSignature< T const, RV ( A0, A1, A2) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2 >
@@ -652,12 +646,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3 >
@@ -692,12 +684,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4 >
@@ -732,12 +722,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5 >
@@ -772,12 +760,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6 >
@@ -812,12 +798,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7) > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7 >
@@ -852,12 +836,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8) 
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8 >
@@ -892,12 +874,10 @@ struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8, 
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
 {};
 
-#if 1 // msvc? Apparently this works.
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9 >
 struct MethodSignature< T const, RV (T::*)( A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) const > :
     MethodSignature< T const, RV ( A0, A1, A2, A3, A4, A5, A6, A7, A8, A9) >
 {};
-#endif
 
 
 template <typename T, typename RV,  typename A0, typename A1, typename A2, typename A3, typename A4, typename A5, typename A6, typename A7, typename A8, typename A9 >

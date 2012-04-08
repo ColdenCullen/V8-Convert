@@ -438,9 +438,9 @@ namespace cvv8 {
                  CATCHER< MethodToInCa<BN, void (BN &), &BN::nativeParamRef> >::Call)
                 ("nativeParamConstRef",
                  CATCHER<
-                    ConstMethodToInCa<BN, void (BN const &), &BN::nativeParamConstRef>
+                    //ConstMethodToInCa<BN, void (BN const &), &BN::nativeParamConstRef>
                     //Equivalent:
-                    //MethodToInCa<const BN, void (BN const &), &BN::nativeParamConstRef>
+                    MethodToInCa<const BN, void (BN const &), &BN::nativeParamConstRef>
                     //Equivalent:
                     //ToInCa<const BN, void (BN const &), &BN::nativeParamConstRef>
                     //Equivalent:
@@ -547,22 +547,24 @@ namespace cvv8 {
                 VarToGetter<std::string,&sharedString>(),
                 ThrowingSetter() )
             ("sharedString2",
-                FunctionToGetter<std::string (), getSharedString>(),
-                FunctionToSetter<void (std::string const &), setSharedString>() )
+                FunctionTo< Getter, std::string (), getSharedString>(),
+                FunctionTo< Setter, void (std::string const &), setSharedString>() )
             ("theInt",
-                ConstMethodToGetter<T, int (), &T::getInt>(),
-                MethodToSetter<T, void (int), &T::setInt>() )
+                MethodTo< Getter, const T, int (), &T::getInt>(),
+               // C++11:
+               //MethodTo< Getter, const T, decltype(&T::getInt), &T::getInt>(),
+               MethodTo< Setter, T, void (int), &T::setInt>() )
             ("theIntNC",
-                MethodToGetter<T, int (), &T::getIntNonConst>(),
+                MethodTo< Getter, T, int (), &T::getIntNonConst>(),
                 MethodTo< Setter, T, void (int), &T::setInt>() )
             ("publicStaticIntRO", VarToGetter<int,&T::publicStaticInt>::Get )
             ("publicIntRO",
                 MemberToGetter<T,int,&T::publicInt>(),
                 ThrowingSetter() )
             ;
-            typedef MemberToAccessors<T,int,&T::publicInt> acc_publicInt;
+            typedef MemberTo< Accessors, T,int,&T::publicInt> acc_publicInt;
             acc("publicIntRW", acc_publicInt(), acc_publicInt() );
-            typedef VarToAccessors<int,&T::publicStaticInt> acc_publicStaticInt;
+            typedef VarTo< Accessors, int, &T::publicStaticInt> acc_publicStaticInt;
             acc("publicStaticIntRW",
                 acc_publicStaticInt::Get,
                 acc_publicStaticInt::Set );
@@ -962,6 +964,10 @@ void test_xto_bindings()
     g = FunctionTo< Getter, int(void), ::getchar>::Get;
     s = FunctionTo< Setter, int(int), ::putchar>::Set;
 
+    //#if __cplusplus >= 201103L /* http://sourceforge.net/apps/mediawiki/predef/index.php?title=Standards */
+    //typedef FunctionToInCa11< InCa > F11;
+    //#endif
+    
     // Var-to-X conversions:
     g = VarTo< Getter, int, &aBoundInt >::Get;
     s = VarTo< Setter, int, &aBoundInt >::Set;

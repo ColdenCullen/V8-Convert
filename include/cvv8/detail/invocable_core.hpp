@@ -398,6 +398,17 @@ namespace Detail {
     !UnlockV8 ? 1 : (SignatureIsUnlockable< SignatureType >::Value ?  1 : -1) \
     ]
 
+    /**
+       Default (unimplemented) specialization for an internal
+       code-reduction class. Specializations for 1+ args are
+       generated. The 0-arity specialization is never instantiated.
+    */
+    template <int _Arity, typename Sig,
+              bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value >
+    struct FunctionForwarderBase
+    {
+    };
+    
     template <int Arity_, typename Sig,
             bool UnlockV8 = SignatureIsUnlockable< Signature<Sig> >::Value >
     struct FunctionForwarder DOXYGEN_FWD_DECL_KLUDGE;
