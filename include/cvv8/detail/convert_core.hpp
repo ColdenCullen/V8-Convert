@@ -1891,6 +1891,56 @@ namespace cvv8 {
         enum { HasConstOp = 0 };
     };
 
+    /**
+       An ArgCaster specialization which can handle (char *)
+       (non-const) parameters. It has the same lifetime limitations as
+       the (char const *) specialization.
+
+       Note that changes made to (char *) input parameters by the
+       function they are passed to are lost on their way back to JS.
+    */
+    template <>
+    struct ArgCaster<char *>
+    {
+    private:
+        typedef std::vector<char> Buffer;
+        Buffer val;
+        typedef char Type;
+    public:
+        typedef Type * ResultType;
+        /**
+           Returns the toString() value of v unless:
+
+           - v.IsEmpty()
+           - v->IsNull()
+           - v->IsUndefined()
+
+           In which cases it returns 0.
+
+           The returned value is valid until:
+
+           - ToNative() is called again.
+           - This object is destructed.
+        */
+        ResultType ToNative( v8::Handle<v8::Value> const & v )
+        {
+            typedef JSToNative<std::string> C;
+            if( v.IsEmpty() || v->IsNull() || v->IsUndefined() )
+            {
+                return 0;
+            }
+            std::string const & conv( C()( v ) );
+            char const * begin = conv.c_str();
+            Buffer b( begin, begin + conv.size() +1 /*include the NUL byte*/ );
+            std::swap( this->val, b );
+            return &this->val[0];
+        }
+        /**
+            To eventually be used for some internal optimizations.
+        */
+        enum { HasConstOp = 0 };
+    };
+    
 #if !defined(DOXYGEN)
     namespace Detail {
         /**

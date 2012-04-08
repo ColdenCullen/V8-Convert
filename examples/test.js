@@ -35,6 +35,7 @@ function test1()
     print('f='+f);
     f.puts("hi, world");
     f.cputs("hi, world");
+    f.putsNC("hi, world (non-const C string)");
     f.doFoo();
     f.doFoo2(1,3.3);
     f.invoInt(1,2,3,4);

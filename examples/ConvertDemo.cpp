@@ -420,6 +420,10 @@ namespace cvv8 {
                  MethodToInCa<BN const,void (char const *),&BN::puts>::Call)
                  //Equivalent:
                  //ConstMethodToInCa<BN,void (char const *),&BN::puts>::Call)
+#if 1
+                ("putsNC",
+                 MethodToInCa<BN const,void (char *),&BN::putsNC>::Call)
+#endif
                 ("doFooConst",
                  MethodToInCa<BN const,void (),&BN::doFooConst>::Call)
                  //Equivalent:

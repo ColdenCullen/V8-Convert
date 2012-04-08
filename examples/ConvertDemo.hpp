@@ -57,6 +57,10 @@ public:
     {
         CERR << "@"<<(void const *)this<<"->puts(\""<<str<<"\")\n";
     }
+    void putsNC(char *str) const
+    {
+        CERR << "@"<<(void const *)this<<"->putsNC(\""<<str<<"\")\n";
+    }
     
     void doFoo()
     {
