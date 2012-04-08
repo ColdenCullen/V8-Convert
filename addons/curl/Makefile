@@ -30,6 +30,7 @@ bytearray.hpp: $(BA.DIR)/bytearray.hpp
 bytearray.cpp: $(BA.DIR)/bytearray.cpp bytearray.hpp
 	cp $(BA.DIR)/$@ .
 bytearray.o: bytearray.cpp
+CurlJS.o: bytearray.o
 CLEAN_FILES += bytearray.cpp bytearray.hpp
 
 
