@@ -1,4 +1,4 @@
-/* auto-generated on Sat Apr  7 19:56:25 CEST 2012. Do not edit! */
+/* auto-generated on Sun Apr  8 21:53:10 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -3626,6 +3626,53 @@ typedef struct whio_mutex whio_mutex;
 extern const whio_mutex whio_mutex_empty;
 
 /**
+   Typedef for functions which act as an output destination for
+   arbitrary data.
+
+   The arguments are:
+
+   - state: implementation-specific state needed by the function.
+
+   - n: the length, in bytes, of src.
+
+   - src: the source bytes which the output function should consume.
+   The src pointer will be invalidated shortly after this function
+   returns, so the implementation must copy or ignore the data, but not
+   hold a copy of the src pointer.
+
+   Must return 0 on success, non-0 on error (preferably a value from
+   whio_rc).
+*/
+typedef int (*whio_data_dest_f)( void * state, void const * src, whio_size_t n );
+
+/**
+   Typedef for functions which act as an input source for
+   arbitrary data.
+
+   The arguments are:
+
+   - state: implementation-specific state needed by the function.
+
+   - n: when called, *n will be the number of bytes the function
+   should read and copy to dest. The function MUST NOT copy more than
+   *n bytes to dest. Before returning, *n must be set to the number of
+   bytes actually copied to dest. If that number is smaller than the
+   original *n value, the input is assumed to be completed (thus this
+   is not useful with non-blocking readers).
+
+   - dest: the destination memory to copy the data do.
+
+   Must return 0 on success, non-0 on error (preferably a value from
+   whio_rc). On error *n may or may not be modified.
+
+    Note that when reading input byte-by-byte, clients may have to
+    concern themselves with encoding-level details like character
+    boundaries in UTF strings.
+*/
+typedef int (*whio_data_source_f)( void * state, void * dest, whio_size_t * n );
+
+
+/**
    A generic buffer class.
 
    They can be used like this:
@@ -3739,6 +3786,34 @@ int whio_buffer_vprintf( whio_buffer * buf, char const * fmt, va_list vargs );
    instead of a va_list.
 */
 int whio_buffer_printf( whio_buffer * buf, char const * fmt, ... );
+
+/**
+   whio_data_dest_f() implementation which appends output to a
+   whio_buffer instance.
+
+   arg MUST be a (whio_buffer*). This function appends n bytes at
+   position arg->used, expanding the buffer as necessary. When
+   expanding it zeros out the memory and over-allocates by at least
+   1 byte, the implication being that data appended to it is
+   implicitly NUL-terminated.
+
+   Example:
+
+   @code
+   whio_buffer buf = whio_buffer_empty;
+   whio_stream * str = NULL;
+   int rc = whio_stream_for_func_out( &str, whio_data_dest_whio_buffer, &buf );
+   assert(0 == rc);
+   whio_stream_writef(str, "Hi from stream @%p!", (void const *)str);
+   str->api->finalize(str);
+   puts( (char const *)buf.mem );
+   whio_buffer_reserve( &buf, 0 );
+   @endcode
+
+   Note that the buffer object's memory must be valid for at least
+   as long as the associated stream is alive.
+*/
+int whio_data_dest_whio_buffer( void * arg, void const * data_, whio_size_t n );
 
 /**
    Returns a true (non-0) value if the library was compiled with zlib
@@ -6287,6 +6362,50 @@ int whio_stream_copy( whio_stream * istr, whio_stream * ostr );
 
 
 /**
+    Creates an input stream which proxies the given whio_data_source_f
+    function. f must be non-NULL. state may be NULL if f requires no
+    state.
+
+    On success 0 is returned and *dest is set to a new stream instance
+    owned by the caller, who must eventually finalize() it. On error
+    non-0 is returned and *dest is not modified.
+
+    Each read() call on the stream will be proxied via f(state,...).
+
+    flush() is a no-op (returns success).
+
+    When closed the stream will call f(state, NULL, NULL), so that
+    the client can clean up or do whatever needs to be done. This is
+    the only case where a NULL 2nd or 3rd parameter will be passed
+    to f().
+
+    When the stream is closed, it's client.dtor member (if set)
+    is called after f() has been called the final time. client.dtor()
+    is passed client.data as its only argument.
+*/
+int whio_stream_for_func_in( whio_stream ** dest, whio_data_source_f f, void * state );
+
+/**
+    This is the output counterpart to whio_stream_for_func_in(). The
+    difference is that this creates an output stream.
+
+    Each write() call on the stream will be proxied via f(state,...).
+
+    flush() is a no-op (returns success).
+
+    When closed the stream will call f(state, NULL, 0) to signal
+    that it is finished, so that the client can flush() or clean up
+    whatever needs to be done. This is the only case where the 2nd
+    and 3rd paramters to f() will be (NULL,0) but client write()
+    calls passing (non-NULL,0) will be passed on to f().
+
+    When the stream is closed, it's client.dtor member (if set)
+    is called after f() has been called the final time. client.dtor()
+    is passed client.data as its only argument.
+*/
+int whio_stream_for_func_out( whio_stream ** dest, whio_data_dest_f f, void * state );
+
+/**
    Consumes stream to the first \\n character.  It appends that data, minus the newline,
    to dest. Returns the number of characters appended to dest, or 0 at EOF or on a read
    error.
@@ -6507,7 +6626,7 @@ typedef unsigned __int64  uint64_t;
 
 #endif /* WANDERINGHORSE_NET_WHIO_UNISTD_H_INCLUDED */
 /* end file include/wh/whio/whio_unistd.h */
-/* auto-generated on Sat Apr  7 19:56:26 CEST 2012. Do not edit! */
+/* auto-generated on Sun Apr  8 21:53:11 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -12126,7 +12245,7 @@ whio_vlbm_block_empty_m/*block*/, \
 
 #endif /* WANDERINGHORSE_NET_WHIO_HT_H_INCLUDED */
 /* end file include/wh/whio/whio_ht.h */
-/* auto-generated on Sat Apr  7 19:56:27 CEST 2012. Do not edit! */
+/* auto-generated on Sun Apr  8 21:53:11 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15509,6 +15628,28 @@ extern "C" {
     */
     int whio_epfs_namer_format( whio_epfs * fs, whio_epfs_namer_reg const * reg );
 
+    /**
+        Convenience form of whio_epfs_namer_format() which searches for
+        a namer implementation with the given name.
+
+        Returns 0 on success.
+    */
+    int whio_epfs_namer_format2( whio_epfs * fs, char const * namer );
+
+    /**
+        The opposite of whio_epfs_namer_format(), this function
+        removes any namer associated with fs. Returns 0 on success.
+        Errors include:
+
+        fs is read-only: whio_rc.AccessError
+
+        fs has no namer: whio_rc.UnsupportedError
+
+        fs is NULL: whio_rc.ArgError
+
+        After calling this, none of the namer-related APIs will
+        work on fs except for whio_epfs_namer_format().
+    */
     int whio_epfs_namer_unformat( whio_epfs * fs );
     
     /**

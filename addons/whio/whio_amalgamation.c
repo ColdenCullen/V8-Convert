@@ -1,5 +1,5 @@
 #include "whio_amalgamation.h"
-/* auto-generated on Sat Apr  7 19:56:25 CEST 2012. Do not edit! */
+/* auto-generated on Sun Apr  8 21:53:10 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -4539,7 +4539,9 @@ int whio_buffer_reserve( whio_buffer * buf, whio_size_t n )
     {
         void * x = realloc( buf->mem, n );
         if( ! x ) return whio_rc.AllocError;
+        assert( buf->capacity < n );
         buf->mem = x;
+        memset( (char *)buf->mem + buf->capacity, 0, n - buf->capacity );
         buf->capacity = n;
         ++buf->timesExpanded;
         return 0;
@@ -4573,7 +4575,7 @@ static long whprintf_appender_whio_buffer( void * arg, char const * data, long n
     npos = sb->used + n;
     if( npos >= sb->capacity )
     {
-        const whio_size_t asz = npos * 2;
+        const whio_size_t asz = npos * 2 + 1;
         const whio_size_t oldCap = sb->capacity;
         int rrc;
         if( asz < npos ) return -1; /* overflow */
@@ -4584,7 +4586,7 @@ static long whprintf_appender_whio_buffer( void * arg, char const * data, long n
                            */
             ;
         assert( (sb->capacity > oldCap) && "Internal error in memory buffer management!" );
-        /* make sure it gets NULL terminated. */
+        /* make sure it gets NUL terminated. */
         memset( ((char *)sb->mem) + oldCap, 0, (sb->capacity - oldCap) );
     }
     for( ; rc < n; ++rc, ++sb->used )
@@ -4614,6 +4616,42 @@ int whio_buffer_printf( whio_buffer * buf, char const * fmt, ... )
     return rc;
 
 }
+
+int whio_data_dest_whio_buffer( void * arg, void const * data_, whio_size_t n )
+{
+    if( ! arg ) return whio_rc.ArgError;
+    else if( !data_ || !n ) return 0;
+    else
+    {
+        whio_buffer * sb = (whio_buffer*)arg;
+        char const * data = (char const *)data_;
+        whio_size_t npos = sb->used + n;
+        /*unsigned int i;*/
+        if( npos >= sb->capacity )
+        {
+            const whio_size_t oldCap = sb->capacity;
+            const whio_size_t asz = npos * 2 + 1;
+            if( asz < npos ) return whio_rc.ArgError /* overflow */;
+            if( 0 != whio_buffer_reserve( sb, asz ) ) return whio_rc.AllocError;
+            assert( (sb->capacity > oldCap) && "Internal error in memory buffer management!" );
+            /* make sure it gets NUL terminated. */
+            memset( (char *)sb->mem + oldCap, 0, (sb->capacity - oldCap) );
+        }
+#if 1
+        memcpy( (char*)sb->mem + sb->used, data, n );
+        sb->used += n;
+        assert(sb->used < sb->capacity);
+#else
+        for( i = 0; i < n; ++i, ++sb->used )
+        {
+            ((char *)sb->mem)[sb->used] = data[i];
+        }
+#endif
+        return 0;
+    }
+}
+
+
 /* end file src/whio_common.c */
 /* begin file src/whio_dev.c */
 /*
@@ -8474,7 +8512,164 @@ static void whio_stream_FILE_finalize( whio_stream * self )
 
 #undef WHIO_STR_FILE_DECL
 /* end file src/whio_stream_FILE.c */
-/* auto-generated on Sat Apr  7 19:56:26 CEST 2012. Do not edit! */
+/* begin file src/whio_stream_func.c */
+#include <assert.h>
+#include <stdlib.h> /* free/malloc */
+
+/*
+  Implementation for a whio_stream wrapper for a whio_dev object.
+*/
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static bool whio_stream_func_isgood( whio_stream * self );
+static whio_size_t whio_stream_func_read( whio_stream * self, void * dest, whio_size_t max );
+static whio_size_t whio_stream_func_write( whio_stream * self, void const * src, whio_size_t len );
+static int whio_stream_func_flush( whio_stream * self );
+static bool whio_stream_func_close( whio_stream * self );
+static void whio_stream_func_finalize( whio_stream * self );
+static whio_iomode_mask whio_stream_func_iomode( whio_stream * self );
+/** whio_dev::impl::typeID value for whio_stream_func objects. */
+
+const whio_stream_api whio_stream_api_func = 
+    {
+    whio_stream_func_read,
+    whio_stream_func_write,
+    whio_stream_func_close,
+    whio_stream_func_finalize,
+    whio_stream_func_flush,
+    whio_stream_func_isgood,
+    whio_stream_func_iomode
+    };
+
+typedef struct whio_stream_func_meta
+{
+    whio_stream self;
+    whio_data_dest_f dest;
+    whio_data_source_f src;
+    void * state;
+} whio_stream_func_meta;
+
+static const whio_stream_func_meta whio_stream_func_meta_empty =
+{
+    {/*self*/
+        &whio_stream_api_func,
+        { /* impl */
+            0, /* data */
+            &whio_stream_api_func /* typeID */
+        }
+    },
+    NULL/*dest*/,
+    NULL/*src*/,
+    NULL/*state*/
+};
+
+/**
+   Helper macro for the whio_stream_func_xxx() API.
+*/
+#define WHIO_STR_DECL(RV) whio_stream_func_meta * meta = (self && (self->impl.typeID==&whio_stream_api_func)) ? (whio_stream_func_meta*)self->impl.data : 0; \
+    if( ! meta ) return RV
+
+bool whio_stream_func_isgood( whio_stream * self )
+{
+    WHIO_STR_DECL(false);
+    return (meta->dest || meta->src) ? 1 : 0;
+}
+
+whio_size_t whio_stream_func_read( whio_stream * self, void * dest, whio_size_t len )
+{
+    WHIO_STR_DECL(0);
+    if(!dest || !meta->src || !len) return 0;
+    return (*meta->src)( meta->state, dest, &len )
+        ? 0 : len;
+}
+
+whio_size_t whio_stream_func_write( whio_stream * self, void const * src, whio_size_t len )
+{
+    WHIO_STR_DECL(0);
+    if(!src || !meta->dest || !len) return 0;
+    return (*meta->dest)( meta->state, src, len )
+        ? 0 : len;
+}
+
+int whio_stream_func_flush( whio_stream * self )
+{
+    return 0 /*whio_rc.UnsupportedError ? */;
+}
+
+bool whio_stream_func_close( whio_stream * self )
+{
+    whio_stream_func_meta * meta = (self ? (whio_stream_func_meta*)self->impl.data : 0);
+    if( ! meta || (!meta->src && !meta->dest) ) return false;
+    if(meta->src) (*meta->src)( meta->state, NULL, NULL );
+    else if(meta->dest) (*meta->dest)( meta->state, NULL, 0 );
+    meta->src = NULL;
+    meta->dest = NULL;
+    if( self->client.dtor ) self->client.dtor( self->client.data );
+    self->client = whio_client_data_empty;
+    return true;
+}
+
+
+static whio_iomode_mask whio_stream_func_iomode( whio_stream * self )
+{
+    WHIO_STR_DECL(WHIO_MODE_INVALID);
+    return meta->src
+        ? WHIO_MODE_RO
+        : (meta->dest ? WHIO_MODE_WO : WHIO_MODE_INVALID);
+}
+
+
+void whio_stream_func_finalize( whio_stream * self )
+{
+    if( self )
+    {
+        self->api->close( self );
+        assert( self->impl.data );
+        whio_free( self->impl.data );
+    }
+}
+
+static whio_stream_func_meta * whio_stream_func_meta_alloc(){
+    whio_stream_func_meta * x =
+        (whio_stream_func_meta *) whio_malloc(sizeof(whio_stream_func_meta));
+    if(x){
+        *x = whio_stream_func_meta_empty;
+        x->self.impl.data = x;
+    }
+    return x;
+}
+
+static int whio_stream_for_func( whio_stream ** str, whio_data_source_f src,  whio_data_dest_f dest, void * state )
+{
+    if(!str || (!src && !dest)) return whio_rc.ArgError;
+    else {
+        whio_stream_func_meta * m = whio_stream_func_meta_alloc();
+        if(!m) return whio_rc.AllocError;
+        *str = &m->self;
+        m->src = src;
+        m->dest = dest;
+        m->state = state;
+        return 0;
+    }
+}
+int whio_stream_for_func_in( whio_stream ** dest, whio_data_source_f f, void * state )
+{
+    return whio_stream_for_func( dest, f, NULL, state );
+}
+int whio_stream_for_func_out( whio_stream ** dest, whio_data_dest_f f, void * state )
+{
+    return whio_stream_for_func( dest, NULL, f, state );
+}
+
+#undef WHIO_STR_DECL
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
+/* end file src/whio_stream_func.c */
+/* auto-generated on Sun Apr  8 21:53:11 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -15797,7 +15992,7 @@ whio_dev * whio_vlbm_take_dev( whio_vlbm * bm )
     }
 }
 /* end file src/whio_vlbm.c */
-/* auto-generated on Sat Apr  7 19:56:27 CEST 2012. Do not edit! */
+/* auto-generated on Sun Apr  8 21:53:11 CEST 2012. Do not edit! */
 #if !defined(_POSIX_C_SOURCE)
 #define _POSIX_C_SOURCE 200112L /* needed for ftello() and friends */
 #endif
@@ -21709,7 +21904,7 @@ const whio_epfs_namer_reg whio_epfs_namer_reg_empty = whio_epfs_namer_reg_empty_
 int whio_epfs_namer_format( whio_epfs * fs, whio_epfs_namer_reg const * reg )
 {
     if( ! fs || !reg || !*reg->label ) return whio_rc.ArgError;
-    else if( fs->namer.n ) return whio_rc.AccessError;
+    else if( fs->namer.n || !whio_epfs_is_rw(fs) ) return whio_rc.AccessError;
     else
     {
         whio_epfs_namer_reg regCheck = whio_epfs_namer_reg_empty;
@@ -21725,7 +21920,6 @@ int whio_epfs_namer_format( whio_epfs * fs, whio_epfs_namer_reg const * reg )
             if( ! n ) return whio_rc.AllocError;
             else
             {
-                bool const isRW = whio_epfs_is_rw(fs);
                 enum { BufLen = whio_epfs_sizeof_namer_label_payload };
                 unsigned char buf[BufLen];
                 size_t const nameLen = strlen( (char const *)reg->label );
@@ -21754,17 +21948,55 @@ int whio_epfs_namer_format( whio_epfs * fs, whio_epfs_namer_reg const * reg )
                     fs->namer.reg = *reg;
                     rc = n->api->format( n, fs, bufP, restLen );
                     CHECK_RC;
-                    if( isRW )
-                    {
-                        rc = whio_epfs_namer_metadata_write( fs, buf, BufLen );
-                        CHECK_RC;
-                    }
+                    rc = whio_epfs_namer_metadata_write( fs, buf, BufLen );
+                    CHECK_RC;
 #undef CHECK_RC
+                    whio_epfs_flush( fs );
                     return rc;
                 }
             }
         }
     }
+}
+
+int whio_epfs_namer_format2( whio_epfs * fs, char const * namer )
+{
+    if(!fs || !namer) return whio_rc.ArgError;
+    else if(whio_epfs_has_namer(fs) ) return whio_rc.AccessError;
+    else {
+        int rc;
+        whio_epfs_namer_reg namereg = whio_epfs_namer_reg_empty;
+        whio_size_t len = (whio_size_t)strlen(namer);
+        if( len > (whio_size_t)whio_epfs_sizeof_namer_label_payload ) {
+            return whio_rc.RangeError;
+        }
+        rc = whio_epfs_namer_reg_search( namer, &namereg );
+        if( rc ) return rc;
+        return whio_epfs_namer_format( fs, &namereg );
+    }
+}
+
+int whio_epfs_namer_unformat( whio_epfs * fs )
+{
+    
+    if( !fs ) return whio_rc.ArgError;
+    else if(!whio_epfs_is_rw(fs)) return whio_rc.AccessError;
+    else if(!fs->namer.n || !fs->namer.n->api->unformat ) return whio_rc.UnsupportedError;
+    else {
+        int rc = fs->namer.n->api->unformat( fs->namer.n );
+        if(rc) return rc;
+        fs->namer.reg.free( fs->namer.n );
+        fs->namer.n = NULL;
+        fs->namer.reg = whio_epfs_namer_reg_empty;
+        {
+            enum { BufLen = whio_epfs_sizeof_namer_label_payload };
+            unsigned char buf[BufLen];
+            memset(buf, 0, BufLen);
+            /*buf[BufLen-1] = '%';*/
+            rc = whio_epfs_namer_metadata_write( fs, buf, BufLen );
+        }
+        return rc;
+    }    
 }
 
 bool whio_epfs_has_namer( whio_epfs const * fs )
@@ -21803,26 +22035,6 @@ int whio_epfs_name_foreach( whio_epfs * fs, whio_epfs_namer_foreach_callback cal
     else return fs->namer.n->api->foreach( fs->namer.n, callback, callbackData );
 }
 
-int whio_epfs_namer_unformat( whio_epfs * fs )
-{
-    
-    if( !fs ) return whio_rc.ArgError;
-    else if(!fs->namer.n || !fs->namer.n->api->unformat ) return whio_rc.UnsupportedError;
-    else {
-        int rc = fs->namer.n->api->unformat( fs->namer.n );
-        if(rc) return rc;
-        fs->namer.reg.free( fs->namer.n );
-        fs->namer.n = NULL;
-        fs->namer.reg = whio_epfs_namer_reg_empty;
-        {
-            enum { BufLen = whio_epfs_sizeof_namer_label_payload };
-            unsigned char buf[BufLen];
-            memset(buf, 0, BufLen);
-            rc = whio_epfs_namer_metadata_write( fs, buf, BufLen );
-        }
-        return rc;
-    }    
-}
 
 static whio_epfs_namer_reg whio_epfs_namer_list[] = {
 /*
@@ -21939,12 +22151,14 @@ int whio_epfs_namer_metadata_write( whio_epfs * fs, unsigned char const * metada
     else if( !dataLen || (dataLen > whio_epfs_sizeof_namer_label) ) return whio_rc.RangeError;
     else
     {
-        unsigned char buf[whio_epfs_sizeof_namer_label];
-        memset( buf, 0, whio_epfs_sizeof_namer_label );
+        enum { sz = whio_epfs_sizeof_namer_label };
+        unsigned char buf[sz];
+        memset( buf, 0, sz );
         memcpy( buf, metadata, dataLen );
-        return (whio_epfs_sizeof_namer_label
+        buf[sz-1] = 0;
+        return (sz
                 == whio_epfs_writeat( fs, fs->offsets[whio_epfs_index_namer_label],
-                                      buf, whio_epfs_sizeof_namer_label ))
+                                      buf, sz ))
             ? 0
             : whio_rc.IOError;
     }
@@ -22513,6 +22727,8 @@ static int whio_epfs_namer_ht_format( struct whio_epfs_namer * self, whio_epfs *
                 whio_epfs_id_t const inodeID = whio_epfs_dev_inode_id(pdev);
                 char buf[space];
                 int splen;
+                assert( whio_ht_is_open(&impl->ht) );
+                assert( ht == &impl->ht );
                 assert( 0 != inodeID );
                 memset(buf,0,space);
                 splen = sprintf( buf, HT_METADATA_PFMT, inodeID );
@@ -22540,9 +22756,11 @@ static int whio_epfs_namer_ht_format( struct whio_epfs_namer * self, whio_epfs *
 static int whio_epfs_namer_ht_unformat( struct whio_epfs_namer * self )
 {
     int rc = 0;
+    whio_epfs * fs;
     whio_epfs_id_t inodeId;
     HT_DECL(whio_rc.ArgError);
     inodeId = impl->inodeId;
+    fs = impl->fs;
     /*
         We cannot use self->api->cleanup(self) here because that removes
         the state which the unlink() call will need. We cannot call
@@ -22550,14 +22768,15 @@ static int whio_epfs_namer_ht_unformat( struct whio_epfs_namer * self )
         unlink() an opened inode (impl->ht's storage).
     */
     if(whio_ht_is_open(&impl->ht)){
-        whio_ht_close(&impl->ht);
+        /*whio_ht_close(&impl->ht);*/
+        self->api->cleanup(self);
     }
     if( inodeId ){
-        impl->fs->namer.n = NULL /* KLUDGE to allow unlink() to work */;
-        rc = whio_epfs_unlink( impl->fs, inodeId );
-        impl->fs->namer.n = self;
+        fs->namer.n = NULL /* KLUDGE to allow unlink() to work */;
+        rc = whio_epfs_unlink( fs, inodeId );
+        fs->namer.n = self;
         impl->inodeId = 0;
-    }    
+    }
     return rc;
 }
 
@@ -22568,6 +22787,7 @@ static int whio_epfs_namer_ht_open( whio_epfs_namer * self, whio_epfs * fs, void
     else
     {
         whio_epfs_id_t inodeID = 0;
+        
         if( 1 != sscanf( (char const *)metadata, HT_METADATA_SFMT, &inodeID ) )
         {
             return whio_rc.ConsistencyError;
@@ -22925,6 +23145,7 @@ static int whio_epfs_namer_ht_cleanup( whio_epfs_namer * self )
         impl->ht = whio_ht_empty;
     }
     impl->inodeId = 0;
+    impl->fs = NULL;
     assert( self->impl.data == impl );
     /*
       impl and self will be freed by whio_epfs_namer_ht_free(),
@@ -22962,7 +23183,7 @@ static void whio_epfs_namer_ht_free( whio_epfs_namer * self )
     if( ! impl ) return;
     assert( self == &impl->namer );
     obj = self->impl.data;
-    self->api->cleanup( self );
+    /*self->api->cleanup( self );*/
     *self = whio_epfs_namer_empty;
     whio_free( obj /* contains the self object!*/ );
 }
