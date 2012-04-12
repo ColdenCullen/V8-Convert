@@ -20,6 +20,8 @@ name=$2
 function gen_h() {
 cat <<EOF
 
+#include <cvv8/ClassCreator.hpp>
+
 namespace cvv8 {
     CVV8_TypeName_DECL((${class}));
 
@@ -73,6 +75,12 @@ EOF
 }
 
 function gen_cpp(){
+cat <<EOF
+#include <cvv8/XTo.hpp>
+#include <cvv8/properties.hpp>
+EOF
+
+
     echo "namespace cvv8 {"
 
 cat <<EOF
@@ -109,7 +117,6 @@ cat <<EOF
         if(obj) delete obj;
     }
 EOF
-
 
 cat <<EOF
     void ClassCreator_SetupBindings<typename ${class}>::Initialize( v8::Handle<v8::Object> const & target );
