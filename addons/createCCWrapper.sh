@@ -26,16 +26,16 @@ namespace cvv8 {
     CVV8_TypeName_DECL((${class}));
 
     template <>
-    struct ClassCreator_InternalFields<${class}>
-        : ClassCreator_InternalFields_Base<${class}>
+    struct ClassCreator_InternalFields<${class} >
+        : ClassCreator_InternalFields_Base<${class} >
     {};
 
     template <>
-    struct ClassCreator_SearchPrototypeForThis<${class}> : Opt_Bool<true>
+    struct ClassCreator_SearchPrototypeForThis<${class} > : Opt_Bool<true>
     {};
 
     template <>
-    class ClassCreator_Factory<${class}>
+    class ClassCreator_Factory<${class} >
     {
     public:
         typedef ${class} * ReturnType;
@@ -43,30 +43,30 @@ namespace cvv8 {
         static void Delete( ReturnType obj );
     };
 
-    template <typename ${class}>
-    struct ClassCreator_WeakWrap
+    template <>
+    struct ClassCreator_WeakWrap<${class} >
     {
-        typedef typename TypeInfo<${class}>::NativeHandle NativeHandle;
+        typedef typename TypeInfo<${class} >::NativeHandle NativeHandle;
         static void PreWrap( v8::Persistent<v8::Object> const &, v8::Arguments const & );
         static void Wrap( v8::Persistent<v8::Object> const &, NativeHandle );
         static void Unwrap( v8::Handle<v8::Object> const &, NativeHandle );
     };
 
-    template <typename ${class}>
-    struct ClassCreator_SetupBindings
+    template <>
+    struct ClassCreator_SetupBindings< ${class} >
     {
         static void Initialize( v8::Handle<v8::Object> const & target );
     };
 
     
     template <>
-    struct JSToNative<${class}>
-        : JSToNative_ClassCreator<${class}>
+    struct JSToNative<${class} >
+        : JSToNative_ClassCreator<${class} >
     {};
 
 #if 0
     template <>
-    struct NativeToJS<${class}> : NativeToJSMap<${class}>::NativeToJSImpl {};
+    struct NativeToJS<${class} > : NativeToJSMap<${class} >::NativeToJSImpl {};
 #endif
 
 } /* namespace */
@@ -88,11 +88,11 @@ cat <<EOF
 
 #if 0 /* needed? */
     template <>
-    const void * ClassCreator_TypeID<${class}>::Value = TypeName<${class}>::Value;
+    const void * ClassCreator_TypeID<${class} >::Value = TypeName<${class} >::Value;
 #endif
 EOF
 
-    local WW="ClassCreator_WeakWrap<${class}>"
+    local WW="ClassCreator_WeakWrap<${class} >"
 cat <<EOF
 
     void ${WW}::PreWrap( v8::Persistent<v8::Object> const &, v8::Arguments const & ){
@@ -107,7 +107,7 @@ cat <<EOF
 
 EOF
 
-    local FAC="ClassCreator_Factor<${class}>"
+    local FAC="ClassCreator_Factor<${class} >"
 cat <<EOF
     static ${FAC}::ReturnType ${FAC}::Create( v8::Persistent<v8::Object> &, v8::Arguments const & argv ){
         return new ${class};
@@ -119,7 +119,7 @@ cat <<EOF
 EOF
 
 cat <<EOF
-    void ClassCreator_SetupBindings<typename ${class}>::Initialize( v8::Handle<v8::Object> const & target );
+    void ClassCreator_SetupBindings<typename ${class} >::Initialize( v8::Handle<v8::Object> const & target ){
         typedef ${class} T;
         typedef ClassCreator<T> CC:
         CC & cc( CC::Instance() );
