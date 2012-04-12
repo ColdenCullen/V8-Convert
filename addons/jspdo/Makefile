@@ -75,6 +75,8 @@ endif
 # The rest of the code "shouldn't" need to be hacked for most Unix
 # systems.
 
+cpdo_amalgamation.o jspdo.o: CPPFLAGS+=-DCPDO_CPP_ENABLE_SAFETY_NET=1
+
 ########################################################################
 # Build shared library and link it against the underlying db libs
 # (so client binaries won't have to)...

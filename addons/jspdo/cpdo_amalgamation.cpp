@@ -107,8 +107,6 @@ static cpdo_driver_reg CPDO_DRIVER_LIST[CPDO_DRIVER_LIST_LENGTH] =
 {
 #define X cpdo_driver_reg_empty_m
 X,X,X,X,X,
-X,X,X,X,X,
-X,X,X,X,X,
 X,X,X,X,X
 #undef X
 };
@@ -1171,6 +1169,60 @@ int cpdo_free_string( cpdo_driver * drv, char * str )
     else return drv->api->free_string(drv, str);
 }
 
+int cpdo_step_each( cpdo_stmt * stmt, cpdo_step_each_f f, void * state )
+{
+    if(!stmt || !f) return cpdo_rc.ArgError;
+    else {
+        int rc = 0;
+        cpdo_step_code scode;
+        while( CPDO_STEP_OK==(scode=stmt->api->step(stmt))){
+            rc = f( stmt, state );
+            if(rc) break;
+        }
+        if(!rc && (CPDO_STEP_DONE!=scode) ){
+            rc = cpdo_rc.CheckDbError;
+        }
+        return rc;
+    }
+}
+
+int cpdo_exec_each( cpdo_driver * db, cpdo_step_each_f f, void * state, char const * sql, unsigned int sqlLength )
+{
+    int rc = 0;
+    cpdo_stmt * st = NULL;
+    if(!db || !f || !sql || !sqlLength) return cpdo_rc.ArgError;
+    rc = cpdo_prepare( db, &st, sql, sqlLength );
+    if(rc) return rc;
+    rc = cpdo_step_each( st, f, state );
+    st->api->finalize(st);
+    return rc;
+}
+
+int cpdo_exec_each_f_v( cpdo_driver * db, cpdo_step_each_f f, void * state, char const * fmt, va_list vargs )
+{
+    int rc = 0;
+    char * sql = NULL;
+    if(!db || !f || !fmt) return cpdo_rc.ArgError;
+    sql = cpdo_mprintf_v( fmt, vargs );
+    if( ! sql ) return cpdo_rc.AllocError;
+    rc = cpdo_exec_each( db, f, state, sql, strlen(sql) );
+    free(sql);
+    return rc;
+
+}
+
+int cpdo_exec_each_f( cpdo_driver * db, cpdo_step_each_f f, void * state, char const * fmt, ... )
+{
+    int rc;
+    va_list vargs;
+    va_start( vargs, fmt );
+    rc = cpdo_exec_each_f_v( db, f, state, fmt, vargs );
+    va_end( vargs );
+    return rc;
+}
+
+
+
 #undef MARKER
 #if defined(__cplusplus)
 } /*extern "C"*/
@@ -1248,7 +1300,6 @@ static int cpdo_skel_driver_rollback( cpdo_driver * self );
 static char cpdo_skel_driver_in_trans( cpdo_driver * self );
 static int cpdo_skel_driver_opt_set( cpdo_driver * self, char const * key, va_list vargs );
 static int cpdo_skel_driver_opt_get( cpdo_driver * self, char const * key, va_list vargs );
-static int cpdo_skel_driver_opt_get_string_quote_char( cpdo_driver * self, char * ch );
 const cpdo_driver_api cpdo_skel_driver_api =
 {
     cpdo_skel_driver_details,
@@ -1269,8 +1320,7 @@ const cpdo_driver_api cpdo_skel_driver_api =
     },
     {/*opt*/
         cpdo_skel_driver_opt_set,
-        cpdo_skel_driver_opt_get,
-        cpdo_skel_driver_opt_get_string_quote_char
+        cpdo_skel_driver_opt_get
     },
     {/*constants*/
         CPDO_DRIVER_NAME /*driver_name*/
@@ -1761,16 +1811,6 @@ static int cpdo_skel_driver_opt_set( cpdo_driver * self, char const * key, va_li
 static int cpdo_skel_driver_opt_get( cpdo_driver * self, char const * key, va_list vargs )
 {
     return cpdo_rc.NYIError;
-}
-
-static int cpdo_skel_driver_opt_get_string_quote_char( cpdo_driver * self, char * ch )
-{
-    if( NULL == ch ) return cpdo_rc.ArgError;
-    else
-    {
-        *ch = '\'';
-        return 0;
-    }
 }
 
 static cpdo_step_code cpdo_skel_stmt_step( cpdo_stmt * self )
@@ -3388,10 +3428,10 @@ char * cpdo_printf_str( char const * fmt, ... )
 
    
 */
+#include <assert.h>
 #include <sqlite3.h>
 #include <stdlib.h> /* malloc()/free() */
 #include <string.h> /* strlen() */
-
 
 #if defined(__cplusplus)
 extern "C" {
@@ -3419,7 +3459,6 @@ static char cpdo_sq3_driver_in_trans( cpdo_driver * self );
 
 static int cpdo_sq3_driver_opt_set( cpdo_driver * self, char const * key, va_list vargs );
 static int cpdo_sq3_driver_opt_get( cpdo_driver * self, char const * key, va_list vargs );
-static int cpdo_sq3_driver_opt_get_string_quote_char( cpdo_driver * self, char * ch );
 
 const cpdo_driver_api cpdo_sq3_driver_api =
 {
@@ -3441,8 +3480,7 @@ const cpdo_driver_api cpdo_sq3_driver_api =
     },
     {/*opt*/
         cpdo_sq3_driver_opt_set,
-        cpdo_sq3_driver_opt_get,
-        cpdo_sq3_driver_opt_get_string_quote_char
+        cpdo_sq3_driver_opt_get
     },
     {/*constants*/
         CPDO_DRIVER_NAME /*driver_name*/
@@ -3656,6 +3694,29 @@ static int cpdo_sq3_last_insert_id( cpdo_driver * self, uint64_t * v, char const
 {
     DRV_DECL(cpdo_rc.ArgError);
     if( ! v ) return cpdo_rc.ArgError;
+#if 0 /* enabling this adds LOTS of mallocs()! */
+    else if(hint && *hint) { /* check sqlite_sequence table... */
+        char const * sql = "SELECT seq FROM sqlite_sequence WHERE name=?";
+        sqlite3_stmt * st3 = NULL;
+        int rc = sqlite3_prepare( drv->db, sql, (int)strlen(sql), &st3, NULL );
+        if(rc){
+            return cpdo_rc.CheckDbError;
+        }
+        rc = sqlite3_bind_text( st3, 1, hint, (int)strlen(hint), SQLITE_STATIC );
+        if(rc) goto end;
+        rc = sqlite3_step( st3 );
+        if( SQLITE_ROW != rc ) {
+            *v = sqlite3_last_insert_rowid(drv->db);
+            rc = 0;
+            goto end;
+        }
+        rc = 0;
+        *v = (uint64_t) sqlite3_column_int64( st3, 0 );
+        end:
+        sqlite3_finalize(st3);
+        return rc ? cpdo_rc.CheckDbError : 0;;
+    }
+#endif
     else
     {
         *v = sqlite3_last_insert_rowid(drv->db);
@@ -3665,8 +3726,7 @@ static int cpdo_sq3_last_insert_id( cpdo_driver * self, uint64_t * v, char const
 static int cpdo_sq3_close( cpdo_driver * self )
 {
     DRV_DECL(cpdo_rc.ArgError);
-    cpdo_sq3_driver_free(drv);
-    return 0;
+    return cpdo_sq3_driver_free(drv);
 }
 
 static char cpdo_sq3_is_connected( cpdo_driver * self )
@@ -3726,14 +3786,23 @@ static int cpdo_sq3_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
 static int cpdo_sq3_sql_qualify( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
 {
     if(!str || !dest || !*str) return cpdo_rc.ArgError;
+    else if( (NULL != strstr(str, ";"))
+             ||  (NULL != strstr(str, "'"))
+             ||  (NULL != strstr(str, "["))
+             )
+    {
+        return cpdo_rc.RangeError;
+    }
     else
     {
-        char * rc = cpdo_mprintf("[%s]", str);
+        int sz = 0;
+        char * rc = cpdo_mprintf("[%s]%n", str, &sz);
         if(!rc) return cpdo_rc.AllocError;
         else
         {
+            assert( sz > 0 );
             *dest = rc;
-            if(len) *len = strlen(rc);
+            if(len) *len = (uint32_t) sz; /*strlen(rc);*/
             return 0;
         }
     }
@@ -3772,6 +3841,15 @@ static int cpdo_sq3_prepare( cpdo_driver * self, cpdo_stmt ** tgt, char const * 
     return 0;
 }
 
+static int cpdo_sq3_mode_to_flags( char const * m ){
+
+    if(!m || !*m) return 0;
+    else if(0 == strcmp("rwc",m)) return SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+    else if(0 == strcmp("rw",m)) return SQLITE_OPEN_READWRITE;
+    else if(0 == strcmp("ro",m)) return SQLITE_OPEN_READONLY;
+    else return -1;
+}
+
 int cpdo_sq3_connect( cpdo_driver * self, cpdo_connect_opt const * opt )
 {
     int rc;
@@ -3781,20 +3859,84 @@ int cpdo_sq3_connect( cpdo_driver * self, cpdo_connect_opt const * opt )
     {
         enum { BufSize = 256U };
         char buf[BufSize];
-        char const * params = NULL;
+        char const * tokBegin = NULL;
+        char const * tokEnd = NULL;
+        char kbuf[BufSize] = {0,0};
+        char nameBuf[BufSize] = {0,0};
+        char * pos;
+        char const * key = NULL;
 #if (SQLITE_VERSION_NUMBER >= 3005001)
         int flags; flags = 0; /* not yet used */
 #endif
-        rc = cpdo_split_dsn( opt->dsn, buf, BufSize, &params );
+        rc = cpdo_split_dsn( opt->dsn, buf, BufSize, &tokBegin );
         if( rc ) return rc;
+        assert( NULL != tokBegin );
+        pos = nameBuf;
+        while( *tokBegin && (';'!=*tokBegin) ){ /* skip filename part */
+            if((pos-nameBuf) >= (BufSize-1)){
+                return cpdo_rc.RangeError;
+            }
+            *(pos++) = *(tokBegin++);
+        }
+        *pos = 0; /* NUL-terminate file name */
+        if(';'==*tokBegin) ++tokBegin;
+        while( cpdo_next_token( &tokBegin, ';', &tokEnd ) ){
+            if(tokBegin==tokEnd) break;
+            else {
+                char const * value = NULL;
+                char * at = kbuf;
+                if( (tokEnd - tokBegin) >= (BufSize-1) ) return cpdo_rc.RangeError;
+                memset( kbuf, 0, BufSize );
+                key = tokBegin;
+                /* Write the key part to the buffer... */
+                for( ; (key<tokEnd) && *key && ('='!=*key); ++key ) {
+                    *(at++) = *key;
+                }
+                *(at++) = 0;
+                value = at;
+                if( '=' == *key ) {
+                    ++key;
+                }
+                /* Write the value part to the buffer... */
+                for( ; (key<tokEnd) && *key; ++key ) {
+                    *(at++) = *key;
+                }
+                key = kbuf;
+                /* Done parsing. Now see if we understand how to use
+                   this option... */
+                if( 0 == strcmp("openmode",key) )
+                {
+#if (SQLITE_VERSION_NUMBER >= 3005001)
+                    flags = cpdo_sq3_mode_to_flags( value );
+                    if(flags<0){
+                        /* FIXME: add error string to db class */
+                        return cpdo_rc.RangeError;
+                    }
+#else
+                    /* TODO: emit a warning here. */
+#endif
+                }
+                else
+                {
+                    /* ignore unknown keys: this is optional in the CPDO
+                       interface. If we add warning support, i'll add the
+                       warning here. Or if i'm feeling pedantic later i'll
+                       throw the error here.
+                    */
+                }
+                /* set up for the next token... */
+                tokBegin = tokEnd;
+                tokEnd = NULL;
+            }
+        }
         /*
           FIXME: strip any parameters after the first ';' separator
           (just replace the first ';' with a NUL).
          */
 #if (SQLITE_VERSION_NUMBER >= 3005001)
         rc = flags
-            ? sqlite3_open_v2( params, &drv->db, flags, NULL )
-            : sqlite3_open( params, &drv->db );
+            ? sqlite3_open_v2( nameBuf, &drv->db, flags, NULL )
+            : sqlite3_open( nameBuf, &drv->db );
 #else
         rc = sqlite3_open( params, &drv->db );
 #endif
@@ -3852,17 +3994,6 @@ static int cpdo_sq3_driver_opt_get( cpdo_driver * self, char const * key, va_lis
 {
     return cpdo_rc.NYIError;
 }
-
-static int cpdo_sq3_driver_opt_get_string_quote_char( cpdo_driver * self, char * ch )
-{
-    if( NULL == ch ) return cpdo_rc.ArgError;
-    else
-    {
-        *ch = '\'';
-        return 0;
-    }
-}
-
 
 static cpdo_step_code cpdo_sq3_stmt_step( cpdo_stmt * self )
 {
@@ -4212,10 +4343,11 @@ int cpdo_driver_sqlite3_register()
 
    - dbname=STRING
 
-   - fieldbuffersize=INTEGER. When fetching string/blob data, if the
-   db cannot tell us the maximum length for the field then this value
-   is used as a fallback. The driver ignores "very small" values, but
-   how small "very small" is is not specified.
+   - DEPRECATED (not needed): fieldbuffersize=INTEGER. When fetching
+   string/blob data, if the db cannot tell us the maximum length for
+   the field then this value is used as a fallback. The driver ignores
+   "very small" values, but how small "very small" is is not
+   specified.
 
 
    TODO:
@@ -4317,6 +4449,7 @@ int cpdo_driver_sqlite3_register()
 
 #define MARKER if(1) printf("MARKER: %s:%d:%s():\t",__FILE__,__LINE__,__func__); if(1) printf
 
+#if !defined(CPDO_MY5_HAS_PRINT64)
 /** CPDO_MY5_HAS_PRINT64 is used to determine whether or not to install
     our own int64-to-string logic. C89 does not specify the equivalent
     of C99's PRIi64 format specifier.
@@ -4325,6 +4458,7 @@ int cpdo_driver_sqlite3_register()
     otherwise we use cpdo_printf() to do the conversion.
 */
 #define CPDO_MY5_HAS_PRINT64 (CPDO_ENABLE_64_BIT || (__STDC_VERSION__ >= 199901L) || (HAVE_LONG_LONG == 1))
+#endif
 
 #if !CPDO_MY5_HAS_PRINT64
 #endif
@@ -4355,7 +4489,6 @@ static char cpdo_my5_driver_in_trans( cpdo_driver * self );
 
 static int cpdo_my5_driver_opt_set( cpdo_driver * self, char const * key, va_list vargs );
 static int cpdo_my5_driver_opt_get( cpdo_driver * self, char const * key, va_list vargs );
-static int cpdo_my5_driver_opt_get_string_quote_char( cpdo_driver * self, char * ch );
 
 const cpdo_driver_api cpdo_my5_driver_api =
 {
@@ -4377,8 +4510,7 @@ const cpdo_driver_api cpdo_my5_driver_api =
     },
     {/*opt*/
         cpdo_my5_driver_opt_set,
-        cpdo_my5_driver_opt_get,
-        cpdo_my5_driver_opt_get_string_quote_char
+        cpdo_my5_driver_opt_get
     },
     {/*constants*/
         CPDO_DRIVER_NAME /*driver_name*/
@@ -4548,7 +4680,7 @@ struct cpdo_my5_stmt
         /** The number of columns in the result set.
         */
         uint16_t count;
-        /** MySQL's interface into the result data columsn.
+        /** MySQL's interface into the result data colums.
             This is an array count items long.
         */
         MYSQL_BIND * myBinders;
@@ -4557,8 +4689,11 @@ struct cpdo_my5_stmt
         */
         cpdo_bind_val * cBinders;
         /**
-            Buffers for holding T-to-String conversions.
-            This is an array count items long.
+            Buffers for holding T-to-String conversions.  This is an
+            array count items long. We use this in the get_string() op
+            to cache the result of the string conversions so that the
+            lifetime of the returned bytes can be extended to a usable
+            duration.
         */
         cpdo_bind_val * convBuf;
     } rbind;
@@ -4856,6 +4991,10 @@ static int cpdo_my5_error_info( cpdo_driver * self, char const ** dest, uint32_t
  */
 #define RESET_DRV_ERR(DRIVER) cpdo_my5_drv_err2( (DRIVER), 0, NULL )
 
+#define TRY_SHARED_NULL 0
+#if TRY_SHARED_NULL
+static char my5_null_string[] = {'N','U','L','L',0};
+#endif
 static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
 {
     DRV_DECL(cpdo_rc.ArgError);
@@ -4863,12 +5002,18 @@ static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
     if( ! len || !dest ) return cpdo_rc.ArgError;
     else if( NULL == str )
     {
+#if TRY_SHARED_NULL
+        *dest = my5_null_string;
+        *len = 4;
+        return 0;
+#else
         char * tmp = (char *)malloc(5);
         if( ! tmp ) return cpdo_rc.AllocError;
         strcpy( tmp, "NULL" );
         *dest = tmp;
         *len = 4;
         return 0;
+#endif
     }
     else
     {
@@ -4883,17 +5028,27 @@ static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
         return 0;
     }
 }
+
 static int cpdo_my5_sql_qualify( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
 {
     if(!str || !dest || !*str) return cpdo_rc.ArgError;
+    else if( (NULL != strstr(str, ";"))
+             ||  (NULL != strstr(str, "'"))
+             ||  (NULL != strstr(str, "`"))
+             )
+    {
+        return cpdo_rc.RangeError;
+    }
     else
     {
-        char * rc = cpdo_mprintf("`%s`", str);
+        int sz = 0;
+        char * rc = cpdo_mprintf("`%s`%n", str, &sz);
         if(!rc) return cpdo_rc.AllocError;
         else
         {
+            assert( sz > 0 );
             *dest = rc;
-            if(len) *len = strlen(rc);
+            if(len) *len = (uint32_t)sz; /*strlen(rc);*/
             return 0;
         }
     }
@@ -4901,7 +5056,13 @@ static int cpdo_my5_sql_qualify( cpdo_driver * self, char const * str, uint32_t 
 
 static int cpdo_my5_free_string( cpdo_driver * self, char * str)
 {
-    return str ? (free(str),0) : cpdo_rc.ArgError;
+#if TRY_SHARED_NULL
+    if(my5_null_string == str) return 0;
+    else
+#endif
+    {
+        return str ? (free(str),0) : cpdo_rc.ArgError;
+    }
 }
 
 
@@ -4935,9 +5096,7 @@ static int cpdo_my5_setup_bind_buffers( cpdo_my5_stmt * stmt, uint16_t paramCoun
         stmt->rbind.cBinders = cpdo_bind_val_list_new(stmt->rbind.count);
         if( ! stmt->rbind.cBinders ) return cpdo_rc.AllocError;
 
-        stmt->rbind.convBuf = cpdo_bind_val_list_new(stmt->rbind.count);
-        if( ! stmt->rbind.convBuf ) return cpdo_rc.AllocError;
-
+        /* stmt->rbind.convBuf initialization is delayed until get_string(). */
     }
     if( stmt->colMeta && !stmt->rbind.count ) return cpdo_rc.InternalError;
     return 0;
@@ -4990,32 +5149,26 @@ static int cpdo_my5_setup_result_bindings( cpdo_my5_stmt * stmt )
               case MYSQL_TYPE_TINY:
                   cpdo_bind_val_int8( bv, 0 );
                   bin->buffer = (char *)&bv->valu.i8;
-                  bin->buffer_type = fld->type;
                   break;
               case MYSQL_TYPE_SHORT:
                   cpdo_bind_val_int16( bv, 0 );
                   bin->buffer = (char *)&bv->valu.i16;
-                  bin->buffer_type = fld->type;
                   break;
               case MYSQL_TYPE_LONG:
                   cpdo_bind_val_int32( bv, 0 );
                   bin->buffer = (char *)&bv->valu.i32;
-                  bin->buffer_type = fld->type;
                   break;
               case MYSQL_TYPE_LONGLONG:
                   cpdo_bind_val_int64( bv, 0 );
                   bin->buffer = (char *)&bv->valu.i64;
-                  bin->buffer_type = fld->type;
                   break;
               case MYSQL_TYPE_FLOAT:
                   cpdo_bind_val_float( bv, 0.0 );
                   bin->buffer = (char *)&bv->valu.flt;
-                  bin->buffer_type = fld->type;
                   break;
               case MYSQL_TYPE_DOUBLE:
                   cpdo_bind_val_double( bv, 0.0 );
                   bin->buffer = (char *)&bv->valu.dbl;
-                  bin->buffer_type = fld->type;
                   break;
               case MYSQL_TYPE_VAR_STRING:
               case MYSQL_TYPE_STRING: {
@@ -5026,7 +5179,6 @@ static int cpdo_my5_setup_result_bindings( cpdo_my5_stmt * stmt )
                   rc = cpdo_bind_val_string( bv, NULL, allocLen );
                   if( rc ) return rc;
                   bin->buffer = (char *)bv->valu.blob.mem;
-                  bin->buffer_type = fld->type;
                   bin->buffer_length = bv->valu.blob.length;
                   bin->length = &bv->valu.blob.length;
                   break;
@@ -5039,7 +5191,6 @@ static int cpdo_my5_setup_result_bindings( cpdo_my5_stmt * stmt )
                   rc = cpdo_bind_val_blob( bv, NULL, allocLen );
                   if( rc ) return rc;
                   bin->buffer = (char *)bv->valu.blob.mem;
-                  bin->buffer_type = fld->type;
                   bin->buffer_length = bv->valu.blob.length;
                   bin->length = &bv->valu.blob.length;
                   break;
@@ -5059,7 +5210,6 @@ static int cpdo_my5_setup_result_bindings( cpdo_my5_stmt * stmt )
                       return rc;
                   }
                   bin->buffer = (char *)mt;
-                  bin->buffer_type = fld->type;
                   bin->buffer_length = sizeof(MYSQL_TIME);
                   bin->length = &bv->valu.custom.length;
                   break;
@@ -5068,6 +5218,7 @@ static int cpdo_my5_setup_result_bindings( cpdo_my5_stmt * stmt )
                   MARKER("WARNING: UNHANDLED MYSQL_TYPE_XXX #%d IN PARAMETER DATA\n",fld->type);
                   return cpdo_rc.TypeError;
             };
+            bin->buffer_type = fld->type;
         }
         return 0;
     }
@@ -5338,17 +5489,6 @@ static int cpdo_my5_driver_opt_get( cpdo_driver * self, char const * key, va_lis
     return cpdo_rc.NYIError;
 }
 
-static int cpdo_my5_driver_opt_get_string_quote_char( cpdo_driver * self, char * ch )
-{
-    /* TODO: support configurable single- or double-quote char. */
-    if( NULL == ch ) return cpdo_rc.ArgError;
-    else
-    {
-        *ch = '\'';
-        return 0;
-    }
-}
-
 static int cpdo_my5_driver_commit( cpdo_driver * self )
 {
     int rc;
@@ -5401,9 +5541,11 @@ static void cpdo_my5_cleanup_scratchpads( cpdo_my5_stmt * st )
 {
     uint16_t i;
     assert( st );
-    for( i = 0; i < st->rbind.count; ++i )
-    {
-        cpdo_bind_val_clean( &st->rbind.convBuf[i] );
+    if(st->rbind.convBuf) {
+        for( i = 0; i < st->rbind.count; ++i )
+        {
+            cpdo_bind_val_clean( &st->rbind.convBuf[i] );
+        }
     }
 }
 
@@ -5801,6 +5943,7 @@ static int cpdo_my5_stmt_get_float_ndx( cpdo_stmt * self, uint16_t ndx, float * 
     if( (0 == rc) && val ) *val = (float)d;
     return rc;
 }
+
 #if !CPDO_MY5_HAS_PRINT64
 typedef struct {
     char * str;
@@ -5828,7 +5971,7 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
     else if( ndx >= stmt->rbind.count ) return cpdo_rc.RangeError;
     else
     {
-        enum { NumBufSize = 64 };
+        enum { NumBufSize = 80 };
         int rc;
         cpdo_bind_val * scratch = NULL;
         cpdo_bind_val * bv = &stmt->rbind.cBinders[ndx];
@@ -5838,156 +5981,168 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
             if( len ) *len = 0;
             return 0;
         }
-        else if( bv->type == CPDO_TYPE_CUSTOM )
+        else if( CPDO_TYPE_STRING == bv->type ) {
+            /* shortcut - no need to convert this */
+            *val = (char const *)bv->valu.blob.mem;
+            if( len ) *len = bv->valu.blob.length;
+            return 0;
+        }
+        else if(!stmt->rbind.convBuf)
         {
-            enum { BufSize = 20 /* for time/date-to-string (timestamp sz=19)*/ };
-            MYSQL_BIND * bin = &stmt->rbind.myBinders[ndx];
-            if(! cpdo_bind_val_tag_type_check_origin(&cpdo_my5_driver_api,
-                                             bv->valu.custom.type_tag ))
-            {
-                return cpdo_rc.TypeError;
-            }
-            switch( bin->buffer_type )
-            {
-              case MYSQL_TYPE_DATE:
-              case MYSQL_TYPE_TIME:
-              case MYSQL_TYPE_DATETIME:
-              case MYSQL_TYPE_TIMESTAMP: {
-                  MYSQL_TIME * tm;
-                  scratch = &stmt->rbind.convBuf[ndx];
-                  if( CPDO_TYPE_STRING == scratch->type )
-                  {/* already done the conversion, so re-use it.. */
-                      *val = (char const *)scratch->valu.blob.mem;
-                      if(len) *len = scratch->valu.blob.length;
-                      return 0;
-                  }
-                  rc = cpdo_bind_val_string( scratch, NULL, BufSize );
-                  if( rc ) return rc;
-                  tm = (MYSQL_TIME*)bv->valu.custom.mem;
-                  assert( tm );
-                  if( ! tm ) return cpdo_rc.InternalError;
-                  if( MYSQL_TYPE_DATE == bin->buffer_type )
-                  {
-                      sprintf( (char *)scratch->valu.blob.mem,
-                               "%04d-%02d-%02d",
-                               tm->year, tm->month, tm->day);
-                  }
-                  else if( MYSQL_TYPE_TIME == bin->buffer_type )
-                  {
-                      sprintf( (char *)scratch->valu.blob.mem,
-                               "%02d:%02d:%02d",
-                               tm->hour, tm->minute, tm->second);
-                  }
-                  else
-                  {
-                      assert( (MYSQL_TYPE_TIMESTAMP == bin->buffer_type)
-                            || (MYSQL_TYPE_DATETIME == bin->buffer_type)
-                            );
-                      sprintf( (char *)scratch->valu.blob.mem,
-                               "%04d-%02d-%02d %02d:%02d:%02d",
-                               tm->year, tm->month, tm->day,
-                               tm->hour, tm->minute, tm->second);
-                  }
-                  scratch->valu.blob.length = strlen( (char *)scratch->valu.blob.mem );
-                  *val = (char const *)scratch->valu.blob.mem;
-                  if(len) *len = scratch->valu.blob.length;
-                  return 0;                  
-              }
-              default:
-                  break;
-            }
-            return cpdo_rc.TypeError;
+            stmt->rbind.convBuf = cpdo_bind_val_list_new(stmt->rbind.count);
+            if( ! stmt->rbind.convBuf ) return cpdo_rc.AllocError;
         }
-        else if( CPDO_TYPE_STRING == bv->type )
-        { /* shortcut - no need to convert this */
-            *val = (char const *)bv->valu.blob.mem;
-            if( len )
-            {
-                *len = bv->valu.blob.length;
-            }
-            return 0;
-        }
-#if 0
-        else if( CPDO_TYPE_BLOB == bv->type )
-        { /* Arguable: optimistically assume blob is a legal string */
-            *val = (char const *)bv->valu.blob.mem;
-            if( len )
-            {
-                *len = bv->valu.blob.length;
-            }
-            return 0;
-        }
-#endif
-        else
-        { /* convert numbers to strings... */
-            cpdo_bind_val * scratch = &stmt->rbind.convBuf[ndx];
-            int sprc;
-            char buf[NumBufSize];
+        else {
+            /* check for a cached value */
+            scratch = &stmt->rbind.convBuf[ndx];
             if( CPDO_TYPE_STRING == scratch->type )
             {/* already done the conversion, so re-use it.. */
                 *val = (char const *)scratch->valu.blob.mem;
                 if(len) *len = scratch->valu.blob.length;
                 return 0;
             }
-            switch( bv->type )
-            {
-              case CPDO_TYPE_INT8:
-                  sprc = sprintf( buf, "%"PRIi8, bv->valu.i8 );
-                  break;
-              case CPDO_TYPE_INT16:
-                  sprc = sprintf( buf, "%"PRIi16, bv->valu.i16 );
-                  break;
-              case CPDO_TYPE_INT32:
-                  sprc = sprintf( buf, "%"PRIi32, bv->valu.i32 );
-                  break;
-              case CPDO_TYPE_INT64:
-#if CPDO_MY5_HAS_PRINT64
+        }
 
-             sprc = sprintf( buf, "%"PRIi64, bv->valu.i64 );
-#else
-              /*
-              We  use cpdo_printf() to implement this on 32-bit platforms
-              because the PRIi64 specifier can map to a value which is not
-              specified in C89.
-              */
-                {
-                    enum { I64BufLen = 80 };
-                    char buf[I64BufLen];
-                    My5StringAppender myStr;
-                    myStr.str = buf;
-                    myStr.maxLen = I64BufLen;
-                    myStr.pos = 0;
-                    sprc = cpdo_printf( cpdo_my5_appender_string, &myStr, "%"PRIi64, bv->valu.i64 );
-                }
-#endif
-                break;
-              case CPDO_TYPE_DOUBLE:
-                  sprc = sprintf( buf, "%f", bv->valu.dbl );
-                  break;
-              case CPDO_TYPE_FLOAT:
-                  sprc = sprintf( buf, "%f", bv->valu.flt );
-                  break;
-              default:
-                  MARKER("WARNING: UNHANDLED MYSQL_TYPE_XXX #%d IN RESULT DATA\n",
-                         stmt->rbind.myBinders[ndx].buffer_type);
-                  return cpdo_rc.TypeError;
-            };
-            if(sprc>0)
-            { /* Strip trailing zeroes before passing it on... */
-                unsigned int urc = (unsigned int)sprc;
-                char * pos = buf + urc - 1;
-                for( ; ('0' == *pos) && urc && (*(pos-1) != '.')&& (*(pos-1) != ',');
-                     --pos, --urc )
-                {
-                    *pos = 0;
-                }
-                assert(urc && *pos);
-            }
-            rc = cpdo_bind_val_string( scratch, buf, strlen(buf) );
-            if( rc ) return rc;
-            *val = (char const *)scratch->valu.blob.mem;
-            if( len ) *len = scratch->valu.blob.length;
+        switch( bv->type ){
+          case CPDO_TYPE_STRING: { /* shortcut - no need to convert this */
+              *val = (char const *)bv->valu.blob.mem;
+              if( len ) *len = bv->valu.blob.length;
             return 0;
+          }
+#if 0
+          case CPDO_TYPE_BLOB: { /* Arguable: optimistically assume blob is a legal string */
+              *val = (char const *)bv->valu.blob.mem;
+              if( len ) *len = bv->valu.blob.length;
+              return 0;
+          }
+#endif
+          case CPDO_TYPE_INT8:
+          case CPDO_TYPE_INT16:
+          case CPDO_TYPE_INT32:
+          case CPDO_TYPE_INT64:
+          case CPDO_TYPE_DOUBLE:
+          case CPDO_TYPE_FLOAT: { /* convert numbers to strings... */
+              cpdo_bind_val * scratch = &stmt->rbind.convBuf[ndx];
+              int sprc;
+              char buf[NumBufSize];
+              assert( (CPDO_TYPE_STRING != scratch->type) && "This should have been caught by an earlier block.");
+              switch( bv->type )
+              {
+                case CPDO_TYPE_INT8:
+                    sprc = sprintf( buf, "%"PRIi8, bv->valu.i8 );
+                    break;
+                case CPDO_TYPE_INT16:
+                    sprc = sprintf( buf, "%"PRIi16, bv->valu.i16 );
+                    break;
+                case CPDO_TYPE_INT32:
+                    sprc = sprintf( buf, "%"PRIi32, bv->valu.i32 );
+                    break;
+                case CPDO_TYPE_INT64:
+#if CPDO_MY5_HAS_PRINT64
+                    
+                    sprc = sprintf( buf, "%"PRIi64, bv->valu.i64 );
+#else
+                    /*
+                      We  use cpdo_printf() to implement this on 32-bit platforms
+                      because the PRIi64 specifier can map to a value which is not
+                      specified in C89.
+                    */
+                    {
+                        enum { I64BufLen = 80 };
+                        char buf[I64BufLen];
+                        My5StringAppender myStr;
+                        myStr.str = buf;
+                        myStr.maxLen = I64BufLen;
+                        myStr.pos = 0;
+                        sprc = cpdo_printf( cpdo_my5_appender_string, &myStr, "%"PRIi64, bv->valu.i64 );
+                    }
+#endif
+                    break;
+                case CPDO_TYPE_DOUBLE:
+                    sprc = sprintf( buf, "%f", bv->valu.dbl );
+                  break;
+                case CPDO_TYPE_FLOAT:
+                    sprc = sprintf( buf, "%f", bv->valu.flt );
+                  break;
+                default:
+                    assert(0 && "Unhandled statement column data type in switch().");
+                    return cpdo_rc.TypeError;
+              };
+              if(sprc>0)
+              { /* Strip trailing zeroes before passing it on... */
+                  unsigned int urc = (unsigned int)sprc;
+                  char * pos = buf + urc - 1;
+                  for( ; ('0' == *pos) && urc && (*(pos-1) != '.')&& (*(pos-1) != ',');
+                       --pos, --urc )
+                  {
+                      *pos = 0;
+                  }
+                  assert(urc && *pos);
+              }
+              rc = cpdo_bind_val_string( scratch, buf, strlen(buf) );
+              if( rc ) return rc;
+              *val = (char const *)scratch->valu.blob.mem;
+              if( len ) *len = scratch->valu.blob.length;
+              return 0;
+          }
+          case CPDO_TYPE_CUSTOM:{ /* convert date/time fields to strings... */
+              enum { BufSize = 20 /* for time/date-to-string (timestamp sz=19)*/ };
+              MYSQL_BIND * bin = &stmt->rbind.myBinders[ndx];
+              if(! cpdo_bind_val_tag_type_check_origin(&cpdo_my5_driver_api,
+                                                       bv->valu.custom.type_tag ))
+              {
+                  return cpdo_rc.TypeError;
+              }
+              switch( bin->buffer_type )
+              {
+                case MYSQL_TYPE_DATE:
+                case MYSQL_TYPE_TIME:
+                case MYSQL_TYPE_DATETIME:
+                case MYSQL_TYPE_TIMESTAMP: {
+                    MYSQL_TIME * tm;
+                    scratch = &stmt->rbind.convBuf[ndx];
+                    assert( (CPDO_TYPE_STRING != scratch->type) && "This should have been caught by an earlier block.");
+                    rc = cpdo_bind_val_string( scratch, NULL, BufSize );
+                    if( rc ) return rc;
+                    tm = (MYSQL_TIME*)bv->valu.custom.mem;
+                    assert( tm );
+                    if( ! tm ) return cpdo_rc.InternalError;
+                    if( MYSQL_TYPE_DATE == bin->buffer_type )
+                    {
+                        sprintf( (char *)scratch->valu.blob.mem,
+                                 "%04d-%02d-%02d",
+                                 tm->year, tm->month, tm->day);
+                    }
+                    else if( MYSQL_TYPE_TIME == bin->buffer_type )
+                    {
+                        sprintf( (char *)scratch->valu.blob.mem,
+                                 "%02d:%02d:%02d",
+                                 tm->hour, tm->minute, tm->second);
+                    }
+                    else
+                    {
+                        assert( (MYSQL_TYPE_TIMESTAMP == bin->buffer_type)
+                                || (MYSQL_TYPE_DATETIME == bin->buffer_type)
+                                );
+                        sprintf( (char *)scratch->valu.blob.mem,
+                                 "%04d-%02d-%02d %02d:%02d:%02d",
+                                 tm->year, tm->month, tm->day,
+                                 tm->hour, tm->minute, tm->second);
+                    }
+                    scratch->valu.blob.length = strlen( (char *)scratch->valu.blob.mem );
+                    *val = (char const *)scratch->valu.blob.mem;
+                    if(len) *len = scratch->valu.blob.length;
+                    return 0;                  
+                }
+                default:
+                    break;
+              }
+              return cpdo_rc.TypeError;
+          }
+          default: 
+              MARKER("WARNING: UNHANDLED MYSQL_TYPE_XXX #%d IN RESULT DATA\n",
+                     stmt->rbind.myBinders[ndx].buffer_type);
+              return cpdo_rc.TypeError;
         }
     }
 }
@@ -6010,8 +6165,12 @@ static int cpdo_my5_stmt_get_blob_ndx( cpdo_stmt * self, uint16_t ndx, void cons
         switch( bv->type )
         {
           case CPDO_TYPE_BLOB:
-              *val = (char const *)bv->valu.blob.mem;
+              *val = (void const *)bv->valu.blob.mem;
               if(len) *len = bv->valu.blob.length;
+              break;
+          case CPDO_TYPE_CUSTOM:
+              *val = (void const *)bv->valu.custom.mem;
+              if(len) *len = bv->valu.custom.length;
               break;
           case CPDO_TYPE_NULL:
               *val = 0;
@@ -6088,6 +6247,8 @@ int cpdo_driver_mysql5_register()
 #include <cassert>
 #include <cstring>
 #include <sstream>
+#include <iterator>
+//#include <iostream> /* only for debuggering */
 
 /** @def CPDO_CPP_ENABLE_SAFETY_NET
     
@@ -6132,11 +6293,19 @@ namespace cpdo {
             <<").";
         this->msg = os.str();
     }
-    
-    statement::statement( cpdo_stmt * st )
-        : st(st)
+
+    void statement::updateCounts(){
+        assert(this->st);
+        this->colCount = this->st->api->get.column_count( this->st );
+        this->paramCount = this->st->api->bind.param_count( this->st );
+    }
+    statement::statement( cpdo_stmt * st_ )
+        : st(st_),
+          colCount(0),
+          paramCount(0)
     {
         assert( NULL != st );
+        this->updateCounts();
     }
 
     statement::~statement() throw()
@@ -6155,7 +6324,8 @@ namespace cpdo {
 
     void statement::check_code( int code )
     {
-        if( cpdo_rc.AllocError == code )
+        if(!code) return;
+        else if( cpdo_rc.AllocError == code )
         {
             throw std::bad_alloc();
         }
@@ -6168,7 +6338,7 @@ namespace cpdo {
                              (0 != dbc),
                              msg ? msg : "Unknown error" );
         }
-        else if( code )
+        else
         {
             throw exception( code );
         }
@@ -6189,21 +6359,19 @@ namespace cpdo {
 
     void statement::assert_index( uint16_t ndx, unsigned char base )
     {
+        assert((1==base) || (0==base));
         if( 1 == base )
         {
-            if(!ndx || (ndx > this->param_count()))
+            if(!ndx || (ndx > this->paramCount))
             {
                 throw exception( cpdo_rc.RangeError, false,
                                 "Bound parameter index out of range.");
             }
         }
-        else
+        else if(ndx >= this->colCount)
         {
-            if(ndx >= this->col_count())
-            {
-                throw exception( cpdo_rc.RangeError, false,
-                                 "Column index out of range.");
-            }
+            throw exception( cpdo_rc.RangeError, false,
+                             "Column index out of range.");
         }
     }
     
@@ -6233,10 +6401,11 @@ namespace cpdo {
         return s ? s : "";
     }
 
-    uint16_t statement::param_count()
+    uint16_t statement::param_count() const
     {
-        CPDO_STMT_CHECK_ALIVE;
-        return st->api->bind.param_count(st);
+        return this->paramCount;
+        //CPDO_STMT_CHECK_ALIVE;
+        //return st->api->bind.param_count(st);
     }
 
     uint16_t statement::param_index( char const * name )
@@ -6317,10 +6486,11 @@ namespace cpdo {
         this->check_code( st->api->bind.reset(st) );
     }
 
-    uint16_t statement::col_count()
+    uint16_t statement::col_count() const
     {
-        CPDO_STMT_CHECK_ALIVE;
-        return st->api->get.column_count(st);
+        return this->colCount;
+        //CPDO_STMT_CHECK_ALIVE;
+        //return st->api->get.column_count(st);
     }
 
     char const * statement::col_name( uint16_t ndx )
@@ -6337,6 +6507,16 @@ namespace cpdo {
         this->check_code( st->api->get.type(st,ndx, &t) );
         return t;
     }
+
+    bool statement::col_is_null( uint16_t ndx )
+    {
+        CPDO_STMT_CHECK_ALIVE;
+        this->assert_index( ndx, 0 );
+        cpdo_data_type t = CPDO_TYPE_ERROR;
+        this->check_code( st->api->get.type(st,ndx, &t) );
+        return CPDO_TYPE_NULL == t;
+    }
+
     int8_t statement::get_int8( uint16_t ndx )
     {
         CPDO_STMT_CHECK_ALIVE;
@@ -6425,7 +6605,12 @@ namespace cpdo {
         return *this;
     }
 
-    void stmt::finalize()
+    bool stmt::step()
+    {
+        return this->handle().step();
+    }
+
+    void stmt::finalize() throw()
     {
         if(this->st) delete this->st;
         this->st = NULL;
@@ -6433,8 +6618,20 @@ namespace cpdo {
     
     statement * stmt::operator->()
     {
-        return this->st;
+        return &this->handle();
     }
+
+    statement & stmt::handle()
+    {
+        if(this->st) return *this->st;
+        else throw std::runtime_error("stmt::handle() throwing to avoid dereferencing NULL.");
+    }
+
+    stmt::operator statement &()
+    {
+        return this->handle();
+    }
+
 
     bool stmt::empty() const
     {
@@ -6526,35 +6723,57 @@ namespace cpdo {
         if( ! sql || !*sql || !len ) throw exception( cpdo_rc.RangeError );
         this->assert_connected();
         cpdo_stmt * st = NULL;
-        this->check_code( this->drv->api->prepare( this->drv, &st, sql, len ) );
+        int rc = this->drv->api->prepare( this->drv, &st, sql, len );
         try
         {
+            this->check_code( rc );
             statement * rs = new statement(st);
             return rs;
         }
         catch(...)
         {
-            st->api->finalize(st);
+            if(st) st->api->finalize(st);
+            throw;
+        }
+    }
+    statement * driver::prepare_v( char const * fmt, va_list vargs )
+    {
+        this->assert_connected();
+        cpdo_stmt * st = NULL;
+        int const rc = cpdo_prepare_f_v( this->drv, &st, fmt, vargs );
+        try
+        {
+            this->check_code( rc );
+            return new statement(st);
+        }
+        catch(...)
+        {
+            if(st) st->api->finalize(st);
             throw;
         }
     }
     statement * driver::prepare_f( char const * fmt, ... )
     {
+        /**
+           Reminder: not implemented in terms of prepare_v() because
+           if that function throws then we do not get to call
+           va_end(), and that will possibly hose memory somewhere.
+         */
         this->assert_connected();
+        cpdo_stmt * st = NULL;
+        int rc;
         va_list vargs;
         va_start(vargs,fmt);
-        cpdo_stmt * st = NULL;
-        int const rc = cpdo_prepare_f_v( this->drv, &st, fmt, vargs );
+        rc = cpdo_prepare_f_v( this->drv, &st, fmt, vargs );
         va_end(vargs);
-        this->check_code( rc );
         try
         {
-            statement * rs = new statement(st);
-            return rs;
+            this->check_code( rc );
+            return new statement(st);
         }
         catch(...)
         {
-            st->api->finalize(st);
+            if(st) st->api->finalize(st);
             throw;
         }
     }
@@ -6567,16 +6786,22 @@ namespace cpdo {
         return this->prepare( sql.c_str(), static_cast<uint32_t>(sql.size()) );
     }
 
-    std::string driver::quote( std::string const & part )
+    std::string driver::quote( char const * part )
     {
+        static const std::string sqlNull("NULL");
         this->assert_connected();
-        char * dest = NULL;
-        uint32_t slen = static_cast<uint32_t>(part.size());
-        this->check_code( this->drv->api->quote( this->drv,
-                            part.c_str(), &slen, &dest) );
-        std::string const & rs( dest ? dest : "" );
-        this->drv->api->free_string(this->drv, dest);
-        return rs;
+        if(!part) return sqlNull /* the C API already does this but requires a malloc(),
+                                    so we're just optimizing here. */;
+        else {
+            char * dest = NULL;
+            uint32_t slen = (part && *part) ? std::strlen(part) : 0;
+            this->check_code( this->drv->api->quote( this->drv,
+                                                     part, &slen, &dest) );
+            std::string const rs( dest ? dest : "",
+                                  dest ? ((char const *)dest + slen) : 0 );
+            this->drv->api->free_string(this->drv, dest);
+            return rs;
+        }
     }
 
     std::string driver::qualify( std::string const & part )
@@ -6586,7 +6811,7 @@ namespace cpdo {
         uint32_t slen = static_cast<uint32_t>(part.size());
         this->check_code( this->drv->api->qualify( this->drv,
                             part.c_str(), &slen, &dest) );
-        std::string const & rs( dest ? dest : "" );
+        std::string const rs( (dest ? dest : ""), slen );
         this->drv->api->free_string(this->drv, dest);
         return rs;
     }
@@ -6669,6 +6894,254 @@ namespace cpdo {
         va_end(vargs);
         this->check_code( rc );
     }
+
+    stmt_row::stmt_row(statement & s) :
+        st(s)
+    {
+        if(!st.col_count()){
+            throw exception( cpdo_rc.ArgError, false, "Statement is not a SELECT-style query.");
+        }
+    }
+
+    stmt_row & stmt_row::operator=(statement & s)
+    {
+        if(!st.col_count()){
+            throw exception( cpdo_rc.ArgError, false, "Statement is not a SELECT-style query.");
+        }
+        return *this;
+    }
+    
+    stmt_row::~stmt_row(){
+    }
+
+    stmt_binder::stmt_binder(statement & s)
+        : st(s)
+    {
+        if(!st.param_count()){
+            throw exception( cpdo_rc.ArgError, false, "Statement is not a SELECT-style query.");
+        }
+    }
+    stmt_binder::~stmt_binder(){
+    }
+
+
+    chainer::chainer(driver &d)
+        : db(d),
+          sth(),
+          colCount(0),
+          paramCount(0)
+    {}
+
+    chainer::~chainer() throw()
+    {}
+
+    chainer & chainer::prepare( statement * st )
+    {
+        if(!st) throw exception( cpdo_rc.ArgError, false, "Statement handle may not be NULL.");
+        this->assertNotPrepared();
+        this->sth = st;
+        this->updateCounts();
+        return *this;
+    }
+    
+    chainer & chainer::prepare( char const * sql, uint32_t len )
+    {
+        this->assertNotPrepared();
+        this->sth = this->db.prepare( sql, len );
+        this->updateCounts();
+        return *this;
+    }
+
+    chainer & chainer::prepare( std::string const & sql )
+    {
+        this->assertNotPrepared();
+        this->sth = this->db.prepare( sql );
+        this->updateCounts();
+        return *this;
+    }
+
+    chainer & chainer::prepare_f( char const * sql, ... )
+    {
+        /**
+           Reminder: not implemented in terms of
+           driver::prepare_v() because if that function throws
+           then we do not get to call va_end(), and that will
+           possibly hose memory somewhere.
+        */
+        this->assertNotPrepared();
+        cpdo_stmt * st = NULL;
+        int rc;
+        va_list vargs;
+        va_start(vargs,sql);
+        rc = cpdo_prepare_f_v( this->db.handle(), &st, sql, vargs );
+        va_end(vargs);
+        try
+        {
+            this->check_code( rc );
+            this->sth = new statement(st);
+        }
+        catch(...)
+        {
+            if(st) st->api->finalize(st);
+            throw;
+        }
+        this->updateCounts();
+        return *this;
+    }
+
+    bool chainer::is_select_query() const {
+        return !this->sth.empty()
+            && (this->colCount > 0);
+    }
+
+    uint16_t chainer::bound_param_count() const {
+        return this->paramCount;
+    }
+        
+    
+    chainer & chainer::bind( uint16_t ndx ){
+        this->assertHasBoundParams();
+        this->sth->bind(ndx);
+        return *this;
+    }
+
+    chainer & chainer::bind_f_v( uint16_t ndx, char const * fmt, va_list vargs ){
+        this->assertHasBoundParams();
+        cpdo_stmt * st = this->sth->handle();
+        int rc;
+        rc = cpdo_bind_string_f_v( st, ndx, fmt, vargs );
+        this->check_code(rc);
+        return *this;
+    }
+
+    
+    chainer & chainer::bind_f( uint16_t ndx, char const * fmt, ... ){
+        this->assertHasBoundParams();
+        cpdo_stmt * st = this->sth->handle();
+        int rc;
+        va_list vargs;
+        va_start(vargs, fmt);
+        rc = cpdo_bind_string_f_v( st, ndx, fmt, vargs );
+        va_end(vargs);
+        this->check_code(rc);
+        return *this;
+    }
+
+    
+    chainer & chainer::reset(){
+        this->assertPrepared();
+        this->sth->reset();
+        return *this;
+    }
+
+    chainer & chainer::finalize() throw() {
+        this->sth.finalize();
+        return *this;
+    }
+
+
+    uint16_t chainer::param_index( char const * p ) {
+        this->assertHasBoundParams();
+        return this->sth->param_index(p);
+    }
+    
+     chainer & chainer::step(bool failIfEmpty) {
+        this->assertPrepared();
+        bool const rc = this->sth->step();
+        if( !rc && failIfEmpty && this->colCount){
+            throw exception(cpdo_rc.RangeError,
+                            false,
+                            "step() fetched no results.");
+        }
+        return *this;
+    }
+
+    void chainer::updateCounts(){
+        if( !this->sth.empty() ){
+            this->colCount = this->sth->col_count();
+            this->paramCount = this->sth->param_count();
+        }
+    }
+    
+    void chainer::assertPrepared(){
+        if(this->sth.empty()){
+            throw exception(cpdo_rc.ArgError,
+                            false,
+                            "Statement has not been prepared.");
+        }
+    }
+    void chainer::assertNotPrepared(){
+        if(!this->sth.empty()){
+            throw exception(cpdo_rc.ArgError,
+                            false,
+                            "Statement was already prepared.");
+        }
+    }
+    void chainer::assertHasBoundParams(){
+        if(!this->paramCount){
+            throw exception(cpdo_rc.ArgError,
+                            false,
+                            "Statement has no parameters to bind to.");
+        }
+    }
+    void chainer::assertHasColumns(){
+        if(!this->colCount){
+            throw exception(cpdo_rc.ArgError,
+                            false,
+                            "Statement has no columns to fetch.");
+        }
+    }
+    /*statement & chainer::handle(){
+      return this->sth;
+      }*/
+    statement * chainer::take(){
+        return this->sth.take();
+    }
+
+    void chainer::check_code( int code )
+    {
+        if(!code) return;
+        else if( cpdo_rc.AllocError == code )
+        {
+            throw std::bad_alloc();
+        }
+        else if( cpdo_rc.CheckDbError == code )
+        {
+            int dbc = this->db.error_code();
+            std::string const & msg( this->db.error_text() );
+            throw exception( dbc ? dbc : cpdo_rc.UnknownError,
+                             (0 != dbc),
+                             msg.empty() ? "Unknown error" : msg);
+        }
+        else
+        {
+            throw exception( code );
+        }
+    }
+
+    static void col_to_string_setup( col_to_string & self, char const * nullString ){
+        self.nullString = nullString ? nullString : "NULL";
+        self.customTypesAs = CPDO_TYPE_STRING;
+        self.blobsAs = CPDO_TYPE_BLOB;
+
+    }
+  
+    col_to_string::col_to_string(char const * nullString)
+    {
+        col_to_string_setup( *this, nullString );
+    }
+    col_to_string::col_to_string()
+    {
+        col_to_string_setup( *this, NULL );
+    }
+
+
+    std::string col_to_string::operator()( statement & st, uint16_t ndx ) const{
+        std::string s;
+        (*this)( st, ndx, std::back_inserter(s) );
+        return s;
+    }
+    
 } // namespace
 #undef CPDO_STMT_CHECK_ALIVE
 /* end of file cpdopp.cpp */

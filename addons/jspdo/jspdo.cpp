@@ -24,6 +24,7 @@ clause).
 #include "cpdo_amalgamation.hpp"
 
 #include "cvv8/ClassCreator.hpp"
+#include "cvv8/XTo.hpp"
 #include "cvv8/properties.hpp"
 
 #include "jspdo.hpp"
@@ -67,6 +68,9 @@ namespace cvv8 {
     /** We don't really need the extra type-safety bits for Statement b/c
         subclassing will never be an issue (b/c client code can't create
         Statements directly (or it's not in the public API, anyway)).
+
+        We use an extra internal field for storing a statement-to-db
+        mapping for cleanup purposes.
     */
     template <>
     struct ClassCreator_InternalFields<cpdo::statement>
@@ -235,7 +239,6 @@ namespace cvv8 {
             cpdo::driver const * drv = getDriverForStmt(nativeSelf,jsSelf);
             if( drv )
             {
-                v8::Locker const lock;
                 jspdo::DbMapLocker().map()[drv][nativeSelf] = jsSelf;
             }
             return;
@@ -385,7 +388,7 @@ v8::Handle<v8::Value> JSPDO_toString( v8::Arguments const & argv )
     buf << "[cpdo::driver@"<<(void const *)drv;
     if( drv )
     {
-        buf << ", driver="<<drv->driver_name();
+        buf << " driver="<<drv->driver_name();
     }
     return buf << ']';
 }
@@ -399,7 +402,7 @@ v8::Handle<v8::Value> Statement_toString( v8::Arguments const & argv )
     if( st )
     {
         v8::Handle<v8::Value> const v(argv.This()->Get(JSTR("sql")));
-        if( !v.IsEmpty() && v->IsString()) sb << ", sql=["<<v<<"]";
+        if( !v.IsEmpty() && v->IsString()) sb << "sql=["<<v<<"]";
     }
     return sb << ']';
 }
@@ -680,7 +683,7 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
     }
     if( 2 == argc )
     {
-        return Statement_bind( st, argv[0], argv[1] );
+        Statement_bind( st, argv[0], argv[1] );
     }
     else /* one argument */
     {
@@ -688,18 +691,19 @@ v8::Handle<v8::Value> Statement_bind(v8::Arguments const & argv)
         if( val->IsArray() )
         {
             v8::Handle<v8::Array> ar((v8::Array::Cast(*val)));
-            return Statement_bind( st, ar );
+            Statement_bind( st, ar );
         }
         else if( val->IsObject() )
         {
             v8::Handle<v8::Object> obj((v8::Object::Cast(*val)));
-            return Statement_bind( st, obj );
+            Statement_bind( st, obj );
         }
         else
         {
-            return Statement_bind( st, val, v8::Null() );
+            Statement_bind( st, val, v8::Null() );
         }
     }
+    return argv.This();
 }
 
 //! JSPDO.Statement.stepArray() impl.
@@ -1169,16 +1173,16 @@ namespace cvv8 {
             //SPB::BindGetterMethod<uint16_t (),&ST::param_count>( "paramCount", stProto );
             //SPB::BindGetterMethod<uint16_t (),&ST::col_count>( "columnCount", stProto );
             stProto->SetAccessor(JSTR("errorCode"),
-                                 MethodToGetter<ST, int (),&ST::error_code>::Get,
+                                 MethodTo< Getter, ST, int (),&ST::error_code>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("errorText"),
-                                 MethodToGetter<ST, std::string (),&ST::error_text>::Get,
+                                 MethodTo< Getter, ST, std::string (),&ST::error_text>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnCount"),
-                                 MethodToGetter<ST, uint16_t (),&ST::col_count>::Get,
+                                 MethodTo< Getter, ST const, uint16_t (),&ST::col_count>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("paramCount"),
-                                 MethodToGetter<ST, uint16_t (),&ST::param_count>::Get,
+                                 MethodTo< Getter, ST const, uint16_t (),&ST::param_count>::Get,
                                  throwOnSet);
             stProto->SetAccessor(JSTR("columnNames"), Statement_getColumnNames, throwOnSet );
             // do not bind columnTypes for the time being because
@@ -1200,7 +1204,7 @@ namespace cvv8 {
                  )
                 ("prepare", CATCHER< cv::InCaToInCa<JSPDO_prepare> >::Call )
                 ("qualify", CATCHER< cv::MethodToInCa<DRV,std::string (std::string const &),&DRV::qualify> >::Call)
-                ("quote", CATCHER< cv::MethodToInCa<DRV,std::string (std::string const &),&DRV::quote> >::Call)
+                ("quote", CATCHER< cv::MethodToInCa<DRV,std::string (char const *),&DRV::quote> >::Call)
                 ("rollback", CATCHER< cv::MethodToInCa<DRV,void (),&DRV::rollback> >::Call)
                 ("toString", CATCHER< cv::InCaToInCa<JSPDO_toString> >::Call)
                 ;

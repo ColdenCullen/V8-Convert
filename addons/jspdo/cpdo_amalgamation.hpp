@@ -194,10 +194,10 @@ bottom of the main header file (cpdo.h).
 
 Requirements:
 
-- C99, but only for the fixed-size integer defined in stdint.h.  The
-rest of the code "should" work fine in C89 mode. In theory it should
-work fine in C89 mode when including the C99-specified stdint.h, but
-the portability of that approach is questionable.
+- C99, but only for the fixed-size integer defined in stdint.h.  The rest of
+the code "should" work fine in C89 mode. It works fine in C89 mode when
+including the C99-specified stdint.h, but the portability of that approach
+is questionable.
 
 - A db back-end for which we have a driver, including the required
 headers and libraries needed for using that back-end.
@@ -205,9 +205,9 @@ headers and libraries needed for using that back-end.
 
 Current code status:
 
-- The public API is more or less complete. There will be some
-additions to the cpdo_driver_api. e.g. for working with bound
-parameters by name. Some utility (non-member) functions are probably
+- The public API is more or less complete. There will likely be some
+additions to the cpdo_driver_api. e.g. for fetching table lists and similar
+driver-specific utilities. Some utility (non-member) functions are probably
 missing, but those will be added as the need for them is found.
 
 - The sqlite3 driver implementation seems to work as documented for
@@ -699,10 +699,10 @@ extern "C" {
         int (*qualify)( cpdo_driver * self, char const * identifier, uint32_t * len, char ** dest );
 
         /**
-           Frees a string allocated by quote(). Results are undefined
-           if the string came from another source. It must return 0 on
-           success. It must, like free(), gracefully ignore a NULL string
-           value.
+           Frees a string allocated by quote() or qualify(). Results are
+           undefined if the string came from another source. It must return
+           0 on success. It must, like free(), gracefully ignore a NULL
+           string value.
         */
         int (*free_string)( cpdo_driver * self, char * str);
 
@@ -740,8 +740,8 @@ extern "C" {
        
            Returns 0 on success (meaning that it fetched the info from the
            underlying driver). On success *dest and/or *len and/or
-           *errorCode may be set to 0 if the driver has no error to
-           report. Some drivers may return other strings on error (sqlite3
+           *errorCode may be set to 0 if the driver has no error to report.
+           Some drivers may return other strings on non-error (sqlite3
            infamously uses "not an error" for this case).
 
            It is ASSUMED that the underlying driver owns the returned
@@ -888,27 +888,6 @@ extern "C" {
             yet.
             */
             int (*get)( cpdo_driver * self, char const * key, va_list vargs );
-            
-            /** @deprecated Use cpdo_driver_api::qualify().
-                
-                Must set *ch to the character used for quoting strings.
-                Must return 0 on success, non-0 on error.
-                Must return cpdo_rc.ArgError if ch is NULL.
-                
-                The driver may support a NULL value for the self object
-                (e.g. if the quote character is constant for that driver),
-                in which case it should set *ch to the quoting character
-                and return 0. If the driver requires a non-NULL self
-                pointer and a NULL is passed then the function must
-                return cpdo_rc.ArgError. Alternately, it may set *ch to
-                "some sane default" (i.e. a single-quote character) and
-                return 0.
-                
-                Some drivers support both single- and double-quotes,
-                but the use of double quotes is discouraged for compatibility
-                reasons.
-            */
-            int (*get_string_quote_char)( cpdo_driver * self, char * ch );
         } opt;
         /**
            Holds non-function constants used by the driver implementation.
@@ -1933,7 +1912,81 @@ extern "C" {
        Convenience form of drv->api->free_string(drv,str).
     */
     int cpdo_free_string( cpdo_driver * drv, char * str );
-    
+
+    /**
+       Callback type used by cpdo_step_each(). It is called only in
+       response to a successful step() operation on st, and this function
+       may use st to fetch the current row's data, but must not step()
+       the statement or otherwise modify it. The state argument is the
+       3rd argument passed to cpdo_step_each().
+
+       Implementations must return 0 on success, non-zero on error,
+       preferably a value from cson_rc.
+
+       @see cpdo_step_each()
+       @see cpdo_exec_each()
+    */
+    typedef int (*cpdo_step_each_f)( cpdo_stmt * st, void * state );
+
+    /**
+       Iterates over a SELECT-style curstor and calls a callback for
+       each iteration.
+
+       For each row it calls f(stmt,state), stopping if f() returns
+       non-0. Returns 0 on success, non-0 on error. If f() returns
+       non-0, that value is returned. If step() fails then
+       cpdo_rc.CheckDbError will be returned, a sign that the caller
+       should ask the statement for the driver-level error
+       information.
+
+       The client is free to return some magic value (e.g. -9999) from
+       his step function to indicate to the caller of this function
+       that it aborted early on purpose, as opposed to due to an
+       error.
+
+       @see cpdo_exec_each()
+       @see cpdo_exec_each_f()
+       @see cpdo_exec_each_f_v()
+    */
+    int cpdo_step_each( cpdo_stmt * stmt, cpdo_step_each_f f, void * state );
+
+    /**
+       Convenience form of cpdo_step_each() which steps through the
+       first sqlLength bytes of the given SQL string, which is assumed
+       to be a statement which is capable of returning results. The
+       SQL must represent a single statement.
+
+       Returns 0 on success.
+
+       @see cpdo_step_each()
+       @see cpdo_exec_each_f()
+       @see cpdo_exec_each_f_v()
+    */
+    int cpdo_exec_each( cpdo_driver * db, cpdo_step_each_f f, void * state,
+                        char const * sql, unsigned int sqlLength );
+
+    /**
+       Variadic form of cpdo_exec_each(), accepts the same formatting
+       specifies supported by cpdo_prepare_f_v().
+
+       @see cpdo_step_each()
+       @see cpdo_exec_each()
+       @see cpdo_exec_each_f()
+    */
+    int cpdo_exec_each_f_v( cpdo_driver * db, cpdo_step_each_f f, void * state,
+                            char const * sql, va_list args );
+
+    /**
+       Variadic form of cpdo_exec_each(), accepts the same formatting
+       specifies supported by cpdo_prepare_f().
+
+       @see cpdo_step_each()
+       @see cpdo_exec_each()
+       @see cpdo_exec_each_f_v()
+    */
+    int cpdo_exec_each_f( cpdo_driver * db, cpdo_step_each_f f, void * state,
+                          char const * sql, ... );
+
     /** LICENSE
 
     This software's source code, including accompanying documentation and
@@ -2240,11 +2293,12 @@ extern "C" {
                  */
                 void * mem;
                 /**
-                   Arbitrary value. e.g. (MYSQL_TIME*) for a 
-                   MYSQL_TYPE_TIMESTAMP value (or equivalent for a 
-                   given driver). Drivers can use this to 
-                   distinguish between multiple types bound with the 
-                   cpdo type CPDO_TYPE_CUSTOM.
+                   Arbitrary value. e.g. a value from
+                   enum_mysql_timestamp_type for a
+                   MYSQL_TYPE_TIMESTAMP value (or equivalent for a
+                   given driver). Drivers can use this to distinguish
+                   between multiple types bound with the cpdo type
+                   CPDO_TYPE_CUSTOM.
                    
                    See cpdo_bind_val_custom() for more notes on this.
                  */
@@ -2354,6 +2408,20 @@ extern "C" {
        option. The client would probably need to call into the driver
        API to generate such a mask, or we could add it to the public API,
        and use driver->api as the address to mask against. Hmmm...
+
+       FIXME: use a (void const *) as the type tag here, and let the
+       driver choose some internal static pointer to associate with
+       each type. Disadvantage: can't use it in a
+       switch/case. Alternately, take 2 params here: one identifies
+       the driver name and one a driver-specific type id. We could
+       then construct an internal tag with no collisions based on
+       that. BUT... since we only have MySQL for now (and the
+       foreseeable future), that might be getting ahead of myself.
+       And, in hindsight, since the only way for values bound this way
+       to cross into another driver's implementation is if a client
+       swaps the impl or api members of cpdo_stmt object, we could
+       safely just allow each driver to pass any value as typeTag, and
+       not do any type of hashing/verification on it.
     */
     int cpdo_bind_val_custom( cpdo_bind_val * b, void * mem,
                               void (*dtor)(void *), int typeTag );
@@ -2691,7 +2759,7 @@ extern "C" {
     into the Public Domain.
 
     In jurisdictions which do not recognize Public Domain property
-    (e.g. Germany as of 2011), this software is Copyright (c) 2011
+    (e.g. Germany as of 2011), this software is Copyright (c) 2011-2012
     by Stephan G. Beal, and is released under the terms of the MIT License
     (see below).
 
@@ -2790,8 +2858,12 @@ int cpdo_driver_mysql5_register();
 /* start of file include/wh/cpdo/cpdo.hpp */
 #if !defined(WANDERINGHORSE_NET_CPDO_CPDO_HPP_H_INCLUDED)
 #define WANDERINGHORSE_NET_CPDO_CPDO_HPP_H_INCLUDED
+#include <cassert>
 #include <stdexcept>
 #include <string>
+#include <cstring>
+#include <algorithm> /* copy() */
+#include <sstream>
 
 /**
     The cpdo namespace houses a C++ wrapper around the cpdo C API.
@@ -2821,7 +2893,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
     {
         public:
         ~exception() throw() {}
-
+        
         /**
             Returns this exception's message string.
         */
@@ -2845,28 +2917,27 @@ Temporary (file-scope) macro to mark functions which throw on error.
         */
         bool is_db_error() const throw()
         { return this->is_db_err; }
+
+        /**
+           Extracts error information from drv and closes drv. Ownership
+           of drv is passed to this object, and it is destroyed before the
+           constructor returns.
+
+           this->is_db_error() will return true if drv is not NULL, else
+           it will return false.
+        */
+        explicit exception( cpdo_driver * drv );
+        //TODO?: exception( cpdo_stmt * st );
+        exception( int code, bool isDbErr, std::string const & msg )
+            : code(code), is_db_err(isDbErr), msg(msg)
+        {}
+        /**
+           Assumes code is a cpdo_rc error code and builds a basic
+           error string from it.
+        */
+        explicit exception( int code );
         
         private:
-            friend class statement;
-            friend class driver;
-            /**
-                Extracts error information from drv and closes drv. Ownership
-                of drv is passed to this object, and it is destroyed before the
-                constructor returns.
-
-                this->is_db_error() will return true if drv is not NULL, else
-                it will return false.
-            */
-            exception( cpdo_driver * drv );
-            //TODO?: exception( cpdo_stmt * st );
-            exception( int code, bool isDbErr, std::string const & msg )
-                : code(code), is_db_err(isDbErr), msg(msg)
-            {}
-            /**
-                Assumes code is a cpdo_rc error code and builds a basic
-                error string from it.
-            */
-            exception( int code );
             int code;
             bool is_db_err;
             std::string msg;
@@ -2874,496 +2945,1758 @@ Temporary (file-scope) macro to mark functions which throw on error.
     };
 
     /**
-        A simple wrapper around the cpdo_stmt C class.
-        These objects can only be instantiated by using driver::prepare(),
-        and each instance MUST be destroyed (using the delete operator)
-        BEFORE its parent driver is destroyed, or undefined results will
-        ensue. If a statement is destroyed after its underlying driver,
-        a segfault is almost certain. If it is not destroyed, a leak is certain.
+       A simple wrapper around the cpdo_stmt C class. These objects
+       can only be instantiated by using driver::prepare(), and each
+       instance MUST be destroyed (using the delete operator) BEFORE
+       its parent driver is destroyed, or undefined results will
+       ensue. If a statement is destroyed after its underlying driver,
+       a segfault is almost certain. If it is not destroyed, a leak is
+       certain and the driver may misbehave (e.g. not be able to
+       prepare new queries or be unable to close the connection
+       properly).
     */
     class statement
     {
-        private:
-            cpdo_stmt * st;
-            friend class driver;
-            //! Instantiated only via driver::prepare().
-            statement( cpdo_stmt * );
-            //! Not allowed/implemented.
-            statement( statement const & );
-            //! Not allowed/implemented.
-            statement & operator=( statement const & );
-            //! Throws if code is not 0.
-            void check_code( int code );
-            /**
-                Throws if code ndx is out of range. If base is 1
-                then BIND (1-based) indexes as assumed, else GET
-                (0-based) are assumed.
-            */
-            void assert_index( uint16_t ndx, unsigned char base );
-            /**
-                Closes the underlying statement handle, but does not
-                destroy this object. It is illegal to use any member
-                functions of this object after calling this.
-            */
-            void finalize() throw();
+    private:
+        cpdo_stmt * st;
+        uint16_t colCount;
+        uint16_t paramCount;
+        friend class driver;
+        friend class chainer;
+        //! Instantiated only via driver::prepare().
+        statement( cpdo_stmt * );
+        //! Not allowed/implemented.
+        statement( statement const & );
+        //! Not allowed/implemented.
+        statement & operator=( statement const & );
+        void updateCounts();
+        //! Throws if code is not 0.
+        void check_code( int code );
+        /**
+           Throws if code ndx is out of range. If base is 1
+           then BIND (1-based) indexes as assumed, else GET
+           (0-based) are assumed.
+        */
+        void assert_index( uint16_t ndx, unsigned char base );
+        /**
+           Closes the underlying statement handle, but does not
+           destroy this object. It is illegal to use any member
+           functions of this object after calling this.
+        */
+        void finalize() throw();
 
-            /**
-                Throws if finalize() has been called.
-            */
-            void assert_alive() const  THROWS_ON_ERROR;
-        public:
-            ~statement() throw();
+        /**
+           Throws if finalize() has been called.
+        */
+        void assert_alive() const  THROWS_ON_ERROR;
+    public:
+        /**
+           finalize()es the underlying statement handle.
+        */
+        ~statement() throw();
 
-            /** Returns true for CPDO_STEP_ROW, false for CPDO_STEP_DONE,
-                and throws on CPDO_STEP_ERROR.
-            */
-            bool step() THROWS_ON_ERROR;
-            /**
-                Returns the last driver-level error code, or 0 if there is none.
-            */
-            int error_code();
+        /** Returns true for CPDO_STEP_ROW, false for CPDO_STEP_DONE,
+            and throws on CPDO_STEP_ERROR.
+        */
+        bool step() THROWS_ON_ERROR;
+
+        /**
+           Returns the last driver-level error code, or 0 if there is none.
+        */
+        int error_code();
             
-            /**
-                Returns the last driver-level error message. If there was no
-                recent error, this function _might_ return an empty string or
-                _might_ return some other value, depending on how the underlying
-                db driver does it (e.g. sqlite3 uses "not an error").
-            */
-            std::string error_text();
+        /**
+           Returns the last driver-level error message. If there was no
+           recent error, this function _might_ return an empty string or
+           _might_ return some other value, depending on how the underlying
+           db driver does it (e.g. sqlite3 uses "not an error").
+        */
+        std::string error_text();
 
-            /**
-                Returns the number of bound parameter placeholders are in
-                the prepared query.
-            */  
-            uint16_t param_count();
+        /**
+           Returns the number of bound parameter placeholders are in
+           the prepared query.
+        */  
+        uint16_t param_count() const;
 
-            /**
-                Returns the 1-based BIND parameter for the given placeholder name,
-                or 0 if no such parameter is found or on error (e.g. if the
-                driver does not support named parameters).
-            */
-            uint16_t param_index( char const * name );
+        /**
+           Returns the 1-based BIND parameter for the given placeholder name,
+           or 0 if no such parameter is found or on error (e.g. if the
+           driver does not support named parameters).
+        */
+        uint16_t param_index( char const * name );
 
-            /**
-                Returns the name for the given 1-based BIND parameter
-                index, throwing on error (e.g. out of bounds).
-                Returns NULL if the driver reports no name for the
-                given parameter.
-            */
-            char const * param_name( uint16_t ndx )  THROWS_ON_ERROR;
+        /**
+           Returns the name for the given 1-based BIND parameter
+           index, throwing on error (e.g. out of bounds).
+           Returns NULL if the driver reports no name for the
+           given parameter.
+        */
+        char const * param_name( uint16_t ndx )  THROWS_ON_ERROR;
 
-            /**
-                Binds the NULL value to the given 1-based index.
-                Throws if ndx is out of bounds.
-            */
-            void bind( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, int8_t v ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, int16_t v ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, int32_t v ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, int64_t v ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, float v ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, double v ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, char const * v, uint32_t len ) THROWS_ON_ERROR;
-            /**
-                Binds the given value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value.
-            */
-            void bind( uint16_t ndx, std::string const & v ) THROWS_ON_ERROR;
-            /**
-                Binds the given "blob" value to the given 1-based index.
-                Throws if ndx is out of bounds or if there is a driver-level
-                error when binding the value as a blob.
-            */
-            void bind( uint16_t ndx, void const * v, uint32_t len ) THROWS_ON_ERROR;
+        /**
+           Binds the NULL value to the given 1-based index.
+           Throws if ndx is out of bounds.
+        */
+        void bind( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, int8_t v ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, int16_t v ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, int32_t v ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, int64_t v ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, float v ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, double v ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, char const * v, uint32_t len ) THROWS_ON_ERROR;
+        /**
+           Binds the given value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value.
+        */
+        void bind( uint16_t ndx, std::string const & v ) THROWS_ON_ERROR;
+        /**
+           Binds the given "blob" value to the given 1-based index.
+           Throws if ndx is out of bounds or if there is a driver-level
+           error when binding the value as a blob.
+        */
+        void bind( uint16_t ndx, void const * v, uint32_t len ) THROWS_ON_ERROR;
 
-            /**
-                Resets a statement to its pre-execution state so that it
-                can be executed again. This is most often used between loop
-                iterations when performing INSERT operations.
-                See cpdo_stmt_api::reset().
-            */
-            void reset() THROWS_ON_ERROR;
+        /**
+           Resets a statement to its pre-execution state so that
+           it can be executed again. This is most often used
+           between loop iterations when performing INSERT
+           operations. See cpdo_stmt_api::reset(). When called on
+           a fetching query this will effectively re-set the
+           cursor to the beginning of the result set.
+        */
+        void reset() THROWS_ON_ERROR;
 
-            /**
-                Returns the number of columns in the result set, or 0 for
-                non-fetching queries or on error.                
-            */
-            uint16_t col_count();
-            /**
-                Returns the name of the column at the given index.
-                Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                The returned bytes are owned by the underlying driver and may
-                be invalidated on the next step() operation (or when the statement
-                is freed), so they must be copied if needed for later.
-                See cpdo_stmt_api::get::col_name().
-            */
-            char const * col_name( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::type(). Throws if ndx is out of bounds.
-            */
-            cpdo_data_type col_type( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::i8(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                NULL values translate to 0.
-            */
-            int8_t get_int8( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::i16(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                NULL values translate to 0.
-            */
-            int16_t get_int16( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::i32(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                NULL values translate to 0.
-            */
-            int32_t get_int32( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::i64(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                NULL values translate to 0.
-            */
-            int64_t get_int64( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::flt(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                NULL values translate to 0.
-            */
-            float get_float( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::dbl(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                NULL values translate to 0.
-            */
-            double get_double( uint16_t ndx ) THROWS_ON_ERROR;
-            /**
-                See cpdo_stmt_api::get::string(). Throws if ndx is out of bounds
-                or there is a driver-level error while fetching the data.
-                If size is not NULL then the length of the fetched string
-                is written to it.
-            */
-            char const * get_string( uint16_t ndx, uint32_t * size = NULL ) THROWS_ON_ERROR;
+        /**
+           Returns the number of columns in the result set, or 0 for
+           non-fetching queries or on error.                
+        */
+        uint16_t col_count() const;
 
-            /**
-                Fetches blob data from the given 0-based column.
-                A length-0 blob is returned as a NULL pointer.
-                On success a pointer to the bytes is returned and
-                *size is set to their length. size may be NULL,
-                but if it is then the caller will have no way of
-                knowing the length.
-            */
-            void const * get_blob( uint16_t ndx, uint32_t * size ) THROWS_ON_ERROR;
+        /**
+           Returns the name of the column at the given index.
+           Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           The returned bytes are owned by the underlying driver and may
+           be invalidated on the next step() operation (or when the statement
+           is freed), so they must be copied if needed for later.
+           See cpdo_stmt_api::get::col_name().
+        */
+        char const * col_name( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::type(). Throws if ndx is out of bounds.
+        */
+        cpdo_data_type col_type( uint16_t ndx ) THROWS_ON_ERROR;
 
-            /**
-                Returns the underlying cpdo_stmt handle. The handle is owned
-                by this object and MUST NOT be closed/destroyed by the caller,
-                nor may it be used concurrently with this object (e.g.
-                multi-threaded). This function is primarily provided so that the
-                C++ API can be used with generic C routines which are not part
-                of the cpdo_stmt_api interface.
-            */
-            cpdo_stmt * handle();
+        /**
+           Returns true if the result column at the given index
+           has a NULL value, else false.
+        */
+        bool col_is_null( uint16_t ndx ) THROWS_ON_ERROR;
+        
+        /**
+           See cpdo_stmt_api::get::i8(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           NULL values translate to 0.
+        */
+        int8_t get_int8( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::i16(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           NULL values translate to 0.
+        */
+        int16_t get_int16( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::i32(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           NULL values translate to 0.
+        */
+        int32_t get_int32( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::i64(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           NULL values translate to 0.
+        */
+        int64_t get_int64( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::flt(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           NULL values translate to 0.
+        */
+        float get_float( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::dbl(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           NULL values translate to 0.
+        */
+        double get_double( uint16_t ndx ) THROWS_ON_ERROR;
+        /**
+           See cpdo_stmt_api::get::string(). Throws if ndx is out of bounds
+           or there is a driver-level error while fetching the data.
+           If size is not NULL then the length of the fetched string
+           is written to it.
+        */
+        char const * get_string( uint16_t ndx, uint32_t * size = NULL ) THROWS_ON_ERROR;
+
+        /**
+           Fetches blob data from the given 0-based column.
+           A length-0 blob is returned as a NULL pointer.
+           On success a pointer to the bytes is returned and
+           *size is set to their length. size may be NULL,
+           but if it is then the caller will have no way of
+           knowing the length.
+        */
+        void const * get_blob( uint16_t ndx, uint32_t * size ) THROWS_ON_ERROR;
+
+        /**
+           Returns the underlying cpdo_stmt handle. The handle is owned
+           by this object and MUST NOT be closed/destroyed by the caller,
+           nor may it be used concurrently with this object (e.g.
+           multi-threaded). This function is primarily provided so that the
+           C++ API can be used with generic C routines which are not part
+           of the cpdo_stmt_api interface.
+        */
+        cpdo_stmt * handle();
             
     };
 
+
     /**
-        This convenience class is intended to be used similarly to
-        std::auto_ptr to protect against leaks when a locally-created
-        statement object throws an exception. It is recommended that
-        client code use these objects in conjunction with the return
-        values from driver::prepare() to simplify error handling in the
-        case that using the prepared statement throws. Statements will
-        be returned from a function, do not use this class or use its
-        take() member to transfer ownership to the caller.
+       Convenience base for col_bind and col_get templates.
+    */
+    template <cpdo_data_type TypeID>
+    struct col_base
+    {
+    private:
+        static const char AssertTypeIsOk[(TypeID==CPDO_TYPE_ERROR) ? -1 : 1];
+    public:
+        static const cpdo_data_type data_type = TypeID;
+    };
 
-        These objects are intended to be created only on the stack, not via
-        (new stmt).
+    /**
+       Base (unimplemented) instantiation of a template which
+       implements statement::bind() operations in terms of
+       operator(). The template type T specifies the native
+       data type to be stored in the DB, and specializations
+       of this type are then responsible for binding values of
+       that type.
+    */
+    template <typename T>
+    struct col_bind;
+    
+    template <typename T>
+    struct col_bind<T const> : col_bind<T>
+    {};
+    template <typename T>
+    struct col_bind<T const &> : col_bind<T>
+    {};
+    template <typename T>
+    struct col_bind<T &> : col_bind<T>
+    {};
+#if 0
+    template <typename T>
+    struct col_bind<T *> : col_bind<T>
+    {};
+    template <typename T>
+    struct col_bind<T const *> : col_bind<T>
+    {};
+#endif
 
-        Example:
+    template <>
+    struct col_bind<void> : col_base<CPDO_TYPE_NULL> {
+        void operator()( statement & st, uint16_t ndx ){st.bind( ndx );}
+    };
+    template <>
+    struct col_bind<int8_t> : col_base<CPDO_TYPE_INT8> {
+        typedef int8_t value_type;
+        void operator()( statement & st, uint16_t ndx, int8_t v ){st.bind( ndx, v );}
+    };
+    template <>
+    struct col_bind<int16_t> : col_base<CPDO_TYPE_INT16> {
+        typedef int16_t value_type;
+        void operator()( statement & st, uint16_t ndx, int16_t v ){st.bind( ndx, v );}
+    };
+    template <>
+    struct col_bind<int32_t> : col_base<CPDO_TYPE_INT32> {
+        typedef int32_t value_type;
+        void operator()( statement & st, uint16_t ndx, int32_t v ){st.bind( ndx, v );}
+    };
+    template <>
+    struct col_bind<int64_t> : col_base<CPDO_TYPE_INT64> {
+        typedef int64_t value_type;
+        void operator()( statement & st, uint16_t ndx, int64_t v ){st.bind( ndx, v );}
+    };
+    template <>
+    struct col_bind<float> : col_base<CPDO_TYPE_FLOAT> {
+        typedef float value_type;
+        void operator()( statement & st, uint16_t ndx, float v ){st.bind( ndx, v );}
+    };
+    template <>
+    struct col_bind<double> : col_base<CPDO_TYPE_DOUBLE> {
+        typedef double value_type;
+        void operator()( statement & st, uint16_t ndx, double v ){st.bind( ndx, v );}
+    };
+    template <>
+    struct col_bind<char const *> : col_base<CPDO_TYPE_STRING> {
+        typedef char const * value_type;
+        void operator()( statement & st, uint16_t ndx, char const * v, uint32_t len ){
+            st.bind( ndx, v, len );
+        }
+        void operator()( statement & st, uint16_t ndx, char const * v ){
+            st.bind( ndx, v, v ? std::strlen(v) : 0 );
+        }
+    };
 
-        @code
-        stmt st( myDriver->prepare(...) );
-        // Now use the '->' operator to access the statement's API, e.g.:
-        while( st->step() ) { puts(st->get_string(0)); }
-        // To take over ownership of the statement object:
-        statement * s = st.take();
-        @endcode
+    template <>
+    struct col_bind<char *> : col_bind<char const *> {};
+
+    template <>
+    struct col_bind<std::string> : col_base<CPDO_TYPE_STRING>{
+        typedef std::string value_type;
+        void operator()( statement & st, uint16_t ndx, std::string const & v ){
+            st.bind( ndx, v );
+        }
+    };
+
+    template <>
+    struct col_bind<void const *> : col_base<CPDO_TYPE_BLOB>{
+        typedef void const * value_type;
+        void operator()( statement & st, uint16_t ndx, void const * v, uint32_t len ){
+            st.bind( ndx, v, len );
+        }
+    };
+
+    template <>
+    struct col_bind<void *> : col_bind<void const *> {};
+
+    /**
+       Internal convenience base type.
+    */
+    template <typename T>
+    struct col_bind0_base
+    {
+    public:
+        typedef typename col_bind<T>::value_type value_type;
+    protected:
+        statement * st;
+        uint16_t ndx;
+        value_type val;
+        col_bind0_base() {}
+    };
+
+
+    /**
+       Experimental.
+    */
+    template <typename T>
+    struct col_bind0 : col_bind0_base<T>
+    {
+    public:
+        typedef typename col_bind<T>::value_type value_type;
+        col_bind0( statement & s, uint16_t ndx, value_type v )
+        {
+            this->st = &s;
+            this->ndx = ndx;
+            this->val = v;
+        }
+        void operator()(){
+            typedef col_bind<T> B;
+            return B()( *this->st, this->ndx, this->val );
+        }
+    };
+
+    /**
+       Experimental.
+    */
+    template <typename T>
+    struct col_bind0_2 : col_bind0_base<T>
+    {
+    protected:
+        uint32_t len;
+    public:
+        typedef typename col_bind<T>::value_type value_type;
+        col_bind0_2( statement & s, uint16_t ndx, value_type v, uint32_t len )
+        {
+            this->st = &s;
+            this->ndx = ndx;
+            this->val = v;
+            this->len = len;
+        }
+        void operator()(){
+            typedef col_bind<T> B;
+            return B()( *this->st, this->ndx, this->val, this->len );
+        }
+    };
+    template <>
+    struct col_bind0<void const *> : col_bind0_2<void const *> {};
+    template <>
+    struct col_bind0<void *> : col_bind0<void const *> {};
+    template <>
+    struct col_bind0<char const *> : col_bind0_2<char const *> {};
+
+    template <>
+    struct col_bind0<std::string> : col_bind0_base<std::string>
+    {
+    public:
+        typedef col_bind<std::string>::value_type value_type;
+        col_bind0( statement & s, uint16_t ndx, std::string const & v )
+        {
+            this->st = &s;
+            this->ndx = ndx;
+            this->val = v;
+        }
+        void operator()(){
+            typedef col_bind<char const *> B;
+            return B()( *this->st, this->ndx, this->val.c_str(), this->val.size() );
+        }
+    };
+
+    
+    /**
+       Base (unimplemented) declaration for a family of templates
+       which should use T to figure out which statement::get_xxx()
+       function to call to fetch a value. Implementations must have an
+       operator() which takes (StatementLike &, uint16_t) parameters,
+       and may take additional parameters. StatementLike must be
+       statement, stmt_row, or compatible.
+    */
+    template <typename T>
+    struct col_get;
+
+    template <typename T>
+    struct col_get<volatile T> : col_get<T>
+    {};
+    
+    template <typename T>
+    struct col_get<T const> : col_get<T>
+    {};
+
+    template <typename T>
+    struct col_get<T const &> : col_get<T>
+    {};
+
+    template <typename T>
+    struct col_get<T &> : col_get<T>
+    {};
+
+    /**
+       Specialization for CPDO_TYPE_INT8 fields.
+    */
+    template <>
+    struct col_get<int8_t> : col_base<CPDO_TYPE_INT8> {
+        typedef int8_t value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){return st.get_int8( ndx );}
+    };
+
+    /**
+       Specialization for CPDO_TYPE_INT16 fields.
+    */
+    template <>
+    struct col_get<int16_t> : col_base<CPDO_TYPE_INT16> {
+        typedef int16_t value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){return st.get_int16( ndx );}
+    };
+
+    /**
+       Specialization for CPDO_TYPE_INT32 fields.
+    */
+    template <>
+    struct col_get<int32_t> : col_base<CPDO_TYPE_INT32> {
+        typedef int32_t value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){return st.get_int32( ndx );}
+    };
+
+    /**
+       Specialization for CPDO_TYPE_INT64 fields.
+    */
+    template <>
+    struct col_get<int64_t> : col_base<CPDO_TYPE_INT64> {
+        typedef int64_t value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){return st.get_int64( ndx );}
+    };
+
+    /**
+       Specialization for CPDO_TYPE_FLOAT fields.
+    */
+    template <>
+    struct col_get<float> : col_base<CPDO_TYPE_FLOAT> {
+        typedef float value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){return st.get_float( ndx );}
+    };
+
+    /**
+       Specialization for CPDO_TYPE_DOUBLE fields.
+    */
+    template <>
+    struct col_get<double> : col_base<CPDO_TYPE_DOUBLE> {
+        typedef double value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){ return st.get_double( ndx );}
+    };
+
+    /**
+       Specialization for CPDO_TYPE_STRING fields.
+    */
+    template <>
+    struct col_get<char const *> : col_base<CPDO_TYPE_STRING> {
+        typedef char const * value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){
+            return st.get_string( ndx );
+        }
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx, uint32_t & sz ){
+            return st.get_string( ndx, &sz );
+        }
+    };
+
+    /**
+       Specialization for CPDO_TYPE_STRING fields.
+    */
+    template <>
+    struct col_get<char *> : col_get<char const *> {};
+
+    /**
+       Specialization for CPDO_TYPE_STRING fields.
+    */
+    template <>
+    struct col_get<std::string> : col_base<CPDO_TYPE_STRING>{
+        typedef std::string value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){
+            uint32_t len = 0;
+            typedef col_get<char const *> Proxy;
+            char const * s = Proxy()( st, ndx );
+            return s ? std::string(s, s + len) : std::string();
+        }
+    };
+
+    /**
+       Specialization for CPDO_TYPE_BLOB fields.
+    */
+    template <>
+    struct col_get<void const *> : col_base<CPDO_TYPE_BLOB>{
+        typedef void const * value_type;
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx ){
+            return st.get_blob(ndx, NULL);
+        }
+        template <typename StmtLike>
+        value_type operator()( StmtLike & st, uint16_t ndx, uint32_t & sz ){
+            return st.get_blob(ndx, &sz);
+        }
+    };
+
+    /**
+       Specialization for CPDO_TYPE_BLOB fields.
+    */
+    template <>
+    struct col_get<void *> : col_get<void const *> {};
+    
+    /**
+       A thin proxy for the statement class which only exposes the API
+       which is legal in the context of a binding parameters to a
+       statement. All of its methods map 1-to-1 to the API of its
+       underlying statement.
+    */
+    struct stmt_binder
+    {
+    private:
+        statement & st;
+    public:
+        /**
+           Initializes this object to wrap s. Throws if
+           s->param_count() is 0, as that indicates that s has no
+           parameters to bind. s must outlive this object.
+        */
+        explicit stmt_binder(statement & s);
+        ~stmt_binder();
+
+        int error_code() { return st.error_code(); }
+        std::string error_text() { return st.error_text(); }
+        uint16_t param_count() { return st.param_count(); }
+        uint16_t param_index( char const * name ) { return st.param_index(name); }
+        char const * param_name( uint16_t ndx ) { return st.param_name(ndx); }
+
+        stmt_binder & reset() { st.reset(); return *this; }
+        stmt_binder & step() { st.step(); return *this; }
+
+        stmt_binder & bind( uint16_t ndx ) { st.bind(ndx); return *this; }
+        stmt_binder & bind( uint16_t ndx, int8_t v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, int16_t v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, int32_t v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, int64_t v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, float v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, double v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, char const * v, uint32_t len ) { st.bind(ndx, v, len); return *this; }
+        stmt_binder & bind( uint16_t ndx, std::string const & v ) { st.bind(ndx, v); return *this; }
+        stmt_binder & bind( uint16_t ndx, void const * v, uint32_t len ) { st.bind(ndx, v, len); return *this; }
+
+        /**
+           Binds the given column to NULL.
+        */
+        stmt_binder & operator()( uint16_t ndx ) {
+            st.bind(ndx);
+            return *this;
+        }
+
+        /**
+           Overload which takes a named parameter name in the form ":param".
+        */
+        stmt_binder & operator()( char const *pname ) {
+            st.bind( st.param_index(pname) );
+            return *this;
+        }
+
+        /**
+           Uses col_bind<V> to select a bind() implementation to call.
+        */
+        template <typename V>
+        stmt_binder & operator()( uint16_t ndx, V v ) {
+            typedef col_bind<V> B;
+            B()(st, ndx, v);
+            return *this;
+        }
+
+        /**
+           Overload which takes a named parameter name in the form ":param".
+        */
+        template <typename V>
+        stmt_binder & operator()( char const * pname, V v ) {
+            typedef col_bind<V> B;
+            B()(st, st.param_index(pname), v);
+            return *this;
+        }
+
+        /**
+           Uses col_bind<V> to select a bind() implementation to call.
+           This form is only valid for string/blob fields.
+        */
+        template <typename V>
+        stmt_binder & operator()( uint16_t ndx, V v, unsigned int len ) {
+            typedef col_bind<V> B;
+            B()(st, ndx, v, len);
+            return *this;
+        }
+        /**
+           Overload which takes a named parameter name in the form ":param".
+        */
+        template <typename V>
+        stmt_binder & operator()( char const * pname, V v, unsigned int len ) {
+            typedef col_bind<V> B;
+            B()(st, st.param_index(pname), v, len);
+            return *this;
+        }
+    };
+    
+    /**
+       A thin proxy for the statement class which only exposes the API
+       which is legal in the context of a single step() iteration. All
+       of its methods map 1-to-1 to the API of its underlying
+       statement.
+    */
+    class stmt_row
+    {
+    private:
+        statement & st;
+    public:
+        /**
+           Initializes this object to wrap s. Throws if s->col_count()
+           is 0, as that indicates a non-querying statement. It is
+           illegal to use this object after s as been finalized, which
+           normally means that s must outlive this object.
+        */
+        explicit stmt_row(statement & s);
+        /**
+           Redirects this object to use the given statement. It is not
+           legal to use this object after s's lifetime has expired.
+         */
+        stmt_row & operator=(statement & s);
+        ~stmt_row();
+
+        /**
+           See statement::error_code().
+        */
+        int error_code() { return st.error_code(); }
+        /**
+           See statement::error_text().
+        */
+        std::string error_text() { return st.error_text(); }
+        /**
+           See statement::col_count().
+        */
+        uint16_t col_count() { return st.col_count(); }
+        /**
+           See statement::col_name().
+        */
+        char const * col_name( uint16_t ndx ) { return st.col_name(ndx); }
+        /**
+           See statement::col_type().
+        */
+        cpdo_data_type col_type( uint16_t ndx ) { return st.col_type(ndx); }
+
+        /**
+           See statement::is_null().
+        */
+        bool col_is_null( uint16_t ndx ) { return st.col_is_null(ndx); }
+
+        /**
+           See statement::get_int8().
+        */
+        int8_t get_int8( uint16_t ndx ) { return st.get_int8(ndx); }
+        /**
+           See statement::get_int16().
+        */
+        int16_t get_int16( uint16_t ndx ) { return st.get_int16(ndx); }
+        /**
+           See statement::get_int32().
+        */
+        int32_t get_int32( uint16_t ndx ) { return st.get_int32(ndx); }
+        /**
+           See statement::get_int64().
+        */
+        int64_t get_int64( uint16_t ndx ) { return st.get_int64(ndx); }
+        /**
+           See statement::get_float().
+        */
+        float get_float( uint16_t ndx ) { return st.get_float(ndx); }
+        /**
+           See statement::get_double().
+        */
+        double get_double( uint16_t ndx ) { return st.get_double(ndx); }
+        /**
+           See statement::get_string().
+        */
+        char const * get_string( uint16_t ndx, uint32_t * size = NULL ) { return st.get_string(ndx, size); }
+        /**
+           See statement::get_blob().
+        */
+        void const * get_blob( uint16_t ndx, uint32_t * size ) { return st.get_blob(ndx, size); }
+
+        /**
+           Uses col_get<V> to select a get_xxx() implementation to call.
+        */
+        template <typename V>
+        typename col_get<V>::value_type value_at( uint16_t ndx ) {
+            typedef col_get<V> B;
+            return B()(st, ndx);
+        }
+
+        /**
+           Uses col_get<V> to select a get() implementation to call,
+           but only usable with variants which take a (uint32_t &) as
+           their 3rd argument (string and blob).
+        */
+        template <typename V>
+        typename col_get<V>::value_type value_at( uint16_t ndx, uint32_t & sz ) {
+            typedef col_get<V> B;
+            return B()(st, ndx, sz);
+        }
+
+        /**
+           Like value_at(), but assigns the value to v and returns
+           this object.
+        */
+        template <typename V>
+        stmt_row & get( uint16_t ndx, V & v ) {
+            v = this->value_at<V>( ndx );
+            return *this;
+        }
+
+        /**
+           Like the 2-arg form of value_at(), but assigns the result
+           value to v, its length to len, and returns this object.
+        */
+        template <typename V>
+        stmt_row & get( uint16_t ndx, V & v, uint32_t & len ) {
+            v = this->value_at<V>( ndx, len );
+            return *this;
+        }
+
+
+        /**
+           Alias for get().
+        */
+        template <typename V>
+        stmt_row & operator()( uint16_t ndx, V & v ) {
+            return this->get( ndx, v );
+        }
+
+        /**
+           Alias for get().
+        */
+        template <typename V>
+        stmt_row & operator()( uint16_t ndx, V & v, uint32_t & len ) {
+            return this->get( ndx, v, len );
+        }
+
+#if 0
+        /**
+           Returns the underlying statement handle. This is really only
+           in the API until i consolidate the get() access for the various
+           statement-like wrappers.
+        */
+        //statement & handle(){ return this->st; }
+#endif     
+    };
+
+    /**
+       step()s through each row of st's results, calling f(XYZ, state)
+       on each iteration, where XYZ is a stmt_row instance
+       wrapping st. To signal error f() must throw an exception.
+       
+       This is only valid for SELECT queries and db-specific
+       SQL which returns results.
+
+       Because f() must not step() or otherwise modify the statement
+       passed to it, it is passed a stmt_row instance instead
+       of being passed st directly.
+       
+       Throws if st.step() or f() throws.
+    */
+    template <typename State, typename Func>
+    void step_each( statement & st, Func f, State & state ) THROWS_ON_ERROR {
+        stmt_row x(st);
+        while( st.step() ){
+            f( x, state );
+        }
+    }
+
+    /**
+       Overload which does not take a functor state parameter.
+
+       If f has its own state which will be updated by calling
+       f(), you can force f to be a non-const reference by
+       explicitly providing a non-const/reference-qualified
+       template type, e.g.:
+
+       @code
+       struct MyFunctor {
+       int rows;
+       MyFunctor() : rows(0){}
+       void operator()( cpdo::stmt_row & ){
+       ++this->rows;
+       }
+       };
+
+       ...
+       
+       MyFunctor func;
+       {
+       stmt st( db->prepare("SELECT * FROM foo") ); 
+       step_each<MyFunctor &>( st, func );
+       }
+       assert( func.rows > 0 );
+       @endcode
+    */
+    template <typename Func>
+    void step_each( statement & st, Func f ) THROWS_ON_ERROR {
+        stmt_row x(st);
+        while( st.step() ){
+            f( x );
+        }
+    }
+    
+    /**
+       This convenience class is intended to be used similarly to
+       std::auto_ptr to protect against leaks when a locally-created
+       statement object throws an exception. It is recommended that
+       client code use these objects in conjunction with the return
+       values from driver::prepare() to simplify error handling in the
+       case that using the prepared statement throws. Statements will
+       be returned from a function, do not use this class or use its
+       take() member to transfer ownership to the caller.
+
+       These objects are intended to be created only on the stack, not via
+       (new stmt).
+
+       Example:
+
+       @code
+       stmt st( myDriver->prepare(...) );
+       // Now use the '->' operator to access the statement's API, e.g.:
+       while( st->step() ) { puts(st->get_string(0)); }
+       // To take over ownership of the statement object:
+       statement * s = st.take();
+       @endcode
     */
     class stmt
     {
-        private:
-            statement * st;
-            //! Not allowed/implemented.
-            stmt(stmt const &);
-            //! Not allowed/implemented.
-            stmt & operator=(stmt const &);
-        public:
-            /**
-                Empty-initializes this object. Use operator=()
-                to assign a statement to it.
-            */
-            stmt();
-            /**
-                Transfers ownership of st to this object.
+    private:
+        statement * st;
+        //! Not allowed/implemented.
+        stmt(stmt const &);
+        //! Not allowed/implemented.
+        stmt & operator=(stmt const &);
+    public:
+        /**
+           Empty-initializes this object. Use operator=()
+           to assign a statement to it.
+        */
+        stmt();
+        /**
+           Transfers ownership of st to this object.
 
-                If st is NULL then invoking operator->() will
-                result in undefined behaviour. empty() can be used
-                to check if the statement is NULL.
-            */
-            explicit stmt(statement * st);
-            /**
-                Destroys any existing statement and transfers
-                ownership of st to this object.
-            */
-            stmt & operator=(statement * st);
-            /**
-                Destroys the statement owned by this object.
-            */
-            ~stmt();
+           If st is NULL then invoking operator->() will result in
+           undefined behaviour. empty() can be used to check if the
+           statement is NULL.
+        */
+        explicit stmt(statement * st);
+        /**
+           Destroys any existing statement and transfers ownership of
+           st to this object. This is a no-op if this object already
+           manages st.
+        */
+        stmt & operator=(statement * st);
+        /**
+           Destroys the statement owned by this object.
+        */
+        ~stmt();
             
-            /**
-                Destroys the statement owned by this object. This is
-                automatically called during destruction, and need not
-                normally be called by client code.
-            */
-            void finalize();
+        /**
+           Destroys the statement owned by this object. This is
+           automatically called during destruction, and need not
+           normally be called by client code.
+        */
+        void finalize() throw();
             
-            /**
-                Returns true if this object is "empty" (its statement
-                is NULL).
-            */
-            bool empty() const;
+        /**
+           Returns true if this object is "empty" (its statement
+           is NULL).
+        */
+        bool empty() const;
             
-            /**
-                Returns the statement object owned by this object.
-                Ownership
-            */
-            statement * operator->();
-            
-            /**
-                Transfers ownership of the statement owned by
-                this object to the caller. After calling this,
-                empty() returns true and calling operator->() will
-                result in undefined behaviour.
-            */
-            statement * take();
+        /**
+           Returns the statement object owned by this object.
+           Ownership is not changed.
+        */
+        statement * operator->();
+
+        /**
+           Returns a reference to its statement. Throws if it
+           would dereference NULL.
+        */
+        operator statement & ();
+        statement & handle();
+        
+        /**
+           Transfers ownership of the statement owned by this object
+           to the caller. After calling this, empty() returns true and
+           calling operator->() will result in an exception.
+        */
+        statement * take();
+
+        /**
+           A workaround to allow step_each() to work with this type.
+        */
+        bool step();
     };
 
     /**
-        A simple wrapper around the cpdo_driver C class. Each instance of
-        this class manages (and owns) one cpdo_driver instance.
+       A simple wrapper around the cpdo_driver C class. Each instance
+       of this class manages (and owns) one cpdo_driver instance.
     */
     class driver
     {
-        private:
-            cpdo_driver * drv;
-            //! Throws if code is not 0.
-            void check_code( int code ) THROWS_ON_ERROR;
-            void assert_connected() const THROWS_ON_ERROR;
-        public:
-            /**
-                Opens a connection to the given dsn using the rules
-                described for cpdo_driver_new_connect().
+    private:
+        cpdo_driver * drv;
+        //! Throws if code is not 0.
+        void check_code( int code ) THROWS_ON_ERROR;
+        //! Throws if !this->drv
+        void assert_connected() const THROWS_ON_ERROR;
+    public:
+        /**
+           Opens a connection to the given dsn using the rules
+           described for cpdo_driver_new_connect().
 
-                Throws if no driver can be loaded or connection fails.
-            */
-            driver( std::string const & dsn, std::string const & user = "",
-                    std::string const & pass = "" ) THROWS_ON_ERROR;
-            /**
-                Transfers ownership of d to this object. Throws if d is
-                not already connected. It keeps ownership (and closes d)
-                even if it throws, to simplify client-side error handling.
-            */
-            driver( cpdo_driver * d ) THROWS_ON_ERROR;
+           Throws if no driver can be loaded or connection fails.
+        */
+        driver( std::string const & dsn, std::string const & user = "",
+                std::string const & pass = "" ) THROWS_ON_ERROR;
+        /**
+           Transfers ownership of d to this object. Throws if d is not
+           already connected. It keeps ownership (and closes d) even
+           if it throws, to simplify client-side error handling.
+        */
+        driver( cpdo_driver * d ) THROWS_ON_ERROR;
             
-            /**
-                Closes the database connection and frees internal
-                resources. statement objects created via prepare()
-                MUST be destroyed BEFORE this object destructs,
-                or undefined behaviour ensues.
-            */
-            ~driver() throw();
+        /**
+           Closes the database connection and frees internal
+           resources. statement objects created via prepare() MUST be
+           destroyed BEFORE this object destructs, or undefined
+           behaviour ensues.
+        */
+        ~driver() throw();
             
             
-            /**
-                Closes the database connection. It is illegal to do
-                any of the following after calling this:
+        /**
+           Closes the database connection. It is illegal to do
+           any of the following after calling this:
                 
-                - Call any member functions of this class. They will
-                throw. The exception to that rule is that calling
-                close() multiple times is a no-op after the first
-                call.
+           - Call any member functions of this class. They will
+           throw. The exception to that rule is that calling
+           close() multiple times is a no-op after the first
+           call.
                 
-                - Destroy any statements created by prepare(). They
-                must be destroyed before the connection is closed or
-                not at all. Violating that will likely lead to a
-                segmentation fault.
-            */ 
-            void close() throw();
+           - Destroy any statements created by prepare(). They
+           must be destroyed before the connection is closed or
+           not at all. Violating that will likely lead to a
+           segmentation fault.
+        */ 
+        void close() throw();
             
-            /**
-                Works like cpdo_prepare(). Ownership of the returned statement
-                is transfered to the caller, and it MUST be destroyed before
-                this object closed/destroyed or undefined behaviour will result.
+        /**
+           Works like cpdo_prepare(). Ownership of the returned
+           statement is transfered to the caller, and it MUST be
+           destroyed before this object is closed/destroyed or
+           undefined behaviour will result.
 
-                Throws if sql is NULL or an empty string, or if preparation
-                of the statement fails.
+           Throws if sql is NULL or an empty string, or if preparation
+           of the statement fails.
 
-                It is recommended that clients use the stmt convenience class
-                for catching the return result, to simplify error handling
-                if the returned statement subsequently throws an exception.
-            */
-            statement * prepare( char const * sql, uint32_t len ) THROWS_ON_ERROR;
+           It is recommended that clients use the stmt convenience
+           class for catching the return result, to simplify error
+           handling if the returned statement subsequently throws an
+           exception.
+        */
+        statement * prepare( char const * sql, uint32_t len ) THROWS_ON_ERROR;
 
-            /**
-                Convenience form of prepare(sql,strlen(sql)).
-            */
-            statement * prepare( char const * sql ) THROWS_ON_ERROR;
+        /**
+           Convenience form of prepare(sql,strlen(sql)).
+        */
+        statement * prepare( char const * sql ) THROWS_ON_ERROR;
 
-            /**
-                Convenience form of prepare(sql.c_str(),sql.size()).
-            */
-            statement * prepare( std::string const & sql ) THROWS_ON_ERROR;
+        /**
+           Convenience form of prepare(sql.c_str(),sql.size()).
+        */
+        statement * prepare( std::string const & sql ) THROWS_ON_ERROR;
 
-            /**
-                Works like cpdo_prepare_f(), but throws on error.
-                See the two-argument form of prepare() for details about
-                the return value.
-            */
-            statement * prepare_f( char const * fmt, ... ) THROWS_ON_ERROR;
+        /**
+           Works like cpdo_prepare_f(), but throws on error.  See the
+           two-argument form of prepare() for details about the return
+           value.
+        */
+        statement * prepare_f( char const * fmt, ... ) THROWS_ON_ERROR;
+
+        /**
+           Works like cpdo_prepare_f_v(), but throws on error.  See
+           the two-argument form of prepare() for details about the
+           return value.
+        */
+        statement * prepare_v( char const * fmt, va_list ) THROWS_ON_ERROR;
             
-            /**
-                Returns the SQL-quoted form of the given SQL "part". It is
-                NOT intended to be used on whole SQL statements, but on
-                individual values. See cpdo_driver_api::quote() for details,
-                but note that the ownership of the string, as documented
-                in that interface, is instead transfered to the returned
-                std::string object.
+        /**
+           Returns the SQL-quoted form of the given SQL "part". It is
+           NOT intended to be used on whole SQL statements, but on
+           individual values. See cpdo_driver_api::quote() for
+           details, but note that the ownership of the string, as
+           documented in that interface, is instead transfered to the
+           returned std::string object.
 
-                Throws on error, but the only error case would be an allocation.
-            */
-            std::string quote( std::string const & part ) THROWS_ON_ERROR;
+           If part is NULL then the string "NULL" (without any
+           quoting) is returned.
 
-            /**
-               Returns the "qualified" form of an identifier name (table or
-               column name).
-             */
-            std::string qualify( std::string const & part ) THROWS_ON_ERROR;
+           Throws on error, but the only error case would be an allocation.
+        */
+        std::string quote( char const * part ) THROWS_ON_ERROR;
 
-            /**
-                Returns the last driver-level error code, or 0 if there is none.
-            */
-            int error_code();
+        /**
+           Returns the "qualified" form of an identifier name (table or
+           column name).
+        */
+        std::string qualify( std::string const & part ) THROWS_ON_ERROR;
+
+        /**
+           Returns the last driver-level error code, or 0 if there is none.
+        */
+        int error_code();
             
-            /**
-                Returns the last driver-level error message. If there was no
-                recent error, this function _might_ return an empty string or
-                _might_ return some other value, depending on how the underlying
-                db driver does it (e.g. sqlite3 uses "not an error").
-            */
-            std::string error_text();
+        /**
+           Returns the last driver-level error message. If there was no
+           recent error, this function _might_ return an empty string or
+           _might_ return some other value, depending on how the underlying
+           db driver does it (e.g. sqlite3 uses "not an error").
+        */
+        std::string error_text();
             
-            /**
-                Returns the most recent insertion ID, as documented for
-                cpdo_driver_api::last_insert_id().
+        /**
+           Returns the most recent insertion ID, as documented for
+           cpdo_driver_api::last_insert_id().
 
-                Throws on error.
-            */
-            uint64_t last_insert_id( char const * hint = NULL ) THROWS_ON_ERROR;
-            /**
-                Begins a transaction, as documented for cpdo_driver_api::transaction::begin().
+           Throws on error.
+        */
+        uint64_t last_insert_id( char const * hint = NULL ) THROWS_ON_ERROR;
+        /**
+           Begins a transaction, as documented for cpdo_driver_api::transaction::begin().
 
-                Throws on error.
-            */
-            void begin() THROWS_ON_ERROR;
-            /**
-                Begins a transaction, as documented for cpdo_driver_api::transaction::commit().
+           Throws on error.
+        */
+        void begin() THROWS_ON_ERROR;
+        /**
+           Begins a transaction, as documented for cpdo_driver_api::transaction::commit().
 
-                Throws on error.
-            */
-            void commit() THROWS_ON_ERROR;
-            /**
-                Begins a transaction, as documented for cpdo_driver_api::transaction::rollback().
+           Throws on error.
+        */
+        void commit() THROWS_ON_ERROR;
+        /**
+           Begins a transaction, as documented for cpdo_driver_api::transaction::rollback().
 
-                Throws on error.
-            */
-            void rollback() THROWS_ON_ERROR;
-            /**
-                As documented for cpdo_driver_api::transaction::is_in(). See
-                that function for important caveats.
-            */
-            bool in_transaction();
-            /**
-                Returns the cpdo driver name for the current connection. The bytes
-                are owned by the underying driver, and may be invalidated when
-                it is closed (or they may not - it's implementation-defined).
-            */
-            char const * driver_name() const;
+           Throws on error.
+        */
+        void rollback() THROWS_ON_ERROR;
+        /**
+           As documented for cpdo_driver_api::transaction::is_in(). See
+           that function for important caveats.
+        */
+        bool in_transaction();
+        /**
+           Returns the cpdo driver name for the current connection. The bytes
+           are owned by the underying driver, and may be invalidated when
+           it is closed (or they may not - it's implementation-defined).
+        */
+        char const * driver_name() const;
 
-            /**
-                Returns the underlying cpdo_driver handle. The handle is owned
-                by this object and MUST NOT be closed/destroyed by the caller,
-                nor may it be used concurrently with this object (e.g.
-                multi-threaded). This function is primarily provided so that the
-                C++ API can be used with generic C routines which are not part
-                of the cpdo_driver_api interface.
-            */
-            cpdo_driver * handle();
+        /**
+           Returns the underlying cpdo_driver handle. The handle is owned
+           by this object and MUST NOT be closed/destroyed by the caller,
+           nor may it be used concurrently with this object (e.g.
+           multi-threaded). This function is primarily provided so that the
+           C++ API can be used with generic C routines which are not part
+           of the cpdo_driver_api interface.
+        */
+        cpdo_driver * handle();
             
-            /**
-                Equivalent to cpdo_exec(), but throws on error.
-            */
-            void exec( char const * sql, uint32_t len );
+        /**
+           Equivalent to cpdo_exec(), but throws on error.
+        */
+        void exec( char const * sql, uint32_t len );
             
-            /**
-                Convenience form of exec() which takes a std::string.
-            */
-            void exec( std::string const & sql );
+        /**
+           Convenience form of exec() which takes a std::string.
+        */
+        void exec( std::string const & sql );
             
-            /**
-                Equivalent to cpdo_exec_f(), but throws on error.
-            */
-            void exec_f( char const * fmt, ... );
+        /**
+           Equivalent to cpdo_exec_f(), but throws on error.
+        */
+        void exec_f( char const * fmt, ... );
     };
+
+    /**
+       The chainer class is a helper for working with prepared
+       statements. It provides a slightly more convenient (or
+       "different", at least) interface for preparing and manipulating
+       statement objects. Most of its functions return the current
+       object, and are intended to be used in chains of calls, like this:
+
+       @code
+       chainer( myDb ).
+           prepare("INSERT INTO t (a,b) VALUES(?,?)").
+           bind(1, 42).
+           bind(2, "hi, world!").
+           step();
+       @endcode
+
+       Or for fetching data:
+
+       @code
+       int32_t i = 0;
+       std::string s;
+       chainer( myDb ).
+           prepare("SELECT a, b FROM t ORDER BY a DESC LIMIT 0,1").
+           step(). // for fetching queries, step() throws by default
+                   // if no row matches
+           get(0, i).
+           get(1, s);
+       @endcode
+
+       Note that because of lifetime issues it is not always safe to
+       use the (char const *) and (void const *) string/blob APIs in
+       conjunction with get(). When in doubt use value_at() (at
+       non-chaining function) and be aware of the lifetime of the
+       returned bytes (i.e. RTFM).
+
+       There are also several other convenience methods like
+       step_each().
+    */
+    class chainer
+    {
+    private:
+        driver & db;
+        stmt sth;
+        uint16_t colCount;
+        uint16_t paramCount;
+        void updateCounts();
+        void assertPrepared();
+        void assertNotPrepared();
+        void assertHasBoundParams();
+        void assertHasColumns();
+        void check_code( int code );
+        
+    public:
+        /**
+           Initializes this sobject to use the given db handle.  This
+           object must not be used after d has been close()d.
+        */
+        explicit chainer(driver &d);
+        /**
+           Effectively equivalent to finalize()
+         */
+        ~chainer() throw();
+
+        /**
+           "Prepares" this chainer using an already-prepared
+           statement.
+        
+           If this object is not already prepare()d then this
+           transfers ownership of st to this object.
+
+           If this object is already prepared an exception is thrown
+           (use clear() to remove a previous statement) and ownership
+           of st is unchanged. An exception is also thrown if st is
+           NULL.
+           
+           Returns this object.
+
+           take() may be used to take back ownership of st in the
+           future.
+        */
+        chainer & prepare( statement * st );
+        
+        /**
+           Prepares the first len bytes of the given SQL string and
+           returns this object.
+        */
+        chainer & prepare( char const * sql, uint32_t len );
+
+        /**
+           Prepares the given SQL string and returns this object.
+        */
+        chainer & prepare( std::string const & sql );
+
+        /**
+           Wrapper for cpdo_prepare_f(). It is not named prepare()
+           because of an ambiguity when the arguments match the (char
+           const *, uint32_t) overload.
+
+           Returns this object.
+        */
+        chainer & prepare_f( char const * sql, ... );        
+
+        /**
+           Returns true if this object has been prepared and its query
+           has result columns (an indicator that it is meant to be
+           step()'d until there are no more results), else it returns
+           false. This is the converse of INSERTs and such, which do
+           not return results (and have a column count of 0).
+
+           Note that some driver-specific SQL (e.g. MySQL's "show tables")
+           also qualifies as a "select" query.
+
+           Always returns 0 before prepare() has succeeded.
+        */
+        bool is_select_query() const;
+
+        /**
+           Returns the number of bound parameters, 0 if the prepared
+           statement has no bound parameter placeholders or if this
+           object has not yet been prepared.
+        */
+        uint16_t bound_param_count() const;
+        
+        /**
+           See statement::reset().
+        */
+        chainer & reset();
+
+        /**
+           Finalizes the underlying statement handle (if
+           any). this->prepare() may be called after this has been
+           called.
+
+           This operation is implicitly called by the destructor, and
+           only needs to be explicitly called when re-using this
+           object with multiple statements or when local scoping
+           requires it for some specific reason.
+
+           Note that this function frees the underlying handle but not
+           this object.
+
+           This is a harmless no-op if called multiple times.
+        */
+        chainer & finalize() throw();
+
+        /**
+           Returns the 1-based bind-parameter index for the given
+           name. If this object was not prepared with any bound
+           paramters then this function throws. If no such parameter
+           is found then 0 is returned.
+        */
+        uint16_t param_index( char const * p );
+
+        /**
+           Binds NULL to the given parameter index.
+        */
+        chainer & bind( uint16_t ndx );
+
+        /**
+           Uses col_bind<V> to select a bind() implementation, then
+           binds v to the given parameter index.
+        */
+        template <typename V>
+        chainer & bind( uint16_t ndx, V v ){
+            this->assertHasBoundParams();
+            typedef col_bind<V> B;
+            B()( this->sth, ndx, v );
+            return *this;
+        }
+
+        /**
+           Intentionally not implemented, to avoid accidental mis-use
+           of the blob binding API.
+        */
+        chainer & bind( uint16_t ndx, void const * );
+
+        /**
+           Convenience overload which expects a parameter name in the
+           form ":name".
+        */
+        template <typename V>
+        chainer & bind( char const * pname, V v ){
+            this->assertPrepared();
+            return this->bind( this->sth->param_index(pname), v );
+        }
+
+        /**
+           Overload which is only useful for (char const *) and (void
+           const *) bindings (strings and blobs, respectively).
+        */
+        template <typename V>
+        chainer & bind( uint16_t ndx, V v, uint32_t len ){
+            this->assertHasBoundParams();
+            typedef col_bind<V> B;
+            B()( this->sth, ndx, v, len );
+            return *this;
+        }
+
+        /**
+           Convenience overload which expects a parameter name in the
+           form ":name".
+        */
+        template <typename V>
+        chainer & bind( char const * pname, V v, uint32_t len ){
+            this->assertPrepared();
+            return this->bind( this->sth->param_index(pname), v, len );
+        }
+
+        /**
+           Binds a formatted string to the given 1-based index.
+
+           @see cpdo_bind_string_f_v()
+        */
+        chainer & bind_f( uint16_t ndx, char const * fmt, ... );
+        /**
+           Binds a formatted string to the given 1-based index.
+
+           @see cpdo_bind_string_f_v()
+        */
+        chainer & bind_f_v( uint16_t ndx, char const * fmt, va_list );
+
+
+        /**
+           step()s the statement one time. If the statement is a
+           SELECT-like result set (i.e. it has a column count) AND if
+           failIfIsSelectAndIsEmpty is true AND if step() returns
+           false then this function throws.  If the query is not a
+           "fetching query" then the boolean parameter is ignored.
+        */
+        chainer & step( bool failIfIsSelectAndIsEmpty = true );
+
+        /**
+           For fetching queries, IFF step()ing the handle fetches a
+           row then f(XYZ, state) is called, where XYZ is a
+           stmt_row wrapper for this statement. f() is not called
+           if step() returns false (no row fetched) because the
+           internal state of the statement is unspecified at that
+           point.
+
+           For non-fetching queries this function throws because
+           the state of the statement would be unspecified
+           when we passed it to the callback.
+        */
+        template <typename State, typename Func>
+        chainer & step( Func f, State & state ) {
+            this->assertHasColumns();
+            if( this->sth->step() ){
+                stmt_row x(this->sth);
+                f( x, state );
+            }
+            return *this;
+        }
+
+        /**
+           Similar to the two-arg overload but f() is passed a
+           stmt_row statement wrapper as its only argument.
+
+           If you want a stateful functor, as opposed to a copy,
+           explicitly pass (Func &) as the template parameter type.
+        */
+        template <typename Func>
+        chainer & step( Func f ) {
+            this->assertHasColumns();
+            if( this->sth->step() ){
+                stmt_row x(this->sth);
+                f( x );
+            }
+            return *this;
+        }
+
+        /**
+           For non-fetching queries this function throws.  For
+           fetching queries this function loops over
+           statement::step(). Each time step() returns true f(XYZ,
+           state) is called, where XYZ is a stmt_row wrapper around
+           the current statement.
+
+           Returns this object.
+
+           Note that State will, if not specified explicitly, be a
+           const reference. If you need state to be copied by
+           non-const reference then specify it explicitly, e.g.:
+
+           @code
+           chain.step_each<MyState &>( myFunctor, myState );
+           @endcode
+        */
+        template <typename State, typename Func>
+        chainer & step_each( Func f, State & state ) {
+            this->assertHasColumns();
+            stmt_row x(this->sth);
+            while( this->sth->step() ){
+                f( x, state );
+            }
+            return *this;
+        }
+
+        /**
+           Similar to the two-arg overload but f() is passed a
+           stmt_row statement wrapper as its only argument.
+
+           If you want a stateful functor, as opposed to a copy,
+           explicitly pass (Func &) as the template parameter type.
+        */
+        template <typename Func>
+        chainer & step_each( Func f ) {
+            this->assertHasColumns();
+            stmt_row x(this->sth);
+            while( this->sth->step() ){
+                f( x );
+            }
+            return *this;
+        }
+
+        /**
+           Returns the underlying statement handle. Throws if
+           this object has not been prepare()d.
+        */
+        //statement & handle();
+
+        /**
+           Transfers ownership of the underlying statement handle to
+           the caller. Returns NULL if this object is not yet prepared
+           or has been finalize()d. After calling this, prepare() may
+           be legally called (again) on this object.
+        */
+        statement * take();
+
+        /**
+           Uses col_get<V> to select a get_xxx() implementation to call
+           and returns the column value using that conversion.
+        */
+        template <typename V>
+        typename col_get<V>::value_type value_at( uint16_t ndx ) {
+            this->assertHasColumns();
+            typedef col_get<V> B;
+            return B()(this->sth.handle(), ndx);
+        }
+
+        /**
+           Uses col_get<V> to select a get() implementation to call
+           and returns the column value using that conversion.  Only
+           usable with variants which take a (uint32_t &) as their 3rd
+           argument (string and blob).
+        */
+        template <typename V>
+        typename col_get<V>::value_type value_at( uint16_t ndx, uint32_t & sz ) {
+            this->assertHasColumns();
+            typedef col_get<V> B;
+            return B()(this->sth.handle(), ndx, sz);
+        }
+
+        /**
+           Like value_at(), but assigns the value to v and returns
+           this object.
+        */
+        template <typename V>
+        chainer & get( uint16_t ndx, V & v ) {
+            this->assertHasColumns();
+            v = this->value_at<V>( ndx );
+            return *this;
+        }
+
+        /**
+           Like the 2-arg form of value_at(), but assigns the result
+           value to v and returns this object.
+        */
+        template <typename V>
+        chainer & get( uint16_t ndx, V & v, uint32_t & len ) {
+            this->assertHasColumns();
+            v = this->value_at<V>( ndx, len );
+            return *this;
+        }
+
+
+    };
+
+
+    /**
+       A functor which converts a statement's column value to a
+       string. While the sqlite3 and MySQL drivers support this
+       natively for all of their types, the cpdo API does not require
+       them to be able to convert non-string types to strings. This
+       function checks the reported type of the column and implements
+       its own logic to convert the values to a string.
+
+       Notes:
+
+       - The data types CPDO_TYPE_CUSTOM and CPDO_TYPE_BLOB are
+       handled differently, depending on the values of the
+       customTypesAs and blobsAs members, respectively.
+
+       - When in "blob mode", binary data is emitted in the form
+       X'DEADBEEF'.
+
+       - SQL NULL values will be returned using the nullString value.
+
+       TODO: consider moving this functionality into
+       cpdo_driver_api. It's more work to do there but it is the only
+       way we can transparently handle db-specific custom types (we
+       currently assume/hope they can convert to a string).  Rather
+       than new functionality, we could require drivers to be capable
+       of converting non-string fields to strings. Since both the
+       sqlite3 and mysql5 drivers already do this, that would not be
+       such a deal-breaker in terms of required-vs-optional API
+       features.
+    */
+    struct col_to_string
+    {
+        /**
+           The string used to represent NULL values it must not be a
+           literal NULL (because we can't output those properly here).
+
+           Default = "NULL"
+        */
+        char const * nullString;
+
+        /**
+           Tells us how to render CPDO_TYPE_CUSTOM fields. It must
+           have one of values CPDO_TYPE_ERROR, CPDO_TYPE_STRING, or
+           CPDO_TYPE_BLOB.
+
+           Note that when set to CPDO_TYPE_BLOB, the blob's value
+           might represent the raw underlying native value (which
+           certainly is not useful outside of the driver's internals).
+           e.g. this is the case when using this option in conjunction
+           with MySQL5 time/date fields. For best results with those,
+           use CPDO_TYPE_STRING.
+
+           If this is set to CPDO_TYPE_ERROR then the to-string
+           conversion will fail with an exception for fields with the
+           type CPDO_TYPE_CUSTOM.
+
+           Default = CPDO_TYPE_STRING
+        */
+        cpdo_data_type customTypesAs;
+
+        /**
+           Tells us how to render CPDO_TYPE_BLOB fields. It must have
+           one of values CPDO_TYPE_ERROR, CPDO_TYPE_STRING, or
+           CPDO_TYPE_BLOB.
+
+           If this is set to CPDO_TYPE_BLOB then blobs get rendered
+           using X'DEADBEEF' notation. If it is set to
+           CPDO_TYPE_STRING then we naively assume the blob contains
+           legal ASCII/UTF8 data and convert it to a string.
+
+           If this is set to CPDO_TYPE_ERROR then the to-string
+           conversion will fail with an exception for fields with the
+           type CPDO_TYPE_BLOB.
+
+           Default = CPDO_TYPE_BLOB
+        */
+        cpdo_data_type blobsAs;
+
+        /**
+           Equivalent to col_to_string(NULL).
+         */
+        col_to_string();
+
+        /**
+           Initializes this object with the given NULL string. Passing
+           NULL is equivalent to passing the string "NULL".
+
+         */
+        explicit col_to_string(char const * nullString);
+
+        /**
+           Outputs a "lexical version" of the value at st's ndx'th
+           column to the given output iterator.
+
+           How BLOB and CUSTOM types are handled are determined by the
+           values of customTypesAs and blobsAs, respectively.
+
+           StmtLike must be a statement, stmt_row, or similar class
+           which offers GET access to statement data. If st is not in
+           a step()'d state then results of this call are undefined.
+        */
+        template <typename StmtLike, typename OutIter>
+        void operator()( StmtLike & st, uint16_t ndx, OutIter dest ) const{
+            static char const * hex = "0123456789ABCDEF";
+            cpdo_data_type const t = st.col_type(ndx);
+            char const * nullString = this->nullString;
+            if(! nullString ) nullString = "";
+#define DONULL std::copy( nullString, nullString+std::strlen(nullString), dest ); return
+            switch(t){
+              case CPDO_TYPE_NULL:
+                  DONULL;
+                  return;
+#define DONUM(VT) { uint32_t len = 0; char const * s = st.get_string( ndx, &len ); \
+                      if(!s || !len) { DONULL; }                        \
+                      else { std::copy( s, s+len, dest ); return; }     \
+                  } return
+                  /* Reminder: the CPDO interface does not require
+                     drivers to be able to convert non-string values
+                     to strings, but both the sqlite3 and mysql5
+                     drivers support it. If we ever add a driver which
+                     doesn't then we'll have to re-implement the
+                     numeric handling here..
+                   */
+              case CPDO_TYPE_INT8: DONUM(int8_t);
+              case CPDO_TYPE_INT16: DONUM(int16_t);
+              case CPDO_TYPE_INT32: DONUM(int32_t);
+              case CPDO_TYPE_INT64: DONUM(int64_t);
+              case CPDO_TYPE_FLOAT: DONUM(float);
+              case CPDO_TYPE_DOUBLE: DONUM(double);
+#undef DONUM
+              case CPDO_TYPE_CUSTOM: // try it as a string and hope for the best!
+              case CPDO_TYPE_BLOB:
+              case CPDO_TYPE_STRING:
+                  if((CPDO_TYPE_STRING==t)
+                     || ((CPDO_TYPE_BLOB==t) && (CPDO_TYPE_STRING==this->blobsAs))
+                     || ((CPDO_TYPE_CUSTOM==t) && (CPDO_TYPE_STRING==this->customTypesAs))
+                     )
+                  { /* treat it as a raw string value. */
+                      uint32_t len = 0;
+                      char const * mem = col_get<char const *>()( st, ndx, len );
+                      if(!mem || !len) { DONULL; }
+                      std::copy( mem, mem + len, dest );
+                      return;
+                  }
+                  else if(
+                          ((CPDO_TYPE_BLOB==t) && (CPDO_TYPE_BLOB==this->blobsAs))
+                          || ((CPDO_TYPE_CUSTOM==t) && (CPDO_TYPE_BLOB==this->customTypesAs))
+                          )
+                  { /* write out the blob in the form X'deadbeef',
+                       which is supported by sqlite3 and MySQL. */
+                      uint32_t len = 0;
+                      unsigned char const * mem = (unsigned char const *)col_get<void const *>()( st, ndx, len );
+                      if(!mem || !len) { DONULL; }
+                      std::ostringstream os;
+                      *dest++ = 'X';
+                      *dest++ = '\'';
+                      for( uint32_t i = 0; i < len; ++i ){
+                          const unsigned short ch = mem[i];
+                          *dest++ = hex[((ch>>4)&0xf)];
+                          *dest++ = hex[(ch&0xf)];
+                      }
+                      *dest++ = '\'';
+                      return;
+                  }
+#undef DONULL
+                  // else fall through to the error case...
+              default: {
+                  std::ostringstream os;
+                  os << "Unhandled data type (#"<<t<<") in col_lex() conversion.";
+                  throw exception(cpdo_rc.TypeError, false, os.str());
+              }
+            }
+            assert(0 && "You shouldn't have gotten this far.");
+        }
+        
+        /**
+           Converts st's ndx'th column to a string value. See the
+           class-level docs for more details.
+         */
+        std::string operator()( statement & st, uint16_t ndx ) const;
+
+    };
+
+#if 0
+    /**
+       Uses a default-constructed col_to_string() to convert st's ndx'th
+       column to a string.
+    */
+    std::string col_lex( statement & st, uint16_t ndx );
+
+    /**
+       Uses a default-constructed col_to_string() to convert st's ndx'th
+       column to a string.
+    */
+    std::string col_lex( stmt_row & st, uint16_t ndx );
+#endif
+
 #undef THROWS_ON_ERROR
 }
 #endif /* WANDERINGHORSE_NET_CPDO_CPDO_HPP_H_INCLUDED */

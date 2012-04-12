@@ -193,17 +193,20 @@
         is called in a loop, where N is the set [0,opt.columnCount).
     */
     sp.bind = function(opt) {
-        if( (1!==arguments.length) || !(opt instanceof ctor.Statement) )
-            return origImpls.bind.apply(this, argvToArray(arguments));
+        if( (1!==arguments.length) || !(opt instanceof ctor.Statement) ) {
+            origImpls.bind.apply(this, argvToArray(arguments));
+            return this;
+        }
         else if( ! opt.columnCount )
-            throw new Error("Statement to bind from has no result columns.");
+            throw new Error("Source Statement has no result columns.");
         else if( opt.columnCount !== this.paramCount )
             throw new Error("Source and destination column counts do not match "+
                             opt.columnCount+' vs. '+this.paramCount);
-        var i;
-        for( i = 0; i < opt.columnCount;++i ) {
+        var i, l = opt.columnCount;
+        for( i = 0; i < l;++i ) {
             this.bind( 1+i, opt.get(i) );
         }
+        return this;
     };
             
 
