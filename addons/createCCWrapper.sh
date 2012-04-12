@@ -20,7 +20,7 @@ name=$2
 function gen_h() {
 cat <<EOF
 
-#include <cvv8/ClassCreator.hpp>
+#include "cvv8/ClassCreator.hpp"
 
 namespace cvv8 {
     CVV8_TypeName_DECL((${class}));
@@ -76,8 +76,8 @@ EOF
 
 function gen_cpp(){
 cat <<EOF
-#include <cvv8/XTo.hpp>
-#include <cvv8/properties.hpp>
+#include "cvv8/XTo.hpp"
+#include "cvv8/properties.hpp"
 EOF
 
 
