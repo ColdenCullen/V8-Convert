@@ -1550,10 +1550,15 @@ namespace cvv8 {
     /** Partial specialization for std::list<>. */
     template <typename T>
     struct JSToNative< std::list<T> > : JSToNative_list< std::list<T> > {};
+    template <typename T>
+    struct JSToNative< std::list<T> const & > : JSToNative< std::list<T> > {};
 
+    
     /** Partial specialization for std::vector<>. */
     template <typename T>
     struct JSToNative< std::vector<T> > : JSToNative_list< std::vector<T> > {};
+    template <typename T>
+    struct JSToNative< std::vector<T> const & > : JSToNative< std::vector<T> > {};
 
 #if 0 // untested code
     /**

@@ -107,21 +107,21 @@ cat <<EOF
 
 EOF
 
-    local FAC="ClassCreator_Factor<${class} >"
+    local FAC="ClassCreator_Factory<${class} >"
 cat <<EOF
-    static ${FAC}::ReturnType ${FAC}::Create( v8::Persistent<v8::Object> &, v8::Arguments const & argv ){
+    ${FAC}::ReturnType ${FAC}::Create( v8::Persistent<v8::Object> &, v8::Arguments const & argv ){
         return new ${class};
     }
 
-    static void ${FAC}::Delete( ${class} * obj ){
+    void ${FAC}::Delete( ${class} * obj ){
         if(obj) delete obj;
     }
 EOF
 
 cat <<EOF
-    void ClassCreator_SetupBindings<typename ${class} >::Initialize( v8::Handle<v8::Object> const & target ){
+    void ClassCreator_SetupBindings< ${class} >::Initialize( v8::Handle<v8::Object> const & target ){
         typedef ${class} T;
-        typedef ClassCreator<T> CC:
+        typedef ClassCreator<T> CC;
         CC & cc( CC::Instance() );
         if( cc.IsSealed() ){
             cc.AddClassTo( TypeName<T>::Value, target );

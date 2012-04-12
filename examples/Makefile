@@ -5,6 +5,7 @@
 TOP_DIR := ../
 include $(TOP_DIR)/config.make # see that file for certain configuration options.
 
+CXXFLAGS += -std=c++0x
 ConvertDemo.o: ConvertDemo.cpp
 SHELL.DIR := $(TOP_DIR)/addons/shell-skel
 demo.BIN.OBJECTS := demo.o ConvertDemo.o

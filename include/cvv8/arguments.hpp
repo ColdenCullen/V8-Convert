@@ -376,9 +376,9 @@ namespace cvv8 {
     
         Index = arg index to check.
         
-        T is a type for which ValIs<T> is legal. The functor
-        returns true if ValIs<T> returns true the argument
-        at the given index.
+        T is a type for which ValIs<T> is legal. The functor returns
+        true if ValIs<T> returns true for the argument at the given
+        index.
     */
     template <unsigned short Index, typename T>
     struct ArgAt_IsA : ArgAt_Is< Index, ValIs<T> > {};

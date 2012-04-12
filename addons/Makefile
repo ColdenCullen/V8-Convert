@@ -1,9 +1,18 @@
 #!/usr/bin/make -f
 default: all
 
-SUBDIRS := bytearray curl expat glob \
-	jspdo readline shell-skel socket \
-	sprintf time whio 
+SUBDIRS := bytearray \
+	curl \
+	expat \
+	glob \
+	jspdo \
+	pathfinder \
+	readline \
+	shell-skel \
+	socket \
+	sprintf \
+	time \
+	whio 
 
 .PHONY: $(SUBDIRS)
 $(SUBDIRS):
