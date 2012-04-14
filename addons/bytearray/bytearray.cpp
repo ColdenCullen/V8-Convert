@@ -446,6 +446,7 @@ v8::Handle<v8::Value> JSByteArray::gunzip() const
     int const rc = this->gunzipTo( *ba );
     if( rc != Z_OK )
     {
+        CW::DestroyObject(jba);
         cv::StringBuffer msg;
         msg << "Gunzip operation failed with code = " << rc 
             << " (" 
