@@ -389,6 +389,9 @@ int JSByteArray::gunzipTo( JSByteArray & dest ) const
 
 v8::Handle<v8::Value> JSByteArray::gzip() const
 {
+#if ! ByteArray_CONFIG_ENABLE_ZLIB
+    return Toss("zlib functionality was not compiled in.");
+#else
     v8::HandleScope sc;
     typedef cv::ClassCreator<JSByteArray> CW;
     v8::Handle<v8::Object> jba =
@@ -401,15 +404,34 @@ v8::Handle<v8::Value> JSByteArray::gzip() const
         return v8::ThrowException( msg.toError() );
     }
     int const rc = this->gzipTo( *ba );
-    if( rc )
+    if( rc != Z_OK )
     {
         CW::Instance().DestroyObject( jba );
-        return v8::Null();
+        cv::StringBuffer msg;
+        msg << "Gzip operation failed with code = " << rc 
+            << " (" 
+            <<  (   (rc == Z_STREAM_END)    ?   "Z_STREAM_END"  
+                :   (rc == Z_NEED_DICT)     ?   "Z_NEED_DICT"  
+                :   (rc == Z_ERRNO)         ?   "Z_ERRNO"  
+                :   (rc == Z_STREAM_ERROR)  ?   "Z_STREAM_ERROR"  
+                :   (rc == Z_DATA_ERROR)    ?   "Z_DATA_ERROR"  
+                :   (rc == Z_MEM_ERROR)     ?   "Z_MEM_ERROR"  
+                :   (rc == Z_BUF_ERROR)     ?   "Z_BUF_ERROR"  
+                :   (rc == Z_VERSION_ERROR) ?   "Z_VERSION_ERROR"  
+                :                               "UNKNOWN"
+                )
+            << ")";
+        return v8::ThrowException( msg.toError() );
+        //return v8::Null();
     }
     return sc.Close(jba);
+#endif
 }
 v8::Handle<v8::Value> JSByteArray::gunzip() const
 {
+#if ! ByteArray_CONFIG_ENABLE_ZLIB
+    return Toss("zlib functionality was not compiled in.");
+#else
     v8::HandleScope sc;
     typedef cv::ClassCreator<JSByteArray> CW;
     v8::Handle<v8::Object> jba =
@@ -422,12 +444,27 @@ v8::Handle<v8::Value> JSByteArray::gunzip() const
         return v8::ThrowException( msg.toError() );
     }
     int const rc = this->gunzipTo( *ba );
-    if( rc )
+    if( rc != Z_OK )
     {
-        CW::Instance().DestroyObject( jba );
-        return v8::Null();
+        cv::StringBuffer msg;
+        msg << "Gunzip operation failed with code = " << rc 
+            << " (" 
+            <<  (   (rc == Z_STREAM_END)    ?   "Z_STREAM_END"  
+                :   (rc == Z_NEED_DICT)     ?   "Z_NEED_DICT"  
+                :   (rc == Z_ERRNO)         ?   "Z_ERRNO"  
+                :   (rc == Z_STREAM_ERROR)  ?   "Z_STREAM_ERROR"  
+                :   (rc == Z_DATA_ERROR)    ?   "Z_DATA_ERROR"  
+                :   (rc == Z_MEM_ERROR)     ?   "Z_MEM_ERROR"  
+                :   (rc == Z_BUF_ERROR)     ?   "Z_BUF_ERROR"  
+                :   (rc == Z_VERSION_ERROR) ?   "Z_VERSION_ERROR"  
+                :                               "UNKNOWN"
+                )
+            << ")";
+        return v8::ThrowException( msg.toError() );
+        //return v8::Null();
     }
     return sc.Close(jba);
+#endif
 }
 
 
