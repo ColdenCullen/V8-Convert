@@ -1,14 +1,4 @@
 #include "cpdo_amalgamation.hpp"
-#if CPDO_ENABLE_SQLITE3
-namespace {
-    static const int registration_sq3 = cpdo_driver_sqlite3_register();
-}
-#endif /*CPDO_ENABLE_SQLITE3*/
-#if CPDO_ENABLE_MYSQL5
-namespace {
-    static const int registration_my5 = cpdo_driver_mysql5_register();
-}
-#endif /*CPDO_ENABLE_MYSQL5*/
 /* start of file cpdo_amalgamation.c */
 #if !defined(__STDC_FORMAT_MACROS) /* required for PRIi32 and friends.*/
 #  define __STDC_FORMAT_MACROS
@@ -110,6 +100,7 @@ X,X,X,X,X,
 X,X,X,X,X
 #undef X
 };
+static char cpdo_bind_val_empty_blob = 0;
 
 /**
    Searches for a registered driver with the given name. If one is
@@ -404,7 +395,19 @@ int cpdo_bind_val_clean( cpdo_bind_val * b )
               break;
           case CPDO_TYPE_BLOB:
           case CPDO_TYPE_STRING:
-              free( b->valu.blob.mem );
+#if 1
+              if( &cpdo_bind_val_empty_blob != b->valu.blob.mem ) {
+                  free( b->valu.blob.mem );
+#if 0
+                  assert(b->valu.blob.length && "WTF is this coming from?");
+#endif
+              }
+#else
+              /* this is leaking from somewhere! */
+              if( b->valu.blob.length ) {
+                  free( b->valu.blob.mem );
+              }
+#endif
               b->valu.blob.length = 0;
               b->valu.blob.mem = NULL;
               /* fall through */
@@ -554,35 +557,17 @@ static int cpdo_bind_val_strblob( cpdo_bind_val * b, char isString, void const *
             }
         }
         cpdo_bind_val_clean(b);
-        if( NULL != v
-            /* even if len is 0, so we treat literal null and empty
-               string differently*/
-            )
+        mem = len ? malloc(len+1) : &cpdo_bind_val_empty_blob;
+        if( NULL == mem ) return cpdo_rc.AllocError;
+        else
         {
-            mem = malloc(len+1);
-            if( NULL == mem ) return cpdo_rc.AllocError;
-            else
-            {
-                memcpy( mem, v, len+1 );
+            if(len){
+                if(v) memcpy( mem, v, len );
+                else memset( mem, 0, len );
                 ((char *)mem)[len] = 0;
-                b->type = isString ? CPDO_TYPE_STRING : CPDO_TYPE_BLOB;
-                b->valu.blob.mem = mem;
-                b->valu.blob.length = len;
-                return 0;
             }
-        }
-        else if( ! len )
-        {
             b->type = isString ? CPDO_TYPE_STRING : CPDO_TYPE_BLOB;
-            b->valu.blob.mem = NULL;
-            b->valu.blob.length = 0;
-            return 0;
-        }
-        else /* allocate the blob ourselves. */
-        {
-            b->type = isString ? CPDO_TYPE_STRING : CPDO_TYPE_BLOB;
-            b->valu.blob.mem = calloc(len+1,1);
-            if( ! b->valu.blob.mem ) return cpdo_rc.AllocError;
+            b->valu.blob.mem = mem;
             b->valu.blob.length = len;
             return 0;
         }
@@ -3760,18 +3745,38 @@ static int cpdo_sq3_error_info( cpdo_driver * self, char const ** dest, uint32_t
     }
 }
 
-    
+#define TRY_SHARED_STRINGS 1
+#if TRY_SHARED_STRINGS
+static struct {
+    char sql_null[5];
+    char quoted_empty[3];
+} sq3_shared_strings = {
+{'N','U','L','L',0},
+{'\'','\'',0}
+};
+#endif
 static int cpdo_sq3_sql_quote( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
 {
     DRV_DECL(cpdo_rc.ArgError);
     if( ! len || !dest ) return cpdo_rc.ArgError;
     else if( NULL == str )
     {
+#if TRY_SHARED_STRINGS
+        *dest = sq3_shared_strings.sql_null;
+        *len = 4;
+        return 0;
+#else
         char * tmp = (char *)malloc(5);
         if( ! tmp ) return cpdo_rc.AllocError;
         strcpy( tmp, "NULL" );
         *dest = tmp;
         *len = 4;
+        return 0;
+#endif
+    }
+    else if(!*str || !*len){
+        *dest = sq3_shared_strings.quoted_empty;
+        *len = 2;
         return 0;
     }
     else
@@ -3810,7 +3815,18 @@ static int cpdo_sq3_sql_qualify( cpdo_driver * self, char const * str, uint32_t 
     
 static int cpdo_sq3_free_string( cpdo_driver * self, char * str)
 {
-    return str ? (free(str),0) : cpdo_rc.ArgError;
+    if(!self || !str) return cpdo_rc.ArgError;
+#if TRY_SHARED_STRINGS
+    else if( ((void const *)str >= (void const *)&sq3_shared_strings)
+        && ((void const *)str < (void const *)((unsigned char *)&sq3_shared_strings + sizeof(sq3_shared_strings)))){
+        return 0;
+    }
+    else
+#endif
+    {
+        free(str);
+        return 0;
+    }
 }
 
 static int cpdo_sq3_prepare( cpdo_driver * self, cpdo_stmt ** tgt, char const * sql, uint32_t len )
@@ -4132,31 +4148,27 @@ static int cpdo_sq3_stmt_bind_string( cpdo_stmt * self, uint16_t ndx, char const
 {
     int rc;
     STMT_DECL(cpdo_rc.ArgError);
-    if( v )
-    {
-        rc = sqlite3_bind_text( stmt->stmt, (int)ndx, (char const *)v, (int)len, SQLITE_TRANSIENT );
-    }
-    else
-    {
+    if(!v){
         rc = sqlite3_bind_null( stmt->stmt, (int)ndx );
+    }
+    else {
+        rc = sqlite3_bind_text( stmt->stmt, (int)ndx, v, len, SQLITE_TRANSIENT );
     }
     SQ3_TO_CPDO_BIND_RC(rc);
 }
 
 static int cpdo_sq3_stmt_bind_blob( cpdo_stmt * self, uint16_t ndx, void const * v, uint32_t len )
 {
-    
-    if( (NULL == v) || (0==len) )
-    {
-        return cpdo_sq3_stmt_bind_null( self, ndx );
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    if(!v){
+        rc = sqlite3_bind_null( stmt->stmt, (int)ndx );
     }
-    else
-    { 
-        int rc;
-        STMT_DECL(cpdo_rc.ArgError);
+    else {
+        if( len != (uint32_t) ((int)len) ) return cpdo_rc.RangeError;
         rc = sqlite3_bind_blob( stmt->stmt, (int)ndx, v, (int)len, SQLITE_TRANSIENT );
-        SQ3_TO_CPDO_BIND_RC(rc);
     }
+    SQ3_TO_CPDO_BIND_RC(rc);
 }
 #undef SQ3_TO_CPDO_BIND_RC
 
@@ -4269,16 +4281,36 @@ static int cpdo_sq3_stmt_get_blob_ndx( cpdo_stmt * self, uint16_t ndx, void cons
     else STMT_CHECK_GET_NDX;
     else
     {
-        *val = sqlite3_column_blob( stmt->stmt, (int)ndx )
-            /* reminder: sqlite3_column_blob() returns NULL for
-               length-zero blobs. */
-                ;
-        if( len )
-        {
-            *len = *val
-                ? (uint32_t)sqlite3_column_bytes( stmt->stmt, (int)ndx )
-                : 0
-                ;
+        static char zeroLenBlob = {0};
+        cpdo_data_type ty = CPDO_TYPE_ERROR;
+        int const rc = cpdo_sq3_stmt_get_type_ndx( self, ndx, &ty );
+        assert(0 == rc);
+        assert( CPDO_TYPE_ERROR != ty );
+        switch( ty ){
+          case CPDO_TYPE_NULL:
+              *val = NULL;
+              if(len) *len = 0;
+              break;
+          default:
+              *val = sqlite3_column_blob( stmt->stmt, (int)ndx )
+                  /* reminder: sqlite3_column_blob() returns NULL for
+                     length-zero blobs. */
+                  ;
+              if(!*val){
+                  if(len) *len = 0;
+                  *val = &zeroLenBlob;
+              }
+              else if( len ){
+                  *len = (uint32_t)sqlite3_column_bytes( stmt->stmt, (int)ndx )
+                      /*
+                        reminder: sqlite3_column_bytes()'s return
+                        value can potentially be way off if the value
+                        is UTF16:
+                        
+                        http://www.sqlite.org/c3ref/column_blob.html
+                      */
+                      ;
+              }
         }
         return 0;
     }
@@ -4304,7 +4336,7 @@ static cpdo_driver_details const * cpdo_sq3_driver_details()
 {
     static const cpdo_driver_details bob = {
     CPDO_DRIVER_NAME/*driver_name*/,
-    "20110131"/*driver_version*/,
+    "20120413"/*driver_version*/,
     "Dual Public Domain/MIT"/*license*/,
     "http://fossil.wanderinghorse.net/repos/cpdo/",
     "Stephan Beal (http://wanderinghorse.net)"
@@ -4327,7 +4359,994 @@ int cpdo_driver_sqlite3_register()
 #undef DRV_DECL
 #undef STMT_DECL
 #undef CPDO_DRIVER_NAME
-#endif /*CPDO_ENABLE_SQLITE3*/
+#undef TRY_SHARED_STRINGS
+#endif
+/*CPDO_ENABLE_SQLITE3*/
+#if CPDO_ENABLE_SQLITE4
+/** @file cpdo_sqlite4.c
+    
+   sqlite4 driver implementation for cpdo_driver interface.
+
+   Peculiarities vis-a-vis the interface specification:
+
+   - This is the reference driver implementation, and has no known
+   incompatibilities with the interface's required features.
+
+
+   Using this driver:
+
+   The simplest approach is to link it to you app and do:
+
+   @code
+   extern int cpdo_driver_sqlite4_register();
+   ...
+   cpdo_driver_sqlite4_register();
+   @endcode
+
+   If you are using C++, or can use C++ for one file of your
+   project, you can have that code automatically run by assigning
+   a dummy static variable like this:
+
+   @code
+   namespace { static int reg_sqlite4 = cpdo_driver_sqlite4_register(); }
+   @endcode
+
+   
+*/
+#include <assert.h>
+#include <sqlite4.h>
+#include <stdlib.h> /* malloc()/free() */
+#include <string.h> /* strlen() */
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+/************************************************************************
+ cpdo_driver_api members:
+************************************************************************/
+#define CPDO_DRIVER_NAME "sqlite4"
+int cpdo_sq4_connect( cpdo_driver * self, cpdo_connect_opt const * opt );
+static int cpdo_sq4_sql_quote( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
+static int cpdo_sq4_sql_qualify( cpdo_driver * self, char const * src, uint32_t * len, char ** dest );
+static int cpdo_sq4_free_string( cpdo_driver * self, char * str);
+static int cpdo_sq4_prepare( cpdo_driver * self, cpdo_stmt ** tgt, char const * sql, uint32_t len );
+static int cpdo_sq4_error_info( cpdo_driver * self, char const ** dest, uint32_t * len, int * errorCode );
+static char cpdo_sq4_is_connected( cpdo_driver * self );
+static int cpdo_sq4_close( cpdo_driver * self );
+static int cpdo_sq4_last_insert_id( cpdo_driver * self, uint64_t * v, char const * hint );
+static cpdo_driver_details const * cpdo_sq4_driver_details();
+
+static int cpdo_sq4_driver_begin_transaction( cpdo_driver * self );
+static int cpdo_sq4_driver_commit( cpdo_driver * self );
+static int cpdo_sq4_driver_rollback( cpdo_driver * self );
+static char cpdo_sq4_driver_in_trans( cpdo_driver * self );
+
+static int cpdo_sq4_driver_opt_set( cpdo_driver * self, char const * key, va_list vargs );
+static int cpdo_sq4_driver_opt_get( cpdo_driver * self, char const * key, va_list vargs );
+
+const cpdo_driver_api cpdo_sq4_driver_api =
+{
+    cpdo_sq4_driver_details,
+    cpdo_sq4_connect,
+    cpdo_sq4_sql_quote,
+    cpdo_sq4_sql_qualify,
+    cpdo_sq4_free_string,
+    cpdo_sq4_prepare,
+    cpdo_sq4_error_info,
+    cpdo_sq4_is_connected,
+    cpdo_sq4_close,
+    cpdo_sq4_last_insert_id,
+    {/*transaction*/
+         cpdo_sq4_driver_begin_transaction,
+         cpdo_sq4_driver_commit,
+         cpdo_sq4_driver_rollback,
+         cpdo_sq4_driver_in_trans
+    },
+    {/*opt*/
+        cpdo_sq4_driver_opt_set,
+        cpdo_sq4_driver_opt_get
+    },
+    {/*constants*/
+        CPDO_DRIVER_NAME /*driver_name*/
+    }
+};
+
+/************************************************************************
+cpdo_stmt_api members...
+************************************************************************/
+static cpdo_step_code cpdo_sq4_stmt_step( cpdo_stmt * self );
+static int cpdo_sq4_stmt_error_info( cpdo_stmt * self, char const ** dest, uint32_t * len, int * errorCode );
+static uint16_t cpdo_sq4_stmt_column_count( cpdo_stmt * self );
+static char const * cpdo_sq4_stmt_column_name( cpdo_stmt * self, uint16_t ndx );
+static int cpdo_sq4_stmt_reset( cpdo_stmt * self );
+static uint16_t cpdo_sq4_stmt_bind_count( cpdo_stmt * self );
+static uint16_t cpdo_sq4_stmt_param_index( cpdo_stmt * self, char const * name );
+static char const * cpdo_sq4_stmt_param_name( cpdo_stmt * self, uint16_t ndx );
+static int cpdo_sq4_stmt_bind_null( cpdo_stmt * self, uint16_t ndx );
+static int cpdo_sq4_stmt_bind_int8( cpdo_stmt * self, uint16_t ndx, int8_t v );
+static int cpdo_sq4_stmt_bind_int16( cpdo_stmt * self, uint16_t ndx, int16_t v );
+static int cpdo_sq4_stmt_bind_int32( cpdo_stmt * self, uint16_t ndx, int32_t v );
+static int cpdo_sq4_stmt_bind_int64( cpdo_stmt * self, uint16_t ndx, int64_t v );
+static int cpdo_sq4_stmt_bind_float( cpdo_stmt * self, uint16_t ndx, float v );
+static int cpdo_sq4_stmt_bind_double( cpdo_stmt * self, uint16_t ndx, double v );
+static int cpdo_sq4_stmt_bind_string( cpdo_stmt * self, uint16_t ndx, char const * v, uint32_t len );
+static int cpdo_sq4_stmt_bind_blob( cpdo_stmt * self, uint16_t ndx, void const * v, uint32_t len );
+static int cpdo_sq4_stmt_get_type_ndx( cpdo_stmt * self, uint16_t ndx, cpdo_data_type * val );
+static int cpdo_sq4_stmt_get_int8_ndx( cpdo_stmt * self, uint16_t ndx, int8_t * val );
+static int cpdo_sq4_stmt_get_int16_ndx( cpdo_stmt * self, uint16_t ndx, int16_t * val );
+static int cpdo_sq4_stmt_get_int32_ndx( cpdo_stmt * self, uint16_t ndx, int32_t * val );
+static int cpdo_sq4_stmt_get_int64_ndx( cpdo_stmt * self, uint16_t ndx, int64_t * val );
+static int cpdo_sq4_stmt_get_float_ndx( cpdo_stmt * self, uint16_t ndx, float * val );
+static int cpdo_sq4_stmt_get_double_ndx( cpdo_stmt * self, uint16_t ndx, double * val );
+static int cpdo_sq4_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char const ** val, uint32_t * len );
+static int cpdo_sq4_stmt_get_blob_ndx( cpdo_stmt * self, uint16_t ndx, void const ** v, uint32_t * len );
+static int cpdo_sq4_stmt_finalize( cpdo_stmt * self );
+const cpdo_stmt_api cpdo_sq4_stmt_api = {
+    cpdo_sq4_stmt_step,
+    cpdo_sq4_stmt_error_info,
+    cpdo_sq4_stmt_finalize,
+    {/*bind*/
+        cpdo_sq4_stmt_reset,
+        cpdo_sq4_stmt_bind_count,
+        cpdo_sq4_stmt_param_index,
+        cpdo_sq4_stmt_param_name,
+        cpdo_sq4_stmt_bind_null,
+        cpdo_sq4_stmt_bind_int8,
+        cpdo_sq4_stmt_bind_int16,
+        cpdo_sq4_stmt_bind_int32,
+        cpdo_sq4_stmt_bind_int64,
+        cpdo_sq4_stmt_bind_float,
+        cpdo_sq4_stmt_bind_double,
+        cpdo_sq4_stmt_bind_string,
+        cpdo_sq4_stmt_bind_blob
+    },
+    {/*get*/
+        cpdo_sq4_stmt_column_count,
+        cpdo_sq4_stmt_column_name,
+        cpdo_sq4_stmt_get_type_ndx,
+        cpdo_sq4_stmt_get_int8_ndx,
+        cpdo_sq4_stmt_get_int16_ndx,
+        cpdo_sq4_stmt_get_int32_ndx,
+        cpdo_sq4_stmt_get_int64_ndx,
+        cpdo_sq4_stmt_get_float_ndx,
+        cpdo_sq4_stmt_get_double_ndx,
+        cpdo_sq4_stmt_get_string_ndx,
+        cpdo_sq4_stmt_get_blob_ndx
+    }
+};
+
+
+
+typedef struct cpdo_sq4_stmt cpdo_sq4_stmt;
+static int cpdo_sq4_stmt_free(cpdo_sq4_stmt *s);
+static cpdo_sq4_stmt * cpdo_sq4_stmt_alloc();
+
+typedef struct cpdo_sq4_driver cpdo_sq4_driver;
+static int cpdo_sq4_driver_free(cpdo_sq4_driver *d);
+static cpdo_sq4_driver * cpdo_sq4_driver_alloc();
+
+static struct {
+    int envInitCount;
+} Sq4State = {
+0 /* envInitCount */
+};
+
+struct cpdo_sq4_driver
+{
+    sqlite4 * db;
+    char inTransaction;
+    cpdo_driver self;
+};
+
+
+struct cpdo_sq4_stmt
+{
+    sqlite4_stmt * stmt;
+    cpdo_sq4_driver * driver;
+    cpdo_stmt self;
+};
+
+const cpdo_sq4_driver cpdo_sq4_driver_empty = {
+    NULL /*db*/,
+    0/*inTransaction*/,
+    {/*self*/
+        &cpdo_sq4_driver_api /*api*/,
+        NULL /*impl*/
+    }
+};
+
+const cpdo_sq4_stmt cpdo_sq4_stmt_empty = {
+    NULL /*stmt*/,
+    NULL /*driver*/,
+    {/*self*/
+        &cpdo_sq4_stmt_api /*api*/,
+        NULL /*impl*/
+    }
+};
+
+static cpdo_sq4_driver * cpdo_sq4_driver_alloc()
+{
+    cpdo_sq4_driver * s = (cpdo_sq4_driver*)malloc(sizeof(cpdo_sq4_driver));
+    if( s )
+    {
+        *s = cpdo_sq4_driver_empty;
+        s->self.impl = s;
+    }
+    return s;
+}
+
+static int cpdo_sq4_driver_free(cpdo_sq4_driver *d)
+{
+    int rc = cpdo_rc.ArgError;
+    if( d )
+    {
+        rc = 0;
+        if( d->db )
+        {
+            rc = sqlite4_close(d->db);
+            if(rc) rc = cpdo_rc.UnknownError
+                /* we can't use CheckDbError
+                   here because we're destroying the
+                   db the client would be checking.
+                */
+                ;
+        }
+        *d = cpdo_sq4_driver_empty;
+        free(d);
+    }
+    if(0==--Sq4State.envInitCount){
+        sqlite4_shutdown(NULL);
+    }
+    return rc;
+}
+
+
+/**
+   Allocates a new cpdo_sq4_stmt and initializes
+   its self.impl member to point to the returned
+   object.
+*/
+static cpdo_sq4_stmt * cpdo_sq4_stmt_alloc()
+{
+    cpdo_sq4_stmt * s = (cpdo_sq4_stmt*)malloc(sizeof(cpdo_sq4_stmt));
+    if( s )
+    {
+        *s = cpdo_sq4_stmt_empty;
+        s->self.impl = s;
+    }
+    return s;
+}
+
+/**
+   Frees all resources belonging to this statement.  It can return
+   non-0, but there is no generic recovery strategy for this, and s is
+   freed regardless of whether or not sqlite4_finalize() succeeds.
+*/
+static int cpdo_sq4_stmt_free(cpdo_sq4_stmt *s)
+{
+    int rc = cpdo_rc.ArgError;
+    if( s )
+    {
+        rc = 0;
+        if( s->stmt )
+        {
+            rc = sqlite4_finalize(s->stmt);
+            if(0 != rc ) rc = cpdo_rc.CheckDbError;
+        }
+        *s = cpdo_sq4_stmt_empty;
+        free(s);
+    }
+    return rc;
+}
+
+
+int cpdo_sq4_driver_new( cpdo_driver ** tgt )
+{
+    if( ! tgt ) return cpdo_rc.ArgError;
+    else
+    {
+        cpdo_sq4_driver * d = cpdo_sq4_driver_alloc();
+        if( d )
+        {
+            *tgt = &d->self;
+            return 0;
+        }
+        else return cpdo_rc.AllocError;
+    }
+}
+
+#define DRV_DECL(RC) cpdo_sq4_driver * drv = (self && self->impl && (self->api==&cpdo_sq4_driver_api)) \
+        ? (cpdo_sq4_driver *)self->impl : NULL; \
+    if( ! drv ) return RC
+#define STMT_DECL(RC) cpdo_sq4_stmt * stmt = (self && self->impl && (self->api==&cpdo_sq4_stmt_api)) \
+        ? (cpdo_sq4_stmt *)self->impl : NULL; \
+    if( ! stmt ) return RC
+
+static int cpdo_sq4_last_insert_id( cpdo_driver * self, uint64_t * v, char const * hint )
+{
+#if 1
+    return cpdo_rc.UnsupportedError;
+#else
+    DRV_DECL(cpdo_rc.ArgError);
+    if( ! v ) return cpdo_rc.ArgError;
+#if 0 /* enabling this adds LOTS of mallocs()! */
+    else if(hint && *hint) { /* check sqlite_sequence table... */
+        char const * sql = "SELECT seq FROM sqlite_sequence WHERE name=?";
+        sqlite4_stmt * st3 = NULL;
+        int rc = sqlite4_prepare( drv->db, sql, (int)strlen(sql), &st3, NULL );
+        if(rc){
+            return cpdo_rc.CheckDbError;
+        }
+        rc = sqlite4_bind_text( st3, 1, hint, (int)strlen(hint), SQLITE4_STATIC );
+        if(rc) goto end;
+        rc = sqlite4_step( st3 );
+        if( SQLITE4_ROW != rc ) {
+            *v = sqlite4_last_insert_rowid(drv->db);
+            rc = 0;
+            goto end;
+        }
+        rc = 0;
+        *v = (uint64_t) sqlite4_column_int64( st3, 0 );
+        end:
+        sqlite4_finalize(st3);
+        return rc ? cpdo_rc.CheckDbError : 0;;
+    }
+#endif
+    else
+    {
+        *v = sqlite4_last_insert_rowid(drv->db);
+        return 0;
+    }
+#endif
+}
+static int cpdo_sq4_close( cpdo_driver * self )
+{
+    DRV_DECL(cpdo_rc.ArgError);
+    return cpdo_sq4_driver_free(drv);
+}
+
+static char cpdo_sq4_is_connected( cpdo_driver * self )
+{
+    DRV_DECL(0);
+    return drv->db ? 1 : 0;
+}
+
+static int cpdo_sq4_error_info( cpdo_driver * self, char const ** dest, uint32_t * len, int * errorCode )
+{
+    DRV_DECL(cpdo_rc.ArgError);
+    if( ! drv->db ) return cpdo_rc.ConnectionError;
+    else
+    {
+        if( errorCode ) *errorCode = sqlite4_errcode(drv->db);
+        if( dest )
+        {
+            *dest = sqlite4_errmsg(drv->db);
+            if( len )
+            {
+                *len = *dest ? strlen(*dest) : 0;
+            }
+        }
+        return 0;
+    }
+}
+
+    
+#define TRY_SHARED_STRINGS 1
+#if TRY_SHARED_STRINGS
+static struct {
+    char sql_null[5];
+    char quoted_empty[3];
+} sq4_shared_strings = {
+{'N','U','L','L',0},
+{'\'','\'',0}
+};
+#endif
+static int cpdo_sq4_sql_quote( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
+{
+    DRV_DECL(cpdo_rc.ArgError);
+    if( ! len || !dest ) return cpdo_rc.ArgError;
+    else if( NULL == str )
+    {
+#if TRY_SHARED_STRINGS
+        *dest = sq4_shared_strings.sql_null;
+        *len = 4;
+        return 0;
+#else
+        char * tmp = (char *)malloc(5);
+        if( ! tmp ) return cpdo_rc.AllocError;
+        strcpy( tmp, "NULL" );
+        *dest = tmp;
+        *len = 4;
+        return 0;
+#endif
+    }
+    else if(!*str || !*len){
+        *dest = sq4_shared_strings.quoted_empty;
+        *len = 2;
+        return 0;
+    }
+    else
+    {
+        return cpdo_sql_escape( str, len, dest,
+                                '\'',
+                                '\'',
+                                1 );
+    }
+}
+
+static int cpdo_sq4_sql_qualify( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
+{
+    if(!str || !dest || !*str) return cpdo_rc.ArgError;
+    else if( (NULL != strstr(str, ";"))
+             ||  (NULL != strstr(str, "'"))
+             ||  (NULL != strstr(str, "["))
+             )
+    {
+        return cpdo_rc.RangeError;
+    }
+    else
+    {
+        int sz = 0;
+        char * rc = cpdo_mprintf("[%s]%n", str, &sz);
+        if(!rc) return cpdo_rc.AllocError;
+        else
+        {
+            assert( sz > 0 );
+            *dest = rc;
+            if(len) *len = (uint32_t) sz; /*strlen(rc);*/
+            return 0;
+        }
+    }
+}
+    
+static int cpdo_sq4_free_string( cpdo_driver * self, char * str)
+{
+    if(!self || !str) return cpdo_rc.ArgError;
+#if TRY_SHARED_STRINGS
+    else if( ((void const *)str >= (void const *)&sq4_shared_strings)
+        && ((void const *)str < (void const *)((unsigned char *)&sq4_shared_strings + sizeof(sq4_shared_strings)))){
+        return 0;
+    }
+    else
+#endif
+    {
+        free(str);
+        return 0;
+    }
+}
+
+static int cpdo_sq4_prepare( cpdo_driver * self, cpdo_stmt ** tgt, char const * sql, uint32_t len )
+{
+    int rc;
+    sqlite4_stmt * st3 = NULL;
+    cpdo_sq4_stmt * stmt = NULL;
+    DRV_DECL(cpdo_rc.ArgError);
+    if(!drv->db) return cpdo_rc.ConnectionError;
+    else if( ! tgt ) return cpdo_rc.ArgError;
+    rc =
+	sqlite4_prepare( drv->db, sql, (int)len, &st3, NULL );
+    if( 0 != rc ) return cpdo_rc.CheckDbError;
+    stmt = cpdo_sq4_stmt_alloc();
+    if( ! stmt )
+    {
+        sqlite4_finalize(st3);
+        return cpdo_rc.AllocError;
+    }
+    stmt->stmt = st3;
+    stmt->driver = drv;
+    *tgt = &stmt->self;
+    return 0;
+}
+
+static int cpdo_sq4_mode_to_flags( char const * m ){
+
+    if(!m || !*m) return 0;
+    else if(0 == strcmp("rwc",m)) return SQLITE4_OPEN_READWRITE | SQLITE4_OPEN_CREATE;
+    else if(0 == strcmp("rw",m)) return SQLITE4_OPEN_READWRITE;
+    else if(0 == strcmp("ro",m)) return SQLITE4_OPEN_READONLY;
+    else return -1;
+}
+
+int cpdo_sq4_connect( cpdo_driver * self, cpdo_connect_opt const * opt )
+{
+    int rc;
+    DRV_DECL(cpdo_rc.ArgError);
+    if( ! opt ) return cpdo_rc.ArgError;
+    else if( drv->db ) return cpdo_rc.ConnectionError;
+    {
+        enum { BufSize = 256U };
+        char buf[BufSize];
+        char const * tokBegin = NULL;
+        char const * tokEnd = NULL;
+        char kbuf[BufSize] = {0,0};
+        char nameBuf[BufSize] = {0,0};
+        char * pos;
+        char const * key = NULL;
+#if (SQLITE4_VERSION_NUMBER >= 3005001)
+        int flags; flags = 0;
+#endif
+        rc = cpdo_split_dsn( opt->dsn, buf, BufSize, &tokBegin );
+        if( rc ) return rc;
+        assert( NULL != tokBegin );
+        pos = nameBuf;
+        while( *tokBegin && (';'!=*tokBegin) ){ /* skip filename part */
+            if((pos-nameBuf) >= (BufSize-1)){
+                return cpdo_rc.RangeError;
+            }
+            *(pos++) = *(tokBegin++);
+        }
+        *pos = 0; /* NUL-terminate file name */
+        if(';'==*tokBegin) ++tokBegin;
+        while( cpdo_next_token( &tokBegin, ';', &tokEnd ) ){
+            if(tokBegin==tokEnd) break;
+            else {
+                char const * value = NULL;
+                char * at = kbuf;
+                if( (tokEnd - tokBegin) >= (BufSize-1) ) return cpdo_rc.RangeError;
+                memset( kbuf, 0, BufSize );
+                key = tokBegin;
+                /* Write the key part to the buffer... */
+                for( ; (key<tokEnd) && *key && ('='!=*key); ++key ) {
+                    *(at++) = *key;
+                }
+                *(at++) = 0;
+                value = at;
+                if( '=' == *key ) {
+                    ++key;
+                }
+                /* Write the value part to the buffer... */
+                for( ; (key<tokEnd) && *key; ++key ) {
+                    *(at++) = *key;
+                }
+                key = kbuf;
+                /* Done parsing. Now see if we understand how to use
+                   this option... */
+                if( 0 == strcmp("openmode",key) )
+                {
+#if (SQLITE4_VERSION_NUMBER >= 3005001)
+                    flags = cpdo_sq4_mode_to_flags( value );
+                    if(flags<0){
+                        /* FIXME: add error string to db class */
+                        return cpdo_rc.RangeError;
+                    }
+#else
+                    /* TODO: emit a warning here. */
+#endif
+                }
+                else
+                {
+                    /* ignore unknown keys: this is optional in the CPDO
+                       interface. If we add warning support, i'll add the
+                       warning here. Or if i'm feeling pedantic later i'll
+                       throw the error here.
+                    */
+                }
+                /* set up for the next token... */
+                tokBegin = tokEnd;
+                tokEnd = NULL;
+            }
+        }
+        if(1==++Sq4State.envInitCount){
+            sqlite4_initialize(NULL);
+        }
+
+        /*
+          FIXME: strip any parameters after the first ';' separator
+          (just replace the first ';' with a NUL).
+         */
+        rc = /*flags
+            ? sqlite4_open_v2( NULL, nameBuf, &drv->db, flags, NULL )
+            : */sqlite4_open( NULL, nameBuf, &drv->db, flags, 0 )
+            /* reminder: don't close so the caller can get error info. */;
+        return rc ? cpdo_rc.CheckDbError : 0;
+    }
+}
+
+
+static int cpdo_sq4_driver_begin_transaction( cpdo_driver * self )
+{
+    char const * sql = NULL;
+    int rc;
+    DRV_DECL(cpdo_rc.ArgError);
+    if( drv->inTransaction ) return cpdo_rc.UnsupportedError;
+    sql = "BEGIN TRANSACTION";
+    rc = cpdo_exec( self, sql, strlen(sql) );
+    if( 0 == rc ) drv->inTransaction = 1;
+    return rc;
+}
+
+static int cpdo_sq4_driver_commit( cpdo_driver * self )
+{
+    char const * sql = NULL;
+    int rc;
+    DRV_DECL(cpdo_rc.ArgError);
+    sql = "COMMIT";
+    rc = cpdo_exec( self, sql, strlen(sql) );
+    drv->inTransaction = 0;
+    return rc;
+}
+
+static int cpdo_sq4_driver_rollback( cpdo_driver * self )
+{
+    char const * sql = NULL;
+    int rc;
+    DRV_DECL(cpdo_rc.ArgError);
+    sql = "ROLLBACK";
+    rc = cpdo_exec( self, sql, strlen(sql) );
+    drv->inTransaction = 0;
+    return rc;
+}
+
+static char cpdo_sq4_driver_in_trans( cpdo_driver * self )
+{
+    DRV_DECL(0);
+    return drv->inTransaction;
+}
+
+static int cpdo_sq4_driver_opt_set( cpdo_driver * self, char const * key, va_list vargs )
+{
+    return cpdo_rc.NYIError;
+}
+static int cpdo_sq4_driver_opt_get( cpdo_driver * self, char const * key, va_list vargs )
+{
+    return cpdo_rc.NYIError;
+}
+
+static cpdo_step_code cpdo_sq4_stmt_step( cpdo_stmt * self )
+{
+    STMT_DECL(CPDO_STEP_ERROR);
+    switch( sqlite4_step( stmt->stmt ) )
+    {
+      case SQLITE4_ROW:
+          return CPDO_STEP_OK;
+      case SQLITE4_DONE:
+          return CPDO_STEP_DONE;
+      default:
+          return CPDO_STEP_ERROR;
+    }
+}
+
+static int cpdo_sq4_stmt_reset( cpdo_stmt * self )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    return sqlite4_reset( stmt->stmt ) ? cpdo_rc.CheckDbError : 0;
+}
+
+static uint16_t cpdo_sq4_stmt_column_count( cpdo_stmt * self )
+{
+    int rc;
+    STMT_DECL(0);
+    rc = sqlite4_column_count( stmt->stmt );
+    return (rc>0) ? (uint32_t)rc : 0;
+}
+
+static char const * cpdo_sq4_stmt_column_name( cpdo_stmt * self, uint16_t ndx )
+{
+    STMT_DECL(NULL);
+    return sqlite4_column_name( stmt->stmt, (int)ndx );
+}
+
+static uint16_t cpdo_sq4_stmt_bind_count( cpdo_stmt * self )
+{
+    int rc;
+    STMT_DECL(0);
+    rc = sqlite4_bind_parameter_count( stmt->stmt );
+    return (rc<=0) ? 0 : (uint16_t)rc;
+}
+
+
+static uint16_t cpdo_sq4_stmt_param_index( cpdo_stmt * self, char const * name )
+{
+    int rc;
+    STMT_DECL(0);
+    if( ! name ) return 0;
+    else
+    {
+        rc = sqlite4_bind_parameter_index(stmt->stmt, name);
+        return (rc<=0) ? 0U : (uint16_t)rc;
+    }
+}
+
+static char const * cpdo_sq4_stmt_param_name( cpdo_stmt * self, uint16_t ndx )
+{
+    STMT_DECL(NULL);
+    return sqlite4_bind_parameter_name( stmt->stmt, (int)ndx );
+}
+
+/** Converts sqlite4_bind_xxx() return value to cpdo_rc. */
+#define SQ4_TO_CPDO_BIND_RC(RC) \
+    if( 0 == (RC) ) return (RC); \
+    if( SQLITE4_NOMEM == (RC) ) return cpdo_rc.AllocError; \
+    else if( SQLITE4_RANGE == (RC) ) return cpdo_rc.RangeError; \
+    else return cpdo_rc.CheckDbError
+    
+static int cpdo_sq4_stmt_bind_null( cpdo_stmt * self, uint16_t ndx )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_null( stmt->stmt, (int)ndx );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_int8( cpdo_stmt * self, uint16_t ndx, int8_t v )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_int( stmt->stmt, (int)ndx, (int)v );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_int16( cpdo_stmt * self, uint16_t ndx, int16_t v )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_int( stmt->stmt, (int)ndx, (int)v );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+    
+static int cpdo_sq4_stmt_bind_int32( cpdo_stmt * self, uint16_t ndx, int32_t v )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_int( stmt->stmt, (int)ndx, (int)v );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_int64( cpdo_stmt * self, uint16_t ndx, int64_t v )
+{
+    int rc;
+    typedef
+#if SQLITE4_VERSION_NUMBER <= 3003006
+	/*FIXME: in which version did they rename sqlite_int64 to
+	  sqlite4_int64?*/
+	sqlite_int64
+#else
+	sqlite4_int64
+#endif
+	sq4_int64_t;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_int64( stmt->stmt, (int)ndx, (sq4_int64_t)v );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_float( cpdo_stmt * self, uint16_t ndx, float v )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_double( stmt->stmt, (int)ndx, v );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_double( cpdo_stmt * self, uint16_t ndx, double v )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    rc = sqlite4_bind_double( stmt->stmt, (int)ndx, v );
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_string( cpdo_stmt * self, uint16_t ndx, char const * v, uint32_t len )
+{
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    if( v )
+    {
+        rc = sqlite4_bind_text( stmt->stmt, (int)ndx, (char const *)v, (int)len, SQLITE4_TRANSIENT );
+    }
+    else
+    {
+        rc = sqlite4_bind_null( stmt->stmt, (int)ndx );
+    }
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+
+static int cpdo_sq4_stmt_bind_blob( cpdo_stmt * self, uint16_t ndx, void const * v, uint32_t len )
+{
+    
+    int rc;
+    STMT_DECL(cpdo_rc.ArgError);
+    if(!v){
+        rc = sqlite4_bind_null( stmt->stmt, (int)ndx );
+    }
+    else {
+        if( len != (uint32_t) ((int)len) ) return cpdo_rc.RangeError;
+        rc = sqlite4_bind_blob( stmt->stmt, (int)ndx, v, (int)len, SQLITE4_TRANSIENT );
+    }
+    SQ4_TO_CPDO_BIND_RC(rc);
+}
+#undef SQ4_TO_CPDO_BIND_RC
+
+static int cpdo_sq4_stmt_get_type_ndx( cpdo_stmt * self, uint16_t ndx, cpdo_data_type * val )
+{
+    int rc = 0;
+    STMT_DECL(cpdo_rc.ArgError);
+    if( ! val ) return cpdo_rc.ArgError;
+    switch( sqlite4_column_type(stmt->stmt, (int)ndx ) )
+    {
+      case SQLITE4_INTEGER:
+          *val = CPDO_TYPE_INT64;
+          break;
+      case SQLITE4_FLOAT:
+          *val = CPDO_TYPE_DOUBLE;
+          break;
+      case SQLITE4_TEXT: /* my sqlite4.h defines
+                           both SQLITE4_TEXT and SQLITE4_TEXT
+                           to the same value.
+                        */
+          *val = CPDO_TYPE_STRING;
+          break;
+      case SQLITE4_BLOB:
+          *val = CPDO_TYPE_BLOB;
+          break;
+      case SQLITE4_NULL:
+          *val = CPDO_TYPE_NULL;
+          break;
+      default:
+          rc = cpdo_rc.TypeError;
+          break;
+    }
+    return rc;
+}
+
+/** Returns cpdo_rc.RangeError if 0-based ndx is out of bounds. */
+#define STMT_CHECK_GET_NDX if( ndx >= sqlite4_column_count(stmt->stmt) ) return cpdo_rc.RangeError
+
+static int cpdo_sq4_stmt_get_int8_ndx( cpdo_stmt * self, uint16_t ndx, int8_t * val )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    STMT_CHECK_GET_NDX;
+    else if( val ) *val = (int8_t) sqlite4_column_int( stmt->stmt, (int)ndx );
+    return 0;
+}
+static int cpdo_sq4_stmt_get_int16_ndx( cpdo_stmt * self, uint16_t ndx, int16_t * val )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    STMT_CHECK_GET_NDX;
+    else if( val ) *val = (int16_t) sqlite4_column_int( stmt->stmt, (int)ndx );
+    return 0;
+}
+
+static int cpdo_sq4_stmt_get_int32_ndx( cpdo_stmt * self, uint16_t ndx, int32_t * val )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    STMT_CHECK_GET_NDX;
+    else if( val ) *val = (int32_t) sqlite4_column_int( stmt->stmt, (int)ndx );
+    return 0;
+}
+
+static int cpdo_sq4_stmt_get_int64_ndx( cpdo_stmt * self, uint16_t ndx, int64_t * val )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    STMT_CHECK_GET_NDX;
+    else if( val ) *val = (int64_t) sqlite4_column_int64( stmt->stmt, (int)ndx );
+    return 0;
+}
+
+static int cpdo_sq4_stmt_get_float_ndx( cpdo_stmt * self, uint16_t ndx, float * val )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    STMT_CHECK_GET_NDX;
+    else if( val ) *val = (float)sqlite4_column_double( stmt->stmt, (int)ndx );
+    return 0;
+}
+    
+static int cpdo_sq4_stmt_get_double_ndx( cpdo_stmt * self, uint16_t ndx, double * val )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    STMT_CHECK_GET_NDX;
+    else if( val ) *val = sqlite4_column_double( stmt->stmt, (int)ndx );
+    return 0;
+}
+
+static int cpdo_sq4_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char const ** val, uint32_t * len )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    if( ! val ) return cpdo_rc.ArgError;
+    else STMT_CHECK_GET_NDX;
+    else
+    {
+        sqlite4_value * sv = sqlite4_column_value(stmt->stmt, (int)ndx);
+        if( ! sv ) return cpdo_rc.RangeError;
+        *val = (SQLITE4_NULL == sqlite4_value_type(sv))
+            ? NULL
+            : (char const *)sqlite4_column_text( stmt->stmt, (int)ndx );
+        if( len )
+        {
+            *len = (val && *val) ? strlen(*val) : 0;
+        }
+        return 0;
+    }
+}
+
+static int cpdo_sq4_stmt_get_blob_ndx( cpdo_stmt * self, uint16_t ndx, void const ** val, uint32_t * len )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    if( ! val ) return cpdo_rc.ArgError;
+    else STMT_CHECK_GET_NDX;
+    else
+    {
+        static char zeroLenBlob = {0};
+        cpdo_data_type ty = CPDO_TYPE_ERROR;
+        int const rc = cpdo_sq4_stmt_get_type_ndx( self, ndx, &ty );
+        assert(0 == rc);
+        assert( CPDO_TYPE_ERROR != ty );
+        switch( ty ){
+          case CPDO_TYPE_NULL:
+              *val = NULL;
+              if(len) *len = 0;
+              break;
+          default:
+              *val = sqlite4_column_blob( stmt->stmt, (int)ndx )
+                  /* reminder: sqlite4_column_blob() returns NULL for
+                     length-zero blobs. */
+                  ;
+              if(!*val){
+                  if(len) *len = 0;
+                  *val = &zeroLenBlob;
+              }
+              else if( len ){
+                  *len = (uint32_t)sqlite4_column_bytes( stmt->stmt, (int)ndx )
+                      /*
+                        reminder: sqlite4_column_bytes()'s return
+                        value can potentially be way off if the value
+                        is UTF16:
+                        
+                        http://www.sqlite.org/c3ref/column_blob.html
+                      */
+                      ;
+              }
+        }
+        return 0;
+    }
+}
+#undef STMT_CHECK_GET_NDX
+
+int cpdo_sq4_stmt_error_info( cpdo_stmt * self, char const ** dest, uint32_t * len, int * errorCode )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    return cpdo_sq4_error_info( &stmt->driver->self, dest, len, errorCode );
+}
+
+    
+static int cpdo_sq4_stmt_finalize( cpdo_stmt * self )
+{
+    STMT_DECL(cpdo_rc.ArgError);
+    return cpdo_sq4_stmt_free(stmt);
+}
+
+
+
+static cpdo_driver_details const * cpdo_sq4_driver_details()
+{
+    static const cpdo_driver_details bob = {
+    CPDO_DRIVER_NAME/*driver_name*/,
+    "20120628"/*driver_version*/,
+    "Dual Public Domain/MIT"/*license*/,
+    "http://fossil.wanderinghorse.net/repos/cpdo/",
+    "Stephan Beal (http://wanderinghorse.net)"
+    };
+    return &bob;
+}
+
+int cpdo_driver_sqlite4_register()
+{
+    return cpdo_driver_register( CPDO_DRIVER_NAME, cpdo_sq4_driver_new );
+}
+
+
+
+
+#if defined(__cplusplus)
+} /*extern "C"*/
+#endif
+
+#undef DRV_DECL
+#undef STMT_DECL
+#undef CPDO_DRIVER_NAME
+#undef TRY_SHARED_STRINGS
+#endif
+/*CPDO_ENABLE_SQLITE4*/
 #if CPDO_ENABLE_MYSQL5
 /** @file cpdo_mysql5.c
 
@@ -4343,6 +5362,10 @@ int cpdo_driver_sqlite3_register()
 
    - dbname=STRING
 
+   - enableblobtostring=BOOL (default=false). If true, the
+   get_string() operation is allowed to return BLOB-declared values
+   (as-is), as opposed signaling an error. Added 20120413.
+   
    - DEPRECATED (not needed): fieldbuffersize=INTEGER. When fetching
    string/blob data, if the db cannot tell us the maximum length for
    the field then this value is used as a fallback. The driver ignores
@@ -4375,7 +5398,9 @@ int cpdo_driver_sqlite3_register()
    string fields when we cannot determine the size automatically.
 
    - The cpdo_stmt_api::get::string() impl can convert numeric and
-   TIME/DATE/DATETIME/TIMESTAMP data to a string.
+   TIME/DATE/DATETIME/TIMESTAMP data to a string. It will treat BLOB
+   fields as raw string data only if enableblobtostring=true, otherwise
+   it will signal an error for BLOB fields.
 
    - MySQL leaks some memory when connecting and calling
    mysql_library_end() at app shutdown does not always free it.
@@ -4598,14 +5623,15 @@ static cpdo_my5_driver * cpdo_my5_driver_alloc();
 struct cpdo_my5_driver
 {
     MYSQL * conn;
+    uint32_t fieldBufferSize;
+    int lastErrNo;
     char isConnected;
     char inTransaction;
     char explicitAutoCommit;
-    uint32_t fieldBufferSize;
+    char blobsAllowGetString;
     char enableNamedParams;
-    cpdo_my5_stmt * currentStmt;
     char * lastErrMsg;
-    int lastErrNo;
+    cpdo_my5_stmt * currentStmt;
     /** The "this" object of the instance. */
     cpdo_driver self;
 };
@@ -4615,14 +5641,15 @@ struct cpdo_my5_driver
 */
 const cpdo_my5_driver cpdo_my5_driver_empty = {
     NULL/*conn*/,
+    1024 * 4 /*fieldBufferSize*/,
+    0 /* lastErrNo */,
     0/*isConnected*/,
     0/*inTransaction*/,
     -1/*explicitAutoCommit. -1 is a magic value later on, so don't change it!.*/,
-    1024 * 4 /*fieldBufferSize*/,
+    0 /*blobsAllowGetString*/,
     1 /*enablenamedparams*/,
-    NULL /*currentStmt*/,
     NULL /* lastErrMsg */,
-    0 /* lastErrNo */,
+    NULL /*currentStmt*/,
     {/*self*/
         &cpdo_my5_driver_api /*api*/,
         NULL /*impl*/
@@ -4991,9 +6018,15 @@ static int cpdo_my5_error_info( cpdo_driver * self, char const ** dest, uint32_t
  */
 #define RESET_DRV_ERR(DRIVER) cpdo_my5_drv_err2( (DRIVER), 0, NULL )
 
-#define TRY_SHARED_NULL 0
-#if TRY_SHARED_NULL
-static char my5_null_string[] = {'N','U','L','L',0};
+#define TRY_SHARED_STRINGS 1
+#if TRY_SHARED_STRINGS
+static struct {
+    char sql_null[5];
+    char quoted_empty[3];
+} my5_shared_strings = {
+{'N','U','L','L',0},
+{'\'','\'',0}
+};
 #endif
 static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * len, char ** dest )
 {
@@ -5002,8 +6035,8 @@ static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
     if( ! len || !dest ) return cpdo_rc.ArgError;
     else if( NULL == str )
     {
-#if TRY_SHARED_NULL
-        *dest = my5_null_string;
+#if TRY_SHARED_STRINGS
+        *dest = my5_shared_strings.sql_null;
         *len = 4;
         return 0;
 #else
@@ -5014,6 +6047,11 @@ static int cpdo_my5_sql_quote( cpdo_driver * self, char const * str, uint32_t * 
         *len = 4;
         return 0;
 #endif
+    }
+    else if(!*str || !*len){
+        *dest = my5_shared_strings.quoted_empty;
+        *len = 2;
+        return 0;
     }
     else
     {
@@ -5056,12 +6094,17 @@ static int cpdo_my5_sql_qualify( cpdo_driver * self, char const * str, uint32_t 
 
 static int cpdo_my5_free_string( cpdo_driver * self, char * str)
 {
-#if TRY_SHARED_NULL
-    if(my5_null_string == str) return 0;
+    if(!self || !str) return cpdo_rc.ArgError;
+#if TRY_SHARED_STRINGS
+    else if( ((void const *)str >= (void const *)&my5_shared_strings)
+        && ((void const *)str < (void const *)((unsigned char *)&my5_shared_strings + sizeof(my5_shared_strings)))){
+        return 0;
+    }
     else
 #endif
     {
-        return str ? (free(str),0) : cpdo_rc.ArgError;
+        free(str);
+        return 0;
     }
 }
 
@@ -5188,6 +6231,7 @@ static int cpdo_my5_setup_result_bindings( cpdo_my5_stmt * stmt )
                       ? fld->length
                       : stmt->driver->fieldBufferSize
                       ;
+                  assert(0 != allocLen);
                   rc = cpdo_bind_val_blob( bv, NULL, allocLen );
                   if( rc ) return rc;
                   bin->buffer = (char *)bv->valu.blob.mem;
@@ -5413,6 +6457,10 @@ int cpdo_my5_connect( cpdo_driver * self, cpdo_connect_opt const * opt )
                 else if( 0 == strcmp("enablenamedparams",key) )
                 {
                     drv->enableNamedParams = cpdo_token_bool_val(value);
+                }
+                else if( 0 == strcmp("enableblobtostring",key) )
+                {
+                    drv->blobsAllowGetString = cpdo_token_bool_val(value);
                 }
                 else
                 {
@@ -5751,17 +6799,18 @@ static int cpdo_my5_stmt_bind_string( cpdo_stmt * self, uint16_t ndx, char const
     static char isNullNo = 0;
     int rc;
     PBIND_DECL(ndx);
-    memset(mybin, 0, sizeof(MYSQL_BIND));
+    if(!v) len = 0;
     rc = cpdo_bind_val_string( cbin, v, len );
     if( rc ) return rc;
     else
     {
+        memset(mybin, 0, sizeof(MYSQL_BIND));
         mybin->buffer_type = MYSQL_TYPE_STRING;
         mybin->buffer = (char *)cbin->valu.blob.mem;
         mybin->is_null = v
             ? &isNullNo
             : &isNullYes;
-        mybin->buffer_length = len;
+        mybin->buffer_length = v ? len : 0;
         return 0;
     }
 }
@@ -5772,17 +6821,18 @@ static int cpdo_my5_stmt_bind_blob( cpdo_stmt * self, uint16_t ndx, void const *
     static char isNullNo = 0;
     int rc;
     PBIND_DECL(ndx);
-    memset(mybin, 0, sizeof(MYSQL_BIND));
+    if(!v) len = 0;
     rc = cpdo_bind_val_blob( cbin, v, len );
     if( rc ) return rc;
     else
     {
+        memset(mybin, 0, sizeof(MYSQL_BIND));
         mybin->buffer_type = MYSQL_TYPE_BLOB;
         mybin->buffer = (char *)cbin->valu.blob.mem;
-        mybin->is_null = (v && len)
+        mybin->is_null = v
             ? &isNullNo
             : &isNullYes;
-        mybin->buffer_length = len;
+        mybin->buffer_length = v ? len : 0;
         return 0;
     }
 }
@@ -5981,7 +7031,9 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
             if( len ) *len = 0;
             return 0;
         }
-        else if( CPDO_TYPE_STRING == bv->type ) {
+        else if( (CPDO_TYPE_STRING == bv->type)
+                 || (stmt->driver->blobsAllowGetString && (CPDO_TYPE_BLOB == bv->type))
+                 ) {
             /* shortcut - no need to convert this */
             *val = (char const *)bv->valu.blob.mem;
             if( len ) *len = bv->valu.blob.length;
@@ -6009,12 +7061,14 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
               if( len ) *len = bv->valu.blob.length;
             return 0;
           }
-#if 0
-          case CPDO_TYPE_BLOB: { /* Arguable: optimistically assume blob is a legal string */
-              *val = (char const *)bv->valu.blob.mem;
-              if( len ) *len = bv->valu.blob.length;
-              return 0;
-          }
+#if 1
+          case CPDO_TYPE_BLOB:
+              if(stmt->driver->blobsAllowGetString) { /* Arguable: optimistically assume blob is a legal string */
+                  *val = (char const *)bv->valu.blob.mem;
+                  if( len ) *len = bv->valu.blob.length;
+                  return 0;
+              }
+              else goto unhandled_type;
 #endif
           case CPDO_TYPE_INT8:
           case CPDO_TYPE_INT16:
@@ -6139,7 +7193,8 @@ static int cpdo_my5_stmt_get_string_ndx( cpdo_stmt * self, uint16_t ndx, char co
               }
               return cpdo_rc.TypeError;
           }
-          default: 
+          default:
+          unhandled_type:
               MARKER("WARNING: UNHANDLED MYSQL_TYPE_XXX #%d IN RESULT DATA\n",
                      stmt->rbind.myBinders[ndx].buffer_type);
               return cpdo_rc.TypeError;
@@ -6154,16 +7209,21 @@ static int cpdo_my5_stmt_get_blob_ndx( cpdo_stmt * self, uint16_t ndx, void cons
     else if( ndx >= stmt->rbind.count ) return cpdo_rc.RangeError;
     else
     {
+        static char zeroLenVal = {0};
         /*MYSQL_BIND * bin = &stmt->rbind.myBinders[ndx];*/
         cpdo_bind_val * bv = &stmt->rbind.cBinders[ndx];
-        if( bv->is_null || !bv->valu.blob.length )
+        if( bv->is_null )
         {
             *val = NULL;
             if(len) *len = 0;
             return 0;
         }
-        switch( bv->type )
-        {
+        else if( !bv->valu.blob.length ){
+            *val = &zeroLenVal;
+            if(len) *len = 0;
+            return 0;
+        }
+        else switch( bv->type ) {
           case CPDO_TYPE_BLOB:
               *val = (void const *)bv->valu.blob.mem;
               if(len) *len = bv->valu.blob.length;
@@ -6173,6 +7233,7 @@ static int cpdo_my5_stmt_get_blob_ndx( cpdo_stmt * self, uint16_t ndx, void cons
               if(len) *len = bv->valu.custom.length;
               break;
           case CPDO_TYPE_NULL:
+              assert(0 && "Should have been handled above,");
               *val = 0;
               if(len) *len = 0;
               break;
@@ -6215,7 +7276,7 @@ static cpdo_driver_details const * cpdo_my5_driver_details()
 {
     static const cpdo_driver_details bob = {
     CPDO_DRIVER_NAME/*driver_name*/,
-    "20110202"/*driver_version*/,
+    "20120413"/*driver_version*/,
     "Same as your MySQL"/*license*/,
     "http://fossil.wanderinghorse.net/repos/cpdo/" /*url*/,
     "Stephan Beal (http://wanderinghorse.net)" /*authors*/
@@ -6230,6 +7291,13 @@ int cpdo_driver_mysql5_register()
 
 
 #if defined(__cplusplus)
+namespace {
+    struct RegPlaceholder{
+        int registered;
+        RegPlaceholder(int v):registered(v){}
+    };
+    const RegPlaceholder regPlaceholder_my5 = RegPlaceholder(cpdo_driver_mysql5_register());
+}
 } /*extern "C"*/
 #endif
 
@@ -6241,13 +7309,16 @@ int cpdo_driver_mysql5_register()
 #undef CPDO_MY5_HAS_PRINT64
 #undef MEGADEBUG
 #undef RESET_DRV_ERR
-#endif /*CPDO_ENABLE_MYSQL5*/
+#undef TRY_SHARED_STRINGS
+#endif
+/*CPDO_ENABLE_MYSQL5*/
 /* end of file cpdo_amalgamation.c */
 /* start of file cpdopp.cpp */
 #include <cassert>
 #include <cstring>
 #include <sstream>
 #include <iterator>
+#include <sstream>
 //#include <iostream> /* only for debuggering */
 
 /** @def CPDO_CPP_ENABLE_SAFETY_NET
@@ -7056,6 +8127,12 @@ namespace cpdo {
         return *this;
     }
 
+     bool chainer::stepBool() {
+        this->assertPrepared();
+        return this->sth->step();
+    }
+
+    
     void chainer::updateCounts(){
         if( !this->sth.empty() ){
             this->colCount = this->sth->col_count();
@@ -7120,9 +8197,9 @@ namespace cpdo {
     }
 
     static void col_to_string_setup( col_to_string & self, char const * nullString ){
-        self.nullString = nullString ? nullString : "NULL";
-        self.customTypesAs = CPDO_TYPE_STRING;
-        self.blobsAs = CPDO_TYPE_BLOB;
+        self.null_string = nullString ? nullString : "NULL";
+        self.custom_types_as = CPDO_TYPE_STRING;
+        self.blobs_as = CPDO_TYPE_BLOB;
 
     }
   
@@ -7137,11 +8214,44 @@ namespace cpdo {
 
 
     std::string col_to_string::operator()( statement & st, uint16_t ndx ) const{
+        // fixme: we "could" re-implement the string/blob/custom
+        // handling here and optimize the allocation of the result
+        // object, as opposed to continually appending to s.
         std::string s;
         (*this)( st, ndx, std::back_inserter(s) );
         return s;
     }
-    
+
+namespace {
+#if CPDO_ENABLE_MYSQL5
+    extern "C" int cpdo_driver_mysql5_register();
+#endif
+#if CPDO_ENABLE_SQLITE3
+    extern "C" int cpdo_driver_sqlite3_register();
+#endif
+#if CPDO_ENABLE_SQLITE4
+    extern "C" int cpdo_driver_sqlite4_register();
+#endif
+
+    struct RegistrationPlaceholder {
+        RegistrationPlaceholder( ... )
+        {}
+    };
+    const RegistrationPlaceholder regPlaceholder = RegistrationPlaceholder(
+                                                                            1,
+#if CPDO_ENABLE_MYSQL5
+    cpdo_driver_mysql5_register(),
+#endif
+#if CPDO_ENABLE_SQLITE3
+    cpdo_driver_sqlite3_register(),
+#endif
+#if CPDO_ENABLE_SQLITE4
+    cpdo_driver_sqlite4_register(),
+#endif
+    1
+    );
+}
+
 } // namespace
 #undef CPDO_STMT_CHECK_ALIVE
 /* end of file cpdopp.cpp */

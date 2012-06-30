@@ -34,9 +34,11 @@ include ../../config.make # see that file for certain configuration options.
 #
 # FIXME: port in the whiki makefile code which allows us to drop in
 # our own sqlite3.c (from the sqlite3 amalgamation build).
+SQLITE4_HOME ?= $(HOME)
 CPDO_ENABLE_SQLITE3 ?= $(shell whereis sqlite3.h | cut -d: -f2 | grep include/sqlite3.h >/dev/null && echo 1)
+CPDO_ENABLE_SQLITE4 ?= $(shell test -e $(SQLITE4_HOME)/include/sqlite4.h >/dev/null && echo 1)
 LDFLAGS_SQLITE3 ?= -lsqlite3
-
+LDFLAGS_SQLITE4 ?= -L$(SQLITE4_HOME)/lib -lsqlite4
 ########################################################################
 # Try to find mysql_config. If we find it we assume that the dev files
 # are installed and that mysql_config can tell us how to link to
@@ -57,6 +59,14 @@ ifneq (1,$(CPDO_ENABLE_SQLITE3))
 else
   # gcc: work around a portability bug in sqlite3:
   cpdo_amalgamation.o: CPPFLAGS+=-Wno-error=long-long
+endif
+
+ifneq (1,$(CPDO_ENABLE_SQLITE4))
+  CPDO_ENABLE_SQLITE4 := 0
+else
+  # gcc: work around a portability bug in sqlite:
+  cpdo_amalgamation.o: CPPFLAGS+=-Wno-error=long-long
+  cpdo_amalgamation.o: CPPFLAGS+=-I$(SQLITE4_HOME)/include
 endif
 
 ifneq (1,$(CPDO_ENABLE_MYSQL5))
@@ -96,6 +106,10 @@ ifeq (1,$(CPDO_ENABLE_SQLITE3))
     LDFLAGS_DRIVERS += $(LDFLAGS_SQLITE3)
     cpdo_amalgamation.o: CFLAGS+=$(CFLAGS_SQLITE3)
 endif
+ifeq (1,$(CPDO_ENABLE_SQLITE4))
+    LDFLAGS_DRIVERS += $(LDFLAGS_SQLITE4)
+    cpdo_amalgamation.o: CFLAGS+=$(CFLAGS_SQLITE4)
+endif
 
 ifeq (1,$(CPDO_ENABLE_MYSQL5))
     LDFLAGS_DRIVERS += $(LDFLAGS_MYSQL5)
@@ -124,6 +138,7 @@ endif
 OBJS_NEEDING_DB_CPPFLAGS := cpdo_amalgamation.o
 # jspdo.o
 $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_SQLITE3=$(CPDO_ENABLE_SQLITE3)
+$(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_SQLITE4=$(CPDO_ENABLE_SQLITE4)
 $(OBJS_NEEDING_DB_CPPFLAGS): CPPFLAGS+=-DCPDO_ENABLE_MYSQL5=$(CPDO_ENABLE_MYSQL5)
 
 

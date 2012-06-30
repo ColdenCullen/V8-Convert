@@ -5,6 +5,9 @@
 #if !defined(CPDO_ENABLE_SQLITE3)
 #  define CPDO_ENABLE_SQLITE3 0
 #endif
+#if !defined(CPDO_ENABLE_SQLITE4)
+#  define CPDO_ENABLE_SQLITE4 0
+#endif
 #if !defined(CPDO_ENABLE_MYSQL5)
 #  define CPDO_ENABLE_MYSQL5 0
 #endif
@@ -659,10 +662,12 @@ extern "C" {
            assign *dest to the string "NULL" (without any quotes) and assign
            *len to 4.
 
-           On success, 0 is returned and *dest is pointed to the new string,
-           and *len is assigned to the length of the new string. The caller
-           owns the string and must eventually free it using
-           self->api->free_string(self, str).
+           On success, 0 is returned and *dest is pointed to the new
+           string, and *len is assigned to the length of the new
+           string. The caller owns the string and must eventually free
+           it using self->api->free_string(self, str). The bytes are
+           owned by the driver and must not be modified by the caller
+           (they may refer to a shared string).
 
            On error non-0 is returned (one of the cpdo_rc values) and *len and
            *dest are unmodified. The most likely error codes are cpdo_rc.ArgError
@@ -1102,9 +1107,10 @@ extern "C" {
                Binds the first len bytes of v as a string value to the
                given 1-based index.
 
-               Implementations MUST distinguish between (v==NULL) and
-               (v!=NULL, len==0). The former must be treated as SQL NULL
-               and the latter as an empty string.
+               Implementations must (as of 20120413) treat (v==NULL)
+               as an SQL NULL and (v!=NULL) with (0==len) as a
+               zero-length value (as opposed to an SQL NULL). If v is
+               NULL then len must be ignored.
            
                Returns 0 on success.
             */
@@ -1116,8 +1122,10 @@ extern "C" {
                drivers which do not support it must return
                cpdo_rc.UnsupportedError from this function.
                
-               Implementations must treat (v==NULL) or (len==0) as SQL
-               NULL.
+               Implementations must (as of 20120413) treat (v==NULL)
+               as an SQL NULL and (v!=NULL) with (0==len) as a
+               zero-length value (as opposed to an SQL NULL). If v is
+               NULL then len must be ignored.
 
                Returns 0 on success.
             */
@@ -1309,11 +1317,15 @@ extern "C" {
 
                Returns 0 on success. On error, *val is not modified.
 
-               Drivers must return SQL NULL values by setting *val to NULL
-               if at all possible. It is recognized, however, that some
-               underlying APIs may not allow clients to distinguish between
-               an empty string and an SQL NULL, in which case implementations
-               should assign *val to an empty string.
+               Drivers must return SQL NULL values by setting *val to
+               NULL if at all possible. It is recognized, however,
+               that some underlying APIs may not allow clients to
+               distinguish between an empty string and an SQL NULL, in
+               which case implementations should assign *val to an
+               empty string. In either case they must set *len (if len
+               is not NULL) to 0.
+
+               FIXME? Use (unsigned char const **)?
             */
             int (*string)( cpdo_stmt * self, uint16_t ndx, char const ** val, uint32_t * len );
 
@@ -1325,8 +1337,18 @@ extern "C" {
                support it must return cpdo_rc.UnsupportedError from this
                function.
                
-               Implementations must treat a zero-length BLOB as a NULL
-               value.
+               Implementations must return SQL NULL values by setting
+               *val to NULL if at all possible. It is recognized,
+               however, that some underlying APIs may not allow
+               clients to distinguish between an empty blocs and an
+               SQL NULL, in which case implementations should assign
+               *val to "an empty value" (which reading from is
+               invalid). In either case they must set *len (if len is
+               not NULL) to 0. Length-zero blobs are handled by setting
+               *val to some "internal empty value" and *len to 0.
+               Drivers may, out of concern for safety, return
+               cpdo_rc.ArgError if len is NULL and the result would be
+               a zero-length blob.
 
                The returned memory is owned by the statement handle, and
                it may be invalidated the next time the handle is step()'d
@@ -1335,8 +1357,12 @@ extern "C" {
                memory.
 
                Implementations must allow a NULL len value, under the
-               assumption that the client knows that the hell he's doing
-               and has some way to count the number of bytes himself.
+               assumption that the client knows that the hell he's
+               doing and has some way to count the number of bytes
+               himself. A NULL len can be especially problematic for
+               the caller if the row holds a length-zero blob because
+               the caller will get memory which is not legal to read
+               (the user gets a *len=0 in that case if len!=NULL).
 
                Note that drivers may have "relatively small" limits on
                blobs.  e.g. sqlite3 uses int as the blob size, and
@@ -2834,7 +2860,29 @@ int cpdo_driver_sqlite3_register();
 
 #endif /* WANDERINGHORSE_NET_CPDO_CPDO_SQLITE3_H_INCLUDED */
 
-#endif /*CPDO_ENABLE_SQLITE3*/
+#endif
+/*CPDO_ENABLE_SQLITE3*/
+#if CPDO_ENABLE_SQLITE4
+#if !defined(WANDERINGHORSE_NET_CPDO_CPDO_SQLITE4_H_INCLUDED)
+#define WANDERINGHORSE_NET_CPDO_CPDO_SQLITE4_H_INCLUDED
+#ifdef __cplusplus
+extern "C" {
+#endif
+/**
+    Registers the sqlite4 driver with the cpdo library.
+    Returns 0 on success, non-0 on error (see cpdo_driver_register() for
+    the return codes).
+*/
+int cpdo_driver_sqlite4_register();
+
+#if defined(__cplusplus)
+} /*extern "C"*/
+#endif
+
+#endif /* WANDERINGHORSE_NET_CPDO_CPDO_SQLITE4_H_INCLUDED */
+
+#endif
+/*CPDO_ENABLE_SQLITE4*/
 #if CPDO_ENABLE_MYSQL5
 #if !defined(WANDERINGHORSE_NET_CPDO_CPDO_MYSQL5_H_INCLUDED)
 #define WANDERINGHORSE_NET_CPDO_CPDO_MYSQL5_H_INCLUDED
@@ -2853,18 +2901,17 @@ int cpdo_driver_mysql5_register();
 #endif
 #endif /* WANDERINGHORSE_NET_CPDO_CPDO_MYSQL5_H_INCLUDED */
 
-#endif /*CPDO_ENABLE_MYSQL5*/
+#endif
+/*CPDO_ENABLE_MYSQL5*/
 /* end of file cpdo_amalgamation.h */
 /* start of file include/wh/cpdo/cpdo.hpp */
 #if !defined(WANDERINGHORSE_NET_CPDO_CPDO_HPP_H_INCLUDED)
 #define WANDERINGHORSE_NET_CPDO_CPDO_HPP_H_INCLUDED
-#include <cassert>
 #include <stdexcept>
 #include <string>
-#include <cstring>
-#include <algorithm> /* copy() */
-#include <sstream>
-
+#include <cstring> /* std::strlen() */
+#include <algorithm> /* std::copy() */
+#include <vector>
 /**
     The cpdo namespace houses a C++ wrapper around the cpdo C API.
     The primary distinction between this API and the C API is that
@@ -2892,7 +2939,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
     class exception : public std::exception
     {
         public:
-        ~exception() throw() {}
+        virtual ~exception() throw() {}
         
         /**
             Returns this exception's message string.
@@ -2959,7 +3006,13 @@ Temporary (file-scope) macro to mark functions which throw on error.
     {
     private:
         cpdo_stmt * st;
+        /*
+          We store colCount only as an optimization.
+        */
         uint16_t colCount;
+        /*
+          We store paramCount only as an optimization.
+        */
         uint16_t paramCount;
         friend class driver;
         friend class chainer;
@@ -2978,6 +3031,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
            (0-based) are assumed.
         */
         void assert_index( uint16_t ndx, unsigned char base );
+
         /**
            Closes the underlying statement handle, but does not
            destroy this object. It is illegal to use any member
@@ -3508,8 +3562,8 @@ Temporary (file-scope) macro to mark functions which throw on error.
         value_type operator()( StmtLike & st, uint16_t ndx ){
             uint32_t len = 0;
             typedef col_get<char const *> Proxy;
-            char const * s = Proxy()( st, ndx );
-            return s ? std::string(s, s + len) : std::string();
+            char const * s = Proxy()( st, ndx, len );
+            return s ? std::string(s, s+len) : std::string();
         }
     };
 
@@ -3647,11 +3701,15 @@ Temporary (file-scope) macro to mark functions which throw on error.
            is 0, as that indicates a non-querying statement. It is
            illegal to use this object after s as been finalized, which
            normally means that s must outlive this object.
+
+           Note that the stmt class can be implicitly converted to a
+           statement.
         */
         explicit stmt_row(statement & s);
+
         /**
            Redirects this object to use the given statement. It is not
-           legal to use this object after s's lifetime has expired.
+           legal to use this object after s' lifetime has expired.
          */
         stmt_row & operator=(statement & s);
         ~stmt_row();
@@ -3796,7 +3854,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
        
        Throws if st.step() or f() throws.
     */
-    template <typename State, typename Func>
+    template <typename Func, typename State>
     void step_each( statement & st, Func f, State & state ) THROWS_ON_ERROR {
         stmt_row x(st);
         while( st.step() ){
@@ -3814,19 +3872,19 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
        @code
        struct MyFunctor {
-       int rows;
-       MyFunctor() : rows(0){}
-       void operator()( cpdo::stmt_row & ){
-       ++this->rows;
-       }
+         int rows;
+         MyFunctor() : rows(0){}
+         void operator()( cpdo::stmt_row & ){
+           ++this->rows;
+         }
        };
 
        ...
        
        MyFunctor func;
        {
-       stmt st( db->prepare("SELECT * FROM foo") ); 
-       step_each<MyFunctor &>( st, func );
+         stmt st( db->prepare("SELECT * FROM foo") ); 
+         step_each<MyFunctor &>( st, func );
        }
        assert( func.rows > 0 );
        @endcode
@@ -4123,6 +4181,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
         */
         void exec_f( char const * fmt, ... );
     };
+#undef THROWS_ON_ERROR
 
     /**
        The chainer class is a helper for working with prepared
@@ -4166,14 +4225,17 @@ Temporary (file-scope) macro to mark functions which throw on error.
     private:
         driver & db;
         stmt sth;
+        /* Only stored as an optimization. */
         uint16_t colCount;
+        /* Only stored as an optimization. */
         uint16_t paramCount;
         void updateCounts();
         void assertPrepared();
         void assertNotPrepared();
         void assertHasBoundParams();
         void assertHasColumns();
-        void check_code( int code );
+        /** Throws if 0!=cpdoRcCode. */
+        void check_code( int cpdoRcCode );
         
     public:
         /**
@@ -4194,9 +4256,9 @@ Temporary (file-scope) macro to mark functions which throw on error.
            transfers ownership of st to this object.
 
            If this object is already prepared an exception is thrown
-           (use clear() to remove a previous statement) and ownership
-           of st is unchanged. An exception is also thrown if st is
-           NULL.
+           and ownership of st is unchanged (use finalize() to remove
+           a previous statement). An exception is also thrown if st
+           is NULL.
            
            Returns this object.
 
@@ -4351,8 +4413,19 @@ Temporary (file-scope) macro to mark functions which throw on error.
            failIfIsSelectAndIsEmpty is true AND if step() returns
            false then this function throws.  If the query is not a
            "fetching query" then the boolean parameter is ignored.
+
+
+           ACHTUNG: this method is only really intended for executing
+           INSERTs/UPDATEs and stepping over *single-value* result
+           sets, and not walking over multiple rows (because we don't
+           normally want to throw at the end of a result set).
         */
         chainer & step( bool failIfIsSelectAndIsEmpty = true );
+
+        /**
+           Equivalent to statement::step().
+        */
+        bool stepBool();
 
         /**
            For fetching queries, IFF step()ing the handle fetches a
@@ -4402,15 +4475,15 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
            Returns this object.
 
-           Note that State will, if not specified explicitly, be a
-           const reference. If you need state to be copied by
-           non-const reference then specify it explicitly, e.g.:
+           Note that Func will, if not specified explicitly, be copied
+           by value. If you need f to be copied by non-const reference
+           then specify it explicitly, e.g.:
 
            @code
-           chain.step_each<MyState &>( myFunctor, myState );
+           chain.step_each<MyFunctorT &>( myFunctor, myState );
            @endcode
         */
-        template <typename State, typename Func>
+        template <typename Func, typename State>
         chainer & step_each( Func f, State & state ) {
             this->assertHasColumns();
             stmt_row x(this->sth);
@@ -4502,6 +4575,43 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
 
     /**
+       Escapes a BLOB value to an output iterator, using the format
+       X'DEADBEEF', which supported by sqlite3 and MySQL5 for
+       inserting/updating blob values as literals.
+
+       mem_ must be NULL or at least len bytes of valid memory.
+
+       nullStr is the string to be output if mem_ is NULL, and it may
+       be NULL (in which case no output is generated). If mem_ is
+       not NULL but len is 0 then X'' will be generated.
+
+       dest must be an output iterator, to which all output is
+       written.
+    */
+    template <typename OutIter>
+    void escape_blob( void const * mem_, uint32_t len, char const * nullStr, OutIter dest ) {
+        static char const * hex = "0123456789ABCDEF";
+        if(!mem_) {
+            if(nullStr) std::copy(nullStr, nullStr + std::strlen(nullStr), dest);
+            return;
+        }
+        else {
+            unsigned char const * mem = (unsigned char const *)mem_;
+            unsigned char ch;
+            *dest++ = 'X';
+            *dest++ = '\'';
+            for( uint32_t i = 0; i < len; ++i ){
+                ch = mem[i];
+                *dest++ = hex[((ch>>4)&0xf)];
+                *dest++ = hex[(ch&0xf)];
+            }
+            *dest++ = '\'';
+            return;
+        }
+    }
+
+
+    /**
        A functor which converts a statement's column value to a
        string. While the sqlite3 and MySQL drivers support this
        natively for all of their types, the cpdo API does not require
@@ -4513,7 +4623,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
        - The data types CPDO_TYPE_CUSTOM and CPDO_TYPE_BLOB are
        handled differently, depending on the values of the
-       customTypesAs and blobsAs members, respectively.
+       customTypesAs and blobs_as members, respectively.
 
        - When in "blob mode", binary data is emitted in the form
        X'DEADBEEF'.
@@ -4538,7 +4648,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
            Default = "NULL"
         */
-        char const * nullString;
+        char const * null_string;
 
         /**
            Tells us how to render CPDO_TYPE_CUSTOM fields. It must
@@ -4558,7 +4668,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
            Default = CPDO_TYPE_STRING
         */
-        cpdo_data_type customTypesAs;
+        cpdo_data_type custom_types_as;
 
         /**
            Tells us how to render CPDO_TYPE_BLOB fields. It must have
@@ -4576,7 +4686,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
 
            Default = CPDO_TYPE_BLOB
         */
-        cpdo_data_type blobsAs;
+        cpdo_data_type blobs_as;
 
         /**
            Equivalent to col_to_string(NULL).
@@ -4595,7 +4705,7 @@ Temporary (file-scope) macro to mark functions which throw on error.
            column to the given output iterator.
 
            How BLOB and CUSTOM types are handled are determined by the
-           values of customTypesAs and blobsAs, respectively.
+           values of custom_types_as and blobs_as, respectively.
 
            StmtLike must be a statement, stmt_row, or similar class
            which offers GET access to statement data. If st is not in
@@ -4603,25 +4713,25 @@ Temporary (file-scope) macro to mark functions which throw on error.
         */
         template <typename StmtLike, typename OutIter>
         void operator()( StmtLike & st, uint16_t ndx, OutIter dest ) const{
-            static char const * hex = "0123456789ABCDEF";
             cpdo_data_type const t = st.col_type(ndx);
-            char const * nullString = this->nullString;
+            char const * nullString = this->null_string;
             if(! nullString ) nullString = "";
-#define DONULL std::copy( nullString, nullString+std::strlen(nullString), dest ); return
+#define DONULL std::copy( nullString, nullString+std::strlen(nullString), dest )
             switch(t){
               case CPDO_TYPE_NULL:
                   DONULL;
                   return;
 #define DONUM(VT) { uint32_t len = 0; char const * s = st.get_string( ndx, &len ); \
-                      if(!s || !len) { DONULL; }                        \
-                      else { std::copy( s, s+len, dest ); return; }     \
+                      if(!s) { /* "can't happen" for numerics. */ DONULL; } \
+                      else if(len) ; std::copy( s, s+len, dest );        \
                   } return
                   /* Reminder: the CPDO interface does not require
                      drivers to be able to convert non-string values
                      to strings, but both the sqlite3 and mysql5
                      drivers support it. If we ever add a driver which
                      doesn't then we'll have to re-implement the
-                     numeric handling here..
+                     numeric handling here. e.g. we could use
+                     std::ostringstream.
                    */
               case CPDO_TYPE_INT8: DONUM(int8_t);
               case CPDO_TYPE_INT16: DONUM(int16_t);
@@ -4630,49 +4740,37 @@ Temporary (file-scope) macro to mark functions which throw on error.
               case CPDO_TYPE_FLOAT: DONUM(float);
               case CPDO_TYPE_DOUBLE: DONUM(double);
 #undef DONUM
-              case CPDO_TYPE_CUSTOM: // try it as a string and hope for the best!
+              case CPDO_TYPE_CUSTOM:
               case CPDO_TYPE_BLOB:
               case CPDO_TYPE_STRING:
                   if((CPDO_TYPE_STRING==t)
-                     || ((CPDO_TYPE_BLOB==t) && (CPDO_TYPE_STRING==this->blobsAs))
-                     || ((CPDO_TYPE_CUSTOM==t) && (CPDO_TYPE_STRING==this->customTypesAs))
+                     || ((CPDO_TYPE_BLOB==t) && (CPDO_TYPE_STRING==this->blobs_as))
+                     || ((CPDO_TYPE_CUSTOM==t) && (CPDO_TYPE_STRING==this->custom_types_as))
                      )
                   { /* treat it as a raw string value. */
                       uint32_t len = 0;
                       char const * mem = col_get<char const *>()( st, ndx, len );
-                      if(!mem || !len) { DONULL; }
-                      std::copy( mem, mem + len, dest );
+                      if(!mem) { DONULL; }
+                      else if(len) std::copy( mem, mem + len, dest );
                       return;
                   }
                   else if(
-                          ((CPDO_TYPE_BLOB==t) && (CPDO_TYPE_BLOB==this->blobsAs))
-                          || ((CPDO_TYPE_CUSTOM==t) && (CPDO_TYPE_BLOB==this->customTypesAs))
+                          ((CPDO_TYPE_BLOB==t) && (CPDO_TYPE_BLOB==this->blobs_as))
+                          || ((CPDO_TYPE_CUSTOM==t) && (CPDO_TYPE_BLOB==this->custom_types_as))
                           )
                   { /* write out the blob in the form X'deadbeef',
                        which is supported by sqlite3 and MySQL. */
                       uint32_t len = 0;
                       unsigned char const * mem = (unsigned char const *)col_get<void const *>()( st, ndx, len );
-                      if(!mem || !len) { DONULL; }
-                      std::ostringstream os;
-                      *dest++ = 'X';
-                      *dest++ = '\'';
-                      for( uint32_t i = 0; i < len; ++i ){
-                          const unsigned short ch = mem[i];
-                          *dest++ = hex[((ch>>4)&0xf)];
-                          *dest++ = hex[(ch&0xf)];
-                      }
-                      *dest++ = '\'';
+                      escape_blob( mem, len, nullString, dest );
                       return;
                   }
 #undef DONULL
                   // else fall through to the error case...
-              default: {
-                  std::ostringstream os;
-                  os << "Unhandled data type (#"<<t<<") in col_lex() conversion.";
-                  throw exception(cpdo_rc.TypeError, false, os.str());
-              }
+              default:
+                  throw exception(cpdo_rc.TypeError, false,
+                                  "Unhandled data type in col_to_string conversion.");
             }
-            assert(0 && "You shouldn't have gotten this far.");
         }
         
         /**
@@ -4684,20 +4782,47 @@ Temporary (file-scope) macro to mark functions which throw on error.
     };
 
 #if 0
-    /**
-       Uses a default-constructed col_to_string() to convert st's ndx'th
-       column to a string.
-    */
-    std::string col_lex( statement & st, uint16_t ndx );
+    class query_builder
+    {
+    protected:
+        typedef std::vector<std::string> PartList;
+        /*struct State {
+            uint16_t colCount;
+            uint16_t paramCount;
+            };*/
+        driver & db;
+    private:
+        PartList m_parts;
+    protected:
+        query_builder( driver & db );
+        void push( std::string const & );
+    public:
+        ~query_builder();
+        std::string to_string() const;
+        void raw( std::string const & );
+    };
 
-    /**
-       Uses a default-constructed col_to_string() to convert st's ndx'th
-       column to a string.
-    */
-    std::string col_lex( stmt_row & st, uint16_t ndx );
+    class q_select : public query_builder
+    {
+    public:
+        q_select();
+        ~q_select();
+    };
+    class q_insert : public query_builder
+    {
+    public:
+        q_insert();
+        ~q_insert();
+    };
+
+    class q_update : public query_builder
+    {
+    public:
+        q_update();
+        ~q_update();
+    };
 #endif
 
-#undef THROWS_ON_ERROR
-}
+} /* namespace */
 #endif /* WANDERINGHORSE_NET_CPDO_CPDO_HPP_H_INCLUDED */
 /* end of file include/wh/cpdo/cpdo.hpp */
