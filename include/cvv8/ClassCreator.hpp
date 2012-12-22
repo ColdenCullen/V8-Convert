@@ -604,7 +604,7 @@ namespace cvv8 {
                 v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
                 ext = (obj->InternalFieldCount() != InternalFields::Count)
                     ? NULL
-                    : obj->GetPointerFromInternalField( InternalFields::NativeIndex );
+                    : obj->GetAlignedPointerFromInternalField( InternalFields::NativeIndex );
                 // FIXME: if InternalFields::TypeIDIndex>=0 then also do a check on that one.
                 /*
                     If !ext, there is no bound pointer. If (ext &&
@@ -775,9 +775,9 @@ namespace cvv8 {
                 self.MakeWeak( nobj, weak_dtor );
                 if( 0 <= InternalFields::TypeIDIndex )
                 {
-                    self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
+                    self->SetAlignedPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
                 }
-                self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
+                self->SetAlignedPointerInInternalField( InternalFields::NativeIndex, nobj )
                     /* We do this after the call to Wrap() just in case the Wrap() impl
                        accidentally writes to this field. In that case we end up
                        losing the data they stored there. So this is just as evil as

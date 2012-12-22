@@ -855,7 +855,7 @@ namespace cvv8 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
                     ext = (obj->InternalFieldCount() != InternalFieldCount)
                         ? NULL
-                        : obj->GetPointerFromInternalField( InternalFieldIndex );
+                        : obj->GetAlignedPointerFromInternalField( InternalFieldIndex );
                     if( ! ext )
                     {
                         if( !SearchPrototypeChain ) break;
@@ -988,9 +988,9 @@ namespace cvv8 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
                     tid = (obj->InternalFieldCount() != InternalFieldCount)
                         ? NULL
-                        : obj->GetPointerFromInternalField( TypeIdFieldIndex );
+                        : obj->GetAlignedPointerFromInternalField( TypeIdFieldIndex );
                     ext = (tid == TypeID)
-                        ? obj->GetPointerFromInternalField( ObjectFieldIndex )
+                        ? obj->GetAlignedPointerFromInternalField( ObjectFieldIndex )
                         : NULL;
                     if( ! ext )
                     {
