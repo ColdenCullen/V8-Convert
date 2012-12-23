@@ -586,11 +586,6 @@ namespace cvv8 {
 
            If nh is not found anywhere in the chain, an empty handle is
            returned.
-
-           Note that T must be non-cv qualified, so it is generally
-           undesirable to allow the compiler to deduce its type from the
-           parameter. Thus the T template parameter should not be omitted
-           from calls to this function.
         */
         static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> const & jo,
                                                   T const * nh )
@@ -602,9 +597,12 @@ namespace cvv8 {
             while( !ext && !proto.IsEmpty() && proto->IsObject() )
             {
                 v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
-                ext = (obj->InternalFieldCount() != InternalFields::Count)
-                    ? NULL
-                    : obj->GetAlignedPointerFromInternalField( InternalFields::NativeIndex );
+                v8::Local<v8::Value> const & exv = (obj->InternalFieldCount() != InternalFields::Count)
+                    ? v8::Local<v8::Value>()
+                    : obj->GetInternalField( InternalFields::NativeIndex );
+                ext = (!exv.IsEmpty() && exv->IsExternal() )
+                    ? v8::External::Cast(*exv)->Value()
+                    : NULL;
                 // FIXME: if InternalFields::TypeIDIndex>=0 then also do a check on that one.
                 /*
                     If !ext, there is no bound pointer. If (ext &&
@@ -706,16 +704,16 @@ namespace cvv8 {
                 }
                 Factory::Delete(native);
 #endif
+                /*
+                  According to the v8 gurus i need to call pv.Dispose()
+                  instead of pv.Clear(), but if i do then this dtor is
+                  being called twice. If i don't call it, v8 is crashing
+                  sometime after this function with a !NEAR_DEATH
+                  assertion.
+                */
+                pv.Dispose();
+                pv.Clear();
             }
-            /*
-              According to the v8 gurus i need to call pv.Dispose()
-              instead of pv.Clear(), but if i do then this dtor is
-              being called twice. If i don't call it, v8 is crashing
-              sometime after this function with a !NEAR_DEATH
-              assertion.
-            */
-            pv.Dispose();
-            pv.Clear();
         }
 
         /**
@@ -775,9 +773,9 @@ namespace cvv8 {
                 self.MakeWeak( nobj, weak_dtor );
                 if( 0 <= InternalFields::TypeIDIndex )
                 {
-                    self->SetAlignedPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
+                    self->SetInternalField( InternalFields::TypeIDIndex, v8::External::New((void *)TypeID::Value) );
                 }
-                self->SetAlignedPointerInInternalField( InternalFields::NativeIndex, nobj )
+                self->SetInternalField( InternalFields::NativeIndex, v8::External::New(nobj) )
                     /* We do this after the call to Wrap() just in case the Wrap() impl
                        accidentally writes to this field. In that case we end up
                        losing the data they stored there. So this is just as evil as
@@ -808,7 +806,9 @@ namespace cvv8 {
               protoTmpl(v8::Persistent<v8::ObjectTemplate>::New( ctorTmpl->PrototypeTemplate() )),
               isSealed(false)
         {
-            ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
+            if(InternalFields::Count > 0){
+                ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
+            }
         }
     public:
         /**

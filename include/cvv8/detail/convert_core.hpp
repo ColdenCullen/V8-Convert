@@ -853,9 +853,12 @@ namespace cvv8 {
                 while( !ext && !proto.IsEmpty() && proto->IsObject() )
                 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
-                    ext = (obj->InternalFieldCount() != InternalFieldCount)
-                        ? NULL
-                        : obj->GetAlignedPointerFromInternalField( InternalFieldIndex );
+                    v8::Local<v8::Value> const & exv = (obj->InternalFieldCount() != InternalFieldCount)
+                        ? v8::Local<v8::Value>()
+                        : obj->GetInternalField( InternalFieldIndex );
+                    ext = ( !exv.IsEmpty() && exv->IsExternal() )
+                        ? v8::External::Cast(*exv)->Value()
+                        : NULL;
                     if( ! ext )
                     {
                         if( !SearchPrototypeChain ) break;
@@ -986,11 +989,17 @@ namespace cvv8 {
                 while( !ext && !proto.IsEmpty() && proto->IsObject() )
                 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
-                    tid = (obj->InternalFieldCount() != InternalFieldCount)
-                        ? NULL
-                        : obj->GetAlignedPointerFromInternalField( TypeIdFieldIndex );
-                    ext = (tid == TypeID)
-                        ? obj->GetAlignedPointerFromInternalField( ObjectFieldIndex )
+                    v8::Local<v8::Value> const & tidv = (obj->InternalFieldCount() != InternalFieldCount)
+                        ? v8::Local<v8::Value>()
+                        : obj->GetInternalField( TypeIdFieldIndex );
+                    tid = ( !tidv.IsEmpty() && tidv->IsExternal() )
+                        ? v8::External::Cast(*tidv)->Value()
+                        : NULL;
+                    v8::Local<v8::Value> const & exv = (tid == TypeID)
+                        ? obj->GetInternalField( ObjectFieldIndex )
+                        : v8::Local<v8::Value>();
+                    ext = ( !exv.IsEmpty() && exv->IsExternal() )
+                        ? v8::External::Cast(*exv)->Value()
                         : NULL;
                     if( ! ext )
                     {

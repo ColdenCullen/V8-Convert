@@ -700,16 +700,17 @@ namespace { // testing ground for some compile-time assertions...
         typedef cv::CtorForwarder<CFT * (v8::Arguments const &)> Cn;
         ASS<( -1 == sl::Arity< Cn >::Value )>();
         typedef CFT * (*CFTCtor)( v8::Arguments const & );
+#define USE(X) assert(NULL != X) /* "use" an otherwise unused var, to avoid a gcc warnning. */
         CFTCtor ctor;
-        ctor = C0::Call;
-        ctor = C1::Call;
-        ctor = C2::Call;
+        ctor = C0::Call; USE(ctor);
+        ctor = C1::Call; USE(ctor);
+        ctor = C2::Call; USE(ctor);
         //ctor = C0Sub::Ctor;
         typedef cv::Signature< CFT (C0, C1, C2) > CtorList;
         typedef cv::CtorArityDispatcher<CtorList> CDispatch;
         typedef CtorFwdTest * (*FacT)( v8::Arguments const &  argv );
         FacT fac;
-        fac = CDispatch::Call;
+        fac = CDispatch::Call; USE(fac);
         typedef int (CFT::*M1)(int) ;
         typedef int (CFT::*M2)(int,int) const;
         ASS<( !(tmp::IsConst<CFT>::Value) )>();
@@ -776,10 +777,11 @@ namespace { // testing ground for some compile-time assertions...
                 > >::Value >();
         ASS< !SIU< cv::MethodToInCa<BoundNative, int (v8::Arguments const &), &BoundNative::invoInt > >::Value>();
         
-
         v8::InvocationCallback cb;
         cb = cv::InCaLikeMethod<BoundNative, int, &BoundNative::invoInt>::Call;
+        USE(cb);
         cb = cv::InCaLikeConstMethod<BoundNative, int, &BoundNative::invoIntConst>::Call;
+        USE(cb);
         //cb = cv::InCaLike<BoundNative, int, &BoundNative::invoInt>::Call;
         //cb = cv::InCaLike<BoundNative, int, &BoundNative::invoIntConst>::Call;
         ASS< -1 == sl::Arity< cv::InCaLikeMethod<BoundNative, int, &BoundNative::invoInt> >::Value >();
@@ -837,6 +839,7 @@ namespace { // testing ground for some compile-time assertions...
             ASS< 0 == sl::Index< char const *, BNPuts >::Value >();
         }
 #undef ASS
+#undef USE
     }
 
     void test_new_typelist()
@@ -956,51 +959,54 @@ void test_xto_bindings()
     v8::AccessorGetter g;
     v8::AccessorSetter s;
 
+#define USE(X) assert(NULL != X) /* "use" an otherwise unused var, to avoid a gcc warnning. */
     using namespace cvv8;
 
     // Function-to-X conversions:
-    c = FunctionTo< InCa, int(char const *), ::puts>::Call;
-    c = FunctionTo< InCaVoid, int(char const *), ::puts>::Call;
-    g = FunctionTo< Getter, int(void), ::getchar>::Get;
-    s = FunctionTo< Setter, int(int), ::putchar>::Set;
+    c = FunctionTo< InCa, int(char const *), ::puts>::Call; USE(c);
+    c = FunctionTo< InCaVoid, int(char const *), ::puts>::Call; USE(c);
+    g = FunctionTo< Getter, int(void), ::getchar>::Get; USE(g);
+    s = FunctionTo< Setter, int(int), ::putchar>::Set; USE(s);
 
     //#if __cplusplus >= 201103L /* http://sourceforge.net/apps/mediawiki/predef/index.php?title=Standards */
     //typedef FunctionToInCa11< InCa > F11;
     //#endif
     
     // Var-to-X conversions:
-    g = VarTo< Getter, int, &aBoundInt >::Get;
-    s = VarTo< Setter, int, &aBoundInt >::Set;
+    g = VarTo< Getter, int, &aBoundInt >::Get; USE(g);
+    s = VarTo< Setter, int, &aBoundInt >::Set; USE(s);
     typedef VarTo< Accessors, int, &aBoundInt > VarGetSet;
-    g = VarGetSet::Get;
-    s = VarGetSet::Set;
+    g = VarGetSet::Get; USE(g);
+    s = VarGetSet::Set; USE(s);
 
     typedef BoundNative T;
 
     // Member Var-to-X conversions:
-    g = MemberTo< Getter, T, int, &T::publicInt >::Get;
-    s = MemberTo< Setter, T, int, &T::publicInt >::Set;
+    g = MemberTo< Getter, T, int, &T::publicInt >::Get; USE(g);
+    s = MemberTo< Setter, T, int, &T::publicInt >::Set; USE(s);
     typedef MemberTo< Accessors, T, int, &T::publicInt > MemAcc;
-    g = MemAcc::Get;
-    s = MemAcc::Set;
+    g = MemAcc::Get; USE(g);
+    s = MemAcc::Set; USE(s);
     
 
     // Method-to-X conversions:
-    c = MethodTo< InCa, T, void (), &T::doFoo >::Call;
-    c = MethodTo< InCaVoid, T, void (), &T::doFoo >::Call;
-    g = MethodTo< Getter, const T, int (), &T::getInt >::Get;
-    s = MethodTo< Setter, T, void (int), &T::setInt >::Set;
+    c = MethodTo< InCa, T, void (), &T::doFoo >::Call; USE(c);
+    c = MethodTo< InCaVoid, T, void (), &T::doFoo >::Call; USE(c);
+    g = MethodTo< Getter, const T, int (), &T::getInt >::Get; USE(g);
+    s = MethodTo< Setter, T, void (int), &T::setInt >::Set; USE(s);
     // Const methods:
-    c = MethodTo< InCa, const T, int (), &T::getInt >::Call;
-    c = MethodTo< InCaVoid, const T, int (), &T::getInt >::Call;
+    c = MethodTo< InCa, const T, int (), &T::getInt >::Call; USE(c);
+    c = MethodTo< InCaVoid, const T, int (), &T::getInt >::Call; USE(c);
     
 
     // Functor-to-X conversions:
     typedef MyFunctor F;
-    c = FunctorTo< InCaVoid, F, bool () >::Call;
-    c = FunctorTo< InCa, F, bool (int) >::Call;
-    g = FunctorTo< Getter, F, bool () >::Get;
-    s = FunctorTo< Setter, F, void (bool) >::Set;
+    c = FunctorTo< InCaVoid, F, bool () >::Call; USE(c);
+    c = FunctorTo< InCa, F, bool (int) >::Call; USE(c);
+    g = FunctorTo< Getter, F, bool () >::Get; USE(g);
+    s = FunctorTo< Setter, F, void (bool) >::Set; USE(s);
+#undef USE
+
 }
 
 
