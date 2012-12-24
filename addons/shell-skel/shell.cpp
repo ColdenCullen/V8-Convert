@@ -41,7 +41,7 @@
 
 #include <cassert>
 #include <iostream>
-
+#include <cstring>
 #ifndef CERR
 #define CERR std::cerr << __FILE__ << ":" << std::dec << __LINE__ << " : " 
 #endif
@@ -64,10 +64,9 @@ static int v8_main(int argc, char const * const * argv)
     assert( argc >= 2 );
     cv::Shell shell(NULL, argc, argv);
     shell.SetupDefaultBindings()
-#if 0 /* the v8 team keeps changing the signature of IdleNotification() */
-        ("gc", cv::FunctionToInCa<bool (),v8::V8::IdleNotification>::Call )
-#endif
-    ;
+        // Garbage collector:
+        ("gc", cv::FunctionToInCa<bool (int), v8::V8::IdleNotification>::Call )
+        ;
     try
     {
         
@@ -80,8 +79,31 @@ static int v8_main(int argc, char const * const * argv)
             SETUP_SHELL_BINDINGS(global);
         }
 #endif
-        char const * fname = argv[1];
-        /*v8::Handle<v8::Value> rc = */shell.ExecuteFile( fname );
+
+        // Execute a list of JS files up to the "--" in the arguments list
+        // after which the arguments will be passed to the "arguments" 
+        // array.  
+        //
+        // Ex:
+        //
+        //  shell test1.js test2.js test3.js -- arg1 arg2 arg3 
+
+        for (int i = 1; i < argc; ++i)
+        {
+            if (std::strcmp(argv[i], "--") == 0)
+            {
+                // Arguments were handled by the cv::Shell constructor, 
+                // so we just break here.
+                break;
+            }
+
+            v8::Handle<v8::Value> rc( shell.ExecuteFile( argv[i] ) );
+            if( rc.IsEmpty() ) 
+            {   
+                // Exception was reported by shell already
+                return 2;
+            }
+        }
     }
     catch(std::exception const & ex)
     {
@@ -101,9 +123,13 @@ int main(int argc, char const * const * argv)
 
     if( (argc<2) || ('-'==*(argv[1]) ))
     {
-        CERR << "Usage:\n\t" << argv[0] << " script.js [-- [script arguments]]"
-             << "\nAll arguments after '--' are available in the script via "
-             << "the global 'arguments' Array object.\n";
+        std::cerr 
+            <<  "\nUsage:"
+            <<  "\n\n  " << argv[0] << " script1.js  [script2.js script3.js -- [script arguments]]"
+            << "\n\n  All arguments preceding the '--' are executed, "
+            << "in order, as script files."
+            << "\n  Arguments after '--' are available in the script via "
+            << "the global 'arguments' Array object.\n";
         
         return 1;
     }
@@ -111,4 +137,6 @@ int main(int argc, char const * const * argv)
     //CERR << "Done! rc="<<rc<<'\n';
     return rc;
 }
+
+
 
