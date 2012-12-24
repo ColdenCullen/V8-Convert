@@ -2,7 +2,7 @@
    Test/demo code for the v8-convert API.
    
    This file implements a very basic shell application which
-   reads in a single JS file and executes it.
+   reads in one or more JS files and executes them.
    
    The shell's JS environment can be extended without changing
    this code by doing the following:
