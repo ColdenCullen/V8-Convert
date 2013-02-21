@@ -198,7 +198,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<${count},Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -209,7 +210,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static ${ValHnd} Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<${count},Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };

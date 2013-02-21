@@ -29,7 +29,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<1,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -40,7 +41,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<1,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -291,7 +293,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<2,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -302,7 +305,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<2,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -571,7 +575,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<3,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -582,7 +587,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<3,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -869,7 +875,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<4,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -880,7 +887,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<4,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1185,7 +1193,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<5,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -1196,7 +1205,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<5,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1519,7 +1529,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<6,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -1530,7 +1541,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<6,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -1871,7 +1883,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<7,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -1882,7 +1895,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<7,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -2241,7 +2255,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<8,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -2252,7 +2267,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<8,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -2629,7 +2645,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<9,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -2640,7 +2657,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<9,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
@@ -3035,7 +3053,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            return CastToJS( CallNative( func, argv ) );
+            typedef FunctionForwarderBase<10,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            return CastToJS( ParentT::CallNative( func, argv ) );
         }
     };
 
@@ -3046,7 +3065,8 @@ namespace Detail {
         typedef typename SignatureType::FunctionType FunctionType;
         static v8::Handle<v8::Value> Call( FunctionType func, v8::Arguments const & argv )
         {
-            CallNative( func, argv );
+            typedef FunctionForwarderBase<10,Sig,UnlockV8> ParentT /* gcc 4.7 workaround */;
+            ParentT::CallNative( func, argv );
             return v8::Undefined();
         }
     };
