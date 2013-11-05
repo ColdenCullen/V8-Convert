@@ -2,7 +2,8 @@
 #define V8_CONVERT_NATIVE_JS_MAPPER_HPP_INCLUDED
 
 #include "detail/convert_core.hpp"
-namespace cvv8 {
+namespace cvv8
+{
     /**
        A helper class to assist in the "two-way-binding" of
        natives to JS objects. This class holds native-to-JS
@@ -42,12 +43,12 @@ namespace cvv8 {
         /**
            The native type to bind to.
         */
-        typedef typename TI::NativeHandle NativeHandle;
+        typedef const Type* NativeHandle;
         /** The type for holding the JS 'this' object. */
         typedef v8::Persistent<v8::Object> JSObjHandle;
         //typedef v8::Handle<v8::Object> JSObjHandle; // Hmmm.
         typedef std::pair<NativeHandle,JSObjHandle> ObjBindT;
-        typedef std::map<void const *, ObjBindT> OneOfUsT;
+        typedef std::map<const void*, ObjBindT> OneOfUsT;
         /** Maps (void const *) to ObjBindT.
         
             Reminder to self: we might need to make this map a static
@@ -58,7 +59,7 @@ namespace cvv8 {
             initialization of the member is going to require a really
             ugly set of template parameters, though.
         */
-        static OneOfUsT & Map()
+        static OneOfUsT& Map()
         {
             static OneOfUsT bob;
             return bob;
@@ -66,19 +67,24 @@ namespace cvv8 {
     public:
         /** Maps obj as a lookup key for jself. Returns false if !obj,
          else true. */
-        static bool Insert( JSObjHandle const & jself,
-                            NativeHandle obj )
+        static bool Insert( const JSObjHandle jself, NativeHandle obj )
         {
-            return obj
-                ? (Map().insert( std::make_pair( obj, std::make_pair( obj, jself ) ) ),true)
-                : 0;
+            if( obj )
+			{
+				Map()[ obj ] = std::make_pair( obj, jself );
+				return true;
+			}
+			else
+			{
+				return false;
+			}
         }
 
         /**
            Removes any mapping of the given key. Returns the
            mapped native, or 0 if none is found.
         */
-        static NativeHandle Remove( void const * key )
+        static NativeHandle Remove( const void* key )
         {
             typedef typename OneOfUsT::iterator Iterator;
             OneOfUsT & map( Map() );
@@ -89,7 +95,7 @@ namespace cvv8 {
             }
             else
             {
-                NativeHandle victim = (*it).second.first;
+                NativeHandle victim = it->second.first;
                 map.erase(it);
                 return victim;
             }
@@ -99,15 +105,15 @@ namespace cvv8 {
            Returns the native associated (via Insert())
            with key, or 0 if none is found.
         */
-        static NativeHandle GetNative( void const * key )
+        static NativeHandle GetNative( const void* key )
         {
-            if( ! key ) return 0;
+            if( ! key ) return nullptr;
             else
             {
                 typename OneOfUsT::iterator it = Map().find(key);
                 return (Map().end() == it)
                     ? 0
-                    : (*it).second.first;
+                    : it->second.first;
             }
         }
 
@@ -115,13 +121,19 @@ namespace cvv8 {
            Returns the JS object associated with key, or
            an empty handle if !key or no object is found.
         */
-        static v8::Handle<v8::Object> GetJSObject( void const * key )
+        static JSObjHandle GetJSObject( const void* key )
         {
-            if( ! key ) return v8::Handle<v8::Object>();
-            typename OneOfUsT::const_iterator it = Map().find(key);
-            if( Map().end() == it ) return v8::Handle<v8::Object>();
-            else return (*it).second.second;
-        }
+            if( !key )
+				return JSObjHandle();
+
+			auto it = Map().find(key);
+
+            if( Map().end() == it )
+				return JSObjHandle();
+
+            else
+				return it->second.second;
+		}
         
         /**
             A base NativeToJS<T> implementation for classes which use NativeToJSMap<T>
@@ -133,20 +145,37 @@ namespace cvv8 {
             struct NativeToJS<MyType> : NativeToJSMap<MyType>::NativeToJSImpl {};
             @endcode
         */
-        struct NativeToJSImpl
-        {
-            v8::Handle<v8::Value> operator()( Type const * n ) const
-            {
-                typedef NativeToJSMap<T> BM;
-                v8::Handle<v8::Value> const & rc( BM::GetJSObject(n) );
-                if( rc.IsEmpty() ) return v8::Null();
-                else return rc;
-            }
-            v8::Handle<v8::Value> operator()( Type const & n ) const
-            {
-                return this->operator()( &n );
-            }
-        };
+		struct NativeToJSImpl
+		{
+			v8::Handle<v8::Value> operator()( NativeHandle n ) const
+			{
+				JSObjHandle const & rc( GetJSObject( n ) );
+
+				if( rc.IsEmpty() || !rc->IsObject() )
+				{
+					JSObjHandle toReturn =
+						v8::Persistent<v8::Object>::New(
+						ClassCreator<T>::Instance().NewInstance( 0, NULL ) );
+
+					delete toReturn->GetPointerFromInternalField( ClassCreator_InternalFields<Type>::NativeIndex );
+					toReturn->SetPointerInInternalField( ClassCreator_InternalFields<Type>::NativeIndex, (void*)n );
+					Insert( toReturn, n );
+					return toReturn;
+				}
+				else
+				{
+					return rc;
+				}
+			}
+			v8::Handle<v8::Value> operator()( const Type& n ) const
+			{
+				// Create new object
+				v8::Handle<v8::Object>& toReturn = ClassCreator<T>::Instance().NewInstance( 0, NULL );
+				// Copy values from original to new
+				*static_cast<T*>( toReturn->GetPointerFromInternalField( ClassCreator_InternalFields<Type>::NativeIndex ) ) = n;
+				return toReturn;
+			}
+		};
 
 #if 0
         //! Experimental
