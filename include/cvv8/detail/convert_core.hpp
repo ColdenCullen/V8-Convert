@@ -853,12 +853,9 @@ namespace cvv8 {
                 while( !ext && !proto.IsEmpty() && proto->IsObject() )
                 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
-                    v8::Local<v8::Value> const & exv = (obj->InternalFieldCount() != InternalFieldCount)
-                        ? v8::Local<v8::Value>()
-                        : obj->GetInternalField( InternalFieldIndex );
-                    ext = ( !exv.IsEmpty() && exv->IsExternal() )
-                        ? v8::External::Cast(*exv)->Value()
-                        : NULL;
+                    ext = (obj->InternalFieldCount() != InternalFieldCount)
+                        ? NULL
+                        : obj->GetPointerFromInternalField( InternalFieldIndex );
                     if( ! ext )
                     {
                         if( !SearchPrototypeChain ) break;
@@ -980,26 +977,22 @@ namespace cvv8 {
         */
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
+			bool empty = h.IsEmpty();
+			bool obj = h->IsObject();
             if( h.IsEmpty() || ! h->IsObject() ) return NULL;
             else
             {
                 void const * tid = NULL;
                 void * ext = NULL;
                 v8::Handle<v8::Value> proto(h);
-                while( !ext && !proto.IsEmpty() && proto->IsObject() )
+                while( !ext && !proto.IsEmpty() )// && proto->IsObject() )
                 {
                     v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
-                    v8::Local<v8::Value> const & tidv = (obj->InternalFieldCount() != InternalFieldCount)
-                        ? v8::Local<v8::Value>()
-                        : obj->GetInternalField( TypeIdFieldIndex );
-                    tid = ( !tidv.IsEmpty() && tidv->IsExternal() )
-                        ? v8::External::Cast(*tidv)->Value()
-                        : NULL;
-                    v8::Local<v8::Value> const & exv = (tid == TypeID)
-                        ? obj->GetInternalField( ObjectFieldIndex )
-                        : v8::Local<v8::Value>();
-                    ext = ( !exv.IsEmpty() && exv->IsExternal() )
-                        ? v8::External::Cast(*exv)->Value()
+                    tid = (obj->InternalFieldCount() != InternalFieldCount)
+                        ? NULL
+                        : obj->GetPointerFromInternalField( TypeIdFieldIndex );
+                    ext = (tid == TypeID)
+                        ? obj->GetPointerFromInternalField( ObjectFieldIndex )
                         : NULL;
                     if( ! ext )
                     {
@@ -1559,15 +1552,10 @@ namespace cvv8 {
     /** Partial specialization for std::list<>. */
     template <typename T>
     struct JSToNative< std::list<T> > : JSToNative_list< std::list<T> > {};
-    template <typename T>
-    struct JSToNative< std::list<T> const & > : JSToNative< std::list<T> > {};
 
-    
     /** Partial specialization for std::vector<>. */
     template <typename T>
     struct JSToNative< std::vector<T> > : JSToNative_list< std::vector<T> > {};
-    template <typename T>
-    struct JSToNative< std::vector<T> const & > : JSToNative< std::vector<T> > {};
 
 #if 0 // untested code
     /**
@@ -1905,56 +1893,6 @@ namespace cvv8 {
         enum { HasConstOp = 0 };
     };
 
-    /**
-       An ArgCaster specialization which can handle (char *)
-       (non-const) parameters. It has the same lifetime limitations as
-       the (char const *) specialization.
-
-       Note that changes made to (char *) input parameters by the
-       function they are passed to are lost on their way back to JS.
-    */
-    template <>
-    struct ArgCaster<char *>
-    {
-    private:
-        typedef std::vector<char> Buffer;
-        Buffer val;
-        typedef char Type;
-    public:
-        typedef Type * ResultType;
-        /**
-           Returns the toString() value of v unless:
-
-           - v.IsEmpty()
-           - v->IsNull()
-           - v->IsUndefined()
-
-           In which cases it returns 0.
-
-           The returned value is valid until:
-
-           - ToNative() is called again.
-           - This object is destructed.
-        */
-        ResultType ToNative( v8::Handle<v8::Value> const & v )
-        {
-            if( v.IsEmpty() || v->IsNull() || v->IsUndefined() )
-            {
-                return 0;
-            }
-            v8::String::Utf8Value const val(v);
-            char const * begin = *val;
-            if(!begin) return NULL;
-            char const * end = begin + strlen(begin);
-            this->val.assign( begin, end +1 /*include the NUL byte*/ );
-            return &this->val[0];
-        }
-        /**
-            To eventually be used for some internal optimizations.
-        */
-        enum { HasConstOp = 0 };
-    };
-    
 #if !defined(DOXYGEN)
     namespace Detail {
         /**

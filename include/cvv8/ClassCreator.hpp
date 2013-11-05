@@ -586,6 +586,11 @@ namespace cvv8 {
 
            If nh is not found anywhere in the chain, an empty handle is
            returned.
+
+           Note that T must be non-cv qualified, so it is generally
+           undesirable to allow the compiler to deduce its type from the
+           parameter. Thus the T template parameter should not be omitted
+           from calls to this function.
         */
         static v8::Handle<v8::Object> FindHolder( v8::Handle<v8::Object> const & jo,
                                                   T const * nh )
@@ -597,12 +602,9 @@ namespace cvv8 {
             while( !ext && !proto.IsEmpty() && proto->IsObject() )
             {
                 v8::Local<v8::Object> const & obj( v8::Object::Cast( *proto ) );
-                v8::Local<v8::Value> const & exv = (obj->InternalFieldCount() != InternalFields::Count)
-                    ? v8::Local<v8::Value>()
-                    : obj->GetInternalField( InternalFields::NativeIndex );
-                ext = (!exv.IsEmpty() && exv->IsExternal() )
-                    ? v8::External::Cast(*exv)->Value()
-                    : NULL;
+                ext = (obj->InternalFieldCount() != InternalFields::Count)
+                    ? NULL
+                    : obj->GetPointerFromInternalField( InternalFields::NativeIndex );
                 // FIXME: if InternalFields::TypeIDIndex>=0 then also do a check on that one.
                 /*
                     If !ext, there is no bound pointer. If (ext &&
@@ -619,8 +621,9 @@ namespace cvv8 {
         
         static void weak_dtor( v8::Persistent< v8::Value > pv, void *nobj )
         {
+            using namespace v8;
             //std::cerr << "Entering weak_dtor<>(native="<<(void const *)nobj<<")\n";
-            v8::Local<v8::Object> jobj( v8::Object::Cast(*pv) );
+            Local<Object> jobj( Object::Cast(*pv) );
             typedef typename JSToNative<T>::ResultType NT;
             NT native = CastFromJS<T>( pv );
             if( !native )
@@ -688,10 +691,10 @@ namespace cvv8 {
                 }
                 else
                 {
-                    nholder->SetInternalField( InternalFields::NativeIndex, v8::Null() );
+                    nholder->SetInternalField( InternalFields::NativeIndex, Null() );
                     if( 0 <= InternalFields::TypeIDIndex )
                     {
-                        nholder->SetInternalField( InternalFields::TypeIDIndex, v8::Null() );
+                        nholder->SetInternalField( InternalFields::TypeIDIndex, Null() );
                     }
                     Factory::Delete(native);
                 }
@@ -704,16 +707,16 @@ namespace cvv8 {
                 }
                 Factory::Delete(native);
 #endif
-                /*
-                  According to the v8 gurus i need to call pv.Dispose()
-                  instead of pv.Clear(), but if i do then this dtor is
-                  being called twice. If i don't call it, v8 is crashing
-                  sometime after this function with a !NEAR_DEATH
-                  assertion.
-                */
-                pv.Dispose();
-                pv.Clear();
             }
+            /*
+              According to the v8 gurus i need to call pv.Dispose()
+              instead of pv.Clear(), but if i do then this dtor is
+              being called twice. If i don't call it, v8 is crashing
+              sometime after this function with a !NEAR_DEATH
+              assertion.
+            */
+            pv.Dispose();
+            pv.Clear();
         }
 
         /**
@@ -721,6 +724,7 @@ namespace cvv8 {
          */
         static v8::Handle<v8::Value> ctor_proxy( v8::Arguments const & argv )
         {
+            using namespace v8;
             if(ClassCreator_AllowCtorWithoutNew<T>::Value)
             {
                 /**
@@ -730,8 +734,8 @@ namespace cvv8 {
                 if (!argv.IsConstructCall()) 
                 {
                     const int argc = argv.Length();
-                    v8::Handle<v8::Function> ctor( v8::Function::Cast(*argv.Callee()));
-                    std::vector< v8::Handle<v8::Value> > av(static_cast<size_t>(argc),v8::Undefined());
+                    Handle<Function> ctor( Function::Cast(*argv.Callee()));
+                    std::vector< Handle<Value> > av(static_cast<size_t>(argc),Undefined());
                     for( int i = 0; i < argc; ++i ) av[i] = argv[i];
                     return ctor->NewInstance( argc, &av[0] );
                 }
@@ -749,7 +753,7 @@ namespace cvv8 {
                     return Toss("This constructor cannot be called as function!");
                 }
             }
-            v8::Local<v8::Object> const & jobj( argv.This()
+            Local<Object> const & jobj( argv.This()
                                         /*CastToJS<T>(*nobj)
                                           
                                         We are not yet far enough
@@ -759,7 +763,7 @@ namespace cvv8 {
                                         case, anyway.
                                         */);
             if( jobj.IsEmpty() ) return jobj /* assume exception*/;
-            v8::Persistent<v8::Object> self( v8::Persistent<v8::Object>::New(jobj) );
+            Persistent<Object> self( Persistent<Object>::New(jobj) );
             T * nobj = NULL;
             try
             {
@@ -773,9 +777,9 @@ namespace cvv8 {
                 self.MakeWeak( nobj, weak_dtor );
                 if( 0 <= InternalFields::TypeIDIndex )
                 {
-                    self->SetInternalField( InternalFields::TypeIDIndex, v8::External::New((void *)TypeID::Value) );
+                    self->SetPointerInInternalField( InternalFields::TypeIDIndex, (void *)TypeID::Value );
                 }
-                self->SetInternalField( InternalFields::NativeIndex, v8::External::New(nobj) )
+                self->SetPointerInInternalField( InternalFields::NativeIndex, nobj )
                     /* We do this after the call to Wrap() just in case the Wrap() impl
                        accidentally writes to this field. In that case we end up
                        losing the data they stored there. So this is just as evil as
@@ -806,9 +810,7 @@ namespace cvv8 {
               protoTmpl(v8::Persistent<v8::ObjectTemplate>::New( ctorTmpl->PrototypeTemplate() )),
               isSealed(false)
         {
-            if(InternalFields::Count > 0){
-                ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
-            }
+            ctorTmpl->InstanceTemplate()->SetInternalFieldCount(InternalFields::Count);
         }
     public:
         /**
@@ -1298,6 +1300,9 @@ namespace cvv8 {
             return NULL;
         }
     };
+
+	template<> struct NativeToJS<float> : NativeToJS<double>
+	{};
 
 }// namespaces
 
