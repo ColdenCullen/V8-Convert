@@ -194,7 +194,7 @@ namespace cvv8 {
             typedef typename TypeInfo<T>::Type Type;
             typedef typename JSToNative<T>::ResultType NativeHandle;
             NativeHandle self = CastFromJS<T>( info.This() );
-            if( self ) self->*MemVar = CastFromJS<PropertyType>( value );
+            if( self ) self->*MemVar = static_cast<PropertyType>( CastFromJS<PropertyType>( value ) );
             else Toss( StringBuffer() << "Native member property setter '"
                         << property << "' could not access native 'this'his object!" );
         }
