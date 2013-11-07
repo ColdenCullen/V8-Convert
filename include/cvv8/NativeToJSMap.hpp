@@ -2,6 +2,7 @@
 #define V8_CONVERT_NATIVE_JS_MAPPER_HPP_INCLUDED
 
 #include "detail/convert_core.hpp"
+#include <unordered_map>
 namespace cvv8
 {
     /**
@@ -48,7 +49,8 @@ namespace cvv8
         typedef v8::Persistent<v8::Object> JSObjHandle;
         //typedef v8::Handle<v8::Object> JSObjHandle; // Hmmm.
         typedef std::pair<NativeHandle,JSObjHandle> ObjBindT;
-        typedef std::map<const void*, ObjBindT> OneOfUsT;
+        typedef std::unordered_map<const void*, ObjBindT> OneOfUsT;
+		//typedef std::map<const void*, ObjBindT> OneOfUsT;
         /** Maps (void const *) to ObjBindT.
         
             Reminder to self: we might need to make this map a static
