@@ -12,7 +12,7 @@
 */
 
 //#include <cstdint> // arg! Requires C++0x!
-#include <v8\v8.h>
+#include <v8.h>
 #include <stdint.h> // hope the client's platform is recent!
 #include <string>
 #include <cstring>
