@@ -157,7 +157,11 @@ namespace cvv8
 						v8::Persistent<v8::Object>::New(
 						ClassCreator<T>::Instance().NewInstance( 0, NULL ) );
 
-					delete toReturn->GetPointerFromInternalField( ClassCreator_InternalFields<Type>::NativeIndex );
+					auto ptr = static_cast<T*>( toReturn->GetPointerFromInternalField( ClassCreator_InternalFields<Type>::NativeIndex ) );
+
+					if( ptr )
+						delete ptr;
+
 					toReturn->SetPointerInInternalField( ClassCreator_InternalFields<Type>::NativeIndex, (void*)n );
 					Insert( toReturn, n );
 					return toReturn;

@@ -156,6 +156,14 @@ namespace cvv8 {
     struct ClassCreator_AllowCtorWithoutNew : Opt_Bool<false>
     {};
 
+	/************************************************************************/
+	/* A policy that allows objects to be wrapped                           */
+	/* without valid constructors                                           */
+	/************************************************************************/
+	template <typename T>
+	struct ClassCreator_AllowNullConstructor : Opt_Bool<false>
+	{};
+
     /**
        ClassCreator policy which determines whether lookups for native
        types in JS objects should walk through the prototype
@@ -769,7 +777,7 @@ namespace cvv8 {
             {
                 WeakWrap::PreWrap( self, argv  );
                 nobj = Factory::Create( self, argv );
-                if( ! nobj )
+                if( ! nobj && !ClassCreator_AllowNullConstructor<T>::Value )
                 {
                     return CastToJS<std::exception>(std::runtime_error("Native constructor failed."));
                 }
