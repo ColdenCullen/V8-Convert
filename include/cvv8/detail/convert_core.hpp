@@ -977,8 +977,6 @@ namespace cvv8 {
         */
         ResultType operator()( v8::Handle<v8::Value> const & h ) const
         {
-			bool empty = h.IsEmpty();
-			bool obj = h->IsObject();
             if( h.IsEmpty() || ! h->IsObject() ) return NULL;
             else
             {
